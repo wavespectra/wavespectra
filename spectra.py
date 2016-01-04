@@ -17,7 +17,7 @@ class Spectrum(xray.DataArray):
         (1) xray DataArray:
         - data_array :: DataArray object with spectra
         - coords     :: (optional) dictionary mapping "time", "freq" and/or "dir" coordinates if they have different
-                        names, e.g., {'T': 'time', 'My_Frequences': 'freq'}
+                        names, e.g., {'T': 'time', 'My_Frequencies': 'freq'}
         (2) numpy arrays:
         - spec_array  :: 1D, 2D or 3D array with spectrum
         - freq_array :: 1D array with frequencies for spectrum
@@ -49,27 +49,36 @@ class Spectrum(xray.DataArray):
         self.df = abs(self.freq[1:].values - self.freq[:-1].values)
         self.dd = abs(self.dir[1].values - self.dir[0].values) if any(self.dir) else 1.0
 
-    def split(self, fmin=None, fmax=None):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
         """
-        Frequency-split of spectra
+        Split spectra over frequencies [fmin, fmax], interpolate at those values if not included in frequency array
+        fmin, fmax :: scalars, minimum and maximum frequencies to split spectra over
+        dmin, dmax :: scalars, minimum and maximum directions to split spectra over
         """
-        other = self.sel(freq=slice(fmin, fmax))
+        # TODO: direction slicing is not active yet, we need to ensure they are monotonically increasing
+        slice_dict = {'freq': slice(fmin, fmax)}
+        # if 'dir' in self.coords:
+        #     slice_dict.update({'dir': slice(dmin, dmax)})
+        other = self.sel(**slice_dict)
+
         # Interpolate at fmin
         if other.freq.min() != self.freq.min() and other.freq.min() > fmin:
-            i0 = np.where(self.freq > fmin)[0][0]
-            df = np.diff(self.freq.isel(freq=[i0-1, i0]))[0]
-            Sint = self.isel(freq=[i0]) * (fmin - self.freq.isel(freq=[i0-1]).values) +\
-                self.isel(freq=[i0-1]).values * (self.freq.isel(freq=[i0]).values - fmin)
+            ifreq = np.where(self.freq > fmin)[0][0]
+            df = np.diff(self.freq.isel(freq=[ifreq-1, ifreq]))[0]
+            Sint = self.isel(freq=[ifreq]) * (fmin - self.freq.isel(freq=[ifreq-1]).values) +\
+                self.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fmin)
             Sint.freq.values = [fmin]
             other = xray.concat([Sint/df, other], dim='freq')
+
         # Interpolate at fmax
         if other.freq.max() != self.freq.max() and other.freq.max() < fmax:
-            i0 = np.where(self.freq < fmax)[0][-1]
-            df = np.diff(self.freq.isel(freq=[i0, i0+1]))[0]
-            Sint = self.isel(freq=[i0+1]) * (fmax - self.freq.isel(freq=[i0]).values) +\
-                self.isel(freq=[i0]).values * (self.freq.isel(freq=[i0+1]).values - fmax)
+            ifreq = np.where(self.freq < fmax)[0][-1]
+            df = np.diff(self.freq.isel(freq=[ifreq, ifreq+1]))[0]
+            Sint = self.isel(freq=[ifreq+1]) * (fmax - self.freq.isel(freq=[ifreq]).values) +\
+                self.isel(freq=[ifreq]).values * (self.freq.isel(freq=[ifreq+1]).values - fmax)
             Sint.freq.values = [fmax]
             other = xray.concat([other, Sint/df], dim='freq')
+
         return Spectrum(data_array=other)
 
     def oned(self):
