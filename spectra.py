@@ -92,9 +92,11 @@ class SpecArray(xr.DataArray):
 
     def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
         """
-        Split spectra over frequencies [fmin, fmax], interpolate at those values if not included in frequency array
-        fmin, fmax :: scalars, minimum and maximum frequencies to split spectra over
-        dmin, dmax :: scalars, minimum and maximum directions to split spectra over
+        Split spectra over freq and/or dir dimensions
+        - fmin :: lowest frequency for split spectra, by default min(freq) - interpolates at fmin if fmin not in freq
+        - fmax :: highest frequency for split spectra, by default max(freq) - interpolates at fmax if fmax not in freq
+        - dmin :: lowest direction to split spectra over, by default min(dir)
+        - dmax :: highest direction to split spectra over, by default max(dir)
         """
         # Slice frequencies
         other = self.sel(freq=slice(fmin, fmax))
@@ -175,18 +177,15 @@ class SpecArray(xr.DataArray):
     def hs(self, fmin=None, fmax=None, times=None, tail=True):
         """
         Spectral significant wave height Hm0
-        - fmin  :: lowest frequency to integrate over, by default self.freq.min()
-        - fmax  :: highest frequency to integrate over, by default self.freq.max()
+        - fmin  :: lowest frequency to integrate over, by default min(freq)
+        - fmax  :: highest frequency to integrate over, by default max(freq)
         - times :: list of datetimes to calculate hs over, by default all times
         - tail  :: fit high-frequency tail
         """
         fmin = fmin or self.freq.min()
         fmax = fmax or self.freq.max()
         times = [times] if not isinstance(times, list) and times is not None else times
-        if fmin is not None or fmax is not None:
-            other = self.split(fmin, fmax)
-        else:
-            other = self
+        other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
         Sf = other.oned()
         if times:
             Sf = Sf.sel(time=times, method='nearest')
