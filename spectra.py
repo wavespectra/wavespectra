@@ -3,32 +3,47 @@ New spectra object based on DataArray
 """
 import copy
 from collections import OrderedDict
-import xray
 from datetime import datetime
 import numpy as np
+import xray as xr
 
-class Spectrum(xray.DataArray):
+# TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
+
+class SpecArray(xr.DataArray):
     """
-    Multi-dimensional Spectrum object Built on the top of xray.DataArray
+    Multi-dimensional SpecArray object Built on the top of DataArray
     """
-    def __init__(self, **kwards): #data_array=None, spec_array=None, freq_array=None, dir_array=[None], time_array=[None]):
+    def __init__(self, **kwards):
         """
-        Inputs:
+        ---------------------------
+        Required keyword arguments:
+        ---------------------------
+
         (1) xray DataArray:
+        -------------------
+        spec = SpecArray(data_array=data_array[, dim_map=dim_map])
+
         - data_array :: DataArray object with spectra
-        - coords     :: (optional) dictionary mapping "time", "freq" and/or "dir" coordinates if they have different
-                        names, e.g., {'T': 'time', 'My_Frequencies': 'freq'}
+        - dim_map    :: (optional) dictionary to map coordinates ('time', 'freq', 'dir') that must be provided if they
+                        are called differently in 'data_array', e.g., {'T': 'time', 'My_Frequencies': 'freq'}
+
+        or
+
         (2) numpy arrays:
-        - spec_array  :: 1D, 2D or 3D array with spectrum
-        - freq_array :: 1D array with frequencies for spectrum
-        - dir_array  :: (optional) 1D array with directions for spectrum
-        - time_array :: (optional) 1D array with datetimes
+        -----------------
+        spec = SpecArray(spec_array=spec_array, freq_array=freq_array[, dir_array=dir_array, time_array=time_array])
+
+        - spec_array :: 1D, 2D or 3D numpy array with spectra. Axes must be ordered as: ([time,]freq[,dir])
+        - freq_array :: 1D numpy array with frequencies for spectra
+        - dir_array  :: (optional) 1D numpy array with directions for spectra
+        - time_array :: (optional) 1D numpy array with datetimes for spectra
         """
         # (1)
-        if 'data_array' in kwards and isinstance(kwards['data_array'], xray.DataArray):
-            if 'coords' in kwards and isinstance(kwards['coords'], dict):
-                kwards['data_array'].rename(coords)
-            super(Spectrum, self).__init__(data=kwards['data_array'], name='spec')
+        if 'data_array' in kwards and isinstance(kwards['data_array'], xr.DataArray):
+            darray = copy.deepcopy(kwards['data_array'])
+            if 'dim_map' in kwards and isinstance(kwards['dim_map'], dict):
+                darray = darray.rename(kwards['dim_map'])
+            assert 'freq' in darray.dims, 'Dimension "freq" not in SpecArray'
         # (2)
         elif 'spec_array' in kwards:
             assert 'freq_array' in kwards, 'freq_array must be provided together with spec_array'
@@ -37,17 +52,43 @@ class Spectrum(xray.DataArray):
                 kwards['spec_array'] = np.expand_dims(kwards['spec_array'], 0)
             if 'dir_array' not in kwards:
                 kwards.update({'dir_array': [None]})
-                kwards['dir_array'] = np.expand_dims(kwards['spec_array'], -1)
-                spec_array = np.expand_dims(spec_array, -1)
+                kwards['spec_array'] = np.expand_dims(kwards['spec_array'], -1)
             coords = OrderedDict((('time', kwards['time_array']),
                                   ('freq', kwards['freq_array']),
                                   ('dir', kwards['dir_array'])))
-            super(Spectrum, self).__init__(data=kwards['spec_array'], coords=coords, name='spec')
+            darray = xr.DataArray(data=kwards['spec_array'], coords=coords, name='spec')
         else:
             raise Exception('Either "data_array" or "spec_array" keyword arguments must be provided')
 
+        # Ensure frequencies and directions are sorted
+        for dim in ['freq', 'dir']:
+            if dim in darray.dims and not self._strictly_increasing(darray[dim].values):
+                darray = self.sort(darray, dims=[dim])
+
+        super(SpecArray, self).__init__(data=darray, name='spec')
+
         self.df = abs(self.freq[1:].values - self.freq[:-1].values)
-        self.dd = abs(self.dir[1].values - self.dir[0].values) if any(self.dir) else 1.0
+        self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and any(self.dir) else 1.0
+
+    def _strictly_increasing(self, arr):
+        """
+        Returns True if array arr is sorted in increasing order
+        """
+        return all(x<y for x, y in zip(arr, arr[1:]))
+
+    def sort(self, darray, dims, inplace=False):
+        """
+        Sort "darray" along dimensions in "dims" list so that the respective coordinates are sorted
+        """
+        other = darray if inplace else copy.deepcopy(darray)
+        dims = [dims] if not isinstance(dims, list) else dims
+        for dim in dims:
+            if dim in other.dims:
+                if not self._strictly_increasing(darray[dim].values):
+                    other = other.isel(**{dim: np.argsort(darray[dim]).values})
+            else:
+                raise Exception('Dimension %s not in SpecArray' % (dim))
+        return SpecArray(data_array=other)
 
     def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
         """
@@ -55,11 +96,8 @@ class Spectrum(xray.DataArray):
         fmin, fmax :: scalars, minimum and maximum frequencies to split spectra over
         dmin, dmax :: scalars, minimum and maximum directions to split spectra over
         """
-        # TODO: direction slicing is not active yet, we need to ensure they are monotonically increasing
-        slice_dict = {'freq': slice(fmin, fmax)}
-        # if 'dir' in self.coords:
-        #     slice_dict.update({'dir': slice(dmin, dmax)})
-        other = self.sel(**slice_dict)
+        # Slice frequencies
+        other = self.sel(freq=slice(fmin, fmax))
 
         # Interpolate at fmin
         if other.freq.min() != self.freq.min() and other.freq.min() > fmin:
@@ -68,7 +106,7 @@ class Spectrum(xray.DataArray):
             Sint = self.isel(freq=[ifreq]) * (fmin - self.freq.isel(freq=[ifreq-1]).values) +\
                 self.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fmin)
             Sint.freq.values = [fmin]
-            other = xray.concat([Sint/df, other], dim='freq')
+            other = xr.concat([Sint/df, other], dim='freq')
 
         # Interpolate at fmax
         if other.freq.max() != self.freq.max() and other.freq.max() < fmax:
@@ -77,16 +115,20 @@ class Spectrum(xray.DataArray):
             Sint = self.isel(freq=[ifreq+1]) * (fmax - self.freq.isel(freq=[ifreq]).values) +\
                 self.isel(freq=[ifreq]).values * (self.freq.isel(freq=[ifreq+1]).values - fmax)
             Sint.freq.values = [fmax]
-            other = xray.concat([other, Sint/df], dim='freq')
+            other = xr.concat([other, Sint/df], dim='freq')
 
-        return Spectrum(data_array=other)
+        # Slice directions
+        if 'dir' in other.dims and (dmin is not None or dmax is not None):
+            other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
+
+        return SpecArray(data_array=other)
 
     def oned(self):
         """
         Returns the one-dimensional frequency spectra
-        The direction dimension is dropped after integrating
+        Direction dimension is dropped after integrating
         """
-        return self.dd * self.sum(dim='dir')
+        return SpecArray(data_array=self.dd * self.sum(dim='dir'))
 
     def _peak(self, arr):
         """
@@ -155,38 +197,48 @@ class Spectrum(xray.DataArray):
 
 
 if __name__ == '__main__':
-    import numpy as np
     from pymo.data.spectra import SwanSpecFile
 
-    # Real spectra
+    #=================================
+    # Real spectra, input as DataArray
+    #=================================
     spectra = SwanSpecFile('/Users/rafaguedes/work/prelud0.spec')
     spec_list = [s for s in spectra.readall()]
+
     spec_array = np.concatenate([np.expand_dims(s.S, 0) for s in spec_list])
-    spec = Spectrum(spec_array=spec_array,
-                    freq_array=spec_list[0].freqs,
-                    dir_array=spec_list[0].dirs,
-                    time_array=spectra.times)
+    coords=OrderedDict((('dumb_time_name', spectra.times), ('freq', spec_list[0].freqs), ('dir', spec_list[0].dirs)))
+    darray = xr.DataArray(data=spec_array, coords=coords)
+
+    spec = SpecArray(data_array=darray, dim_map={'dumb_time_name': 'time'})
+
+    hs_new = spec.hs(fmin=0.05, fmax=0.2)
+    hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
+    for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
+        print 'Hs old for %s: %0.4f m' % (t, old)
+        print 'Hs new for %s: %0.4f m\n' % (t, new)
+
     print 'Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
         (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,07,20,18), tail=True))
-    print 'Hs for 2015-07-20 18:00:00 (old): %0.3f m' %\
-        (spec_list[0].split([0.05,0.2]).hs())
 
-    # freq_array = np.arange(0, 1.01, 0.1)
-    # dir_array = np.arange(0, 360, 30)
-    # time_array = [datetime(2015, 1, d) for d in [1,2,3]]
-    #
-    # # With time and directions
-    # spec_array = np.random.randint(1, 10, (len(time_array), len(freq_array), len(dir_array)))
-    # spec1 = Spectrum(spec_array, freq_array, dir_array, time_array)
-    #
-    # # Without time
-    # spec_array = np.random.random((len(freq_array), len(dir_array)))
-    # spec2 = Spectrum(spec_array, freq_array, dir_array)
-    #
-    # # Without directions
-    # spec_array = np.random.random((len(time_array), len(freq_array)))
-    # spec3 = Spectrum(spec_array, freq_array, time_array=time_array)
-    #
-    # # Without time and directions
-    # spec_array = np.random.random(len(freq_array))
-    # spec4 = Spectrum(spec_array, freq_array)
+    #====================================
+    # Fake spectra, input as numpy arrays
+    #====================================
+    freq_array = np.arange(0, 1.01, 0.1)
+    dir_array = np.arange(0, 360, 30)
+    time_array = [datetime(2015, 1, d) for d in [1,2,3]]
+
+    # With time and directions
+    spec_array = np.random.randint(1, 10, (len(time_array), len(freq_array), len(dir_array)))
+    spec1 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array, time_array=time_array)
+
+    # Without time
+    spec_array = np.random.random((len(freq_array), len(dir_array)))
+    spec2 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array)
+
+    # Without directions
+    spec_array = np.random.random((len(time_array), len(freq_array)))
+    spec3 = SpecArray(spec_array=spec_array, freq_array=freq_array, time_array=time_array)
+
+    # Without time and directions
+    spec_array = np.random.random(len(freq_array))
+    spec4 = SpecArray(spec_array=spec_array, freq_array=freq_array)
