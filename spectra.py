@@ -9,6 +9,10 @@ import xray as xr
 
 # TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
 
+_=np.newaxis
+sum=np.sum
+gamma=lambda x:math.sqrt(2.*pi/x)*((x/math.exp(1.))*math.sqrt(x*math.sinh(1./x)))**x
+
 class SpecArray(xr.DataArray):
     """
     Multi-dimensional SpecArray object Built on the top of DataArray
@@ -125,6 +129,25 @@ class SpecArray(xr.DataArray):
 
         return SpecArray(data_array=other)
 
+    def momf(self,mom=0):
+        '''Calculate given frequency moment'''
+        freqs=self.freq.values
+        df=abs(freqs[1:]-freqs[:-1])
+        fp = self.freq**mom
+        mf = (0.5 * df * (fp[{'freq': slice(1, None)}]*self[{'freq': slice(1, None)}]+fp[{'freq': slice(None,-1)}] * self[{'freq': slice(None,-1)}])).sum(dim='freq')
+        #return SpecArray(data_array=mf,freq_array=[0.]) # TODO may need to find a way to fix this
+        return mf
+
+    def momf1(self,mom=0):
+        '''Calculate bin integrated frequency moments'''
+        freqs = self.freqs.values
+        fup=np.hstack((freqs,2*freqs[-1] - freqs[-2]))
+        fdown = np.hstack((2*freqs[0] - freqs[1],freqs))
+        df = fup[1:] - fdown[:-1]
+        fp = freqs**mom
+        mf = sum(df[:,_]*fp[:,_]*self[:,:],0)
+        return SpecArray([0.],self.dirs,mf)
+
     def oned(self):
         """
         Returns the one-dimensional frequency spectra
@@ -137,10 +160,10 @@ class SpecArray(xr.DataArray):
         Returns the index ipeak of largest peak along freq dimension
         A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
         """
-        ispeak = (numpy.diff(numpy.append(arr[0], arr))>0) &\
-                 (numpy.diff(numpy.append(arr, arr[-1]))<0)
-        isort = numpy.argsort(arr)
-        ipeak = numpy.arange(len(arr))[isort][ispeak[isort]]
+        ispeak = (np.diff(np.append(arr[0], arr))>0) &\
+                 (np.diff(np.append(arr, arr[-1]))<0)
+        isort = np.argsort(arr)
+        ipeak = np.arange(len(arr))[isort][ispeak[isort]]
         if any(ipeak):
             return ipeak[-1]
         else:
@@ -194,6 +217,62 @@ class SpecArray(xr.DataArray):
             E += 0.25 * Sf[{'freq': -1}].values * other.freq[-1].values
         return 4 * np.sqrt(E)
 
+    def tm01(self, times=None):
+        """Mean wave period tm01"""
+        # Gives slight errors, problm with momf
+        return self.momf(0).sum(dim='dir')/self.momf(1).sum(dim='dir')
+
+    def tm02(self):
+        """Mean wave period tm02"""
+        return np.sqrt(sum(sum(self.momf(0)))/sum(sum(self.momf(2))))
+
+    def dp(self):
+        """Peak (frequency integrated) wave direction"""
+        ind = self.sum(dim='freq').argmax(dim='dir')
+        ret = ind.copy()
+        ret[:] = self.dir.values[ind]
+        return ret
+
+    def dpm(self):
+        """
+        Mean wave direction at peak frequency. Similar to previous code
+        but uses the true peak and not simply the maximum value
+        """
+        #imax=self._peak()
+        imax = self._truepeak(sum(self.S, 1))
+        if imax:
+            moms,momc = self.momd(1)
+            dpm = math.atan2(moms[imax][0], momc[imax][0])
+            return (270 - r2d*dpm) % 360.
+        else:
+            return -999
+
+    def dm(self):
+        """Mean wave direction"""
+        moms,momc=self.momd(1)
+        if all(moms.S==0):
+            return -999
+        else:
+            dpm=math.atan2(moms.sum(),momc.sum())
+            return (270-r2d*dpm) % 360.
+
+    def dspr(self):
+        """Directional wave spreading (spectrum integrated)"""
+        moms,momc=self.momd(1)
+        dspr=(2*r2d**2*(1-((moms.momf().S**2+momc.momf().S**2)**0.5/self.momf(0).oned().S)))**0.5
+        return dspr[0,0]
+
+    def swe(self):
+        stmp=self.oned()
+        if stmp.hs()<0.001:return 1.
+        return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
+
+    def sw(self):
+        stmp=self.oned()
+        if stmp.hs()<0.001:return 1.
+        return (stmp.momf(0).sum()*stmp.momf(2).sum()/stmp.momf(1).sum()**2-1.)**0.5;
+
+
 
 if __name__ == '__main__':
     from pymo.data.spectra import SwanSpecFile
@@ -213,11 +292,11 @@ if __name__ == '__main__':
     hs_new = spec.hs(fmin=0.05, fmax=0.2)
     hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
     for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
-        print 'Hs old for %s: %0.4f m' % (t, old)
-        print 'Hs new for %s: %0.4f m\n' % (t, new)
+        print ('Hs old for %s: %0.4f m' % (t, old))
+        print ('Hs new for %s: %0.4f m\n' % (t, new))
 
-    print 'Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
-        (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,07,20,18), tail=True))
+    print ('Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
+        (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,7,20,18), tail=True)))
 
     #====================================
     # Fake spectra, input as numpy arrays
