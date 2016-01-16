@@ -133,10 +133,13 @@ class SpecArray(xr.DataArray):
         '''Calculate given frequency moment'''
         freqs=self.freq.values
         df=abs(freqs[1:]-freqs[:-1])
-        fp = self.freq**mom
-        mf = (0.5 * df * (fp[{'freq': slice(1, None)}]*self[{'freq': slice(1, None)}]+fp[{'freq': slice(None,-1)}] * self[{'freq': slice(None,-1)}])).sum(dim='freq')
-        #return SpecArray(data_array=mf,freq_array=[0.]) # TODO may need to find a way to fix this
-        return mf
+        fp = freqs**mom
+        mf = (0.5 * df[:,_] * (fp[1:,_]*self[{'freq': slice(1, None)}].values+fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
+        mfdarr = SpecArray(spec_array=mf,
+                           freq_array=df,
+                           dir_array=self.dir,
+                           time_array=self.time)
+        return mfdarr.sum(dim='freq')
 
     def momf1(self,mom=0):
         '''Calculate bin integrated frequency moments'''
@@ -224,7 +227,7 @@ class SpecArray(xr.DataArray):
 
     def tm02(self):
         """Mean wave period tm02"""
-        return np.sqrt(sum(sum(self.momf(0)))/sum(sum(self.momf(2))))
+        return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
 
     def dp(self):
         """Peak (frequency integrated) wave direction"""
