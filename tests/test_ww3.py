@@ -28,15 +28,10 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 
 
 class TestSpec(unittest.TestCase):
+#class TestSpec(object):
 
     def setUp(self):
         self.startTime = time.time()
-
-    def tearDown(self):
-        t = time.time() - self.startTime
-        print ("%s: %.3f" % (self.id(), t))
-
-    def calcNew(self,method='hs'):
         # New spectra
         startTime = time.time()
         dset = xray.open_dataset(testfile)
@@ -45,26 +40,54 @@ class TestSpec(unittest.TestCase):
         dset.direction += 180
         dset.direction %= 360
         self.specnew = SpecArray(data_array=dset.efth[:,0],dim_map=coords)
-        self.new = getattr(self.specnew,method)()
-        print ('%s: pymsl: %s' % (method, time.time() - startTime))
-
-    def calcOld(self,method='hs'):
         # Old spectra
-        startTime = time.time()
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
-        self.old = self.calcOldTs(method=method)
+
+    def tearDown(self):
+        t = time.time() - self.startTime
+        print ("%s: %.3f" % (self.id(), t))
+
+    def calcNew(self,spec,method='hs'):
+        startTime = time.time()
+        self.new = getattr(spec,method)()
+        print ('%s: pymsl: %s' % (method, time.time() - startTime))
+
+    def calcOld(self,spec,method='hs'):
+        startTime = time.time()
+        self.old = self.calcOldTs(spec,method=method)
         print ('%s: pymo: %s' % (method, time.time() - startTime))
 
     def test_vars(self):
-        #for method in ('hs','tp'):
-        for method in ('dp',):
-            self.calcOld(method=method)
-            self.calcNew(method=method)
+        #for method in ('hs','tp','tm01','tm02'):
+        for method in ('dm'):
+            self.calcOld(self.specold,method=method)
+            self.calcNew(self.specnew,method=method)
             self.plot()
             plt.title(method)
             #np.allclose(self.old.values, self.new.values)
         plt.show()
+
+#    def test_sea(self,split=9.):
+#        startTime = time.time()
+#        nsw = self.specnew.split(fmin=1./split)
+#        nsea = self.specnew.split(fmax=1./split)
+#        print ('pymsl split: %s' % (time.time() - startTime))
+#        startTime = time.time()
+#        osw = self.specold.split(fmin=1./split)
+#        osea = self.specold.split(fmax=1./split)
+#        print ('pymo split: %s' % (time.time() - startTime))
+#        for method in ('hs',):
+#            self.calcOld(nsea,method=method)
+#            self.calcNew(osea,method=method)
+#            self.plot()
+#            plt.title(method+' Sea')
+#            self.calcOld(nsw,method=method)
+#            self.calcNew(osw,method=method)
+#            self.plot()
+#            plt.title(method+' Sea')
+#            #np.allclose(self.old.values, self.new.values)
+#        plt.show()
 
     def plot(self):
         plt.figure()
@@ -72,14 +95,14 @@ class TestSpec(unittest.TestCase):
         self.new.plot(label='pymsl')
         plt.legend()
 
-    def calcOldTs(self,method):
+    def calcOldTs(self,spec,method):
         data = []
         time = []
         lat = []
         lon = []
         darrays = []
         for sitei in [self.sites[0]]:
-            self.sito=self.specold.defSites(sitei)
+            self.sito=spec.defSites(sitei)
             lat.append(sitei.x)
             lon.append(sitei.y)
             for i,S in enumerate(self.specold.readall()):
@@ -91,8 +114,8 @@ class TestSpec(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    # test = TestSpec()
-    # test.setUp()
-    # test.test_new()
-    # test.test_old()
+    #test = TestSpec()
+    #test.setUp()
+    #test.test_new()
+    #test.test_old()
 
