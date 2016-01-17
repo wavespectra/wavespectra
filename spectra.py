@@ -129,11 +129,11 @@ class SpecArray(xr.DataArray):
 
         return SpecArray(data_array=other)
 
-    def momf(self,mom=0):
+    def momf(self, mom=0):
         """
         Calculate given frequency moment
         """
-        fp = self.freqs.values**mom
+        fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self[{'freq': slice(1, None)}].values + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
         mfdarr = SpecArray(spec_array=mf,
