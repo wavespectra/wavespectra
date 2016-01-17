@@ -59,13 +59,12 @@ class TestSpec(unittest.TestCase):
         print ('%s: pymo: %s' % (method, time.time() - startTime))
 
     def test_vars(self):
-        #for method in ('hs','tp','tm01','tm02'):
-        for method in ('dm'):
+        #for method in ('hs','tp','tm01','tm02','dm'):
+        for method in ('dspr',):
             self.calcOld(self.specold,method=method)
             self.calcNew(self.specnew,method=method)
             self.plot()
             plt.title(method)
-            #np.allclose(self.old.values, self.new.values)
         plt.show()
 
 #    def test_sea(self,split=9.):

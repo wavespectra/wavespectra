@@ -11,6 +11,11 @@ import xray as xr
 
 _ = np.newaxis
 gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
+# TODO verify which of these are needed...
+d2r=np.pi/180.
+r2d=180./np.pi
+pi=np.pi
+pi2=2*pi
 
 class SpecArray(xr.DataArray):
     """
@@ -135,17 +140,34 @@ class SpecArray(xr.DataArray):
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self[{'freq': slice(1, None)}] + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
-        return mf.sum(dim='freq')
+        ret = SpecArray(spec_array=mf.sum(dim='freq').values[:,_,:],
+                        freq_array=np.zeros(1),
+                        dir_array=self.dir,
+                        time_array=self.time)
+        return ret 
 
-    def momf1(self,mom=0):
-        '''Calculate bin integrated frequency moments'''
-        freqs = self.freqs.values
-        fup=np.hstack((freqs,2*freqs[-1] - freqs[-2]))
-        fdown = np.hstack((2*freqs[0] - freqs[1],freqs))
-        df = fup[1:] - fdown[:-1]
-        fp = freqs**mom
-        mf = np.sum(df[:,_]*fp[:,_]*self[:,:],0)
-        return SpecArray([0.],self.dirs,mf)
+
+    def momd(self,mom=0,theta=90.):
+        '''Calculate given directional moment'''
+        dirs = self.dir.values
+        if len(dirs)==1:
+            ddir=1
+        else:
+            ddir=abs(dirs[1]-dirs[0])
+        cp=np.cos(d2r*(180+theta-dirs))**mom
+        sp=np.sin(d2r*(180+theta-dirs))**mom
+        mcos=(ddir*(self * cp[_,:])).sum(dim='dir')
+        msin=(ddir*(self * sp[_,:])).sum(dim='dir')
+        retcos = SpecArray(spec_array=mcos.values[:,:,_],
+                           freq_array=mcos.freq,
+                           dir_array=np.zeros(1),
+                           time_array=mcos.time)
+        retsin = SpecArray(spec_array=msin.values[:,:,_],
+                           freq_array=msin.freq,
+                           dir_array=np.zeros(1),
+                           time_array=msin.time)
+        #return SpecArray(data_array=msin), SpecArray(data_array=mcos)
+        return retsin, retcos 
 
     def oned(self):
         """
@@ -249,17 +271,14 @@ class SpecArray(xr.DataArray):
     def dm(self):
         """Mean wave direction"""
         moms,momc=self.momd(1)
-        if all(moms.S==0):
-            return -999
-        else:
-            dpm=math.atan2(moms.sum(),momc.sum())
-            return (270-r2d*dpm) % 360.
+        dpm = np.arctan2(moms.sum(dim='freq'),momc.sum(dim='freq'))
+        return (270-r2d*dpm) % 360.
 
     def dspr(self):
         """Directional wave spreading (spectrum integrated)"""
         moms,momc=self.momd(1)
-        dspr=(2*r2d**2*(1-((moms.momf().S**2+momc.momf().S**2)**0.5/self.momf(0).oned().S)))**0.5
-        return dspr[0,0]
+        dspr=(2*r2d**2*(1-((moms.momf()**2+momc.momf()**2)**0.5/self.momf(0).oned())))**0.5
+        return dspr.sum(dim='freq').sum(dim='dir')
 
     def swe(self):
         stmp=self.oned()
