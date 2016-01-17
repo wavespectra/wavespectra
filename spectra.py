@@ -9,9 +9,8 @@ import xray as xr
 
 # TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
 
-_=np.newaxis
-sum=np.sum
-gamma=lambda x:math.sqrt(2.*pi/x)*((x/math.exp(1.))*math.sqrt(x*math.sinh(1./x)))**x
+_ = np.newaxis
+gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
 
 class SpecArray(xr.DataArray):
     """
@@ -135,12 +134,8 @@ class SpecArray(xr.DataArray):
         """
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
-            (fp[1:,_] * self[{'freq': slice(1, None)}].values + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
-        mfdarr = SpecArray(spec_array=mf,
-                           freq_array=self.df,
-                           dir_array=self.dir,
-                           time_array=self.time)
-        return mfdarr.sum(dim='freq')
+            (fp[1:,_] * self[{'freq': slice(1, None)}] + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
+        return mf.sum(dim='freq')
 
     def momf1(self,mom=0):
         '''Calculate bin integrated frequency moments'''
@@ -149,7 +144,7 @@ class SpecArray(xr.DataArray):
         fdown = np.hstack((2*freqs[0] - freqs[1],freqs))
         df = fup[1:] - fdown[:-1]
         fp = freqs**mom
-        mf = sum(df[:,_]*fp[:,_]*self[:,:],0)
+        mf = np.sum(df[:,_]*fp[:,_]*self[:,:],0)
         return SpecArray([0.],self.dirs,mf)
 
     def oned(self):
