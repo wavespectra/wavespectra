@@ -86,6 +86,15 @@ class SpecArray(xr.DataArray):
         """
         return all(x<y for x, y in zip(arr, arr[1:]))
 
+    def _collapse_array(self, arr, indices, axis):
+        """
+        Collapse n-dim array [arr] along [axis] using [indices]
+        """
+        magic_index = [np.arange(i) for i in indices.shape]
+        magic_index = np.ix_(*magic_index)
+        magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
+        return arr[magic_index]
+
     def sort(self, darray, dims, inplace=False):
         """
         Sort "darray" along dimensions in "dims" list so that the respective coordinates are sorted
@@ -146,11 +155,12 @@ class SpecArray(xr.DataArray):
                         freq_array=np.zeros(1),
                         dir_array=self.dir,
                         time_array=self.time)
-        return ret 
-
+        return ret
 
     def momd(self,mom=0,theta=90.):
-        '''Calculate given directional moment'''
+        """
+        Calculate given directional moment
+        """
         dirs = self.dir.values
         if len(dirs)==1:
             ddir=1
@@ -192,35 +202,37 @@ class SpecArray(xr.DataArray):
         else:
             return None
 
-    def tp(self):
-        if self.freq.size < 3:
+    def tp(self, smooth=True):
+        """
+        Peak wave period
+        """
+        if len(self.freq) < 3:
             return None
-        oned = self.oned()
-        imax = oned.argmax(dim='freq')
-        # imax[imax==0] = None
-        # imax[imax==len(self.freq)-1] = None
-        sig1 = self.freq[imax-1].values
-        sig2 = self.freq[imax+1].values
-        sig3 = self.freq[imax].values
-        e1   = oned.isel(freq=imax-1)
-        e2   = oned.isel(freq=imax+1)
-        e3   = oned.isel(freq=imax)
-        p    = sig1+sig2
-        q    = (e1-e2)/(sig1-sig2)
-        r    = sig1+sig3
-        t    = (e1-e3)/(sig1-sig3)
-        a    = (t-q)/(r-p)
-        # if (a<0):
-        #     sigp = (-q+p*a)/(2.*a)
-        # else:
-        #     sigp = sig3
-        sigp = (-q+p*a)/(2.*a)
-        dims = self.coords.keys()
-        coords = copy.deepcopy(self.coords)
-        del coords['freq']
-        del coords['dir']
-        import pdb; pdb.set_trace()
-        return xr.DataArray(1./sigp,coords=coords)
+        Sf = self.oned()
+        ipeak = Sf.argmax(dim='freq')
+        # if not ipeak:
+        #     return None
+        if smooth:
+            freq_axis = Sf.get_axis_num(dim='freq')
+            sig1 = self.freq[ipeak-1].values
+            sig2 = self.freq[ipeak+1].values
+            sig3 = self.freq[ipeak].values
+            e1 = self._collapse_array(Sf.values, ipeak.values-1, axis=freq_axis)
+            e2 = self._collapse_array(Sf.values, ipeak.values+1, axis=freq_axis)
+            e3 = self._collapse_array(Sf.values, ipeak.values, axis=freq_axis)
+            p = sig1 + sig2
+            q = (e1-e2) / (sig1-sig2)
+            r = sig1 + sig3
+            t = (e1-e3) / (sig1-sig3)
+            a = (t-q) / (r-p)
+            fp = (-q+p*a) / (2.*a)
+            fp[a>=0] = sig3[a>=0]
+        else:
+            fp = self.freq.values[ipeak]
+        tp = SpecArray(spec_array=1./fp[:,_],
+                       freq_array=np.zeros(1),
+                       time_array=self.time)
+        return tp
 
     def hs(self, fmin=None, fmax=None, times=None, tail=True):
         """
