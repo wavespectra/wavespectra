@@ -6,6 +6,7 @@ import unittest
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.testing import assert_array_almost_equal
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -15,10 +16,11 @@ import xray
 from spectra import SpecArray
 
 # Old imports
-from pymo.data.spectra_new import WW3NCSpecFile,WW3NCGridFile
+from pymo.data.spectra_new import WW3NCSpecFile
 from pymo.core.basetype import Site
 
-testfile = '/home/tdurrant/Downloads/shell_spec_test.nc'
+# testfile = '/home/tdurrant/Downloads/shell_spec_test.nc'
+testfile = '/home/tdurrant/Documents/projects/shell/code/old/shell_spec_test.nc'
 
 D2R=np.pi/180.
 
@@ -28,7 +30,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 
 
 class TestSpec(unittest.TestCase):
-#class TestSpec(object):
+# class TestSpec(object):
 
     def setUp(self):
         self.startTime = time.time()
@@ -40,6 +42,7 @@ class TestSpec(unittest.TestCase):
         dset.direction += 180
         dset.direction %= 360
         self.specnew = SpecArray(data_array=dset.efth[:,0],dim_map=coords)
+        #self.specnew = SpecArray(data_array=dset.efth,dim_map=coords)
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
@@ -51,18 +54,22 @@ class TestSpec(unittest.TestCase):
     def calcNew(self,spec,method='hs'):
         startTime = time.time()
         self.new = getattr(spec,method)()
-        print ('%s: pymsl: %s' % (method, time.time() - startTime))
+        self.ntime = time.time() - startTime
+        print ('%s: pymsl: %s' % (method, self.ntime))
 
     def calcOld(self,spec,method='hs'):
         startTime = time.time()
         self.old = self.calcOldTs(spec,method=method)
-        print ('%s: pymo: %s' % (method, time.time() - startTime))
+        self.otime = time.time() - startTime
+        print ('%s: pymo: %s' % (method, self.otime))
 
     def test_vars(self):
-        #for method in ('hs','tp','tm01','tm02','dm'):
-        for method in ('dspr',):
+        #for method in ('hs','tm01','tm02','dm'):
+        for method in ('tp',):
             self.calcOld(self.specold,method=method)
             self.calcNew(self.specnew,method=method)
+            print ('x times improvement: %s' % (self.otime/self.ntime))
+            #assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze())
             self.plot()
             plt.title(method)
         plt.show()
@@ -95,12 +102,13 @@ class TestSpec(unittest.TestCase):
         plt.legend()
 
     def calcOldTs(self,spec,method):
-        data = []
-        time = []
+        darrays = []
         lat = []
         lon = []
-        darrays = []
+        #for sitei in self.sites:
         for sitei in [self.sites[0]]:
+            data = []
+            time = []
             self.sito=spec.defSites(sitei)
             lat.append(sitei.x)
             lon.append(sitei.y)
@@ -108,6 +116,8 @@ class TestSpec(unittest.TestCase):
                 time.append(S.time)
                 data.append(getattr(S,method)())
             darrays.append(data)
+        #npdat = np.array(darrays)
+        #return xray.DataArray(npdat.transpose(),[('time',time),('station',np.arange(0,len(lat)))])
         return xray.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)])
 
 
