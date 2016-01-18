@@ -8,6 +8,8 @@ import numpy as np
 import xray as xr
 
 # TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
+# TODO: Currently initializing with an xr.DataArray allows for additional
+#       dimensions (e.g. sites), but initializing with np.array does not
 
 _ = np.newaxis
 gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
@@ -167,7 +169,7 @@ class SpecArray(xr.DataArray):
                            dir_array=np.zeros(1),
                            time_array=msin.time)
         #return SpecArray(data_array=msin), SpecArray(data_array=mcos)
-        return retsin, retcos 
+        return retsin, retcos
 
     def oned(self):
         """
@@ -178,7 +180,7 @@ class SpecArray(xr.DataArray):
 
     def _peak(self, arr):
         """
-        Returns the index ipeak of largest peak along freq dimension
+        Returns the index ipeak of largest peak in 1D-array arr
         A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
         """
         ispeak = (np.diff(np.append(arr[0], arr))>0) &\
@@ -190,33 +192,35 @@ class SpecArray(xr.DataArray):
         else:
             return None
 
-    def tp(self, smooth=True):
-        """
-        Peak wave period
-        """
-        if len(self.freq) < 3:
-            return None #-999
-        Sf = self.oned()
-        imax = self._peak(Sf)
-        if not imax:
-            return None #-999
-        else:
-            sig1 = self.freq[imax-1]
-            sig2 = self.freq[imax+1]
-            sig3 = self.freq[imax]
-            e1   = Sf[imax-1]
-            e2   = Sf[imax+1]
-            e3   = Sf[imax]
-            p    = sig1 + sig2
-            q    = (e1-e2) / (sig1-sig2)
-            r    = sig1 + sig3
-            t    = (e1-e3) / (sig1-sig3)
-            a    = (t-q) / (r-p)
-            if (a < 0):
-               sigp = (-q+p*a) / (2.*a)
-            else:
-               sigp = sig3
-            return 1.0 / sigp
+    def tp(self):
+        if self.freq.size < 3:
+            return None
+        oned = self.oned()
+        imax = oned.argmax(dim='freq')
+        # imax[imax==0] = None
+        # imax[imax==len(self.freq)-1] = None
+        sig1 = self.freq[imax-1].values
+        sig2 = self.freq[imax+1].values
+        sig3 = self.freq[imax].values
+        e1   = oned.isel(freq=imax-1)
+        e2   = oned.isel(freq=imax+1)
+        e3   = oned.isel(freq=imax)
+        p    = sig1+sig2
+        q    = (e1-e2)/(sig1-sig2)
+        r    = sig1+sig3
+        t    = (e1-e3)/(sig1-sig3)
+        a    = (t-q)/(r-p)
+        # if (a<0):
+        #     sigp = (-q+p*a)/(2.*a)
+        # else:
+        #     sigp = sig3
+        sigp = (-q+p*a)/(2.*a)
+        dims = self.coords.keys()
+        coords = copy.deepcopy(self.coords)
+        del coords['freq']
+        del coords['dir']
+        import pdb; pdb.set_trace()
+        return xr.DataArray(1./sigp,coords=coords)
 
     def hs(self, fmin=None, fmax=None, times=None, tail=True):
         """
@@ -240,7 +244,6 @@ class SpecArray(xr.DataArray):
 
     def tm01(self, times=None):
         """Mean wave period tm01"""
-        # Gives slight errors, problm with momf
         return self.momf(0).sum(dim='dir')/self.momf(1).sum(dim='dir')
 
     def tm02(self):
