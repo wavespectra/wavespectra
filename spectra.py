@@ -214,9 +214,18 @@ class SpecArray(xr.DataArray):
         #     return None
         if smooth:
             freq_axis = Sf.get_axis_num(dim='freq')
-            sig1 = self.freq[ipeak-1].values
-            sig2 = self.freq[ipeak+1].values
-            sig3 = self.freq[ipeak].values
+            if len(ipeak.dims) > 1:
+                sig1 = np.empty(ipeak.shape)
+                sig2 = np.empty(ipeak.shape)
+                sig3 = np.empty(ipeak.shape)
+                for dim in range(ipeak.shape[1]):
+                    sig1[:,dim] = self.freq[ipeak[:,dim]-1].values
+                    sig2[:,dim] = self.freq[ipeak[:,dim]+1].values
+                    sig3[:,dim] = self.freq[ipeak[:,dim]].values
+            else:
+                sig1 = self.freq[ipeak-1].values
+                sig2 = self.freq[ipeak+1].values
+                sig3 = self.freq[ipeak].values
             e1 = self._collapse_array(Sf.values, ipeak.values-1, axis=freq_axis)
             e2 = self._collapse_array(Sf.values, ipeak.values+1, axis=freq_axis)
             e3 = self._collapse_array(Sf.values, ipeak.values, axis=freq_axis)
@@ -229,10 +238,11 @@ class SpecArray(xr.DataArray):
             fp[a>=0] = sig3[a>=0]
         else:
             fp = self.freq.values[ipeak]
-        tp = SpecArray(spec_array=1./fp[:,_],
-                       freq_array=np.zeros(1),
-                       time_array=self.time)
-        return tp
+        # tp = SpecArray(spec_array=1./fp[:,:,_],
+        #                freq_array=np.zeros(1),
+        #                time_array=self.time)
+        ipeak.values[:] = 1
+        return ipeak / fp
 
     def hs(self, fmin=None, fmax=None, times=None, tail=True):
         """
