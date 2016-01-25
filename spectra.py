@@ -11,6 +11,12 @@ import xray as xr
 # TODO: Currently initializing with an xr.DataArray allows for additional
 #       dimensions (e.g. sites), but initializing with np.array does not
 
+# TODO: fix momf() for multi-dimensional array
+# TODO: fix momd() for multi-dimensional array
+# TODO: fix tp() for multi-dimensional array
+# TODO: fix tm01() for multi-dimensional array
+# TODO: fix tm02() for multi-dimensional array
+#ValueError: coordinate time has dimensions (u'time',), but these are not a subset of the DataArray dimensions ['dim_0', 'dim_1', 'dim_2', 'dim_3']
 _ = np.newaxis
 gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
 # TODO verify which of these are needed...
@@ -77,8 +83,20 @@ class SpecArray(xr.DataArray):
 
         super(SpecArray, self).__init__(data=darray, name='spec')
 
-        self.df = abs(self.freq[1:].values - self.freq[:-1].values)
-        self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and any(self.dir) else 1.0
+        self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
+        self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
+
+    def _set_dims(self, darray):
+        """
+        Ensures SpecArray has frequency / direction dimensions and increments
+        """
+        spec_array = darray.values
+        spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
+        for required_dim in ['freq', 'dir']:
+            if required_dim not in darray.dims:
+                spec_array = np.expand_dims(spec_array, axis=-1)
+                spec_coords.update({required_dim: np.array((1,))})
+        return SpecArray(data_array=xr.DataArray(spec_array, coords=spec_coords))
 
     def _strictly_increasing(self, arr):
         """
@@ -151,35 +169,20 @@ class SpecArray(xr.DataArray):
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self[{'freq': slice(1, None)}] + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
-        ret = SpecArray(spec_array=mf.sum(dim='freq').values[:,_,:],
-                        freq_array=np.zeros(1),
-                        dir_array=self.dir,
-                        time_array=self.time)
-        return ret
+        return self._set_dims(mf.sum(dim='freq'))
 
-    def momd(self,mom=0,theta=90.):
+    def momd(self, mom=0, theta=90., keep_dir=False):
         """
-        Calculate given directional moment
+        Directional moment
         """
-        dirs = self.dir.values
-        if len(dirs)==1:
-            ddir=1
+        cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
+        sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
+        msin = (self.dd * (self * sp[_,:])).sum(dim='dir')
+        mcos = (self.dd * (self * cp[_,:])).sum(dim='dir')
+        if keep_dir:
+            return self._set_dims(msin), self._set_dims(mcos)
         else:
-            ddir=abs(dirs[1]-dirs[0])
-        cp=np.cos(d2r*(180+theta-dirs))**mom
-        sp=np.sin(d2r*(180+theta-dirs))**mom
-        mcos=(ddir*(self * cp[_,:])).sum(dim='dir')
-        msin=(ddir*(self * sp[_,:])).sum(dim='dir')
-        retcos = SpecArray(spec_array=mcos.values[:,:,_],
-                           freq_array=mcos.freq,
-                           dir_array=np.zeros(1),
-                           time_array=mcos.time)
-        retsin = SpecArray(spec_array=msin.values[:,:,_],
-                           freq_array=msin.freq,
-                           dir_array=np.zeros(1),
-                           time_array=msin.time)
-        #return SpecArray(data_array=msin), SpecArray(data_array=mcos)
-        return retsin, retcos
+            return msin, mcos
 
     def oned(self):
         """
@@ -256,7 +259,7 @@ class SpecArray(xr.DataArray):
         fmax = fmax or self.freq.max()
         times = [times] if not isinstance(times, list) and times is not None else times
         other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
-        Sf = other.oned()
+        Sf = other.oned() if 'dir' in self.dims else copy.deepcopy(self)
         if times:
             Sf = Sf.sel(time=times, method='nearest')
         E = 0.5 * (other.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
@@ -265,19 +268,28 @@ class SpecArray(xr.DataArray):
         return 4 * np.sqrt(E)
 
     def tm01(self, times=None):
-        """Mean wave period tm01"""
+        """
+        Mean absolute wave period Tm01
+        true average period from the 1st spectral moment
+        """
         return self.momf(0).sum(dim='dir')/self.momf(1).sum(dim='dir')
 
     def tm02(self):
-        """Mean wave period tm02"""
+        """
+        Mean absolute wave period Tm02
+        Average period of zero up-crossings (Zhang, 2011)
+        """
         return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
 
     def dp(self):
-        """Peak (frequency integrated) wave direction"""
+        """
+        Peak (frequency integrated) wave direction
+        """
         ind = self.sum(dim='freq').argmax(dim='dir')
-        ret = ind.copy()
-        ret[:] = self.dir.values[ind]
-        return ret
+        return self.dir.values[ind]
+        # ret = ind.copy()
+        # ret[:] = self.dir.values[ind]
+        # return ret
 
     def dpm(self):
         """
@@ -294,21 +306,32 @@ class SpecArray(xr.DataArray):
             return -999
 
     def dm(self):
-        """Mean wave direction"""
-        moms,momc=self.momd(1)
-        dpm = np.arctan2(moms.sum(dim='freq'),momc.sum(dim='freq'))
-        return (270-r2d*dpm) % 360.
+        """
+        Mean wave direction from the 1st spectral moment
+        """
+        moms, momc = self.momd(1)
+        dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
+        return (270 - r2d*dpm) % 360.
 
     def dspr(self):
-        """Directional wave spreading (spectrum integrated)"""
-        moms,momc=self.momd(1)
-        dspr=(2*r2d**2*(1-((moms.momf()**2+momc.momf()**2)**0.5/self.momf(0).oned())))**0.5
+        """
+        Directional wave spreading
+        The one-sided directional width of the spectrum
+        """
+        moms, momc = self.momd(1, keep_dir=True)
+        dspr = (2 * r2d**2 * (1 - ((moms.momf()**2 + momc.momf()**2)**0.5 / self.momf(0).oned())))**0.5
         return dspr.sum(dim='freq').sum(dim='dir')
 
     def swe(self):
-        stmp=self.oned()
-        if stmp.hs()<0.001:return 1.
-        return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
+        """
+        Spectral width parameter by Cartwright and Longuet-Higgins (1956)
+        """
+        stmp = self.oned()
+        swe = (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5
+        swe.values[swe.values < 0.001] = 1.
+        return swe
+        # if stmp.hs()<0.001:return 1.
+        # return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
 
     def sw(self):
         stmp=self.oned()
@@ -319,6 +342,17 @@ class SpecArray(xr.DataArray):
 
 if __name__ == '__main__':
     from pymo.data.spectra import SwanSpecFile
+
+    #=================================
+    # WW3 spectra, input as DataArray
+    #=================================
+    ncfile = 'tests/s20151221_00z.nc'
+    dset = xr.open_dataset(ncfile)
+    S = (dset['specden']+127) * dset['factor']
+    ww3 = SpecArray(data_array=S)
+
+    # hs = ww3.hs()
+    # tp = ww3.tp()
 
     #=================================
     # Real spectra, input as DataArray
