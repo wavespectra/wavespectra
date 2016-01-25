@@ -1,5 +1,12 @@
 """
-New spectra object based on DataArray
+Spectra object based on DataArray with methods to calculate spectral statistics
+
+Reference:
+- Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
+  Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
+- Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
+  Journal of Geophysical Research, 80, 2688–2694, doi: 10.1029/JC080i018p02688.
+- Zhang (2011).
 """
 import copy
 from collections import OrderedDict
@@ -325,6 +332,7 @@ class SpecArray(xr.DataArray):
     def swe(self):
         """
         Spectral width parameter by Cartwright and Longuet-Higgins (1956)
+        Represents the range of frequencies where the dominant energy exists
         """
         stmp = self.oned()
         swe = (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5
@@ -334,9 +342,14 @@ class SpecArray(xr.DataArray):
         # return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
 
     def sw(self):
-        stmp=self.oned()
-        if stmp.hs()<0.001:return 1.
-        return (stmp.momf(0).sum()*stmp.momf(2).sum()/stmp.momf(1).sum()**2-1.)**0.5;
+        """
+        Spectral width parameter by Longuet-Higgins (1975)
+        Represents energy distribution over entire frequency range;
+        """
+        stmp = self.oned()
+        if stmp.hs() < 0.001:
+            return 1.
+        return (stmp.momf(0).sum() * stmp.momf(2).sum() / stmp.momf(1).sum()**2 - 1.)**0.5
 
 
 
