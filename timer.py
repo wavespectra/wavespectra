@@ -1,18 +1,21 @@
 """
 Fine grain timing for checking different parts of script
 Use it by wrapping blocks of code that you want to time
-e.g.:
-from pymsl.core.timer import Timer
-with Timer(msg='Total elapsed time') as t:
-    do stuff
-    do more stuff
 """
+
+import time
 
 class Timer(object):
     """
-    Wrap blocks of code to be timed using this class
+    Wrap blocks of code to be timed:
+    with Timer(msg='Elapsed time to do stuff') as t:
+        do stuff
     """
-    def __init__(self, msg='elapsed time'):
+    def __init__(self, msg='elapsed time', verbose=True):
+        """
+        msg :: will be printed before the elapsed time value
+        verbose :: if True, prints Elapsed time, if False, only create instance with attributes
+        """
         self.msg = msg
 
     def __enter__(self):
@@ -21,4 +24,4 @@ class Timer(object):
 
     def __exit__(self, *args):
         self.secs = time.time() - self.start
-        logging.info('%s: %f sec' % (self.msg, self.secs))
+        print('%s: %f sec' % (self.msg, self.secs))
