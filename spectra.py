@@ -5,14 +5,17 @@ Reference:
 - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
   Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
 - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
-  Journal of Geophysical Research, 80, 2688–2694, doi: 10.1029/JC080i018p02688.
+  Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
 - Zhang (2011).
 """
 import copy
 from collections import OrderedDict
 from datetime import datetime
 import numpy as np
-import xray as xr
+import xray as xr # xray.0.6.1
+# import xarray as xr # xarray.0.7.0
+from timer import Timer
+
 
 # TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
 # TODO: Currently initializing with an xr.DataArray allows for additional
@@ -27,10 +30,10 @@ import xray as xr
 _ = np.newaxis
 gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
 # TODO verify which of these are needed...
-d2r=np.pi/180.
-r2d=180./np.pi
-pi=np.pi
-pi2=2*pi
+d2r = np.pi/180.
+r2d = 180./np.pi
+pi = np.pi
+pi2 = 2*pi
 
 class SpecArray(xr.DataArray):
     """
@@ -88,12 +91,12 @@ class SpecArray(xr.DataArray):
             if dim in darray.dims and not self._strictly_increasing(darray[dim].values):
                 darray = self.sort(darray, dims=[dim])
 
-        super(SpecArray, self).__init__(data=darray, name='spec')
+        super(SpecArray, self).__init__(data=darray, coords=darray.coords, name='spec')
 
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
 
-    def _set_dims(self, darray):
+    def _expand_dim(self, darray):
         """
         Ensures SpecArray has frequency / direction dimensions and increments
         """
@@ -176,7 +179,7 @@ class SpecArray(xr.DataArray):
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self[{'freq': slice(1, None)}] + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
-        return self._set_dims(mf.sum(dim='freq'))
+        return self._expand_dim(mf.sum(dim='freq'))
 
     def momd(self, mom=0, theta=90., keep_dir=False):
         """
@@ -187,7 +190,7 @@ class SpecArray(xr.DataArray):
         msin = (self.dd * (self * sp[_,:])).sum(dim='dir')
         mcos = (self.dd * (self * cp[_,:])).sum(dim='dir')
         if keep_dir:
-            return self._set_dims(msin), self._set_dims(mcos)
+            return self._expand_dim(msin), self._expand_dim(mcos)
         else:
             return msin, mcos
 
@@ -355,17 +358,17 @@ class SpecArray(xr.DataArray):
 
 if __name__ == '__main__':
     from pymo.data.spectra import SwanSpecFile
-
-    #=================================
-    # WW3 spectra, input as DataArray
-    #=================================
-    ncfile = 'tests/s20151221_00z.nc'
-    dset = xr.open_dataset(ncfile)
-    S = (dset['specden']+127) * dset['factor']
-    ww3 = SpecArray(data_array=S)
-
-    # hs = ww3.hs()
-    # tp = ww3.tp()
+    #
+    # #=================================
+    # # WW3 spectra, input as DataArray
+    # #=================================
+    # ncfile = 'tests/s20151221_00z.nc'
+    # dset = xr.open_dataset(ncfile)
+    # S = (dset['specden']+127) * dset['factor']
+    # ww3 = SpecArray(data_array=S)
+    #
+    # # hs = ww3.hs()
+    # # tp = ww3.tp()
 
     #=================================
     # Real spectra, input as DataArray
@@ -375,38 +378,38 @@ if __name__ == '__main__':
 
     spec_array = np.concatenate([np.expand_dims(s.S, 0) for s in spec_list])
     coords=OrderedDict((('dumb_time_name', spectra.times), ('freq', spec_list[0].freqs), ('dir', spec_list[0].dirs)))
+
     darray = xr.DataArray(data=spec_array, coords=coords)
-
     spec = SpecArray(data_array=darray, dim_map={'dumb_time_name': 'time'})
-
-    hs_new = spec.hs(fmin=0.05, fmax=0.2)
-    hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
-    for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
-        print ('Hs old for %s: %0.4f m' % (t, old))
-        print ('Hs new for %s: %0.4f m\n' % (t, new))
-
-    print ('Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
-        (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,7,20,18), tail=True)))
-
-    #====================================
-    # Fake spectra, input as numpy arrays
-    #====================================
-    freq_array = np.arange(0, 1.01, 0.1)
-    dir_array = np.arange(0, 360, 30)
-    time_array = [datetime(2015, 1, d) for d in [1,2,3]]
-
-    # With time and directions
-    spec_array = np.random.randint(1, 10, (len(time_array), len(freq_array), len(dir_array)))
-    spec1 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array, time_array=time_array)
-
-    # Without time
-    spec_array = np.random.random((len(freq_array), len(dir_array)))
-    spec2 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array)
-
-    # Without directions
-    spec_array = np.random.random((len(time_array), len(freq_array)))
-    spec3 = SpecArray(spec_array=spec_array, freq_array=freq_array, time_array=time_array)
-
-    # Without time and directions
-    spec_array = np.random.random(len(freq_array))
-    spec4 = SpecArray(spec_array=spec_array, freq_array=freq_array)
+    #
+    # hs_new = spec.hs(fmin=0.05, fmax=0.2)
+    # hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
+    # for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
+    #     print ('Hs old for %s: %0.4f m' % (t, old))
+    #     print ('Hs new for %s: %0.4f m\n' % (t, new))
+    #
+    # print ('Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
+    #     (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,7,20,18), tail=True)))
+    #
+    # #====================================
+    # # Fake spectra, input as numpy arrays
+    # #====================================
+    # freq_array = np.arange(0, 1.01, 0.1)
+    # dir_array = np.arange(0, 360, 30)
+    # time_array = [datetime(2015, 1, d) for d in [1,2,3]]
+    #
+    # # With time and directions
+    # spec_array = np.random.randint(1, 10, (len(time_array), len(freq_array), len(dir_array)))
+    # spec1 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array, time_array=time_array)
+    #
+    # # Without time
+    # spec_array = np.random.random((len(freq_array), len(dir_array)))
+    # spec2 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array)
+    #
+    # # Without directions
+    # spec_array = np.random.random((len(time_array), len(freq_array)))
+    # spec3 = SpecArray(spec_array=spec_array, freq_array=freq_array, time_array=time_array)
+    #
+    # # Without time and directions
+    # spec_array = np.random.random(len(freq_array))
+    # spec4 = SpecArray(spec_array=spec_array, freq_array=freq_array)
