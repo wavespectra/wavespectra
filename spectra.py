@@ -145,6 +145,9 @@ class SpecArray(xr.DataArray):
         - dmin :: lowest direction to split spectra over, by default min(dir)
         - dmax :: highest direction to split spectra over, by default max(dir)
         """
+        assert fmax > fmin if fmax else True, 'fmax needs to be greater than fmin'
+        assert dmax > dmin if dmax else True, 'fmax needs to be greater than fmin'
+
         # Slice frequencies
         other = self.sel(freq=slice(fmin, fmax))
 
@@ -267,6 +270,7 @@ class SpecArray(xr.DataArray):
         """
         fmin = fmin or self.freq.min()
         fmax = fmax or self.freq.max()
+
         times = [times] if not isinstance(times, list) and times is not None else times
         other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
         Sf = other.oned() if 'dir' in self.dims else copy.deepcopy(self)
