@@ -44,8 +44,12 @@ class NewSpecArray(object):
         print 'OI'
         self._obj = xarray_obj
         self._center = None
+
+        # Create useful attributes for accessor 
+        self.freq = xarray_obj.freq
+        self.dir = xarray_obj.dir if 'dir' in xarray_obj.dims else None
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
-        self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
+        self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
     @property
     def center(self):
@@ -62,12 +66,42 @@ class NewSpecArray(object):
         """Plot data on a map."""
         return 'plotting!'
 
+    def _strictly_increasing(self, arr):
+        """
+        Returns True if array arr is sorted in increasing order
+        """
+        return all(x<y for x, y in zip(arr, arr[1:]))
+
     def oned(self):
         """
         Returns the one-dimensional frequency spectra
         Direction dimension is dropped after integrating
         """
-        return SpecArray(data_array=self.dd * self.sum(dim='dir'))
+        if self.dir is not None:
+            return self.dd * self._obj.sum(dim='dir')
+        else:
+            return self._obj.copy(deep=True)
+
+    def hs(self, fmin=None, fmax=None, times=None, tail=True):
+        """
+        Spectral significant wave height Hm0
+        - fmin  :: lowest frequency to integrate over, by default min(freq)
+        - fmax  :: highest frequency to integrate over, by default max(freq)
+        - times :: list of datetimes to calculate hs over, by default all times
+        - tail  :: fit high-frequency tail
+        """
+        fmin = fmin or self.freq.min()
+        fmax = fmax or self.freq.max()
+
+        times = [times] if not isinstance(times, list) and times is not None else times
+        # other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
+        Sf = self.oned()
+        if times:
+            Sf = Sf.sel(time=times, method='nearest')
+        E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
+        if tail and Sf.freq[-1] > 0.333:
+            E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
+        return 4 * np.sqrt(E)
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
