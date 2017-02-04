@@ -41,11 +41,10 @@ class NewSpecArray(object):
     def __init__(self, xarray_obj, dim_map=None):
         if 'dim_map' is not None:
             xarray_obj = xarray_obj.rename(dim_map)
-        print 'OI'
         self._obj = xarray_obj
         self._center = None
 
-        # Create useful attributes for accessor 
+        # Create attributes for accessor 
         self.freq = xarray_obj.freq
         self.dir = xarray_obj.dir if 'dir' in xarray_obj.dims else None
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
@@ -72,6 +71,20 @@ class NewSpecArray(object):
         """
         return all(x<y for x, y in zip(arr, arr[1:]))
 
+    def sort(self, darray, dims, inplace=False):
+        """
+        Sort darray along dimensions in dims list so that the respective coordinates are sorted
+        """
+        other = darray.copy(deep=not inplace)
+        dims = [dims] if not isinstance(dims, list) else dims
+        for dim in dims:
+            if dim in other.dims:
+                if not self._strictly_increasing(darray[dim].values):
+                    other = other.isel(**{dim: np.argsort(darray[dim]).values})
+            else:
+                raise Exception('Dimension %s not in SpecArray' % (dim))
+        return other
+
     def oned(self):
         """
         Returns the one-dimensional frequency spectra
@@ -82,22 +95,56 @@ class NewSpecArray(object):
         else:
             return self._obj.copy(deep=True)
 
-    def hs(self, fmin=None, fmax=None, times=None, tail=True):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
+        """
+        Split spectra over freq and/or dir dimensions
+        - fmin :: lowest frequency to split spectra, by default the lowest - interpolates at fmin if fmin not in freq
+        - fmax :: highest frequency to split spectra, by default the highest - interpolates at fmax if fmax not in freq
+        - dmin :: lowest direction to split spectra over, by default min(dir)
+        - dmax :: highest direction to split spectra over, by default max(dir)
+        """
+        assert fmax > fmin if fmax else True, 'fmax needs to be greater than fmin'
+        assert dmax > dmin if dmax else True, 'fmax needs to be greater than fmin'
+
+        # Slice frequencies
+        other = self._obj.sel(freq=slice(fmin, fmax))
+
+        # Interpolate at fmin
+        if other.freq.min() != self.freq.min() and other.freq.min() > fmin:
+            ifreq = np.where(self.freq > fmin)[0][0]
+            df = np.diff(self.freq.isel(freq=[ifreq-1, ifreq]))[0]
+            Sint = self._obj.isel(freq=[ifreq]) * (fmin - self.freq.isel(freq=[ifreq-1]).values) +\
+                self._obj.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fmin)
+            Sint.freq.values = [fmin]
+            other = xr.concat([Sint/df, other], dim='freq')
+
+        # Interpolate at fmax
+        if other.freq.max() != self.freq.max() and other.freq.max() < fmax:
+            ifreq = np.where(self.freq < fmax)[0][-1]
+            df = np.diff(self.freq.isel(freq=[ifreq, ifreq+1]))[0]
+            Sint = self._obj.isel(freq=[ifreq+1]) * (fmax - self.freq.isel(freq=[ifreq]).values) +\
+                self._obj.isel(freq=[ifreq]).values * (self.freq.isel(freq=[ifreq+1]).values - fmax)
+            Sint.freq.values = [fmax]
+            other = xr.concat([other, Sint/df], dim='freq')
+
+        # Slice directions
+        if 'dir' in other.dims and (dmin is not None or dmax is not None):
+            other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
+
+        return other
+
+    def hs(self, fmin=None, fmax=None, tail=True):
         """
         Spectral significant wave height Hm0
-        - fmin  :: lowest frequency to integrate over, by default min(freq)
-        - fmax  :: highest frequency to integrate over, by default max(freq)
-        - times :: list of datetimes to calculate hs over, by default all times
-        - tail  :: fit high-frequency tail
+        - fmin  :: lowest frequency to integrate over, by default lowest frequency in spectra
+        - fmax  :: highest frequency to integrate over, by default highest frequency in spectra
+        - tail  :: if True fit high-frequency tail
         """
         fmin = fmin or self.freq.min()
         fmax = fmax or self.freq.max()
 
-        times = [times] if not isinstance(times, list) and times is not None else times
         # other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
         Sf = self.oned()
-        if times:
-            Sf = Sf.sel(time=times, method='nearest')
         E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
