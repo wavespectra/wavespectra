@@ -112,7 +112,7 @@ class NewSpecArray(object):
         #     return ipeak[-1]
         # else:
         #     return None
-        
+
     def sort(self, darray, dims, inplace=False):
         """
         Sort darray along dimensions in dims list so that the respective coordinates are sorted
@@ -176,13 +176,11 @@ class NewSpecArray(object):
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
         return 4 * np.sqrt(E)
 
-    def tp(self, smooth=True):
+    def tp(self, smooth=True, mask=np.nan):
         """
         Peak wave period
         """
-        # TODO: Ensure masking edges
         # TODO: Implement true_peak method
-
         if len(self.freq) < 3:
             return None
         Sf = self.oned()
@@ -213,8 +211,13 @@ class NewSpecArray(object):
             fp[a>=0] = sig3[a>=0]
         else:
             fp = self.freq.values[ipeak]
-        ipeak.values[:] = 1 # To ensure output is appropriate DataArray object
-        return ipeak / fp
+
+        # Cheap way to turn Tp into appropriate DataArray object
+        ones = ipeak.copy(deep=True) * 0 + 1
+        tp = ones / fp
+
+        # Returns masked dataarray
+        return tp.where(ipeak>0).fillna(mask)
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
