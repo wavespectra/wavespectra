@@ -136,7 +136,7 @@ class NewSpecArray(object):
         # Slice directions
         if 'dir' in other.dims and (dmin is not None or dmax is not None):
             other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
-            
+
         # Interpolate at fmin
         if other.freq.min() > fmin:
             other = xr.concat([self._interp_freq(fmin), other], dim='freq')
@@ -180,17 +180,13 @@ class NewSpecArray(object):
         """
         Peak wave period
         """
-        # TODO: Ensure returning DataArray not NumPy Array
         # TODO: Ensure masking edges
         # TODO: Implement true_peak method
 
         if len(self.freq) < 3:
             return None
         Sf = self.oned()
-        # ipeak = Sf.argmax(dim='freq')
         ipeak = self._peak(Sf)
-        # if not ipeak:
-        #     return None
         if smooth:
             freq_axis = Sf.get_axis_num(dim='freq')
             if len(ipeak.dims) > 1:
@@ -218,12 +214,8 @@ class NewSpecArray(object):
             fp[a>=0] = sig3[a>=0]
         else:
             fp = self.freq.values[ipeak]
-        # tp = SpecArray(spec_array=1./fp[:,:,_],
-        #                freq_array=np.zeros(1),
-        #                time_array=self.time)
-        # ipeak.values[:] = 1
-        # return ipeak / fp
-        return 1. / fp
+        ipeak.values[:] = 1 # To ensure output is appropriate DataArray object
+        return ipeak / fp
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
