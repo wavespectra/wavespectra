@@ -95,6 +95,24 @@ class NewSpecArray(object):
         Sint.freq.values = [fint]
         return Sint/df
 
+    def _peak(self, arr):
+        """
+        Returns the index ipeak of largest peak in 1D-array arr
+        A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+        """
+        # Temporary - only max values but ensures there is no peak at last value which will break sig2 indexing in tp
+        ipeak = arr.argmax(dim='freq')
+        return ipeak.where(ipeak < self.freq.size-1).fillna(0).astype(int)
+
+        # ispeak = (np.diff(np.append(arr[0], arr))>0) &\
+        #          (np.diff(np.append(arr, arr[-1]))<0)
+        # isort = np.argsort(arr)
+        # ipeak = np.arange(len(arr))[isort][ispeak[isort]]
+        # if any(ipeak):
+        #     return ipeak[-1]
+        # else:
+        #     return None
+        
     def sort(self, darray, dims, inplace=False):
         """
         Sort darray along dimensions in dims list so that the respective coordinates are sorted
@@ -158,24 +176,6 @@ class NewSpecArray(object):
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
         return 4 * np.sqrt(E)
 
-    def _peak(self, arr):
-        """
-        Returns the index ipeak of largest peak in 1D-array arr
-        A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
-        """
-        # Temporary - only max values but ensures there is no peak at last value which will break sig2 indexing in tp
-        ipeak = arr.argmax(dim='freq')
-        return ipeak.where(ipeak < self.freq.size-1).fillna(0).astype(int)
-
-        # ispeak = (np.diff(np.append(arr[0], arr))>0) &\
-        #          (np.diff(np.append(arr, arr[-1]))<0)
-        # isort = np.argsort(arr)
-        # ipeak = np.arange(len(arr))[isort][ispeak[isort]]
-        # if any(ipeak):
-        #     return ipeak[-1]
-        # else:
-        #     return None
-
     def tp(self, smooth=True):
         """
         Peak wave period
@@ -198,7 +198,6 @@ class NewSpecArray(object):
                     sig2[:,dim] = self.freq[ipeak[:,dim]+1].values
                     sig3[:,dim] = self.freq[ipeak[:,dim]].values
             else:
-                # import pdb; pdb.set_trace()
                 sig1 = self.freq[ipeak-1].values
                 sig2 = self.freq[ipeak+1].values
                 sig3 = self.freq[ipeak].values
