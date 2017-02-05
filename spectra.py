@@ -71,6 +71,15 @@ class NewSpecArray(object):
         """
         return all(x<y for x, y in zip(arr, arr[1:]))
 
+    def _collapse_array(self, arr, indices, axis):
+        """
+        Collapse n-dim array [arr] along [axis] using [indices]
+        """
+        magic_index = [np.arange(i) for i in indices.shape]
+        magic_index = np.ix_(*magic_index)
+        magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
+        return arr[magic_index]
+
     def sort(self, darray, dims, inplace=False):
         """
         Sort darray along dimensions in dims list so that the respective coordinates are sorted
@@ -133,22 +142,83 @@ class NewSpecArray(object):
 
         return other
 
-    def hs(self, fmin=None, fmax=None, tail=True):
+    def hs(self, tail=True):
         """
         Spectral significant wave height Hm0
-        - fmin  :: lowest frequency to integrate over, by default lowest frequency in spectra
-        - fmax  :: highest frequency to integrate over, by default highest frequency in spectra
         - tail  :: if True fit high-frequency tail
         """
-        fmin = fmin or self.freq.min()
-        fmax = fmax or self.freq.max()
-
-        # other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
         Sf = self.oned()
         E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
         return 4 * np.sqrt(E)
+
+    def _peak(self, arr):
+        """
+        Returns the index ipeak of largest peak in 1D-array arr
+        A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+        """
+        # Temporary - only max values but ensures there is no peak at last value which will break sig2 indexing in tp
+        ipeak = arr.argmax(dim='freq')
+        return ipeak.where(ipeak < self.freq.size-1).fillna(0).astype(int)
+
+        # ispeak = (np.diff(np.append(arr[0], arr))>0) &\
+        #          (np.diff(np.append(arr, arr[-1]))<0)
+        # isort = np.argsort(arr)
+        # ipeak = np.arange(len(arr))[isort][ispeak[isort]]
+        # if any(ipeak):
+        #     return ipeak[-1]
+        # else:
+        #     return None
+
+    def tp(self, smooth=True):
+        """
+        Peak wave period
+        """
+        # TODO: Ensure returning DataArray not NumPy Array
+        # TODO: Ensure masking edges
+        # TODO: Implement true_peak method
+
+        if len(self.freq) < 3:
+            return None
+        Sf = self.oned()
+        # ipeak = Sf.argmax(dim='freq')
+        ipeak = self._peak(Sf)
+        # if not ipeak:
+        #     return None
+        if smooth:
+            freq_axis = Sf.get_axis_num(dim='freq')
+            if len(ipeak.dims) > 1:
+                sig1 = np.empty(ipeak.shape)
+                sig2 = np.empty(ipeak.shape)
+                sig3 = np.empty(ipeak.shape)
+                for dim in range(ipeak.shape[1]):
+                    sig1[:,dim] = self.freq[ipeak[:,dim]-1].values
+                    sig2[:,dim] = self.freq[ipeak[:,dim]+1].values
+                    sig3[:,dim] = self.freq[ipeak[:,dim]].values
+            else:
+                # import pdb; pdb.set_trace()
+                sig1 = self.freq[ipeak-1].values
+                sig2 = self.freq[ipeak+1].values
+                sig3 = self.freq[ipeak].values
+            e1 = self._collapse_array(Sf.values, ipeak.values-1, axis=freq_axis)
+            e2 = self._collapse_array(Sf.values, ipeak.values+1, axis=freq_axis)
+            e3 = self._collapse_array(Sf.values, ipeak.values, axis=freq_axis)
+            p = sig1 + sig2
+            q = (e1-e2) / (sig1-sig2)
+            r = sig1 + sig3
+            t = (e1-e3) / (sig1-sig3)
+            a = (t-q) / (r-p)
+            fp = (-q+p*a) / (2.*a)
+            fp[a>=0] = sig3[a>=0]
+        else:
+            fp = self.freq.values[ipeak]
+        # tp = SpecArray(spec_array=1./fp[:,:,_],
+        #                freq_array=np.zeros(1),
+        #                time_array=self.time)
+        # ipeak.values[:] = 1
+        # return ipeak / fp
+        return 1. / fp
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
@@ -230,12 +300,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #                 spec_coords.update({required_dim: np.array((1,))})
 #         return SpecArray(data_array=xr.DataArray(spec_array, coords=spec_coords))
 
-#     def _strictly_increasing(self, arr):
-#         """
-#         Returns True if array arr is sorted in increasing order
-#         """
-#         return all(x<y for x, y in zip(arr, arr[1:]))
-
 #     def _collapse_array(self, arr, indices, axis):
 #         """
 #         Collapse n-dim array [arr] along [axis] using [indices]
@@ -244,58 +308,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #         magic_index = np.ix_(*magic_index)
 #         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
 #         return arr[magic_index]
-
-#     def sort(self, darray, dims, inplace=False):
-#         """
-#         Sort "darray" along dimensions in "dims" list so that the respective coordinates are sorted
-#         """
-#         other = darray if inplace else copy.deepcopy(darray)
-#         dims = [dims] if not isinstance(dims, list) else dims
-#         for dim in dims:
-#             if dim in other.dims:
-#                 if not self._strictly_increasing(darray[dim].values):
-#                     other = other.isel(**{dim: np.argsort(darray[dim]).values})
-#             else:
-#                 raise Exception('Dimension %s not in SpecArray' % (dim))
-#         return SpecArray(data_array=other)
-
-#     def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
-#         """
-#         Split spectra over freq and/or dir dimensions
-#         - fmin :: lowest frequency for split spectra, by default min(freq) - interpolates at fmin if fmin not in freq
-#         - fmax :: highest frequency for split spectra, by default max(freq) - interpolates at fmax if fmax not in freq
-#         - dmin :: lowest direction to split spectra over, by default min(dir)
-#         - dmax :: highest direction to split spectra over, by default max(dir)
-#         """
-#         assert fmax > fmin if fmax else True, 'fmax needs to be greater than fmin'
-#         assert dmax > dmin if dmax else True, 'fmax needs to be greater than fmin'
-
-#         # Slice frequencies
-#         other = self.sel(freq=slice(fmin, fmax))
-
-#         # Interpolate at fmin
-#         if other.freq.min() != self.freq.min() and other.freq.min() > fmin:
-#             ifreq = np.where(self.freq > fmin)[0][0]
-#             df = np.diff(self.freq.isel(freq=[ifreq-1, ifreq]))[0]
-#             Sint = self.isel(freq=[ifreq]) * (fmin - self.freq.isel(freq=[ifreq-1]).values) +\
-#                 self.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fmin)
-#             Sint.freq.values = [fmin]
-#             other = xr.concat([Sint/df, other], dim='freq')
-
-#         # Interpolate at fmax
-#         if other.freq.max() != self.freq.max() and other.freq.max() < fmax:
-#             ifreq = np.where(self.freq < fmax)[0][-1]
-#             df = np.diff(self.freq.isel(freq=[ifreq, ifreq+1]))[0]
-#             Sint = self.isel(freq=[ifreq+1]) * (fmax - self.freq.isel(freq=[ifreq]).values) +\
-#                 self.isel(freq=[ifreq]).values * (self.freq.isel(freq=[ifreq+1]).values - fmax)
-#             Sint.freq.values = [fmax]
-#             other = xr.concat([other, Sint/df], dim='freq')
-
-#         # Slice directions
-#         if 'dir' in other.dims and (dmin is not None or dmax is not None):
-#             other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
-
-#         return SpecArray(data_array=other)
 
 #     def momf(self, mom=0):
 #         """
@@ -318,90 +330,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #             return self._expand_dim(msin), self._expand_dim(mcos)
 #         else:
 #             return msin, mcos
-
-#     def oned(self):
-#         """
-#         Returns the one-dimensional frequency spectra
-#         Direction dimension is dropped after integrating
-#         """
-#         return SpecArray(data_array=self.dd * self.sum(dim='dir'))
-
-#     def _peak(self, arr):
-#         """
-#         Returns the index ipeak of largest peak in 1D-array arr
-#         A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
-#         """
-#         ispeak = (np.diff(np.append(arr[0], arr))>0) &\
-#                  (np.diff(np.append(arr, arr[-1]))<0)
-#         isort = np.argsort(arr)
-#         ipeak = np.arange(len(arr))[isort][ispeak[isort]]
-#         if any(ipeak):
-#             return ipeak[-1]
-#         else:
-#             return None
-
-#     def tp(self, smooth=True):
-#         """
-#         Peak wave period
-#         """
-#         if len(self.freq) < 3:
-#             return None
-#         Sf = self.oned()
-#         ipeak = Sf.argmax(dim='freq')
-#         # if not ipeak:
-#         #     return None
-#         if smooth:
-#             freq_axis = Sf.get_axis_num(dim='freq')
-#             if len(ipeak.dims) > 1:
-#                 sig1 = np.empty(ipeak.shape)
-#                 sig2 = np.empty(ipeak.shape)
-#                 sig3 = np.empty(ipeak.shape)
-#                 for dim in range(ipeak.shape[1]):
-#                     sig1[:,dim] = self.freq[ipeak[:,dim]-1].values
-#                     sig2[:,dim] = self.freq[ipeak[:,dim]+1].values
-#                     sig3[:,dim] = self.freq[ipeak[:,dim]].values
-#             else:
-#                 sig1 = self.freq[ipeak-1].values
-#                 sig2 = self.freq[ipeak+1].values
-#                 sig3 = self.freq[ipeak].values
-#             e1 = self._collapse_array(Sf.values, ipeak.values-1, axis=freq_axis)
-#             e2 = self._collapse_array(Sf.values, ipeak.values+1, axis=freq_axis)
-#             e3 = self._collapse_array(Sf.values, ipeak.values, axis=freq_axis)
-#             p = sig1 + sig2
-#             q = (e1-e2) / (sig1-sig2)
-#             r = sig1 + sig3
-#             t = (e1-e3) / (sig1-sig3)
-#             a = (t-q) / (r-p)
-#             fp = (-q+p*a) / (2.*a)
-#             fp[a>=0] = sig3[a>=0]
-#         else:
-#             fp = self.freq.values[ipeak]
-#         # tp = SpecArray(spec_array=1./fp[:,:,_],
-#         #                freq_array=np.zeros(1),
-#         #                time_array=self.time)
-#         ipeak.values[:] = 1
-#         return ipeak / fp
-
-#     def hs(self, fmin=None, fmax=None, times=None, tail=True):
-#         """
-#         Spectral significant wave height Hm0
-#         - fmin  :: lowest frequency to integrate over, by default min(freq)
-#         - fmax  :: highest frequency to integrate over, by default max(freq)
-#         - times :: list of datetimes to calculate hs over, by default all times
-#         - tail  :: fit high-frequency tail
-#         """
-#         fmin = fmin or self.freq.min()
-#         fmax = fmax or self.freq.max()
-
-#         times = [times] if not isinstance(times, list) and times is not None else times
-#         other = self.split(fmin, fmax) if fmin is not None or fmax is not None else self
-#         Sf = other.oned() if 'dir' in self.dims else copy.deepcopy(self)
-#         if times:
-#             Sf = Sf.sel(time=times, method='nearest')
-#         E = 0.5 * (other.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
-#         if tail and other.freq[-1] > 0.333:
-#             E += 0.25 * Sf[{'freq': -1}].values * other.freq[-1].values
-#         return 4 * np.sqrt(E)
 
 #     def tm01(self, times=None):
 #         """
