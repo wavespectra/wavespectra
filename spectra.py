@@ -80,6 +80,30 @@ class NewSpecArray(object):
         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
         return arr[magic_index]
 
+    # def _expand_dim(self, darray):
+    #     """
+    #     Return DataArray expanded with freq and/or dir dimensions if they are not in darray
+    #     This extended array is required for some moment-based calculated but there should be smarter way to solve this
+    #     """
+    #     spec_array = darray.values
+    #     spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
+    #     for required_dim in ['freq', 'dir']:
+    #         if required_dim not in darray.dims:
+    #             spec_array = np.expand_dims(spec_array, axis=-1)
+    #             spec_coords.update({required_dim: np.array((1,))})
+    #     return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
+
+    def _twod(self, darray):
+        """
+        Add direction dimension if 1D spectra to ensure moment calculations won't break
+        """
+        if 'dir' not in darray.dims:
+            spec_array = np.expand_dims(darray.values, axis=-1)
+            spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims).update({'dir': np.array((1,))})
+            return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
+        else:
+            return darray
+
     def _interp_freq(self, fint):
         """
         Linearly interpolate spectra at frequency fint
@@ -218,6 +242,29 @@ class NewSpecArray(object):
 
         # Returns masked dataarray
         return tp.where(ipeak>0).fillna(mask)
+
+    def momf(self, mom=0):
+        """
+        Calculate given frequency moment
+        """
+        fp = self.freq.values**mom
+        mf = (0.5 * self.df[:,_] *
+            (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
+        return self._twod(mf.sum(dim='freq'))
+
+    def tm01(self, times=None):
+        """
+        Mean absolute wave period Tm01
+        true average period from the 1st spectral moment
+        """
+        return self.momf(0).sum(dim='dir') / self.momf(1).sum(dim='dir')
+
+    def tm02(self):
+        """
+        Mean absolute wave period Tm02
+        Average period of zero up-crossings (Zhang, 2011)
+        """
+        return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
