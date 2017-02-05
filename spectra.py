@@ -80,6 +80,21 @@ class NewSpecArray(object):
         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
         return arr[magic_index]
 
+    def _interp_freq(self, fint):
+        """
+        Linearly interpolate spectra at frequency fint
+        Assumes self.freq.min() < fint < self.freq.max()
+        Returns:
+            DataArray with one value in frequency dimension (relative to fint) otherwise same dimensions as self._obj
+        """
+        assert self.freq.min() < fint < self.freq.max(), "Spectra must have frequencies smaller and greater than fint"
+        ifreq = self.freq.searchsorted(fint)
+        df = np.diff(self.freq.isel(freq=[ifreq-1, ifreq]))[0]
+        Sint = self._obj.isel(freq=[ifreq]) * (fint - self.freq.isel(freq=[ifreq-1]).values) +\
+            self._obj.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fint)
+        Sint.freq.values = [fint]
+        return Sint/df
+
     def sort(self, darray, dims, inplace=False):
         """
         Sort darray along dimensions in dims list so that the respective coordinates are sorted
@@ -117,28 +132,18 @@ class NewSpecArray(object):
 
         # Slice frequencies
         other = self._obj.sel(freq=slice(fmin, fmax))
-
-        # Interpolate at fmin
-        if other.freq.min() != self.freq.min() and other.freq.min() > fmin:
-            ifreq = np.where(self.freq > fmin)[0][0]
-            df = np.diff(self.freq.isel(freq=[ifreq-1, ifreq]))[0]
-            Sint = self._obj.isel(freq=[ifreq]) * (fmin - self.freq.isel(freq=[ifreq-1]).values) +\
-                self._obj.isel(freq=[ifreq-1]).values * (self.freq.isel(freq=[ifreq]).values - fmin)
-            Sint.freq.values = [fmin]
-            other = xr.concat([Sint/df, other], dim='freq')
-
-        # Interpolate at fmax
-        if other.freq.max() != self.freq.max() and other.freq.max() < fmax:
-            ifreq = np.where(self.freq < fmax)[0][-1]
-            df = np.diff(self.freq.isel(freq=[ifreq, ifreq+1]))[0]
-            Sint = self._obj.isel(freq=[ifreq+1]) * (fmax - self.freq.isel(freq=[ifreq]).values) +\
-                self._obj.isel(freq=[ifreq]).values * (self.freq.isel(freq=[ifreq+1]).values - fmax)
-            Sint.freq.values = [fmax]
-            other = xr.concat([other, Sint/df], dim='freq')
-
+        
         # Slice directions
         if 'dir' in other.dims and (dmin is not None or dmax is not None):
             other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
+            
+        # Interpolate at fmin
+        if other.freq.min() > fmin:
+            other = xr.concat([self._interp_freq(fmin), other], dim='freq')
+
+        # Interpolate at fmax
+        if other.freq.max() < fmax:
+            other = xr.concat([other, self._interp_freq(fmax)], dim='freq') 
 
         return other
 
