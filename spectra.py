@@ -274,7 +274,8 @@ class NewSpecArray(object):
 
     def dp(self):
         """
-        Peak wave direction
+        Peak wave direction defined as the direction where the energy density
+        of the frequency-integrated spectrum is maximum
         """
         ind = self._obj.sum(dim='freq').argmax(dim='dir')
         return self.dir.values[ind] * (ind*0+1) # Cheap way to turn dp into appropriate DataArray
@@ -377,16 +378,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 
 #         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
 #         self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
-
-#     def dp(self):
-#         """
-#         Peak (frequency integrated) wave direction
-#         """
-#         ind = self.sum(dim='freq').argmax(dim='dir')
-#         return self.dir.values[ind]
-#         # ret = ind.copy()
-#         # ret[:] = self.dir.values[ind]
-#         # return ret
 
 #     def dpm(self):
 #         """
