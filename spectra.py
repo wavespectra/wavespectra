@@ -191,6 +191,9 @@ class NewSpecArray(object):
     def tp(self, smooth=True, mask=np.nan):
         """
         Peak wave period
+        smooth :: if True returns the smooth wave period, if False simply returnsthe discrete
+                  period corresponding to the maxima in the direction-integrated spectra
+        mask :: value for missing data in output (for when there is no peak in the frequency spectra)
         """
         # TODO: Implement true_peak method
         if len(self.freq) < 3:
@@ -279,7 +282,20 @@ class NewSpecArray(object):
         """
         ind = self._obj.sum(dim='freq').argmax(dim='dir')
         return self.dir.values[ind] * (ind*0+1) # Cheap way to turn dp into appropriate DataArray
-        
+
+    def dpm(self, mask=np.nan):
+        """
+        From WW3 Manual: peak wave direction, defined like the mean direction, using the
+        frequency/wavenumber bin containing of the spectrum F(k) that contains the peak frequency only
+        """
+        # TODO: Use true_peak when implemented
+        ipeak = self._peak(self.oned())
+        moms, momc = self.momd(1)
+        moms_peak = self._collapse_array(moms.values, ipeak.values, axis=moms.get_axis_num(dim='freq'))
+        momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim='freq'))
+        dpm = np.arctan2(moms_peak, momc_peak) * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
+        return ((270 - r2d*dpm) % 360.).where(ipeak>0).fillna(mask)
+
     def dspr(self):
         """
         Directional wave spreading
@@ -378,20 +394,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 
 #         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
 #         self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
-
-#     def dpm(self):
-#         """
-#         Mean wave direction at peak frequency. Similar to previous code
-#         but uses the true peak and not simply the maximum value
-#         """
-#         #imax=self._peak()
-#         imax = self._truepeak(sum(self.S, 1))
-#         if imax:
-#             moms,momc = self.momd(1)
-#             dpm = math.atan2(moms[imax][0], momc[imax][0])
-#             return (270 - r2d*dpm) % 360.
-#         else:
-#             return -999
 
 
 
