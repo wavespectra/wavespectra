@@ -250,7 +250,7 @@ class NewSpecArray(object):
         mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir')
         return msin, mcos
 
-    def tm01(self, times=None):
+    def tm01(self):
         """
         Mean absolute wave period Tm01
         true average period from the 1st spectral moment
@@ -282,7 +282,7 @@ class NewSpecArray(object):
         moms = self._twod(moms, dim='dir')
         momc = self._twod(momc, dim='dir')
         mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
-        
+
         dspr = (2 * r2d**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
         return dspr.sum(dim='freq').sum(dim='dir')
 
