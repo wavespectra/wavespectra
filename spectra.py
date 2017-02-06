@@ -286,6 +286,18 @@ class NewSpecArray(object):
         dspr = (2 * r2d**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
         return dspr.sum(dim='freq').sum(dim='dir')
 
+    def swe(self):
+        """
+        Spectral width parameter by Cartwright and Longuet-Higgins (1956)
+        Represents the range of frequencies where the dominant energy exists
+        """
+        stmp = self.oned()
+        swe = (1. - stmp.spec.momf(2).sum()**2 / (stmp.spec.momf(0).sum()*stmp.spec.momf(4).sum()))**0.5
+        swe.values[swe.values < 0.001] = 1.
+        return swe
+        # if stmp.hs()<0.001:return 1.
+        # return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
+
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
 freq = [0.04 * 1.1**n for n in range(10)]
@@ -377,18 +389,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #             return (270 - r2d*dpm) % 360.
 #         else:
 #             return -999
-
-#     def swe(self):
-#         """
-#         Spectral width parameter by Cartwright and Longuet-Higgins (1956)
-#         Represents the range of frequencies where the dominant energy exists
-#         """
-#         stmp = self.oned()
-#         swe = (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5
-#         swe.values[swe.values < 0.001] = 1.
-#         return swe
-#         # if stmp.hs()<0.001:return 1.
-#         # return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
 
 #     def sw(self):
 #         """
