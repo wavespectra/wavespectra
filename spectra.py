@@ -252,6 +252,20 @@ class NewSpecArray(object):
             (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
         return self._twod(mf.sum(dim='freq'))
 
+    def momd(self, mom=0, theta=90., keep_dir=False):
+        """
+        Directional moment
+        """
+        # TODO: Remove keep_dir option, handle this downstream
+        cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
+        sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
+        msin = (self.dd * (self._obj * sp[_,:])).sum(dim='dir')
+        mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir')
+        if keep_dir:
+            return self._twod(msin), self._twod(mcos)
+        else:
+            return msin, mcos
+
     def tm01(self, times=None):
         """
         Mean absolute wave period Tm01
@@ -265,6 +279,14 @@ class NewSpecArray(object):
         Average period of zero up-crossings (Zhang, 2011)
         """
         return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
+
+    def dm(self):
+        """
+        Mean wave direction from the 1st spectral moment
+        """
+        moms, momc = self.momd(1)
+        dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
+        return (270 - r2d*dpm) % 360.
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
@@ -355,42 +377,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
 #         return arr[magic_index]
 
-#     def momf(self, mom=0):
-#         """
-#         Calculate given frequency moment
-#         """
-#         fp = self.freq.values**mom
-#         mf = (0.5 * self.df[:,_] *
-#             (fp[1:,_] * self[{'freq': slice(1, None)}] + fp[:-1,_] * self[{'freq': slice(None,-1)}].values))
-#         return self._expand_dim(mf.sum(dim='freq'))
-
-#     def momd(self, mom=0, theta=90., keep_dir=False):
-#         """
-#         Directional moment
-#         """
-#         cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
-#         sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
-#         msin = (self.dd * (self * sp[_,:])).sum(dim='dir')
-#         mcos = (self.dd * (self * cp[_,:])).sum(dim='dir')
-#         if keep_dir:
-#             return self._expand_dim(msin), self._expand_dim(mcos)
-#         else:
-#             return msin, mcos
-
-#     def tm01(self, times=None):
-#         """
-#         Mean absolute wave period Tm01
-#         true average period from the 1st spectral moment
-#         """
-#         return self.momf(0).sum(dim='dir')/self.momf(1).sum(dim='dir')
-
-#     def tm02(self):
-#         """
-#         Mean absolute wave period Tm02
-#         Average period of zero up-crossings (Zhang, 2011)
-#         """
-#         return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
-
 #     def dp(self):
 #         """
 #         Peak (frequency integrated) wave direction
@@ -414,14 +400,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #             return (270 - r2d*dpm) % 360.
 #         else:
 #             return -999
-
-#     def dm(self):
-#         """
-#         Mean wave direction from the 1st spectral moment
-#         """
-#         moms, momc = self.momd(1)
-#         dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
-#         return (270 - r2d*dpm) % 360.
 
 #     def dspr(self):
 #         """
