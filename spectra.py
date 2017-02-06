@@ -80,19 +80,6 @@ class NewSpecArray(object):
         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
         return arr[magic_index]
 
-    # def _expand_dim(self, darray):
-    #     """
-    #     Return DataArray expanded with freq and/or dir dimensions if they are not in darray
-    #     This extended array is required for some moment-based calculated but there should be smarter way to solve this
-    #     """
-    #     spec_array = darray.values
-    #     spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
-    #     for required_dim in ['freq', 'dir']:
-    #         if required_dim not in darray.dims:
-    #             spec_array = np.expand_dims(spec_array, axis=-1)
-    #             spec_coords.update({required_dim: np.array((1,))})
-    #     return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
-
     def _twod(self, darray, dim='dir'):
         """
         Add dir and|or freq dimension if 1D spectra to ensure moment calculations won't break
@@ -253,19 +240,15 @@ class NewSpecArray(object):
             (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
         return self._twod(mf.sum(dim='freq'))
 
-    def momd(self, mom=0, theta=90., keep_dir=False):
+    def momd(self, mom=0, theta=90.):
         """
         Directional moment
         """
-        # TODO: Remove keep_dir option, handle this downstream
         cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
         sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
         msin = (self.dd * (self._obj * sp[_,:])).sum(dim='dir')
         mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir')
-        if keep_dir:
-            return self._twod(msin), self._twod(mcos)
-        else:
-            return msin, mcos
+        return msin, mcos
 
     def tm01(self, times=None):
         """
@@ -294,9 +277,12 @@ class NewSpecArray(object):
         Directional wave spreading
         The one-sided directional width of the spectrum
         """
-        moms, momc = self.momd(1, keep_dir=True)
-        # Because we need direction-integrated mom0 but we need (unity) freq dim for dspr calculation to work:
+        moms, momc = self.momd(1)
+        # Manipulate dimensions so calculations work
+        moms = self._twod(moms, dim='dir')
+        momc = self._twod(momc, dim='dir')
         mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
+        
         dspr = (2 * r2d**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
         return dspr.sum(dim='freq').sum(dim='dir')
 
