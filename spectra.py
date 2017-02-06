@@ -291,12 +291,9 @@ class NewSpecArray(object):
         Spectral width parameter by Cartwright and Longuet-Higgins (1956)
         Represents the range of frequencies where the dominant energy exists
         """
-        stmp = self.oned()
-        swe = (1. - stmp.spec.momf(2).sum()**2 / (stmp.spec.momf(0).sum()*stmp.spec.momf(4).sum()))**0.5
+        swe = (1. - self.momf(2).sum(dim='dir')**2 / (self.momf(0).sum(dim='dir')*self.momf(4).sum(dim='dir')))**0.5
         swe.values[swe.values < 0.001] = 1.
         return swe
-        # if stmp.hs()<0.001:return 1.
-        # return (1. - stmp.momf(2).sum()**2/(stmp.momf(0).sum()*stmp.momf(4).sum()))**0.5;
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)

@@ -69,3 +69,10 @@ old = [s.split([0.05,0.2]).swe() for s in spec_list]
 for o, n, t in zip(old, new, new.time.to_index()):
     print ('swe old for %s: %0.4f m' % (t, o))
     print ('swe new for %s: %0.4f m\n' % (t, n))
+
+# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.swe()
+# old = [s.split([0.05,0.2]).swe() for s in spec_list]
+# for o, n, t in zip(old, new, new.time.to_index()):
+#     print ('swe old for %s: %0.4f m' % (t, o))
+#     print ('swe new for %s: %0.4f m\n' % (t, n))
+
