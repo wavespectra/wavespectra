@@ -64,15 +64,28 @@ darray = xr.DataArray(data=spec_array, coords=coords)
 #     print ('dspr old for %s: %0.4f m' % (t, o))
 #     print ('dspr new for %s: %0.4f m\n' % (t, n))
 
-new = darray.spec.split(fmin=0.05, fmax=0.2).spec.swe()
-old = [s.split([0.05,0.2]).swe() for s in spec_list]
-for o, n, t in zip(old, new, new.time.to_index()):
-    print ('swe old for %s: %0.4f m' % (t, o))
-    print ('swe new for %s: %0.4f m\n' % (t, n))
-
 # new = darray.spec.split(fmin=0.05, fmax=0.2).spec.swe()
 # old = [s.split([0.05,0.2]).swe() for s in spec_list]
 # for o, n, t in zip(old, new, new.time.to_index()):
 #     print ('swe old for %s: %0.4f m' % (t, o))
 #     print ('swe new for %s: %0.4f m\n' % (t, n))
+
+# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.sw()
+# old = [s.split([0.05,0.2]).sw() for s in spec_list]
+# for o, n, t in zip(old, new, new.time.to_index()):
+#     print ('sw old for %s: %0.4f m' % (t, o))
+#     print ('sw new for %s: %0.4f m\n' % (t, n))
+
+# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dp()
+# old = [s.split([0.05,0.2]).dp() for s in spec_list]
+# for o, n, t in zip(old, new, new.time.to_index()):
+#     print ('dp old for %s: %0.4f m' % (t, o))
+#     print ('dp new for %s: %0.4f m\n' % (t, n))
+
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dpm(mask=-999)
+old = [s.split([0.05,0.2]).dpm() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('dpm old for %s: %0.4f m' % (t, o))
+    print ('dpm new for %s: %0.4f m\n' % (t, n))
+    break
 
