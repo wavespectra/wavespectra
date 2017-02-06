@@ -356,27 +356,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
 #         self.dd = abs(self.dir[1].values - self.dir[0].values) if 'dir' in self.dims and len(self.dir) > 1 else 1.0
 
-#     def _expand_dim(self, darray):
-#         """
-#         Ensures SpecArray has frequency / direction dimensions and increments
-#         """
-#         spec_array = darray.values
-#         spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
-#         for required_dim in ['freq', 'dir']:
-#             if required_dim not in darray.dims:
-#                 spec_array = np.expand_dims(spec_array, axis=-1)
-#                 spec_coords.update({required_dim: np.array((1,))})
-#         return SpecArray(data_array=xr.DataArray(spec_array, coords=spec_coords))
-
-#     def _collapse_array(self, arr, indices, axis):
-#         """
-#         Collapse n-dim array [arr] along [axis] using [indices]
-#         """
-#         magic_index = [np.arange(i) for i in indices.shape]
-#         magic_index = np.ix_(*magic_index)
-#         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
-#         return arr[magic_index]
-
 #     def dp(self):
 #         """
 #         Peak (frequency integrated) wave direction
