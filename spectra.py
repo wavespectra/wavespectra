@@ -272,6 +272,13 @@ class NewSpecArray(object):
         dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
         return (270 - r2d*dpm) % 360.
 
+    def dp(self):
+        """
+        Peak wave direction
+        """
+        ind = self._obj.sum(dim='freq').argmax(dim='dir')
+        return self.dir.values[ind] * (ind*0+1) # Cheap way to turn dp into appropriate DataArray
+        
     def dspr(self):
         """
         Directional wave spreading
