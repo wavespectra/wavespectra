@@ -8,41 +8,40 @@ Reference:
         Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
 - Zhang (2011).
 """
-import copy
 from collections import OrderedDict
 from datetime import datetime
 import numpy as np
-# import xray as xr # xray.0.6.1
-import xarray as xr # xarray.0.7.0
-from timer import Timer
-
-
-# TODO: We are instantiating the output of slicing operation because they loose dd, df attrs - is there a better way?
-# TODO: Currently initializing with an xr.DataArray allows for additional
-#       dimensions (e.g. sites), but initializing with np.array does not
+import xarray as xr
 
 # TODO: fix momf() for multi-dimensional array
 # TODO: fix momd() for multi-dimensional array
 # TODO: fix tp() for multi-dimensional array
 # TODO: fix tm01() for multi-dimensional array
 # TODO: fix tm02() for multi-dimensional array
-#ValueError: coordinate time has dimensions (u'time',), but these are not a subset of the DataArray dimensions ['dim_0', 'dim_1', 'dim_2', 'dim_3']
-_ = np.newaxis
-gamma = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
-# TODO verify which of these are needed...
-d2r = np.pi/180.
-r2d = 180./np.pi
-pi = np.pi
-pi2 = 2*pi
+# TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
+#       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
+# TODO: Implement true_peak method for both tp() and dpm()
 
+# Define some globals
+GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
+D2R = np.pi/180.
+R2D = 180./np.pi
+_ = np.newaxis
 
 @xr.register_dataarray_accessor('spec')
 class NewSpecArray(object):
     def __init__(self, xarray_obj, dim_map=None):
-        if 'dim_map' is not None:
-            xarray_obj = xarray_obj.rename(dim_map)
+        
+        # # Rename spectra coordinates if not 'freq' and/or 'dir'
+        # if 'dim_map' is not None:
+        #     xarray_obj = xarray_obj.rename(dim_map)
+        
+        # # Ensure frequencies and directions are sorted
+        # for dim in ['freq', 'dir']:
+        #     if dim in xarray_obj.dims and not self._strictly_increasing(xarray_obj[dim].values):
+        #         xarray_obj = self.sort(xarray_obj, dims=[dim])
+
         self._obj = xarray_obj
-        self._center = None
 
         # Create attributes for accessor 
         self.freq = xarray_obj.freq
@@ -50,19 +49,10 @@ class NewSpecArray(object):
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
-    @property
-    def center(self):
-        """Return the geographic center point of this dataset."""
-        if self._center is None:
-            # we can use a cache on our accessor objects, because accessors
-            # themselves are cached on instances that access them.
-            freq = self._obj.freq
-            dirs = self._obj.dir
-            self._center = (float(freq.mean()), float(dirs.mean()))
-        return self._center
-
     def plot(self):
-        """Plot data on a map."""
+        """
+        Plot spectra
+        """
         return 'plotting!'
 
     def _strictly_increasing(self, arr):
@@ -136,7 +126,7 @@ class NewSpecArray(object):
                 if not self._strictly_increasing(darray[dim].values):
                     other = other.isel(**{dim: np.argsort(darray[dim]).values})
             else:
-                raise Exception('Dimension %s not in SpecArray' % (dim))
+                raise Exception('Dimension %s not in DataArray' % (dim))
         return other
 
     def oned(self):
@@ -195,7 +185,6 @@ class NewSpecArray(object):
                   period corresponding to the maxima in the direction-integrated spectra
         mask :: value for missing data in output (for when there is no peak in the frequency spectra)
         """
-        # TODO: Implement true_peak method
         if len(self.freq) < 3:
             return None
         Sf = self.oned()
@@ -273,7 +262,7 @@ class NewSpecArray(object):
         """
         moms, momc = self.momd(1)
         dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
-        return (270 - r2d*dpm) % 360.
+        return (270 - R2D*dpm) % 360.
 
     def dp(self):
         """
@@ -288,13 +277,12 @@ class NewSpecArray(object):
         From WW3 Manual: peak wave direction, defined like the mean direction, using the
         frequency/wavenumber bin containing of the spectrum F(k) that contains the peak frequency only
         """
-        # TODO: Use true_peak when implemented
         ipeak = self._peak(self.oned())
         moms, momc = self.momd(1)
         moms_peak = self._collapse_array(moms.values, ipeak.values, axis=moms.get_axis_num(dim='freq'))
         momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim='freq'))
         dpm = np.arctan2(moms_peak, momc_peak) * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
-        return ((270 - r2d*dpm) % 360.).where(ipeak>0).fillna(mask)
+        return ((270 - R2D*dpm) % 360.).where(ipeak>0).fillna(mask)
 
     def dspr(self):
         """
@@ -307,7 +295,7 @@ class NewSpecArray(object):
         momc = self._twod(momc, dim='dir')
         mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
 
-        dspr = (2 * r2d**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
+        dspr = (2 * R2D**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
         return dspr.sum(dim='freq').sum(dim='dir')
 
     def swe(self):
@@ -326,6 +314,7 @@ class NewSpecArray(object):
         """
         sw = (self.momf(0).sum(dim='dir') * self.momf(2).sum(dim='dir') / self.momf(1).sum(dim='dir')**2 - 1.0)**0.5
         return sw.where(self.hs() >= 0.001).fillna(mask)
+
 
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
