@@ -93,13 +93,14 @@ class NewSpecArray(object):
     #             spec_coords.update({required_dim: np.array((1,))})
     #     return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
 
-    def _twod(self, darray):
+    def _twod(self, darray, dim='dir'):
         """
-        Add direction dimension if 1D spectra to ensure moment calculations won't break
+        Add dir and|or freq dimension if 1D spectra to ensure moment calculations won't break
         """
-        if 'dir' not in darray.dims:
+        if dim not in darray.dims:
             spec_array = np.expand_dims(darray.values, axis=-1)
-            spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims).update({'dir': np.array((1,))})
+            spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
+            spec_coords.update({dim: np.array((1,))})
             return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
         else:
             return darray
@@ -288,6 +289,17 @@ class NewSpecArray(object):
         dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
         return (270 - r2d*dpm) % 360.
 
+    def dspr(self):
+        """
+        Directional wave spreading
+        The one-sided directional width of the spectrum
+        """
+        moms, momc = self.momd(1, keep_dir=True)
+        # Because we need direction-integrated mom0 but we need (unity) freq dim for dspr calculation to work:
+        mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
+        dspr = (2 * r2d**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
+        return dspr.sum(dim='freq').sum(dim='dir')
+
 # lons = np.linspace(1, 5, 5)
 # lats = np.linspace(1, 10, 10)
 freq = [0.04 * 1.1**n for n in range(10)]
@@ -379,15 +391,6 @@ da = xr.DataArray(data=data, dims=('freq','dir'), coords={'freq': freq, 'dir': d
 #             return (270 - r2d*dpm) % 360.
 #         else:
 #             return -999
-
-#     def dspr(self):
-#         """
-#         Directional wave spreading
-#         The one-sided directional width of the spectrum
-#         """
-#         moms, momc = self.momd(1, keep_dir=True)
-#         dspr = (2 * r2d**2 * (1 - ((moms.momf()**2 + momc.momf()**2)**0.5 / self.momf(0).oned())))**0.5
-#         return dspr.sum(dim='freq').sum(dim='dir')
 
 #     def swe(self):
 #         """
