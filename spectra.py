@@ -78,7 +78,7 @@ class NewSpecArray(object):
             spec_array = np.expand_dims(darray.values, axis=-1)
             spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
             spec_coords.update({dim: np.array((1,))})
-            return xr.DataArray(spec_array, coords=spec_coords, attrs=darray.attrs)
+            return xr.DataArray(spec_array, coords=spec_coords, dims=spec_coords.keys(), attrs=darray.attrs)
         else:
             return darray
 
@@ -114,11 +114,6 @@ class NewSpecArray(object):
         #     return ipeak[-1]
         # else:
         #     return None
-
-    def _set_attrs(self, darray):
-        """
-        Set predefined attributes onto dataarray object
-        """ 
 
     def sort(self, darray, dims, inplace=False):
         """
@@ -172,25 +167,27 @@ class NewSpecArray(object):
 
         return other
 
-    def hs(self, tail=True):
+    def hs(self, tail=True, standard_name='sea_surface_wave_significant_height'):
         """
         Spectral significant wave height Hm0
         - tail  :: if True fit high-frequency tail
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         Sf = self.oned()
         E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
-        hs = (4 * np.sqrt(E)).rename('hs')
-        hs.attrs.update(OrderedDict((('standard_name', 'sea_surface_wave_significant_height'), ('units', 'm'))))
-        return hs
+        hs = 4 * np.sqrt(E)
+        hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
+        return hs.rename('hs')
 
-    def tp(self, smooth=True, mask=np.nan):
+    def tp(self, smooth=True, mask=np.nan, standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum'):
         """
         Peak wave period
-        smooth :: if True returns the smooth wave period, if False simply returnsthe discrete
-                  period corresponding to the maxima in the direction-integrated spectra
-        mask :: value for missing data in output (for when there is no peak in the frequency spectra)
+        - smooth :: if True returns the smooth wave period, if False simply returnsthe discrete
+                    period corresponding to the maxima in the direction-integrated spectra
+        - mask :: value for missing data in output (for when there is no peak in the frequency spectra)
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         if len(self.freq) < 3:
             return None
@@ -223,12 +220,11 @@ class NewSpecArray(object):
         else:
             fp = self.freq.values[ipeak]
 
-        # Cheap way to turn Tp into appropriate DataArray object
-        ones = ipeak.copy(deep=True) * 0 + 1
-        tp = ones / fp
+        tp = (1+0*ipeak) / fp # Cheap way to turn Tp into appropriate DataArray object
+        tp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
 
         # Returns masked dataarray
-        return tp.where(ipeak>0).fillna(mask)
+        return tp.where(ipeak>0).fillna(mask).rename('tp')
 
     def momf(self, mom=0):
         """
@@ -249,52 +245,68 @@ class NewSpecArray(object):
         mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir')
         return msin, mcos
 
-    def tm01(self):
+    def tm01(self, standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment'):
         """
         Mean absolute wave period Tm01
         true average period from the 1st spectral moment
+        - standard_name :: CF standard name for defining DataArray attribute
         """
-        return self.momf(0).sum(dim='dir') / self.momf(1).sum(dim='dir')
+        tm01 = self.momf(0).sum(dim='dir') / self.momf(1).sum(dim='dir')
+        tm01.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
+        return tm01.rename('tm01')
 
-    def tm02(self):
+    def tm02(self, standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment'):
         """
         Mean absolute wave period Tm02
         Average period of zero up-crossings (Zhang, 2011)
+        - standard_name :: CF standard name for defining DataArray attribute
         """
-        return np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
+        tm02 = np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
+        tm02.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
+        return tm02.rename('tm02')
 
-    def dm(self):
+    def dm(self, standard_name='sea_surface_wave_from_direction'):
         """
         Mean wave direction from the 1st spectral moment
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         moms, momc = self.momd(1)
-        dpm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
-        return (270 - R2D*dpm) % 360.
+        dm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
+        dm = (270 - R2D*dm) % 360.
+        dm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
+        return dm.rename('dm')
 
-    def dp(self):
+    def dp(self, standard_name='sea_surface_wave_direction_at_variance_spectral_density_maximum'):
         """
         Peak wave direction defined as the direction where the energy density
         of the frequency-integrated spectrum is maximum
+        - standard_name :: CF standard name for defining DataArray attribute
         """
-        ind = self._obj.sum(dim='freq').argmax(dim='dir')
-        return self.dir.values[ind] * (ind*0+1) # Cheap way to turn dp into appropriate DataArray
+        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')
+        dp = self.dir.values[ipeak] * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
+        dp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
+        return dp.rename('dp')
 
-    def dpm(self, mask=np.nan):
+    def dpm(self, mask=np.nan, standard_name='sea_surface_wave_peak_direction'):
         """
         From WW3 Manual: peak wave direction, defined like the mean direction, using the
         frequency/wavenumber bin containing of the spectrum F(k) that contains the peak frequency only
+        - mask :: value for missing data in output (for when there is no peak in the frequency spectra)
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         ipeak = self._peak(self.oned())
         moms, momc = self.momd(1)
         moms_peak = self._collapse_array(moms.values, ipeak.values, axis=moms.get_axis_num(dim='freq'))
         momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim='freq'))
         dpm = np.arctan2(moms_peak, momc_peak) * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
-        return ((270 - R2D*dpm) % 360.).where(ipeak>0).fillna(mask)
+        dpm = (270 - R2D*dpm) % 360.
+        dpm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
+        return dpm.where(ipeak>0).fillna(mask).rename('dpm')
 
-    def dspr(self):
+    def dspr(self, standard_name='sea_surface_wave_directional_spread'):
         """
-        Directional wave spreading
-        The one-sided directional width of the spectrum
+        Directional wave spreading, the one-sided directional width of the spectrum
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         moms, momc = self.momd(1)
         # Manipulate dimensions so calculations work
@@ -303,24 +315,31 @@ class NewSpecArray(object):
         mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
 
         dspr = (2 * R2D**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
-        return dspr.sum(dim='freq').sum(dim='dir')
+        dspr = dspr.sum(dim='freq').sum(dim='dir')
+        dspr.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
+        return dspr.rename('dspr')
 
-    def swe(self):
+    def swe(self, standard_name='sea_surface_wave_spectral_width'):
         """
         Spectral width parameter by Cartwright and Longuet-Higgins (1956)
         Represents the range of frequencies where the dominant energy exists
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         swe = (1. - self.momf(2).sum(dim='dir')**2 / (self.momf(0).sum(dim='dir')*self.momf(4).sum(dim='dir')))**0.5
         swe.values[swe.values < 0.001] = 1.
-        return swe
+        swe.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
+        return swe.rename('swe')
 
-    def sw(self, mask=np.nan):
+    def sw(self, mask=np.nan, standard_name='sea_surface_wave_spectral_width'):
         """
         Spectral width parameter by Longuet-Higgins (1975)
-        Represents energy distribution over entire frequency range;
+        Represents energy distribution over entire frequency range
+        - mask :: value for missing data in output (for when Hs is smaller then 0.001 m)
+        - standard_name :: CF standard name for defining DataArray attribute
         """
         sw = (self.momf(0).sum(dim='dir') * self.momf(2).sum(dim='dir') / self.momf(1).sum(dim='dir')**2 - 1.0)**0.5
-        return sw.where(self.hs() >= 0.001).fillna(mask)
+        sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
+        return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
 
 # if __name__ == '__main__':
