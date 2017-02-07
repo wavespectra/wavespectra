@@ -4,9 +4,9 @@ setuptools.setup
 """
 from numpy.distutils.core import setup
 
-setup(name='spectra',
+setup(name='pyspectra',
       version='1.1.0',
-      description='Spectra base class and tools',
+      description='Spectra base class and tools based on DataArray',
       author='MetOcean Solutions Ltd.',
       author_email='r.guedes@metocean.co.nz',
       url='http://www.metocean.co.nz/',
