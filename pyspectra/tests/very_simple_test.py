@@ -4,7 +4,7 @@ Testing new spectra class
 from collections import OrderedDict
 import numpy as np
 import xarray as xr
-from pyspectra import NewSpecArray
+from pyspectra.spectra import NewSpecArray
 from pymo.data.spectra import SwanSpecFile
 
 # freq = [0.04 * 1.1**n for n in range(10)]
@@ -23,71 +23,78 @@ spec_list = [s for s in spectra.readall()]
 
 spec_array = np.concatenate([np.expand_dims(s.S, 0) for s in spec_list])
 coords=OrderedDict((('time', spectra.times), ('freq', spec_list[0].freqs), ('dir', spec_list[0].dirs)))
-# coords=OrderedDict((('dumb_time_name', spectra.times), ('freq', spec_list[0].freqs), ('dir', spec_list[0].dirs)))
 
-darray = xr.DataArray(data=spec_array, coords=coords)
-# da = NewSpecArray(darray, dim_map={'dumb_time_name': 'time'})
+darray = xr.DataArray(data=spec_array, coords=coords, dims=['time', 'freq', 'dir'])
 
-# hs_new = darray.spec.split(fmin=0.05, fmax=0.2).spec.hs()
-# hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
-# for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
-#     print ('Hs old for %s: %0.4f m' % (t, old))
-#     print ('Hs new for %s: %0.4f m\n' % (t, new))
+hs_new = darray.spec.split(fmin=0.05, fmax=0.2).spec.hs()
+hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
+for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
+    print ('Hs old for %s: %0.4f m' % (t, old))
+    print ('Hs new for %s: %0.4f m\n' % (t, new))
+    break
 
 new = darray.spec.split(fmin=0.05, fmax=0.07).spec.tp(mask=-999)
 old = [s.split([0.05,0.07]).tp() for s in spec_list]
 for o, n, t in zip(old, new, new.time.to_index()):
     print ('Tp old for %s: %0.4f m' % (t, o))
     print ('Tp new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.tm01()
-# old = [s.split([0.05,0.2]).tm01() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('Tm01 old for %s: %0.4f m' % (t, o))
-#     print ('Tm01 new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.tm01()
+old = [s.split([0.05,0.2]).tm01() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('Tm01 old for %s: %0.4f m' % (t, o))
+    print ('Tm01 new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.tm02()
-# old = [s.split([0.05,0.2]).tm02() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('Tm02 old for %s: %0.4f m' % (t, o))
-#     print ('Tm02 new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.tm02()
+old = [s.split([0.05,0.2]).tm02() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('Tm02 old for %s: %0.4f m' % (t, o))
+    print ('Tm02 new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dm()
-# old = [s.split([0.05,0.2]).dm() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('dm old for %s: %0.4f m' % (t, o))
-#     print ('dm new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dm()
+old = [s.split([0.05,0.2]).dm() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('dm old for %s: %0.4f m' % (t, o))
+    print ('dm new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dspr()
-# old = [s.split([0.05,0.2]).dspr() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('dspr old for %s: %0.4f m' % (t, o))
-#     print ('dspr new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dspr()
+old = [s.split([0.05,0.2]).dspr() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('dspr old for %s: %0.4f m' % (t, o))
+    print ('dspr new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.swe()
-# old = [s.split([0.05,0.2]).swe() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('swe old for %s: %0.4f m' % (t, o))
-#     print ('swe new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.swe()
+old = [s.split([0.05,0.2]).swe() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('swe old for %s: %0.4f m' % (t, o))
+    print ('swe new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.sw()
-# old = [s.split([0.05,0.2]).sw() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('sw old for %s: %0.4f m' % (t, o))
-#     print ('sw new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.sw()
+old = [s.split([0.05,0.2]).sw() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('sw old for %s: %0.4f m' % (t, o))
+    print ('sw new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dp()
-# old = [s.split([0.05,0.2]).dp() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('dp old for %s: %0.4f m' % (t, o))
-#     print ('dp new for %s: %0.4f m\n' % (t, n))
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dp()
+old = [s.split([0.05,0.2]).dp() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('dp old for %s: %0.4f m' % (t, o))
+    print ('dp new for %s: %0.4f m\n' % (t, n))
+    break
 
-# new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dpm(mask=-999)
-# old = [s.split([0.05,0.2]).dpm() for s in spec_list]
-# for o, n, t in zip(old, new, new.time.to_index()):
-#     print ('dpm old for %s: %0.4f m' % (t, o))
-#     print ('dpm new for %s: %0.4f m\n' % (t, n))
-#     break
+new = darray.spec.split(fmin=0.05, fmax=0.2).spec.dpm(mask=-999)
+old = [s.split([0.05,0.2]).dpm() for s in spec_list]
+for o, n, t in zip(old, new, new.time.to_index()):
+    print ('dpm old for %s: %0.4f m' % (t, o))
+    print ('dpm new for %s: %0.4f m\n' % (t, n))
+    break
 
 
 

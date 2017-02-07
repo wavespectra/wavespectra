@@ -2,7 +2,7 @@
 Testing new spectra object on WW3 native spectra files
 """
 import xarray as xr
-from pyspectra import NewSpecArray
+from pyspectra.spectra import NewSpecArray
 
 filename = './snative20141201T00Z_spec.nc'
 
