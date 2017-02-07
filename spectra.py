@@ -115,6 +115,11 @@ class NewSpecArray(object):
         # else:
         #     return None
 
+    def _set_attrs(self, darray):
+        """
+        Set predefined attributes onto dataarray object
+        """ 
+
     def sort(self, darray, dims, inplace=False):
         """
         Sort darray along dimensions in dims list so that the respective coordinates are sorted
@@ -176,7 +181,9 @@ class NewSpecArray(object):
         E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
-        return 4 * np.sqrt(E)
+        hs = (4 * np.sqrt(E)).rename('hs')
+        hs.attrs.update(OrderedDict((('standard_name', 'sea_surface_wave_significant_height'), ('units', 'm'))))
+        return hs
 
     def tp(self, smooth=True, mask=np.nan):
         """
