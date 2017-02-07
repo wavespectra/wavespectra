@@ -13,11 +13,6 @@ from datetime import datetime
 import numpy as np
 import xarray as xr
 
-# TODO: fix momf() for multi-dimensional array
-# TODO: fix momd() for multi-dimensional array
-# TODO: fix tp() for multi-dimensional array
-# TODO: fix tm01() for multi-dimensional array
-# TODO: fix tm02() for multi-dimensional array
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
@@ -342,60 +337,5 @@ class NewSpecArray(object):
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
 
-# if __name__ == '__main__':
-#     from pymo.data.spectra import SwanSpecFile
-#     #
-#     # #=================================
-#     # # WW3 spectra, input as DataArray
-#     # #=================================
-#     # ncfile = 'tests/s20151221_00z.nc'
-#     # dset = xr.open_dataset(ncfile)
-#     # S = (dset['specden']+127) * dset['factor']
-#     # ww3 = SpecArray(data_array=S)
-#     #
-#     # # hs = ww3.hs()
-#     # # tp = ww3.tp()
-
-#     #=================================
-#     # Real spectra, input as DataArray
-#     #=================================
-#     spectra = SwanSpecFile('/Users/rafaguedes/work/prelud0.spec')
-#     spec_list = [s for s in spectra.readall()]
-
-#     spec_array = np.concatenate([np.expand_dims(s.S, 0) for s in spec_list])
-#     coords=OrderedDict((('dumb_time_name', spectra.times), ('freq', spec_list[0].freqs), ('dir', spec_list[0].dirs)))
-
-#     darray = xr.DataArray(data=spec_array, coords=coords)
-#     spec = SpecArray(data_array=darray, dim_map={'dumb_time_name': 'time'})
-#     #
-#     # hs_new = spec.hs(fmin=0.05, fmax=0.2)
-#     # hs_old = [s.split([0.05,0.2]).hs() for s in spec_list]
-#     # for old, new, t in zip(hs_old, hs_new, hs_new.time.to_index()):
-#     #     print ('Hs old for %s: %0.4f m' % (t, old))
-#     #     print ('Hs new for %s: %0.4f m\n' % (t, new))
-#     #
-#     # print ('Hs for 2015-07-20 18:00:00 (new): %0.3f m' %\
-#     #     (spec.hs(fmin=0.05, fmax=0.2, times=datetime(2015,7,20,18), tail=True)))
-#     #
-#     # #====================================
-#     # # Fake spectra, input as numpy arrays
-#     # #====================================
-#     # freq_array = np.arange(0, 1.01, 0.1)
-#     # dir_array = np.arange(0, 360, 30)
-#     # time_array = [datetime(2015, 1, d) for d in [1,2,3]]
-#     #
-#     # # With time and directions
-#     # spec_array = np.random.randint(1, 10, (len(time_array), len(freq_array), len(dir_array)))
-#     # spec1 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array, time_array=time_array)
-#     #
-#     # # Without time
-#     # spec_array = np.random.random((len(freq_array), len(dir_array)))
-#     # spec2 = SpecArray(spec_array=spec_array, freq_array=freq_array, dir_array=dir_array)
-#     #
-#     # # Without directions
-#     # spec_array = np.random.random((len(time_array), len(freq_array)))
-#     # spec3 = SpecArray(spec_array=spec_array, freq_array=freq_array, time_array=time_array)
-#     #
-#     # # Without time and directions
-#     # spec_array = np.random.random(len(freq_array))
-#     # spec4 = SpecArray(spec_array=spec_array, freq_array=freq_array)
+if __name__ == '__main__':
+    pass
