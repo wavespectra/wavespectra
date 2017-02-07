@@ -336,6 +336,40 @@ class NewSpecArray(object):
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
+    # def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333):
+    #     """
+    #     Watershed partition
+    #     - wsp :: Wind speed
+    #     - wdir :: Wind direction in coming from convention
+    #     - dep :: Water depth
+    #     """
+    #     import pymo.core.specpart
+    #     ipart = pymo.core.specpart.specpart.partition(self.S)
+    #     npart = ipart.max()
+    #     sea = Spectrum(self.freqs, self.dirs)
+    #     swell = []
+    #     for np in range(1, npart+1):
+    #         stmp = Spectrum(self.freqs, self.dirs, numpy.where(ipart==np, self.S,0.))
+    #         imax, imin = stmp.shape(0.01,0.05);
+    #         if len(imin) > 0:
+    #             stmp.S[imin[0]:,:] = 0
+    #             newpart = (stmp.S>0)
+    #             if newpart.sum() > 20:
+    #                 npart = npart+1;
+    #                 ipart[newpart] = npart
+    #     for np in range(1, npart+1):
+    #         stmp = Spectrum(self.freqs, self.dirs, numpy.where(ipart==np,s elf.S, 0.))
+    #         Up = agefac * wsp * numpy.cos(d2r*(self.dirs-wdir))
+    #         W = stmp.S[numpy.tile(Up,(len(self.freqs),1)) > numpy.tile(self.C(dep)[:,numpy.newaxis],(1,len(self.dirs)))].sum()/stmp.S.sum()
+    #         if W > wscut:
+    #             sea += stmp
+    #         else:
+    #             stmp._hsig = stmp.hs()
+    #             if stmp._hsig > 0.001:
+    #                 swell.append(stmp)
+    #         if len(swell) > 1:
+    #             swell.sort(key=lambda spec: spec._hsig, reverse=True)
+    #     return [sea] + swell
 
 if __name__ == '__main__':
     pass
