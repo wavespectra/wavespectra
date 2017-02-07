@@ -23,4 +23,4 @@ da = read_spec_ww3_native(filename)
 
 for method in ['hs', 'tp', 'tm01', 'tm02', 'dm', 'dp', 'dpm', 'dspr', 'swe', 'sw']:
     print 'Cheking out method %s' % (method)
-    print getattr(da.spec, method)()
+    print getattr(da.spec, method)().isel(time=0)
