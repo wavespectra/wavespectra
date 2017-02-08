@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 from pyspectra.spectra import NewSpecArray
 
-# TODO: Ensure lon and lat are attached to dataarray for cases where they are not coordinates
+# TODO: Function to read and merge multiple SWAN hotfiles
 
 SPECNAME = 'efth'
 TIMENAME = 'time'
