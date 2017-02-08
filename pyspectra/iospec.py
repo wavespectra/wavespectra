@@ -28,13 +28,12 @@ def read_spec_ww3_native(filename_or_fileglob, chunks={}):
                 By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'station']
     Returns:
-    - spec_array :: DataArray object with spectra methods in the spec accessor
-    - dset :: Dataset handle
+    - dset :: Dataset with spec accessor class attached to spectra DataArray
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    spec_array = dset['efth'].rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME})
-    spec_array.attrs = SPECATTRS
-    return spec_array.rename(SPECNAME), dset
+    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
+    dset[SPECNAME].attrs = SPECATTRS
+    return dset
 
 def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
     """
@@ -44,14 +43,14 @@ def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
                 By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'site']
     Returns:
-    - spec_array :: DataArray object with spectra methods in the spec accessor
-    - dset :: Dataset handle
+    - dset :: Dataset with spec accessor class attached to spectra DataArray
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    spec_array = (dset['specden'].astype('float32')+127.) * dset['factor']
-    spec_array = spec_array.rename({'freq': FREQNAME, 'dir': DIRNAME})#, 'SITE': SITENAME})
-    spec_array.attrs = SPECATTRS
-    return spec_array.rename(SPECNAME), dset
+    dset.rename({'freq': FREQNAME, 'dir': DIRNAME}, inplace=True)#, 'SITE': SITENAME})
+    dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
+    dset[SPECNAME].attrs = SPECATTRS
+    dset = dset.drop(['specden','factor', 'df'])
+    return dset
 
 def read_spec_swan(filename, dirorder=True, grid=False):
     """
