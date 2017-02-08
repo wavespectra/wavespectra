@@ -12,14 +12,15 @@ sys.setdefaultencoding('utf-8')
 # New imports
 import xarray as xr
 from pyspectra.spectra import NewSpecArray
-from pyspectra.iospec import read_spec_ww3_native
+from pyspectra.iospec import read_spec_ww3_native, SPECNAME
 
 # Old imports
 from pymo.data.spectra_new import WW3NCSpecFile
 from pymo.core.basetype import Site
 
 # testfile = '/home/tdurrant/Downloads/shell_spec_test.nc'
-testfile = '/home/tdurrant/Documents/projects/shell/code/old/shell_spec_test.nc'
+#testfile = '/home/tdurrant/Documents/projects/shell/code/old/shell_spec_test.nc'
+testfile = './snative20141201T00Z_spec.nc'
 
 D2R=np.pi/180.
 
@@ -58,12 +59,11 @@ class TestSpec(unittest.TestCase):
         print ('%s: pymo: %s' % (method, self.otime))
 
     def test_vars(self):
-        #for method in ('hs','tm01','tm02','dm'):
-        for method in ('tp',):
+        for method in ('hs','tm01','tm02','dm'):
             self.calcOld(self.specold,method=method)
-            self.calcNew(self.specnew.spec,method=method)
+            self.calcNew(self.specnew[SPECNAME].spec,method=method)
             print ('x times improvement: %s' % (self.otime/self.ntime))
-            #assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze())
+            assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
             self.plot()
             plt.title(method)
         plt.show()
@@ -111,9 +111,7 @@ class TestSpec(unittest.TestCase):
                 time.append(S.time)
                 data.append(getattr(S,method)())
             darrays.append(data)
-        #npdat = np.array(darrays)
-        #return xr.DataArray(npdat.transpose(),[('time',time),('station',np.arange(0,len(lat)))])
-        return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)])
+        return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)]).transpose()
 
 
 if __name__ == '__main__':
