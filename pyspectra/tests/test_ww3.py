@@ -1,19 +1,18 @@
-import sys
-sys.path.append('../')
-
 import logging
 import unittest
 import time
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+import sys
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 # New imports
-import xray
-from spectra import SpecArray
+import xarray as xr
+from pyspectra.spectra import NewSpecArray
+from pyspectra.iospec import read_spec_ww3_native
 
 # Old imports
 from pymo.data.spectra_new import WW3NCSpecFile
@@ -36,13 +35,8 @@ class TestSpec(unittest.TestCase):
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
-        dset = xray.open_dataset(testfile)
-        coords={'direction': 'dir', 'frequency':'freq'}
-        dset.efth *= D2R
-        dset.direction += 180
-        dset.direction %= 360
-        self.specnew = SpecArray(data_array=dset.efth[:,0],dim_map=coords)
-        #self.specnew = SpecArray(data_array=dset.efth,dim_map=coords)
+        self.specnew = read_spec_ww3_native(testfile)
+        #self.specnew = NewSpecArray(data_array=dset.efth,dim_map=coords)
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
@@ -67,7 +61,7 @@ class TestSpec(unittest.TestCase):
         #for method in ('hs','tm01','tm02','dm'):
         for method in ('tp',):
             self.calcOld(self.specold,method=method)
-            self.calcNew(self.specnew,method=method)
+            self.calcNew(self.specnew.spec,method=method)
             print ('x times improvement: %s' % (self.otime/self.ntime))
             #assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze())
             self.plot()
@@ -98,15 +92,16 @@ class TestSpec(unittest.TestCase):
     def plot(self):
         plt.figure()
         self.old.plot(label='pymo')
+        plt.figure()
         self.new.plot(label='pymsl')
-        plt.legend()
+        #plt.legend()
 
     def calcOldTs(self,spec,method):
         darrays = []
         lat = []
         lon = []
-        #for sitei in self.sites:
-        for sitei in [self.sites[0]]:
+        for sitei in self.sites:
+        #for sitei in [self.sites[0]]:
             data = []
             time = []
             self.sito=spec.defSites(sitei)
@@ -117,8 +112,8 @@ class TestSpec(unittest.TestCase):
                 data.append(getattr(S,method)())
             darrays.append(data)
         #npdat = np.array(darrays)
-        #return xray.DataArray(npdat.transpose(),[('time',time),('station',np.arange(0,len(lat)))])
-        return xray.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)])
+        #return xr.DataArray(npdat.transpose(),[('time',time),('station',np.arange(0,len(lat)))])
+        return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)])
 
 
 if __name__ == '__main__':
