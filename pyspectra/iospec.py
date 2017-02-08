@@ -20,6 +20,7 @@ def read_spec_ww3_native(filename_or_fileglob, chunks={}):
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
     - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
                 By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
+                Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'station']
     Returns:
     - spec_array :: DataArray object with spectra methods in the spec accessor
     - dset :: Dataset handle
@@ -34,7 +35,8 @@ def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
     Read Spectra off WW3 in MSL netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
     - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
-                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation) 
+                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
+                Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'site']
     Returns:
     - spec_array :: DataArray object with spectra methods in the spec accessor
     - dset :: Dataset handle
@@ -48,4 +50,7 @@ def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
 
 if __name__ == '__main__':
     filename = './tests/snative20141201T00Z_spec.nc'
-    da = read_spec_ww3_native(filename)
+    da, dset = read_spec_ww3_native(filename)
+
+    filename = '/wave/global/ww3_0.5_tc/s20000101_00z.nc'
+    da, dset = read_spec_ww3_native(filename, chunks={site: 100})
