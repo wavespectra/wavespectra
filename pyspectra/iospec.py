@@ -9,8 +9,11 @@ from pyspectra.spectra import NewSpecArray
 # TODO: Ensure lon and lat are attached to dataarray for cases where they are not coordinates
 
 SPECNAME = 'efth'
-FREQNAME = 'freq'
+TIMENAME = 'time'
 SITENAME = 'site'
+LATNAME = 'lat'
+LONNAME = 'lon'
+FREQNAME = 'freq'
 DIRNAME = 'dir'
 SPECATTRS = OrderedDict((
     ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
@@ -68,7 +71,6 @@ def read_spec_swan(filename, dirorder=True, grid=False):
     # Read up spectra arrays and coordinates
     from legacy import SwanSpecFile2 # Avoid pymo dependency in top-level module
     spectra = SwanSpecFile2(filename, dirorder=True)
-    # spec_list = [s for s in spectra.readall()]
     spec_list = flatten([s for s in spectra.readall()], [])
 
     # Sort out missing data which is read as an one-dimensional array
@@ -87,23 +89,21 @@ def read_spec_swan(filename, dirorder=True, grid=False):
         arr = np.array([s.S for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
         spec_array = xr.DataArray(
             data=np.swapaxes(arr, 1, 2),
-            coords=OrderedDict((('time', times), ('lat', lats), ('lon', lons), ('freq', freqs), ('dir', dirs))),
-            dims=('time', 'lat', 'lon', 'freq', 'dir'),
+            coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
+            dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
+            attrs=SPECATTRS,
             )
     else:
         spec_array = xr.DataArray(
             data=np.array([s.S for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs)),
-            coords=OrderedDict((('time', times), ('site', sites), ('freq', freqs), ('dir', dirs))),
-            dims=('time', 'site', 'freq', 'dir'),
+            coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
+            dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
             name=SPECNAME,
+            attrs=SPECATTRS,
         )
 
-    # Sort directions for easy of plotting
-    spec_array = spec_array.isel(dir= np.argsort(dirs))
-
     return spec_array
-
 
 
 if __name__ == '__main__':
