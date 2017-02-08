@@ -52,9 +52,12 @@ def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
     dset = dset.drop(['specden','factor', 'df'])
     return dset
 
-def read_spec_swan(filename, dirorder=True, grid=False):
+def read_spec_swan(filename, dirorder=True):
     """
     Read Spectra off SWAN ASCII file
+    - dirorder :: If True reorder spectra read from file so that directions are sorted
+    Returns:
+    - dset :: Dataset with spec accessor class attached to spectra DataArray
     """
     def flatten(l, a):
         """
@@ -81,40 +84,43 @@ def read_spec_swan(filename, dirorder=True, grid=False):
     flat_lats = [site.y for site in spectra.locations]
 
     # Assign DataArray
-    if grid:
-        lons = np.unique(flat_lons)
-        lats = np.unique(flat_lats)
-        assert len(lons)*len(lats) == len(flat_lons), "Grid cannot be constructed from unique coordinates in locations attribute"
+    lons = np.unique(flat_lons)
+    lats = np.unique(flat_lats)
+    if len(lons)*len(lats) == len(flat_lons):
+        # Looks like gridded data, grid DataArray accordingly
         arr = np.array([s.S for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
-        spec_array = xr.DataArray(
+        dset = xr.DataArray(
             data=np.swapaxes(arr, 1, 2),
             coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
             attrs=SPECATTRS,
-            )
+            ).to_dataset()
     else:
-        spec_array = xr.DataArray(
+        # Keep it with sites dimension
+        dset = xr.DataArray(
             data=np.array([s.S for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs)),
             coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
             name=SPECNAME,
             attrs=SPECATTRS,
-        )
+        ).to_dataset()
+        dset[LATNAME] = xr.DataArray(data=flat_lats, coords={SITENAME: sites}, dims=[SITENAME])
+        dset[LONNAME] = xr.DataArray(data=flat_lons, coords={SITENAME: sites}, dims=[SITENAME])
 
-    return spec_array
+    return dset
 
 
 if __name__ == '__main__':
     # Reading native WW3 spectra, do not subchunk it
     filename = './tests/snative20141201T00Z_spec.nc'
-    da_msl, dset_msl = read_spec_ww3_native(filename)
+    dset_msl = read_spec_ww3_native(filename)
 
     # Reading MSL WW3 spectra, use small chunk size for site
     filename = '/wave/global/ww3_0.5_tc/s20000101_00z.nc'
-    da_native, dset_native = read_spec_ww3_native(filename, chunks={site: 10})
+    dset_native = read_spec_ww3_native(filename, chunks={site: 10})
 
     # Reading SWAN hotfile into a regular grid
     filename = './tests/antf0.20170208_06z.hot-001'
-    da_swanhot = read_spec_swan(filename, grid=True)
-    da_swanhot.isel(time=0).spec.hs().plot()
+    dset_swanhot = read_spec_swan(filename)
+    dset_swanhot.isel(time=0)['efth'].spec.hs().plot()
