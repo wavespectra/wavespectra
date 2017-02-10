@@ -30,14 +30,12 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 
 
 class TestSpec(unittest.TestCase):
-# class TestSpec(object):
 
     def setUp(self):
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
         self.specnew = read_spec_ww3_native(testfile)
-        #self.specnew = NewSpecArray(data_array=dset.efth,dim_map=coords)
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
@@ -58,15 +56,24 @@ class TestSpec(unittest.TestCase):
         self.otime = time.time() - startTime
         print ('%s: pymo: %s' % (method, self.otime))
 
-    def test_vars(self):
-        for method in ('hs','tm01','tm02','dm'):
-            self.calcOld(self.specold,method=method)
-            self.calcNew(self.specnew[SPECNAME].spec,method=method)
-            print ('x times improvement: %s' % (self.otime/self.ntime))
-            assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
-            self.plot()
-            plt.title(method)
-        plt.show()
+    def check_method(self,method):
+        print("\nChecking %s:" % method)
+        self.calcOld(self.specold,method=method)
+        self.calcNew(self.specnew[SPECNAME].spec,method=method)
+        print ('x times improvement: %s' % (self.otime/self.ntime))
+        assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
+        # self.plot()
+        # plt.title(method)
+        # plt.show()
+
+    def test_hs(self):
+        self.check_method('hs')
+
+    def test_tp(self):
+        self.check_method('tp')
+
+    def test_dspr(self):
+        self.check_method('dspr')
 
 #    def test_sea(self,split=9.):
 #        startTime = time.time()
@@ -107,17 +114,11 @@ class TestSpec(unittest.TestCase):
             self.sito=spec.defSites(sitei)
             lat.append(sitei.x)
             lon.append(sitei.y)
-            for i,S in enumerate(self.specold.readall()):
+            for i,S in enumerate(spec.readall()):
                 time.append(S.time)
                 data.append(getattr(S,method)())
             darrays.append(data)
         return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)]).transpose()
 
-
 if __name__ == '__main__':
     unittest.main()
-    #test = TestSpec()
-    #test.setUp()
-    #test.test_new()
-    #test.test_old()
-
