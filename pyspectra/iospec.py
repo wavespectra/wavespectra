@@ -33,6 +33,7 @@ def read_spec_ww3_native(filename_or_fileglob, chunks={}):
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
     dset[SPECNAME].attrs = SPECATTRS
+    dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     return dset
 
 def read_spec_ww3_msl(filename_or_fileglob, chunks={}):
