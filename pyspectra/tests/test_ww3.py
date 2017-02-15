@@ -12,15 +12,14 @@ sys.setdefaultencoding('utf-8')
 # New imports
 import xarray as xr
 from pyspectra.spectra import NewSpecArray
-from pyspectra.iospec import read_spec_ww3_native, SPECNAME
+from pyspectra.iospec import read_spec_ww3_native, SPECNAME, read_spec_swan, read_spec_ww3_msl
 
 # Old imports
-from pymo.data.spectra_new import WW3NCSpecFile
+from pymo.data.spectra_new import WW3NCSpecFile, SwanSpecFile
 from pymo.core.basetype import Site
 
 # testfile = '/home/tdurrant/Downloads/shell_spec_test.nc'
 #testfile = '/home/tdurrant/Documents/projects/shell/code/old/shell_spec_test.nc'
-testfile = './snative20141201T00Z_spec.nc'
 
 D2R=np.pi/180.
 
@@ -29,16 +28,18 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                     level=10)
 
 
-class TestSpec(unittest.TestCase):
+class TestSpecSwan(unittest.TestCase):
 
     def setUp(self):
+        print("\n === Testing SWAN: 7 days, 1 site  ===")
+        testfile = './prelud0.spec'
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
-        self.specnew = read_spec_ww3_native(testfile)
+        self.specnew = read_spec_swan(testfile)
         # Old spectra
-        self.specold=WW3NCSpecFile(testfile)
-        self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
+        self.specold=SwanSpecFile(testfile)
+        self.sites = self.specold.locations
 
     def tearDown(self):
         t = time.time() - self.startTime
@@ -48,19 +49,19 @@ class TestSpec(unittest.TestCase):
         startTime = time.time()
         self.new = getattr(spec,method)()
         self.ntime = time.time() - startTime
-        print ('%s: pymsl: %s' % (method, self.ntime))
+        print ('%s: pymsl: \t\t %s' % (method, self.ntime))
 
     def calcOld(self,spec,method='hs'):
         startTime = time.time()
         self.old = self.calcOldTs(spec,method=method)
         self.otime = time.time() - startTime
-        print ('%s: pymo: %s' % (method, self.otime))
+        print ('%s: pymo: \t\t %s' % (method, self.otime))
 
-    def check_method(self,method):
+    def check_method(self, method):
         print("\nChecking %s:" % method)
         self.calcOld(self.specold,method=method)
         self.calcNew(self.specnew[SPECNAME].spec,method=method)
-        print ('x times improvement: %s' % (self.otime/self.ntime))
+        print ('x times improvement: \t%s' % (self.otime/self.ntime))
         assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
         # self.plot()
         # plt.title(method)
@@ -74,6 +75,18 @@ class TestSpec(unittest.TestCase):
 
     def test_dspr(self):
         self.check_method('dspr')
+
+    def test_dm(self):
+        self.check_method('dm')
+
+    def test_dpm(self):
+        self.check_method('dpm')
+
+    def test_tm01(self):
+        self.check_method('tm01')
+
+    def test_tm02(self):
+        self.check_method('tm02')
 
 #    def test_sea(self,split=9.):
 #        startTime = time.time()
@@ -110,6 +123,35 @@ class TestSpec(unittest.TestCase):
         for sitei in self.sites:
         #for sitei in [self.sites[0]]:
             data = []
+            lat.append(sitei.x)
+            lon.append(sitei.y)
+            for i,S in enumerate(spec.readall()):
+                data.append(getattr(S,method)())
+
+            darrays.append(data)
+        time = self.specold.times 
+        return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)]).transpose()
+
+class TestSpecWW3Native(TestSpecSwan):
+
+    def setUp(self):
+        print("\n === Testing WW3 native: 1 month, 27 sites  ===")
+        testfile = './snative20141201T00Z_spec.nc'
+        self.startTime = time.time()
+        # New spectra
+        startTime = time.time()
+        self.specnew = read_spec_ww3_native(testfile)
+        # Old spectra
+        self.specold=WW3NCSpecFile(testfile)
+        self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
+
+    def calcOldTs(self,spec,method):
+        darrays = []
+        lat = []
+        lon = []
+        for sitei in self.sites:
+        #for sitei in [self.sites[0]]:
+            data = []
             time = []
             self.sito=spec.defSites(sitei)
             lat.append(sitei.x)
@@ -119,6 +161,19 @@ class TestSpec(unittest.TestCase):
                 data.append(getattr(S,method)())
             darrays.append(data)
         return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)]).transpose()
+
+class TestSpecWW3MSL(TestSpecWW3Native):
+
+    def setUp(self):
+        print("\n === Testing WW3 MSL (over network): 1 month, 6657 sites  ===")
+        testfile = '/wave/med/ww3_0.1_st4/s19790401_00z.nc'
+        self.startTime = time.time()
+        # New spectra
+        startTime = time.time()
+        self.specnew = read_spec_ww3_msl(testfile)
+        # Old spectra
+        self.specold=WW3NCSpecFile(testfile)
+        self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
 
 if __name__ == '__main__':
     unittest.main()
