@@ -115,11 +115,11 @@ def read_spec_swan(filename, dirorder=True):
 if __name__ == '__main__':
     # Reading native WW3 spectra, do not subchunk it
     filename = './tests/snative20141201T00Z_spec.nc'
-    dset_msl = read_spec_ww3_native(filename)
+    dset_native = read_spec_ww3_native(filename)
 
     # Reading MSL WW3 spectra, use small chunk size for site
     filename = '/wave/global/ww3_0.5_tc/s20000101_00z.nc'
-    dset_native = read_spec_ww3_native(filename, chunks={site: 10})
+    dset_msl = read_spec_ww3_msl(filename, chunks={'site': 10})
 
     # Reading SWAN hotfile into a regular grid
     filename = './tests/antf0.20170208_06z.hot-001'
