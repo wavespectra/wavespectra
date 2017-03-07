@@ -1,1 +1,4 @@
-xray >= 0.7
+xarray >= 0.9
+dask
+toolz
+cloudpickle
