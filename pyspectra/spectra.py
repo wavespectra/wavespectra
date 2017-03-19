@@ -23,8 +23,20 @@ D2R = np.pi/180.
 R2D = 180./np.pi
 _ = np.newaxis
 
+#Add all the export functions at class creation time
+class ExportPlugin(type):
+    def __new__(cls,name,bases,dct):
+        import exports
+        for name in dir(exports):
+            function = getattr(exports,name)
+            if 'to_' not in function:continue
+            if isinstance(function, types.FunctionType):
+                dct[function.__name__] = function
+        return type.__new__(cls, name, bases, dct)
+
 @xr.register_dataarray_accessor('spec')
-class NewSpecArray(object):
+class SpecArray(object):
+    __metaclass__ = ExportPlugin
     def __init__(self, xarray_obj, dim_map=None):
         
         # # Rename spectra coordinates if not 'freq' and/or 'dir'
