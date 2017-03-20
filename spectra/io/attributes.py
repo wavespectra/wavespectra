@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 SPECNAME = 'efth'
 TIMENAME = 'time'
 SITENAME = 'site'
