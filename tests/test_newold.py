@@ -1,25 +1,24 @@
+#This is to test that new and old parameter functions match 
+
 import logging
 import unittest
 import time
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-import sys
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+import sys
+import os
+sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 
 # New imports
 import xarray as xr
-from pyspectra.spectra import NewSpecArray
-from pyspectra.iospec import read_spec_ww3_native, SPECNAME, read_spec_swan, read_spec_ww3_msl
+from spectra import SpecArray
+from spectra.io import read_ww3, read_swan, read_ww3_msl
 
 # Old imports
 from pymo.data.spectra_new import WW3NCSpecFile, SwanSpecFile
 from pymo.core.basetype import Site
-
-# testfile = '/home/tdurrant/Downloads/shell_spec_test.nc'
-#testfile = '/home/tdurrant/Documents/projects/shell/code/old/shell_spec_test.nc'
 
 D2R=np.pi/180.
 
@@ -31,12 +30,12 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
 class TestSpecSwan(unittest.TestCase):
 
     def setUp(self):
-        print("\n === Testing SWAN: 7 days, 1 site  ===")
-        testfile = './prelud0.spec'
+        print("\n === Testing SWAN  ===")
+        testfile = './prelud.spec'
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
-        self.specnew = read_spec_swan(testfile)
+        self.specnew = read_swan(testfile)
         # Old spectra
         self.specold=SwanSpecFile(testfile)
         self.sites = self.specold.locations
@@ -49,7 +48,7 @@ class TestSpecSwan(unittest.TestCase):
         startTime = time.time()
         self.new = getattr(spec,method)()
         self.ntime = time.time() - startTime
-        print ('%s: pymsl: \t\t %s' % (method, self.ntime))
+        print ('%s: pyspectra: \t\t %s' % (method, self.ntime))
 
     def calcOld(self,spec,method='hs'):
         startTime = time.time()
@@ -60,7 +59,7 @@ class TestSpecSwan(unittest.TestCase):
     def check_method(self, method):
         print("\nChecking %s:" % method)
         self.calcOld(self.specold,method=method)
-        self.calcNew(self.specnew[SPECNAME].spec,method=method)
+        self.calcNew(self.specnew,method=method)
         print ('x times improvement: \t%s' % (self.otime/self.ntime))
         assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
         # self.plot()
@@ -135,12 +134,12 @@ class TestSpecSwan(unittest.TestCase):
 class TestSpecWW3Native(TestSpecSwan):
 
     def setUp(self):
-        print("\n === Testing WW3 native: 1 month, 27 sites  ===")
+        print("\n === Testing WW3 native ===")
         testfile = './snative20141201T00Z_spec.nc'
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
-        self.specnew = read_spec_ww3_native(testfile)
+        self.specnew = read_ww3(testfile)
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
@@ -165,12 +164,12 @@ class TestSpecWW3Native(TestSpecSwan):
 class TestSpecWW3MSL(TestSpecWW3Native):
 
     def setUp(self):
-        print("\n === Testing WW3 MSL (over network): 1 month, 6657 sites  ===")
-        testfile = '/wave/med/ww3_0.1_st4/s19790401_00z.nc'
+        print("\n === Testing WW3 MSL  ===")
+        testfile = './med20170319_12z.nc'
         self.startTime = time.time()
         # New spectra
         startTime = time.time()
-        self.specnew = read_spec_ww3_msl(testfile)
+        self.specnew = read_ww3_msl(testfile)
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]

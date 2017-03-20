@@ -12,6 +12,8 @@ from collections import OrderedDict
 from datetime import datetime
 import numpy as np
 import xarray as xr
+import types
+import copy
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
@@ -23,20 +25,8 @@ D2R = np.pi/180.
 R2D = 180./np.pi
 _ = np.newaxis
 
-#Add all the export functions at class creation time
-class ExportPlugin(type):
-    def __new__(cls,name,bases,dct):
-        import exports
-        for name in dir(exports):
-            function = getattr(exports,name)
-            if 'to_' not in function:continue
-            if isinstance(function, types.FunctionType):
-                dct[function.__name__] = function
-        return type.__new__(cls, name, bases, dct)
-
 @xr.register_dataarray_accessor('spec')
 class SpecArray(object):
-    __metaclass__ = ExportPlugin
     def __init__(self, xarray_obj, dim_map=None):
         
         # # Rename spectra coordinates if not 'freq' and/or 'dir'
@@ -382,6 +372,33 @@ class SpecArray(object):
     #         if len(swell) > 1:
     #             swell.sort(key=lambda spec: spec._hsig, reverse=True)
     #     return [sea] + swell
+
+#Add all the export functions at class creation time
+#Also add wrapper functions for all the SpecArray methods
+class DatasetPlugin(type):
+    def __new__(cls,name,bases,dct):
+        import io
+        for fname in dir(io):
+            if 'to_' not in fname:continue
+            function = getattr(io,fname)
+            if isinstance(function, types.FunctionType):
+                dct[function.__name__] = function
+        return type.__new__(cls, name, bases, dct)
+        
+
+#This just provides a wrapper around the xarray dataset 
+class SpecDataset(object):
+    __metaclass__ = DatasetPlugin
+    def __init__(self, xarray_dset):
+        self.dset=xarray_dset
+        
+    def __repr__(self):
+        return 'Spectral Dataset wrapper'+str(self.dset)
+    
+    def __getattr__(self,fn):
+        if fn in dir(SpecArray) and (fn[0]!='_'):
+            return getattr(self.dset['efth'].spec,fn)
+            
 
 if __name__ == '__main__':
     pass
