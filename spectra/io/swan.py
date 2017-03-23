@@ -1,8 +1,11 @@
 import datetime
 import xarray as xr
 import numpy as np
+from pandas import to_datetime
 from attributes import *
 
+class Error(Exception):
+    pass
   
 class SwanSpecFile(object):
     def __init__(self,filename,freqs=None,dirs=None,x=None,y=None,time=False,id='Swan Spectrum',dirorder=False,append=False):
@@ -10,14 +13,15 @@ class SwanSpecFile(object):
         self.filename=filename
         self.buf=None
         try:
-            if freqs:#Writable file
+            if freqs is not None:#Writable file
                 self.freqs=np.array(freqs)
                 self.dirs=np.array(dirs)
                 self.x=np.array(x)
                 self.y=np.array(y)
                 if time:self.times=[]
-                self.f=open('w')
-                self.f.write(self.fileHeader(locations,time,id))
+                self.f=open(filename,'w')
+                self.writeHeader(time,id)
+                self.fmt=len(self.dirs)*'%4d '
             else:
                 self.f=open(filename,'r+' if append else 'r')
                 header=self._readhdr('SWAN')
@@ -39,8 +43,8 @@ class SwanSpecFile(object):
                 self._readhdr('QUANT',True)
                 self.f.readline()
                 self.f.readline()
-        except exp:
-            raise 'File error with %s [%s]' % (filename,exp)
+        except Error as e:
+            raise 'File error with %s [%s]' % (filename,e)
         if dirorder:
             self.dirmap=list(numpy.argsort(self.dirs % 360.))
             self.dirs=self.dirs[self.dirmap] % 360.
@@ -120,7 +124,7 @@ class SwanSpecFile(object):
     def writeHeader(self,time=False,str1='',str2=''):
         strout='SWAN   1\n$   '+str1+'\n$   '+str2+'\n'
         if (time):strout+='TIME\n1\n'
-        np=len(xyloc)
+        np=len(self.x)
         strout+='LONLAT\n'+str(np)+'\n'
         for i,loc in enumerate(self.x):
             strout+='%f %f\n' % (loc,self.y[i])
@@ -133,17 +137,19 @@ class SwanSpecFile(object):
         strout+='QUANT\n1\nVaDens\nm2/Hz/degr\n-99\tException value\n'
         self.f.write(strout)
     
-    def writeSpectum(self,S,time=None):
-        if time:
-            self.times.append(time)
-        if not isinstance(S,list):S=[S]
-        if len(S)<>len(self.locations):raise ValueError('Number of spectra must equal number of locations')
-        for spec in S:
-            if not spec:
-                self.f.write('NODATA\n')
+    def writeSpectra(self,specarray):
+        for S in specarray:
+            fac = S.max()/9998.
+            if fac==np.nan:
+                strout='NODATA\n'
+            elif fac<=0:
+                strout='ZERO\n'
             else:
-                if not isinstance(spec,SwanSpectrum):spec=SwanSpectrum(spec.freqs,spec.dirs,spec.S)
-                self.f.write(spec.fileRecord())
+                strout='FACTOR\n'+str(fac)+'\n'
+                for row in S:
+                    strout+=(self.fmt % tuple(row/fac)) + '\n'
+            self.f.write(strout)
+            
             
     def readSpectrum(self):
         if self.S.any():
@@ -163,10 +169,17 @@ class SwanSpecFile(object):
         
     
 def to_swan(self,filename,id='Swan Spectrum',append=False):
-    f=SwanSpecFile(filename,freqs=self.freq,dirs=self.dir,locations=locations,append=append)
-    for t in self.times:
-        f.write()
-    f.close()
+    if 'site' in self.dset.dims:
+        xx=self.lon
+        yy=self.lat
+    else:
+        xx=self.lon
+        yy=self.lat
+    sfile=SwanSpecFile(filename,freqs=self.freq,time=True,dirs=self.dir,x=self.lon,y=self.lat,id=id,append=append)
+    for i,t in enumerate(self.time):
+        sfile.f.write(to_datetime(t.values).strftime('%Y%m%d.%H%M%S\n'))
+        sfile.writeSpectra(self.dset['efth'].sel(time=t).values.reshape(-1,len(self.freq),len(self.dir)))
+    sfile.close()
             
                 
 def read_swan(filename, dirorder=True):
@@ -198,8 +211,9 @@ def read_swan(filename, dirorder=True):
             ).to_dataset()
     else:
         # Keep it with sites dimension
+        arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
         dset = xr.DataArray(
-            data=np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs)),
+            arr,
             coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
             name=SPECNAME,

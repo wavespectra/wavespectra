@@ -398,6 +398,9 @@ class SpecDataset(object):
     def __getattr__(self,fn):
         if fn in dir(SpecArray) and (fn[0]!='_'):
             return getattr(self.dset['efth'].spec,fn)
+        else:
+            return getattr(self.dset,fn)
+    
             
 
 if __name__ == '__main__':
