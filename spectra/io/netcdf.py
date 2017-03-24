@@ -15,9 +15,9 @@ def read_netcdf(filename_or_fileglob, chunks={}):
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
-    dset[SPECNAME].attrs = SPECATTRS
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
+    set_spec_attributes(dset)
     return SpecArray(dset)
 
-def to_netcdf(filename):
-    raise NotImplementedError('Cannot write to native WW3 format')
+# def to_netcdf(filename):
+#     raise NotImplementedError('Cannot write to native WW3 format')
