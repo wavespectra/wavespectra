@@ -14,7 +14,8 @@ def read_ww3(filename_or_fileglob, chunks={}):
     - dset :: Dataset with spec accessor class attached to spectra DataArray
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
+    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
+        'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     set_spec_attributes(dset)
     return dset
