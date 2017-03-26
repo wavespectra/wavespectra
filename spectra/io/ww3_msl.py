@@ -1,5 +1,6 @@
 import xarray as xr
-from attributes import *
+from spectra.specarray import SpecArray
+from spectra.io.attributes import *
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
     from spectra import SpecArray
@@ -15,9 +16,9 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'freq': FREQNAME, 'dir': DIRNAME}, inplace=True)#, 'SITE': SITENAME})
     dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
-    dset[SPECNAME].attrs = SPECATTRS
     dset = dset.drop(['specden','factor', 'df'])
-    return SpecArray(dset)
+    set_spec_attributes(dset)
+    return dset
 
 def to_ww3_msl(filename):
     raise NotImplementedError('Cannot write to native WW3 format')
