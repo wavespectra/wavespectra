@@ -1,9 +1,9 @@
 import xarray as xr
 import numpy as np
-from attributes import *
+from spectra.specarray import SpecArray
+from spectra.io.attributes import *
 
 def read_ww3(filename_or_fileglob, chunks={}):
-    from spectra import SpecArray
     """
     Read Spectra off WW3 in native netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
@@ -14,10 +14,11 @@ def read_ww3(filename_or_fileglob, chunks={}):
     - dset :: Dataset with spec accessor class attached to spectra DataArray
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
-    dset[SPECNAME].attrs = SPECATTRS
+    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
+        'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
-    return SpecArray(dset)
+    set_spec_attributes(dset)
+    return dset
 
 def to_ww3(filename):
     raise NotImplementedError('Cannot write to native WW3 format')
