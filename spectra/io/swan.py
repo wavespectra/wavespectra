@@ -46,7 +46,7 @@ class SwanSpecFile(object):
         except Error as e:
             raise 'File error with %s [%s]' % (filename,e)
         if dirorder:
-            self.dirmap=list(numpy.argsort(self.dirs % 360.))
+            self.dirmap=list(np.argsort(self.dirs % 360.))
             self.dirs=self.dirs[self.dirmap] % 360.
         else:
             self.dirmap=False
@@ -191,7 +191,7 @@ def read_swan(filename, dirorder=True):
     """
     from spectra import SpecDataset
 
-    swanfile=SwanSpecFile(filename)
+    swanfile=SwanSpecFile(filename, dirorder=dirorder)
     times=swanfile.times
     lons=swanfile.x
     lats=swanfile.y
