@@ -1,4 +1,5 @@
 #Generic netcdf in/output
+
 import xarray as xr
 from attributes import *
 
@@ -10,7 +11,6 @@ def read_netcdf(filename_or_fileglob,
                 specname=SPECNAME,
                 lonname=LONNAME,
                 latname=LATNAME):
-    from spectra import SpecDataset
     """
     Read Spectra off generic netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
@@ -22,15 +22,33 @@ def read_netcdf(filename_or_fileglob,
     -----
     Note that this current assumes frequency as Hz, direction as degrees and spectral energy as m^2s
     """
+    from spectra import SpecDataset
+
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     if sitename in dset.dims: #Sites based
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, sitename: SITENAME, specname: SPECNAME}, inplace=True)
     else: #Gridded
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, lonname: LONNAME, latname: LATNAME, specname: SPECNAME}, inplace=True)
-    dset[SPECNAME].attrs = SPECATTRS
     set_spec_attributes(dset)
     return SpecDataset(dset)
 
-
-# def to_netcdf(filename):
-#     pass
+def to_netcdf(self, filename,
+              specname='efth',
+              ncformat='NETCDF4_CLASSIC',
+              compress=True,
+              time_encoding={'units': 'days since 1900-01-01'}):
+    """
+    Preset parameters before calling xarray's native to_netcdf method
+    - specname :: name of spectra variable in dataset
+    - ncformat :: netcdf format for output, see options in native to_netcdf method
+    - compress :: if True output is compressed, has no effect for NETCDF3
+    - time_encoding :: force standard time units in output files
+    """
+    other = self.copy(deep=True)
+    encoding = {}
+    if compress:
+        for ncvar in other.data_vars:
+            encoding.update({ncvar: {'zlib': True}})
+    if 'time' in other:
+        other.time.encoding.update(time_encoding)
+    other.to_netcdf(filename, format=ncformat, encoding=encoding)
