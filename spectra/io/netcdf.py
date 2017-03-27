@@ -28,8 +28,9 @@ def read_netcdf(filename_or_fileglob,
     else: #Gridded
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, lonname: LONNAME, latname: LATNAME, specname: SPECNAME}, inplace=True)
     dset[SPECNAME].attrs = SPECATTRS
+    set_spec_attributes(dset)
     return SpecDataset(dset)
 
-#xarray already provides this
-#def to_nc(filename):
-#    raise NotImplementedError('Cannot write to native WW3 format')
+
+# def to_netcdf(filename):
+#     pass

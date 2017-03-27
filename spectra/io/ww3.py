@@ -1,6 +1,7 @@
 import xarray as xr
 import numpy as np
-from attributes import *
+from spectra.specarray import SpecArray
+from spectra.io.attributes import *
 
 def read_ww3(filename_or_fileglob, chunks={}):
     from spectra import SpecDataset
@@ -14,10 +15,11 @@ def read_ww3(filename_or_fileglob, chunks={}):
     - dset :: SpecDataset instance
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME}, inplace=True)
-    dset[SPECNAME].attrs = SPECATTRS
+    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
+        'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
-    return SpecDataset(dset)
+    set_spec_attributes(dset)
+    return return SpecDataset(dset)
 
 def to_ww3(filename):
     raise NotImplementedError('Cannot write to native WW3 format')
