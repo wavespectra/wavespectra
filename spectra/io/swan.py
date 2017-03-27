@@ -200,14 +200,13 @@ def read_swan(filename, dirorder=True):
     
     spec_list=swanfile.readall()
     if swanfile.is_grid:
-# Looks like gridded data, grid DataArray accordingly
+        # Looks like gridded data, grid DataArray accordingly
         arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
         dset = xr.DataArray(
             data=np.swapaxes(arr, 1, 2),
             coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
-            attrs=SPECATTRS,
             ).to_dataset()
     else:
         # Keep it with sites dimension
@@ -217,10 +216,10 @@ def read_swan(filename, dirorder=True):
             coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
             name=SPECNAME,
-            attrs=SPECATTRS,
         ).to_dataset()
         dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
         dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
+    set_spec_attributes(dset)
     return SpecDataset(dset)
 
     
