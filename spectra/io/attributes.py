@@ -9,5 +9,5 @@ FREQNAME = 'freq'
 DIRNAME = 'dir'
 SPECATTRS = OrderedDict((
     ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
-    ('units', 'm2s')
+    ('units', 'm2sdeg^-1')
     ))
