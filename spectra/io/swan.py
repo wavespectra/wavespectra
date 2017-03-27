@@ -183,13 +183,14 @@ def to_swan(self,filename,id='Swan Spectrum',append=False):
             
                 
 def read_swan(filename, dirorder=True):
-    from spectra import SpecDataset
     """
     Read Spectra off SWAN ASCII file
     - dirorder :: If True reorder spectra read from file so that directions are sorted
     Returns:
     - dset :: SpecArray
     """
+    from spectra import SpecDataset
+
     swanfile=SwanSpecFile(filename)
     times=swanfile.times
     lons=swanfile.x

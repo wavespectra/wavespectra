@@ -19,7 +19,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
         'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     set_spec_attributes(dset)
-    return return SpecDataset(dset)
+    return SpecDataset(dset)
 
 def to_ww3(filename):
     raise NotImplementedError('Cannot write to native WW3 format')
