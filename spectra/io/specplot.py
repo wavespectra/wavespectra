@@ -35,7 +35,7 @@ def plot_watershed(darray, outfile=None, cmap='Accent', figsize=(15,10)):
     ax.plot_surface(xx, yy, darray, rstride=1, cstride=1, facecolors=fcolors, vmin=vmin, vmax=vmax, shade=False)
     ax.set_xlabel(r'Direction ($degree$)')
     ax.set_ylabel(r'Frequency ($Hz$)')
-    ax.set_zlabel(r'Energy density $(m^2/s^{-1}degree^{-1})$') #(m2/Hz/deg)')
+    ax.set_zlabel(r'Energy density ($m^2/s^{-1}degree^{-1}$)') #(m2/Hz/deg)')
     ax.set_zlim((0, darray.values.max()))
 
     # Setting colorbar
