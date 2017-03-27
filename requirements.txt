@@ -2,3 +2,4 @@ xarray >= 0.9
 dask
 toolz
 cloudpickle
+cfjson

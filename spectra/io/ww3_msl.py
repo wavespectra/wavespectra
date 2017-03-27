@@ -2,7 +2,7 @@ import xarray as xr
 from attributes import *
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
-    from spectra import SpecArray
+    from spectra import SpecDataset
     """
     Read Spectra off WW3 in MSL netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
@@ -10,7 +10,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
                 By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'site']
     Returns:
-    - dset :: Dataset with spec accessor class attached to spectra DataArray
+    - dset :: SpecDataset instance
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'freq': FREQNAME, 'dir': DIRNAME}, inplace=True)#, 'SITE': SITENAME})
