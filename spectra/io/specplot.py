@@ -44,9 +44,9 @@ def plot_watershed(darray, outfile=None, cmap='Accent', figsize=(15,10), wirefra
     # Setting colorbar
     cbar = plt.colorbar(m)
     cbar.ax.get_yaxis().set_ticks([])
-    for j, lab in enumerate(['$0$','$1$','$2$','$3$']):
-        cbar.ax.text(.5, (2 * j + 1) / 8.0, lab, ha='center', va='center')
-    cbar.ax.get_yaxis().labelpad = 15
+    for j, lab in enumerate(['$%i$'%(n) for n in range(nparts)]):
+        cbar.ax.text(.5, (2 * j + 1) / float(2*nparts), lab, ha='center', va='center')
+    cbar.ax.get_yaxis().labelpad = 20
     cbar.ax.set_ylabel('Partition number', rotation=270)
 
     if outfile is not None:
