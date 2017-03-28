@@ -10,7 +10,7 @@ DIRNAME = 'dir'
 ATTRS = {
     SPECNAME: OrderedDict((
         ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
-        ('units', 'm2s')
+        ('units', 'm^2sdeg^-1')
         )),
     TIMENAME: OrderedDict((
         ('standard_name', 'time'),
