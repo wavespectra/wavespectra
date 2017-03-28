@@ -383,6 +383,17 @@ class SpecArray(object):
         else:
             return 1.56 / self.freq
 
+    def wavelen(self, depth=False):
+        """
+        Wave length
+        Deep water approximation is returned if depth=None
+        """
+        if depth:
+            ang_freq = 2 * np.pi * self.freq
+            return 2 * np.pi / wavenuma(ang_freq, depth)
+        else:
+            return 1.56 / self.freq**2
+
     def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001):
         """
         Watershed partition
