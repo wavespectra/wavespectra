@@ -351,10 +351,9 @@ class SpecArray(object):
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
-    def shape(self, fdspec, dfres=0.01, fmin=0.05):
+    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
         """
-        Copied from pymo, required by partition
-        Finds peaks and throghs in smoothed frequency spectra
+        Finds points of inflection in smoothed frequency spectra
         - fdspec :: freq-dir 2D specarray
         - dfres :: used to determine length of smoothing window
         - fmin :: minimum frequency for looking for minima/maxima
@@ -397,7 +396,6 @@ class SpecArray(object):
         assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, (
             'partition requires E(freq,dir) but freq|dir dimensions were not found in %s' % (self._obj.dims))
         from pymo.core.specpart import specpart
-        from pymo.core.wavespec import Spectrum
 
         # Slice each possible 2D, freq-dir array out of the full data array
         slice_dims = list(set(self._obj.dims).difference(('freq', 'dir')))
@@ -411,15 +409,12 @@ class SpecArray(object):
             swell = list()
             # Assign new partitions if multiple peaks and satisfying some conditions
             for part in range(1, nparts+1):
-                # Masking spectrum to keep only current partition
-                stmp = spectrum.where(part_array==part).fillna(0.)
-                # Find spectral peak and valley
-                imax, imin = self.shape(stmp, dfres=0.01, fmin=0.05)
+                stmp = spectrum.where(part_array==part).fillna(0.) # Current partition only
+                imax, imin = self._inflection(stmp, dfres=0.01, fmin=0.05)
+                # Split partition if more than one valley and condition is satidfied
                 if len(imin) > 0:
-                    # Mask if more than one valley
                     stmp.values[imin[0]:, :] = 0
                     newpart = stmp.values > 0
-                    # If more than 20 points after first minima, increment nparts assign points to that
                     if newpart.sum() > 20:
                         nparts += 1;
                         part_array[newpart] = nparts
