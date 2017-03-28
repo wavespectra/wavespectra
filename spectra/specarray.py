@@ -14,6 +14,7 @@ import numpy as np
 import xarray as xr
 import types
 import copy
+from itertools import product
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
@@ -111,6 +112,18 @@ class SpecArray(object):
         #     return ipeak[-1]
         # else:
         #     return None
+
+    def _product(self, dict_of_ids):
+        """
+        Dot product of a dictionary of ids used to construct arbitrary slicing dictionaries
+        e.g.:
+            Input dictionary :: {'site': [0,1], 'time': [0,1]}
+            Output iterator :: {'site': 0, 'time': 0}
+                               {'site': 0, 'time': 1}
+                               {'site': 1, 'time': 0}
+                               {'site': 1, 'time': 1}
+        """
+        return (dict(zip(dict_of_ids, x)) for x in product(*dict_of_ids.itervalues()))
 
     def sort(self, darray, dims, inplace=False):
         """
@@ -338,44 +351,99 @@ class SpecArray(object):
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
-    # def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333):
-    #     """
-    #     Watershed partition
-    #     - wsp :: Wind speed
-    #     - wdir :: Wind direction in coming from convention
-    #     - dep :: Water depth
-    #     """
-    #     import pymo.core.specpart
-    #     ipart = pymo.core.specpart.specpart.partition(self.S)
-    #     npart = ipart.max()
-    #     sea = Spectrum(self.freqs, self.dirs)
-    #     swell = []
-    #     for np in range(1, npart+1):
-    #         stmp = Spectrum(self.freqs, self.dirs, numpy.where(ipart==np, self.S,0.))
-    #         imax, imin = stmp.shape(0.01,0.05);
-    #         if len(imin) > 0:
-    #             stmp.S[imin[0]:,:] = 0
-    #             newpart = (stmp.S>0)
-    #             if newpart.sum() > 20:
-    #                 npart = npart+1;
-    #                 ipart[newpart] = npart
-    #     for np in range(1, npart+1):
-    #         stmp = Spectrum(self.freqs, self.dirs, numpy.where(ipart==np,s elf.S, 0.))
-    #         Up = agefac * wsp * numpy.cos(d2r*(self.dirs-wdir))
-    #         W = stmp.S[numpy.tile(Up,(len(self.freqs),1)) > numpy.tile(self.C(dep)[:,numpy.newaxis],(1,len(self.dirs)))].sum()/stmp.S.sum()
-    #         if W > wscut:
-    #             sea += stmp
-    #         else:
-    #             stmp._hsig = stmp.hs()
-    #             if stmp._hsig > 0.001:
-    #                 swell.append(stmp)
-    #         if len(swell) > 1:
-    #             swell.sort(key=lambda spec: spec._hsig, reverse=True)
-    #     return [sea] + swell
+    def shape(self, fdspec, dfres=0.01, fmin=0.05):
+        """
+        Copied from pymo, required by partition
+        Finds peaks and throghs in smoothed frequency spectra
+        - fdspec :: freq-dir 2D specarray
+        - dfres :: used to determine length of smoothing window
+        - fmin :: minimum frequency for looking for minima/maxima
+        """
+        if len(self.freq) > 1:
+            sf = fdspec.sum(dim='dir')
+            nsmooth = int(dfres / self.df[0]) # Window size
+            if nsmooth > 1:
+                sf.values = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
+            sf[(sf<0) | (self.freq<fmin)] = 0
+            diff = sf.diff(dim='freq')
+            imax = np.argwhere((np.sign(diff).diff(dim='freq') == -2).values) + 1
+            imin = np.argwhere((np.sign(diff).diff(dim='freq') == 2).values) + 1
+        else:
+            imax = 0
+            imin = 0
+        return imax, imin
 
-#Add all the export functions at class creation time
-#Also add wrapper functions for all the SpecArray methods
+    def celerity(self, depth=False):
+        """
+        Wave celerity
+        Deep water approximation is returned if depth=None
+        """
+        if depth:
+            ang_freq = 2 * np.pi * self.freq
+            return ang_freq / wavenuma(ang_freq, depth)
+        else:
+            return 1.56 / self.freq
+
+    def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001):
+        """
+        Watershed partition
+        - wsp :: Wind speed (m/s)
+        - wdir :: Wind direction (degree) coming from convention
+        - dep :: Water depth (m)
+        - hs_min :: minimum Hs for assigning swell partition
+
+        TODO: Return output as data array objects. Need thinking how this is going to look like. List of data arrays?
+        """
+        assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, (
+            'partition requires E(freq,dir) but freq|dir dimensions were not found in %s' % (self._obj.dims))
+        from pymo.core.specpart import specpart
+        from pymo.core.wavespec import Spectrum
+
+        # Slice each possible 2D, freq-dir array out of the full data array
+        slice_dims = list(set(self._obj.dims).difference(('freq', 'dir')))
+        slice_ids = {dim: range(self._obj[dim].size) for dim in slice_dims}
+        for slice_dict in self._product(slice_ids):
+            spectrum  = self._obj.isel(**slice_dict)
+            part_array = specpart.partition(spectrum)
+            nparts = part_array.max()
+            
+            sea = 0 * spectrum
+            swell = list()
+            # Assign new partitions if multiple peaks and satisfying some conditions
+            for part in range(1, nparts+1):
+                # Masking spectrum to keep only current partition
+                stmp = spectrum.where(part_array==part).fillna(0.)
+                # Find spectral peak and valley
+                imax, imin = self.shape(stmp, dfres=0.01, fmin=0.05)
+                if len(imin) > 0:
+                    # Mask if more than one valley
+                    stmp.values[imin[0]:, :] = 0
+                    newpart = stmp.values > 0
+                    # If more than 20 points after first minima, increment nparts assign points to that
+                    if newpart.sum() > 20:
+                        nparts += 1;
+                        part_array[newpart] = nparts
+
+            # Assign sea and swell partitions based on wind and wave properties
+            for part in range(1, nparts+1):
+                stmp = spectrum.where(part_array==part).fillna(0.)
+                Up = agefac * wsp * np.cos(D2R*(self.dir - wdir))
+                W = stmp.values[np.tile(Up.values, (len(self.freq), 1)) > \
+                    np.tile(self.celerity(dep).values[:,_], (1, len(self.dir)))].sum() / stmp.values.sum()
+                if W > wscut:
+                    sea += stmp
+                else:
+                    if stmp.spec.hs() > hs_min: # Calculating hs twice.. we may want to optimise this..
+                        swell.append(stmp)
+            if len(swell) > 1:
+                swell.sort(key=lambda x: x.spec.hs(), reverse=True)
+            return [sea] + swell
+
 class DatasetPlugin(type):
+    """
+    Add all the export functions at class creation time
+    Also add wrapper functions for all the SpecArray methods
+    """
     def __new__(cls,name,bases,dct):
         import io
         for fname in dir(io):
@@ -385,9 +453,10 @@ class DatasetPlugin(type):
                 dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
         
-
-#This just provides a wrapper around the xarray dataset 
 class SpecDataset(object):
+    """
+    Provides a wrapper around the xarray dataset 
+    """
     __metaclass__ = DatasetPlugin
     def __init__(self, xarray_dset):
         self.dset=xarray_dset
@@ -401,7 +470,19 @@ class SpecDataset(object):
         else:
             return getattr(self.dset,fn)
     
-            
+def wavenuma(ang_freq, water_depth):
+    """
+    Chen and Thomson wavenumber approximation
+    """
+    k0h = 0.10194 * ang_freq * ang_freq * water_depth
+    D = [0,0.6522,0.4622,0,0.0864,0.0675]
+    a = 1.0
+    for i in range(1, 6):
+        a += D[i] * k0h**i
+    return (k0h * (1 + 1./(k0h*a))**0.5) / water_depth        
 
 if __name__ == '__main__':
-    pass
+    from spectra.io.swan import read_swan
+    ds = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn', dirorder=True)
+    parts = ds.partition(5, 180, 50)
+
