@@ -129,6 +129,27 @@ class SpecArray(object):
         """
         return (dict(zip(dict_of_ids, x)) for x in product(*dict_of_ids.itervalues()))
 
+    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
+        """
+        Finds points of inflection in smoothed frequency spectra
+        - fdspec :: freq-dir 2D specarray
+        - dfres :: used to determine length of smoothing window
+        - fmin :: minimum frequency for looking for minima/maxima
+        """
+        if len(self.freq) > 1:
+            sf = fdspec.sum(axis=1)
+            nsmooth = int(dfres / self.df[0]) # Window size
+            if nsmooth > 1:
+                sf = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
+            sf[(sf<0) | (self.freq.values<fmin)] = 0
+            diff = np.diff(sf)
+            imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
+            imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
+        else:
+            imax = 0
+            imin = 0
+        return imax, imin
+
     def _same_dims(self, other):
         """
         True if other has same non-spectral dimensions
@@ -361,28 +382,6 @@ class SpecArray(object):
         sw = (self.momf(0).sum(dim='dir') * self.momf(2).sum(dim='dir') / self.momf(1).sum(dim='dir')**2 - 1.0)**0.5
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
-
-    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
-        """
-        Finds points of inflection in smoothed frequency spectra
-        - fdspec :: freq-dir 2D specarray
-        - dfres :: used to determine length of smoothing window
-        - fmin :: minimum frequency for looking for minima/maxima
-        """
-        if len(self.freq) > 1:
-            sf = fdspec.sum(axis=1)
-            nsmooth = int(dfres / self.df[0]) # Window size
-            if nsmooth > 1:
-                sf = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
-            sf[(sf<0) | (self.freq.values<fmin)] = 0
-            diff = np.diff(sf)
-            imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
-            imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
-        else:
-            imax = 0
-            imin = 0
-        return locals(), imin
-        # return imax, imin
 
     def celerity(self, depth=False, freq=None):
         """
