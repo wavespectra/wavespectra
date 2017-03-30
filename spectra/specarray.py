@@ -16,6 +16,8 @@ import types
 import copy
 from itertools import product
 
+import spectra.io
+
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
@@ -468,7 +470,7 @@ class SpecArray(object):
                     if newpart.sum() > 20:
                         nparts += 1;
                         part_array[newpart] = nparts
-
+                
             # Extend partitions list if any extra one has been detected (+1 because of sea)
             if len(all_parts) < nparts+1:
                 for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
@@ -477,6 +479,7 @@ class SpecArray(object):
             # Assign sea and swells partitions based on wind and wave properties
             sea = 0 * spectrum
             swells = list()
+            hs_swell = list()
             Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
             for part in range(1, nparts+1):
                 part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
@@ -485,9 +488,12 @@ class SpecArray(object):
                 if W > wscut:
                     sea += part_spec
                 else:
-                    swells.append(part_spec)
+                    _hs = hs(part_spec, freqs, dirs)
+                    if _hs > hs_min:
+                        swells.append(part_spec)
+                        hs_swell.append(_hs)
             if len(swells) > 1:
-                swells.sort(key=lambda x: hs(x, freqs, dirs), reverse=True)
+                swells = [x for (y,x) in sorted(zip(hs_swell, swells), reverse=True)]
 
             # Updating partition SpecArrays for current slice
             all_parts[0][slice_dict] = sea
@@ -508,11 +514,11 @@ class DatasetPlugin(type):
     Add all the export functions at class creation time
     Also add wrapper functions for all the SpecArray methods
     """
-    def __new__(cls,name,bases,dct):
-        import io
-        for fname in dir(io):
-            if 'to_' not in fname:continue
-            function = getattr(io,fname)
+    def __new__(cls, name, bases, dct):
+        for fname in dir(spectra.io):
+            if 'to_' not in fname:
+                continue
+            function = getattr(spectra.io, fname)
             if isinstance(function, types.FunctionType):
                 dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
@@ -523,16 +529,16 @@ class SpecDataset(object):
     """
     __metaclass__ = DatasetPlugin
     def __init__(self, xarray_dset):
-        self.dset=xarray_dset
+        self.dset = xarray_dset
         
     def __repr__(self):
-        return 'Spectral Dataset wrapper'+str(self.dset)
+        return 'Spectral Dataset wrapper' + str(self.dset)
     
-    def __getattr__(self,fn):
-        if fn in dir(SpecArray) and (fn[0]!='_'):
-            return getattr(self.dset['efth'].spec,fn)
+    def __getattr__(self, fn):
+        if fn in dir(SpecArray) and (fn[0] != '_'):
+            return getattr(self.dset['efth'].spec, fn)
         else:
-            return getattr(self.dset,fn)
+            return getattr(self.dset, fn)
     
 def wavenuma(ang_freq, water_depth):
     """
@@ -611,11 +617,3 @@ if __name__ == '__main__':
         plt.savefig(join(home,'Pictures/compare_hs_part%i.png' % (p)))
 
         # break
-
-    # hs_new = ds.efth.isel(lat=0, lon=0).spec.hs()
-    # hs_old = [part.hs() for part in spectra]
-
-    # plt.figure()
-    # hs_new.plot()
-    # plt.plot(hs_new.time, hs_old)
-    # plt.show()
