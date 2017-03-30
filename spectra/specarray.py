@@ -40,10 +40,12 @@ class SpecArray(object):
         #         xarray_obj = self.sort(xarray_obj, dims=[dim])
 
         self._obj = xarray_obj
+        self._non_spec_dims = set(self._obj.dims).difference(('freq', 'dir'))
 
         # Create attributes for accessor 
         self.freq = xarray_obj.freq
         self.dir = xarray_obj.dir if 'dir' in xarray_obj.dims else None
+
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
@@ -124,6 +126,13 @@ class SpecArray(object):
                                {'site': 1, 'time': 1}
         """
         return (dict(zip(dict_of_ids, x)) for x in product(*dict_of_ids.itervalues()))
+
+    def _same_dims(self, other):
+        """
+        True if other has same non-spectral dimensions
+        Used to ensure consistent slicing
+        """
+        return set(other.dims) == self._non_spec_dims
 
     def sort(self, darray, dims, inplace=False):
         """
@@ -397,40 +406,48 @@ class SpecArray(object):
         else:
             return 1.56 / self.freq**2
 
-    def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001, nearest=False):
+    def partition(self, wsp_darr, wdir_darr, dep_darr, agefac=1.7, wscut=0.3333, hs_min=0.001, nearest=False):
         """
         Partition wave spectra using WW3 watershed algorithm
         Input:
-            - wsp :: Wind speed dataarray (m/s) - must have same (non-spectral) coordinates as specarray
-            - wdir :: Wind direction (degree) - must have same (non-spectral) coordinates as specarray
-            - dep :: Water depth (m) - must have same (non-spectral) coordinates as specarray
+            - wsp_darr :: Wind speed DataArray (m/s) - must have same (non-spectral) coordinates as specarray
+            - wdir_darr :: Wind direction DataArray (degree) - must have same (non-spectral) coordinates as specarray
+            - dep_darr :: Water depth DataArray(m) - must have same (non-spectral) coordinates as specarray
             - hs_min :: minimum Hs for assigning swell partition
             - nearest :: if True, wsp wdir and dep are allowed to be taken from nearest point if not matching spectra
         Output:
-            part_spec :: SpecArray object with one extra dimension representig partition number of partitioned spectra
+            - part_spec :: SpecArray object with one extra dimension representig partition number of partitioned spectra
         """
-        # Checking input
-        spec_dims = ('freq', 'dir')
-        slice_dims = list(set(self._obj.dims).difference(spec_dims))
-        assert all([dim in self._obj.dims for dim in spec_dims]), (
-            'partition requires E(freq,dir) but freq|dir dimensions were not found in %s' % (self._obj.dims))
-        # Assert dims are the same in wind/dep
+
+        # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
+        assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, ('partition requires E(freq,dir) but freq|dir '
+            'dimensions not in SpecArray dimensions (%s)' % (self._obj.dims))
+        for darr in (wsp_darr, wdir_darr, dep_darr):
+            # Conditional below aims at allowing wsp, wdir, dep to be DataArrays within the SpecArray. not working yet
+            if isinstance(darr, str):
+                darr = getattr(self, darr)
+            assert set(darr.dims)==self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
+                'in SpecArray (%s) for consistent slicing' % (darr.name, set(darr.dims), self._non_spec_dims))
+
         from pymo.core.specpart import specpart
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj]
 
-        # Predefine for speed
+        # Predefine these for speed
         dirs = self.dir.values
         freqs = self.freq.values
         ndir = len(dirs)
         nfreq = len(freqs)
-        Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
 
         # Slice each possible 2D, freq-dir array out of the full data array
-        slice_ids = {dim: range(self._obj[dim].size) for dim in slice_dims}
+        slice_ids = {dim: range(self._obj[dim].size) for dim in self._non_spec_dims}
         for slice_dict in self._product(slice_ids):
             specarr = self._obj[slice_dict]
+            wsp = float(wsp_darr[slice_dict])
+            wdir = float(wdir_darr[slice_dict])
+            dep = float(dep_darr[slice_dict])
+
             spectrum = specarr.values
             part_array = specpart.partition(spectrum)
             nparts = part_array.max()
@@ -454,6 +471,7 @@ class SpecArray(object):
             # Assign sea and swells partitions based on wind and wave properties
             sea = 0 * spectrum
             swells = list()
+            Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
             for part in range(1, nparts+1):
                 part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
                 W = part_spec[np.tile(Up, (nfreq, 1)) > \
@@ -540,37 +558,51 @@ def hs(spec, freqs, dirs, tail=True):
 if __name__ == '__main__':
     import datetime
     import matplotlib.pyplot as plt
+    from os.path import expanduser, join
+    home = expanduser("~")
 
-    # filename = '/source/pyspectra/tests/prelud.spec'
-    filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
+    filename = '/source/pyspectra/tests/prelud.spec'
+    # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
 
+    wsp_val = 10
+    wdir_val = 225
+    dep_val = 100
     #================
     # Using SpecArray
     #================
     from spectra.io.swan import read_swan
     t0 = datetime.datetime.now()
     ds = read_swan(filename, dirorder=True)
-    parts = ds.partition(5, 180, 50)
+    # Fake wsp, wdir, dep
+    wsp  = ds.hs() * 0 + wsp_val
+    wdir = ds.hs() * 0 + wdir_val
+    dep  = ds.hs() * 0 + dep_val
+    parts = ds.partition(wsp, wdir, dep)
+    # ds.efth['wsp'] = wsp
+    # ds.efth['wdir'] = wdir
+    # ds.efth['dep'] = dep
+    # parts = ds.partition('wsp', 'wdir', 'dep')
     print 'Elapsed time new: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    # #================
-    # # Using pymo
-    # #================
-    # from pymo.data.spectra import SwanSpecFile
-    # t0 = datetime.datetime.now()
-    # specfile = SwanSpecFile(filename)
-    # spectra = [spec for spec in specfile.readall()]
-    # pymo_parts = [s.partition(5, 180, 50) for s in spectra]
-    # print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+    #================
+    # Using pymo
+    #================
+    from pymo.data.spectra import SwanSpecFile
+    t0 = datetime.datetime.now()
+    specfile = SwanSpecFile(filename)
+    spectra = [spec for spec in specfile.readall()]
+    pymo_parts = [s.partition(wsp_val, wdir_val, dep_val) for s in spectra]
+    print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    # for p in range(0,4):
-    #     hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
-    #     hs_old = [part[p].hs() for part in pymo_parts]
+    for p in range(0,3):
+        hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
+        hs_old = [part[p].hs() for part in pymo_parts]
 
-    #     plt.figure()
-    #     hs_new.plot()
-    #     plt.plot(hs_new.time, hs_old)
-    #     plt.show()
+        plt.figure()
+        hs_new.plot()
+        plt.plot(hs_new.time, hs_old)
+        plt.legend(('SpecArray', 'Pymo'))
+        plt.savefig(join(home,'Pictures/compare_hs_part%i.png' % (p)))
 
         # break
 
