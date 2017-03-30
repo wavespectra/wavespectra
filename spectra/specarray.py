@@ -365,12 +365,13 @@ class SpecArray(object):
                 sf = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
             sf[(sf<0) | (self.freq.values<fmin)] = 0
             diff = np.diff(sf)
-            imax = np.argwhere(np.diff((np.sign(diff)) == -2)) + 1
-            imin = np.argwhere(np.diff((np.sign(diff)) == 2)) + 1
+            imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
+            imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
         else:
             imax = 0
             imin = 0
-        return imax, imin
+        return locals(), imin
+        # return imax, imin
 
     def celerity(self, depth=False, freq=None):
         """
@@ -396,96 +397,6 @@ class SpecArray(object):
         else:
             return 1.56 / self.freq**2
 
-    def partition_fast(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001, nearest=False):
-        """
-        Partition wave spectra using WW3 watershed algorithm
-        Input:
-            - wsp :: Wind speed dataarray (m/s) - must have same (non-spectral) coordinates as specarray
-            - wdir :: Wind direction (degree) - must have same (non-spectral) coordinates as specarray
-            - dep :: Water depth (m) - must have same (non-spectral) coordinates as specarray
-            - hs_min :: minimum Hs for assigning swell partition
-            - nearest :: if True, wsp wdir and dep are allowed to be taken from nearest point if not matching spectra
-        Output:
-            part_spec :: SpecArray object with one extra dimension representig partition number of partitioned spectra
-        """
-        # Checking input
-        spec_dims = ('freq', 'dir')
-        slice_dims = list(set(self._obj.dims).difference(spec_dims))
-        assert all([dim in self._obj.dims for dim in spec_dims]), (
-            'partition requires E(freq,dir) but freq|dir dimensions were not found in %s' % (self._obj.dims))
-        # Assert dims are the same in wind/dep
-        from pymo.core.specpart import specpart
-
-        # Initialise output - dictionary with SpecArray for each partition
-        all_parts = [0 * self._obj] # One entry on list for each partition number
-
-        # Predefine for speed
-        dirs = self.dir.values
-        freqs = self.freq.values
-        ndir = len(dirs)
-        nfreq = len(freqs)
-
-        # Slice each possible 2D, freq-dir array out of the full data array
-        slice_ids = {dim: range(self._obj[dim].size) for dim in slice_dims}
-        for slice_dict in self._product(slice_ids):
-            # print slice_dict
-            specarr = self._obj[slice_dict]
-            spectrum = specarr.values
-            part_array = specpart.partition(spectrum)
-            nparts = part_array.max()
-            
-            sea = 0 * spectrum
-            swells = list()
-            # Assign new partition if multiple valleys and satisfying some conditions
-            for part in range(1, nparts+1):
-                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
-                imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
-                if len(imin) > 0:
-                    part_spec[imin[0].squeeze():, :] = 0
-                    newpart = part_spec > 0
-                    if newpart.sum() > 20:
-                        nparts += 1;
-                        part_array[newpart] = nparts
-
-            # Extend partitions list if any extra one has been detected
-            if len(all_parts) < nparts:
-                for new_part_number in set(range(nparts)).difference(range(len(all_parts))):
-                    all_parts.append(0 * self._obj)
-
-            # Assign sea and swells partitions based on wind and wave properties
-            for part in range(1, nparts+1):
-                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
-                specarr.values = part_spec
-
-                Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
-                W = part_spec[np.tile(Up, (nfreq, 1)) > \
-                    np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))].sum() / part_spec.sum()
-                if W > wscut:
-                    sea += part_spec
-                else:
-                    swells.append(part_spec)
-            if len(swells) > 1:
-                swells.sort(key=lambda x: hs(x, freqs, dirs), reverse=True)
-
-            from pymo.core.wavespec import Spectrum
-            spymo = Spectrum(self.freq.values, self.dir.values, spectrum)
-            ppymo = spymo.partition(wsp, wdir, dep)
-            import pdb; pdb.set_trace()
-
-            # Updating partition SpecArrays for current slice
-            all_parts[0][slice_dict] = sea
-            for ind, swell in enumerate(swells[1:]):
-                all_parts[ind+1][slice_dict] = swell
-
-        # Return concatenated partitions
-        part_coord = xr.DataArray(data=range(len(all_parts)),
-                                  coords={'part': range(len(all_parts))},
-                                  dims=('part',),
-                                  name='part',
-                                  attrs=OrderedDict((('standard_name', 'spectral_partition_number'), ('units', '')))
-                                  )
-        return xr.concat(all_parts, dim=part_coord)
-
     def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001, nearest=False):
         """
         Partition wave spectra using WW3 watershed algorithm
@@ -506,55 +417,60 @@ class SpecArray(object):
         # Assert dims are the same in wind/dep
         from pymo.core.specpart import specpart
 
-        # Initialise output - dictionary with SpecArray for each partition
-        all_parts = [0 * self._obj] # One entry on list for each partition number
+        # Initialise output - one SpecArray for each partition
+        all_parts = [0 * self._obj]
+
+        # Predefine for speed
+        dirs = self.dir.values
+        freqs = self.freq.values
+        ndir = len(dirs)
+        nfreq = len(freqs)
+        Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
 
         # Slice each possible 2D, freq-dir array out of the full data array
         slice_ids = {dim: range(self._obj[dim].size) for dim in slice_dims}
         for slice_dict in self._product(slice_ids):
-            # print slice_dict
-            spectrum  = self._obj[slice_dict]
+            specarr = self._obj[slice_dict]
+            spectrum = specarr.values
             part_array = specpart.partition(spectrum)
             nparts = part_array.max()
-            
-            sea = 0 * spectrum
-            swells = list()
+
             # Assign new partition if multiple valleys and satisfying some conditions
             for part in range(1, nparts+1):
-                stmp = spectrum.where(part_array==part).fillna(0.) # Current partition only
-                imax, imin = self._inflection(stmp, dfres=0.01, fmin=0.05)
+                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+                imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    stmp.values[imin[0].squeeze():, :] = 0
-                    newpart = stmp.values > 0
+                    part_spec[imin[0].squeeze():, :] = 0
+                    newpart = part_spec > 0
                     if newpart.sum() > 20:
                         nparts += 1;
                         part_array[newpart] = nparts
 
-            # Extend partitions list if any extra one has been detected
-            if len(all_parts) < nparts:
-                for new_part_number in set(range(nparts)).difference(range(len(all_parts))):
+            # Extend partitions list if any extra one has been detected (+1 because of sea)
+            if len(all_parts) < nparts+1:
+                for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
                     all_parts.append(0 * self._obj)
 
             # Assign sea and swells partitions based on wind and wave properties
+            sea = 0 * spectrum
+            swells = list()
             for part in range(1, nparts+1):
-                stmp = spectrum.where(part_array==part).fillna(0.)
-                Up = agefac * wsp * np.cos(D2R*(self.dir - wdir))
-                W = stmp.values[np.tile(Up.values, (len(self.freq), 1)) > \
-                    np.tile(self.celerity(dep).values[:,_], (1, len(self.dir)))].sum() / stmp.values.sum()
+                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+                W = part_spec[np.tile(Up, (nfreq, 1)) > \
+                    np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))].sum() / part_spec.sum()
                 if W > wscut:
-                    sea += stmp
+                    sea += part_spec
                 else:
-                    if stmp.spec.hs() > hs_min: # Calculating hs twice.. we may want to optimise this..
-                        swells.append(stmp)
+                    swells.append(part_spec)
             if len(swells) > 1:
-                swells.sort(key=lambda x: x.spec.hs(), reverse=True)
+                swells.sort(key=lambda x: hs(x, freqs, dirs), reverse=True)
 
             # Updating partition SpecArrays for current slice
             all_parts[0][slice_dict] = sea
-            for ind,swell in enumerate(swells[1:]):
+            for ind, swell in enumerate(swells):
                 all_parts[ind+1][slice_dict] = swell
 
-        # Return concatenated partitions
+        # Concatenate partitions along new axis
         part_coord = xr.DataArray(data=range(len(all_parts)),
                                   coords={'part': range(len(all_parts))},
                                   dims=('part',),
@@ -625,8 +541,8 @@ if __name__ == '__main__':
     import datetime
     import matplotlib.pyplot as plt
 
-    filename = '/source/pyspectra/tests/prelud.spec'
-    # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
+    # filename = '/source/pyspectra/tests/prelud.spec'
+    filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
 
     #================
     # Using SpecArray
@@ -634,29 +550,29 @@ if __name__ == '__main__':
     from spectra.io.swan import read_swan
     t0 = datetime.datetime.now()
     ds = read_swan(filename, dirorder=True)
-    parts = ds.partition_fast(5, 180, 50)
+    parts = ds.partition(5, 180, 50)
     print 'Elapsed time new: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    #================
-    # Using pymo
-    #================
-    from pymo.data.spectra import SwanSpecFile
-    t0 = datetime.datetime.now()
-    specfile = SwanSpecFile(filename)
-    spectra = [spec for spec in specfile.readall()]
-    pymo_parts = [s.partition(5, 180, 50) for s in spectra]
-    print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+    # #================
+    # # Using pymo
+    # #================
+    # from pymo.data.spectra import SwanSpecFile
+    # t0 = datetime.datetime.now()
+    # specfile = SwanSpecFile(filename)
+    # spectra = [spec for spec in specfile.readall()]
+    # pymo_parts = [s.partition(5, 180, 50) for s in spectra]
+    # print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    for p in range(1,3):
-        hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
-        hs_old = [part[p].hs() for part in pymo_parts]
+    # for p in range(0,4):
+    #     hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
+    #     hs_old = [part[p].hs() for part in pymo_parts]
 
-        plt.figure()
-        hs_new.plot()
-        plt.plot(hs_new.time, hs_old)
-        plt.show()
+    #     plt.figure()
+    #     hs_new.plot()
+    #     plt.plot(hs_new.time, hs_old)
+    #     plt.show()
 
-        break
+        # break
 
     # hs_new = ds.efth.isel(lat=0, lon=0).spec.hs()
     # hs_old = [part.hs() for part in spectra]
