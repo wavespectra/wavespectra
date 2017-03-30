@@ -410,13 +410,13 @@ class SpecArray(object):
         """
         Partition wave spectra using WW3 watershed algorithm
         Input:
-            - wsp_darr :: Wind speed DataArray (m/s) - must have same (non-spectral) coordinates as specarray
-            - wdir_darr :: Wind direction DataArray (degree) - must have same (non-spectral) coordinates as specarray
-            - dep_darr :: Water depth DataArray(m) - must have same (non-spectral) coordinates as specarray
+            - wsp_darr :: Wind speed DataArray (m/s) - must have same non-spectral dimensions as specarray
+            - wdir_darr :: Wind direction DataArray (degree) - must have same non-spectral dimensions as specarray
+            - dep_darr :: Water depth DataArray(m) - must have same non-spectral dimensions as specarray
             - hs_min :: minimum Hs for assigning swell partition
-            - nearest :: if True, wsp wdir and dep are allowed to be taken from nearest point if not matching spectra
+            - nearest :: if True, wsp wdir and dep are allowed to be taken from nearest point (slower)
         Output:
-            - part_spec :: SpecArray object with one extra dimension representig partition number of partitioned spectra
+            - part_spec :: SpecArray object with one extra dimension representig partition number
         """
 
         # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
@@ -444,9 +444,15 @@ class SpecArray(object):
         slice_ids = {dim: range(self._obj[dim].size) for dim in self._non_spec_dims}
         for slice_dict in self._product(slice_ids):
             specarr = self._obj[slice_dict]
-            wsp = float(wsp_darr[slice_dict])
-            wdir = float(wdir_darr[slice_dict])
-            dep = float(dep_darr[slice_dict])
+            if nearest:
+                slice_dict_nearest = {key: self._obj[key][val].values for key,val in slice_dict.items()}
+                wsp = float(wsp_darr.sel(method='nearest', **slice_dict_nearest))
+                wdir = float(wdir_darr.sel(method='nearest', **slice_dict_nearest))
+                dep = float(dep_darr.sel(method='nearest', **slice_dict_nearest))
+            else:
+                wsp = float(wsp_darr[slice_dict])
+                wdir = float(wdir_darr[slice_dict])
+                dep = float(dep_darr[slice_dict])
 
             spectrum = specarr.values
             part_array = specpart.partition(spectrum)
