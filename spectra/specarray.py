@@ -16,6 +16,8 @@ import types
 import copy
 from itertools import product
 
+import spectra.io
+
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
@@ -40,10 +42,12 @@ class SpecArray(object):
         #         xarray_obj = self.sort(xarray_obj, dims=[dim])
 
         self._obj = xarray_obj
+        self._non_spec_dims = set(self._obj.dims).difference(('freq', 'dir'))
 
         # Create attributes for accessor 
         self.freq = xarray_obj.freq
         self.dir = xarray_obj.dir if 'dir' in xarray_obj.dims else None
+
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
@@ -124,6 +128,34 @@ class SpecArray(object):
                                {'site': 1, 'time': 1}
         """
         return (dict(zip(dict_of_ids, x)) for x in product(*dict_of_ids.itervalues()))
+
+    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
+        """
+        Finds points of inflection in smoothed frequency spectra
+        - fdspec :: freq-dir 2D specarray
+        - dfres :: used to determine length of smoothing window
+        - fmin :: minimum frequency for looking for minima/maxima
+        """
+        if len(self.freq) > 1:
+            sf = fdspec.sum(axis=1)
+            nsmooth = int(dfres / self.df[0]) # Window size
+            if nsmooth > 1:
+                sf = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
+            sf[(sf<0) | (self.freq.values<fmin)] = 0
+            diff = np.diff(sf)
+            imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
+            imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
+        else:
+            imax = 0
+            imin = 0
+        return imax, imin
+
+    def _same_dims(self, other):
+        """
+        True if other has same non-spectral dimensions
+        Used to ensure consistent slicing
+        """
+        return set(other.dims) == self._non_spec_dims
 
     def sort(self, darray, dims, inplace=False):
         """
@@ -351,42 +383,23 @@ class SpecArray(object):
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
-    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
-        """
-        Finds points of inflection in smoothed frequency spectra
-        - fdspec :: freq-dir 2D specarray
-        - dfres :: used to determine length of smoothing window
-        - fmin :: minimum frequency for looking for minima/maxima
-        """
-        if len(self.freq) > 1:
-            sf = fdspec.sum(dim='dir')
-            nsmooth = int(dfres / self.df[0]) # Window size
-            if nsmooth > 1:
-                sf.values = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
-            sf[(sf<0) | (self.freq<fmin)] = 0
-            diff = sf.diff(dim='freq')
-            imax = np.argwhere((np.sign(diff).diff(dim='freq') == -2).values) + 1
-            imin = np.argwhere((np.sign(diff).diff(dim='freq') == 2).values) + 1
-        else:
-            imax = 0
-            imin = 0
-        return imax, imin
-
-    def celerity(self, depth=False):
+    def celerity(self, depth=False, freq=None):
         """
         Wave celerity
-        Deep water approximation is returned if depth=None
+        Deep water approximation is returned if depth=False
         """
+        if freq is None:
+            freq = self.freq
         if depth:
-            ang_freq = 2 * np.pi * self.freq
+            ang_freq = 2 * np.pi * freq
             return ang_freq / wavenuma(ang_freq, depth)
         else:
-            return 1.56 / self.freq
+            return 1.56 / freq
 
     def wavelen(self, depth=False):
         """
         Wave length
-        Deep water approximation is returned if depth=None
+        Deep water approximation is returned if depth=False
         """
         if depth:
             ang_freq = 2 * np.pi * self.freq
@@ -394,67 +407,117 @@ class SpecArray(object):
         else:
             return 1.56 / self.freq**2
 
-    def partition(self, wsp, wdir, dep, agefac=1.7, wscut=0.3333, hs_min=0.001):
+    def partition(self, wsp_darr, wdir_darr, dep_darr, agefac=1.7, wscut=0.3333, hs_min=0.001, nearest=False):
         """
-        Watershed partition
-        - wsp :: Wind speed (m/s)
-        - wdir :: Wind direction (degree) coming from convention
-        - dep :: Water depth (m)
-        - hs_min :: minimum Hs for assigning swell partition
+        Partition wave spectra using WW3 watershed algorithm
+        Input:
+            - wsp_darr :: Wind speed DataArray (m/s) - must have same non-spectral dimensions as specarray
+            - wdir_darr :: Wind direction DataArray (degree) - must have same non-spectral dimensions as specarray
+            - dep_darr :: Water depth DataArray(m) - must have same non-spectral dimensions as specarray
+            - hs_min :: minimum Hs for assigning swell partition
+            - nearest :: if True, wsp wdir and dep are allowed to be taken from nearest point (slower)
+        Output:
+            - part_spec :: SpecArray object with one extra dimension representig partition number
+        """
 
-        TODO: Return output as data array objects. Need thinking how this is going to look like. List of data arrays?
-        """
-        assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, (
-            'partition requires E(freq,dir) but freq|dir dimensions were not found in %s' % (self._obj.dims))
+        # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
+        assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, ('partition requires E(freq,dir) but freq|dir '
+            'dimensions not in SpecArray dimensions (%s)' % (self._obj.dims))
+        for darr in (wsp_darr, wdir_darr, dep_darr):
+            # Conditional below aims at allowing wsp, wdir, dep to be DataArrays within the SpecArray. not working yet
+            if isinstance(darr, str):
+                darr = getattr(self, darr)
+            assert set(darr.dims)==self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
+                'in SpecArray (%s) for consistent slicing' % (darr.name, set(darr.dims), self._non_spec_dims))
+
         from pymo.core.specpart import specpart
 
+        # Initialise output - one SpecArray for each partition
+        all_parts = [0 * self._obj]
+
+        # Predefine these for speed
+        dirs = self.dir.values
+        freqs = self.freq.values
+        ndir = len(dirs)
+        nfreq = len(freqs)
+
         # Slice each possible 2D, freq-dir array out of the full data array
-        slice_dims = list(set(self._obj.dims).difference(('freq', 'dir')))
-        slice_ids = {dim: range(self._obj[dim].size) for dim in slice_dims}
+        slice_ids = {dim: range(self._obj[dim].size) for dim in self._non_spec_dims}
         for slice_dict in self._product(slice_ids):
-            spectrum  = self._obj.isel(**slice_dict)
+            specarr = self._obj[slice_dict]
+            if nearest:
+                slice_dict_nearest = {key: self._obj[key][val].values for key,val in slice_dict.items()}
+                wsp = float(wsp_darr.sel(method='nearest', **slice_dict_nearest))
+                wdir = float(wdir_darr.sel(method='nearest', **slice_dict_nearest))
+                dep = float(dep_darr.sel(method='nearest', **slice_dict_nearest))
+            else:
+                wsp = float(wsp_darr[slice_dict])
+                wdir = float(wdir_darr[slice_dict])
+                dep = float(dep_darr[slice_dict])
+
+            spectrum = specarr.values
             part_array = specpart.partition(spectrum)
             nparts = part_array.max()
-            
-            sea = 0 * spectrum
-            swell = list()
-            # Assign new partitions if multiple peaks and satisfying some conditions
+
+            # Assign new partition if multiple valleys and satisfying some conditions
             for part in range(1, nparts+1):
-                stmp = spectrum.where(part_array==part).fillna(0.) # Current partition only
-                imax, imin = self._inflection(stmp, dfres=0.01, fmin=0.05)
-                # Split partition if more than one valley and condition is satidfied
+                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+                imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    stmp.values[imin[0]:, :] = 0
-                    newpart = stmp.values > 0
+                    part_spec[imin[0].squeeze():, :] = 0
+                    newpart = part_spec > 0
                     if newpart.sum() > 20:
                         nparts += 1;
                         part_array[newpart] = nparts
+                
+            # Extend partitions list if any extra one has been detected (+1 because of sea)
+            if len(all_parts) < nparts+1:
+                for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
+                    all_parts.append(0 * self._obj)
 
-            # Assign sea and swell partitions based on wind and wave properties
+            # Assign sea and swells partitions based on wind and wave properties
+            sea = 0 * spectrum
+            swells = list()
+            hs_swell = list()
+            Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
             for part in range(1, nparts+1):
-                stmp = spectrum.where(part_array==part).fillna(0.)
-                Up = agefac * wsp * np.cos(D2R*(self.dir - wdir))
-                W = stmp.values[np.tile(Up.values, (len(self.freq), 1)) > \
-                    np.tile(self.celerity(dep).values[:,_], (1, len(self.dir)))].sum() / stmp.values.sum()
+                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+                W = part_spec[np.tile(Up, (nfreq, 1)) > \
+                    np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))].sum() / part_spec.sum()
                 if W > wscut:
-                    sea += stmp
+                    sea += part_spec
                 else:
-                    if stmp.spec.hs() > hs_min: # Calculating hs twice.. we may want to optimise this..
-                        swell.append(stmp)
-            if len(swell) > 1:
-                swell.sort(key=lambda x: x.spec.hs(), reverse=True)
-            return [sea] + swell
+                    _hs = hs(part_spec, freqs, dirs)
+                    if _hs > hs_min:
+                        swells.append(part_spec)
+                        hs_swell.append(_hs)
+            if len(swells) > 1:
+                swells = [x for (y,x) in sorted(zip(hs_swell, swells), reverse=True)]
+
+            # Updating partition SpecArrays for current slice
+            all_parts[0][slice_dict] = sea
+            for ind, swell in enumerate(swells):
+                all_parts[ind+1][slice_dict] = swell
+
+        # Concatenate partitions along new axis
+        part_coord = xr.DataArray(data=range(len(all_parts)),
+                                  coords={'part': range(len(all_parts))},
+                                  dims=('part',),
+                                  name='part',
+                                  attrs=OrderedDict((('standard_name', 'spectral_partition_number'), ('units', '')))
+                                  )
+        return xr.concat(all_parts, dim=part_coord)
 
 class DatasetPlugin(type):
     """
     Add all the export functions at class creation time
     Also add wrapper functions for all the SpecArray methods
     """
-    def __new__(cls,name,bases,dct):
-        import io
-        for fname in dir(io):
-            if 'to_' not in fname:continue
-            function = getattr(io,fname)
+    def __new__(cls, name, bases, dct):
+        for fname in dir(spectra.io):
+            if 'to_' not in fname:
+                continue
+            function = getattr(spectra.io, fname)
             if isinstance(function, types.FunctionType):
                 dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
@@ -465,16 +528,16 @@ class SpecDataset(object):
     """
     __metaclass__ = DatasetPlugin
     def __init__(self, xarray_dset):
-        self.dset=xarray_dset
+        self.dset = xarray_dset
         
     def __repr__(self):
-        return 'Spectral Dataset wrapper'+str(self.dset)
+        return 'Spectral Dataset wrapper' + str(self.dset)
     
-    def __getattr__(self,fn):
-        if fn in dir(SpecArray) and (fn[0]!='_'):
-            return getattr(self.dset['efth'].spec,fn)
+    def __getattr__(self, fn):
+        if fn in dir(SpecArray) and (fn[0] != '_'):
+            return getattr(self.dset['efth'].spec, fn)
         else:
-            return getattr(self.dset,fn)
+            return getattr(self.dset, fn)
     
 def wavenuma(ang_freq, water_depth):
     """
@@ -487,8 +550,69 @@ def wavenuma(ang_freq, water_depth):
         a += D[i] * k0h**i
     return (k0h * (1 + 1./(k0h*a))**0.5) / water_depth        
 
-if __name__ == '__main__':
-    from spectra.io.swan import read_swan
-    ds = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn', dirorder=True)
-    parts = ds.partition(5, 180, 50)
+def hs(spec, freqs, dirs, tail=True):
+    """
+    Copied as a function so it can be used in a generic context
+    - tail  :: if True fit high-frequency tail
+    """
+    df = abs(freqs[1:] - freqs[:-1])
+    if len(dirs) > 1:
+        ddir = abs(dirs[1] - dirs[0])
+        E = ddir * spec.sum(1)
+    else:
+        E = np.squeeze(spec)
+    Etot = 0.5 * sum(df * (E[1:] + E[:-1]))
+    if tail and freqs[-1] > 0.333:
+        Etot += 0.25 * E[-1] * freqs[-1]
+    return 4. * np.sqrt(Etot)
 
+if __name__ == '__main__':
+    import datetime
+    import matplotlib.pyplot as plt
+    from os.path import expanduser, join
+    home = expanduser("~")
+
+    filename = '/source/pyspectra/tests/prelud.spec'
+    # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
+
+    wsp_val = 10
+    wdir_val = 225
+    dep_val = 100
+    #================
+    # Using SpecArray
+    #================
+    from spectra.io.swan import read_swan
+    t0 = datetime.datetime.now()
+    ds = read_swan(filename, dirorder=True)
+    # Fake wsp, wdir, dep
+    wsp  = ds.hs() * 0 + wsp_val
+    wdir = ds.hs() * 0 + wdir_val
+    dep  = ds.hs() * 0 + dep_val
+    parts = ds.partition(wsp, wdir, dep)
+    # ds.efth['wsp'] = wsp
+    # ds.efth['wdir'] = wdir
+    # ds.efth['dep'] = dep
+    # parts = ds.partition('wsp', 'wdir', 'dep')
+    print 'Elapsed time new: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+
+    #================
+    # Using pymo
+    #================
+    from pymo.data.spectra import SwanSpecFile
+    t0 = datetime.datetime.now()
+    specfile = SwanSpecFile(filename)
+    spectra = [spec for spec in specfile.readall()]
+    pymo_parts = [s.partition(wsp_val, wdir_val, dep_val) for s in spectra]
+    print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+
+    for p in range(0,3):
+        hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
+        hs_old = [part[p].hs() for part in pymo_parts]
+
+        plt.figure()
+        hs_new.plot()
+        plt.plot(hs_new.time, hs_old)
+        plt.legend(('SpecArray', 'Pymo'))
+        plt.savefig(join(home,'Pictures/compare_hs_part%i.png' % (p)))
+
+        # break
