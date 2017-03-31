@@ -1,5 +1,5 @@
 import xarray as xr
-from pyspectra.spectra.io.attributes import *
+from spectra.io.attributes import *
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
     """
@@ -11,7 +11,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     Returns:
     - dset :: SpecDataset instance
     """
-    from pyspectra.spectra import SpecDataset
+    from spectra import SpecDataset
     
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'freq': FREQNAME, 'dir': DIRNAME}, inplace=True)#, 'SITE': SITENAME})

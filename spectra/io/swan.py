@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 from pandas import to_datetime
 
-from pyspectra.spectra.io.attributes import *
+from spectra.io.attributes import *
 
 class Error(Exception):
     pass
@@ -188,7 +188,7 @@ def read_swan(filename, dirorder=True):
     Returns:
     - dset :: SpecArray
     """
-    from pyspectra.spectra import SpecDataset
+    from spectra import SpecDataset
 
     swanfile=SwanSpecFile(filename, dirorder=dirorder)
     times=swanfile.times
