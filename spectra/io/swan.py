@@ -1,8 +1,10 @@
+import os
 import datetime
 import xarray as xr
 import numpy as np
-from pandas import to_datetime
 from attributes import *
+
+to_datetime=lambda t:datetime.datetime.fromtimestamp(t.astype('int')/1e9)
 
 class Error(Exception):
     pass
@@ -53,6 +55,7 @@ class SwanSpecFile(object):
         lons = np.unique(self.x)
         lats = np.unique(self.y)
         self.is_grid=(len(lons)*len(lats) == len(self.x))
+        self.is_site=(len(lons)*len(lats)==1)
 
     def _readhdr(self,keyword,numspec=False):
         if not self.buf:self.buf=self.f.readline()
@@ -161,12 +164,37 @@ class SwanSpecFile(object):
             return strout
         else:
             return 'NODATA\n'
-
+        
+    def readTable(self,headers=['X-wsp','Y-wsp','dep']):
+        import re
+        fileroot=os.path.splitext(self.filename)[0]
+        try:
+            with open(fileroot+'.tab') as f:
+                for i in range(0,6):
+                    hline=f.readline()
+                    if i==3:
+                        hline=f.readline()
+                        bits=re.split("\s+",hline)
+                        hind=[bits.index(h)-1 if h in bits else -1 for h in headers]
+                ttime=[]
+                dep=[]
+                uwnd=[]
+                vwnd=[]
+                for line in f.readlines():
+                    ttime.append(datetime.datetime.strptime(line[0:15],'%Y%m%d.%H%M%S'))
+                    bits=re.split('\s+',line)
+                    if hind[0]>0:uwnd.append(float(bits[hind[0]]))
+                    if hind[1]>0:vwnd.append(float(bits[hind[1]]))
+                    if hind[2]>0:dep.append(float(bits[hind[2]]))
+            return ttime,uwnd,vwnd,dep
+        except Exception as e:
+            print str(e)
+            return None
+        
     def close(self):
         if self.f:self.f.close()
         self.f=False
-        self.times=[]
-        
+                    
     
 def to_swan(self,filename,id='Swan Spectrum',append=False):
     if 'site' in self.dset.dims:
@@ -200,6 +228,7 @@ def read_swan(filename, dirorder=True):
     dirs=swanfile.dirs
     
     spec_list=swanfile.readall()
+            
     if swanfile.is_grid:
         # Looks like gridded data, grid DataArray accordingly
         arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
@@ -209,6 +238,18 @@ def read_swan(filename, dirorder=True):
             dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
             ).to_dataset()
+        if swanfile.is_site:
+            table_data=swanfile.readTable()
+            if table_data:
+                ttime,uwnd,vwnd,dep=table_data
+                if len(ttime)==len(times):
+                    if len(dep):
+                        dset['dpt'] = xr.DataArray(data=np.array(dep).reshape(-1,1,1), dims=[TIMENAME,LATNAME,LONNAME])
+                    if len(uwnd):
+                        u=np.array(uwnd)
+                        v=np.array(vwnd)
+                        dset['wnd'] = xr.DataArray(data=np.sqrt(u*u+v*v).reshape(-1,1,1), dims=[TIMENAME,LATNAME,LONNAME])
+                        dset['wnddir'] = xr.DataArray(data=np.mod(270-np.pi*np.arctan2(u,v)/180,360).reshape(-1,1,1), dims=[TIMENAME,LATNAME,LONNAME])
     else:
         # Keep it with sites dimension
         arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))

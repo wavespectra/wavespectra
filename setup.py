@@ -10,6 +10,6 @@ setup(name='pyspectra',
       author='MetOcean Solutions Ltd.',
       author_email='r.guedes@metocean.co.nz',
       url='http://www.metocean.co.nz/',
-      packages=['spectra'],
+      packages=['spectra','spectra.io'],
       )
 

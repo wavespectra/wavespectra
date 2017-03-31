@@ -18,7 +18,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden','factor', 'df'])
     set_spec_attributes(dset)
-    return dset
+    return SpecDataset(dset)
 
 def to_ww3_msl(filename):
     raise NotImplementedError('Cannot write to native WW3 format')
