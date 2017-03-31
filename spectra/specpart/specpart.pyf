@@ -1,0 +1,20 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module specpart ! in 
+    interface  ! in :specpart
+        module specpart ! in :specpart:specpart.f90
+            integer public,optional :: ihmax=200
+            subroutine partition(spec,ipart,nk,nth) ! in :specpart:specpart.f90:specpart
+                real dimension(nk,nth),intent(in) :: spec
+                integer dimension(nk,nth),depend(nk,nth),intent(out) :: ipart
+                integer intent(hide),depend(spec) :: nk=shape(spec,0)
+                integer intent(hide),depend(spec) :: nth=shape(spec,1)
+                integer :: partition
+            end subroutine partition
+        end module specpart
+    end interface 
+end python module specpart
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
