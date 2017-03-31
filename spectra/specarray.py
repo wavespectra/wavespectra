@@ -16,8 +16,6 @@ import types
 import copy
 from itertools import product
 
-from pyspectra.spectra import io
-
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
@@ -514,6 +512,7 @@ class DatasetPlugin(type):
     Also add wrapper functions for all the SpecArray methods
     """
     def __new__(cls, name, bases, dct):
+        from pyspectra.spectra import io
         for fname in dir(io):
             if 'to_' not in fname:
                 continue
