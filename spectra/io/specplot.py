@@ -57,7 +57,7 @@ def plot_watershed(darray, outfile=None, cmap='Accent', figsize=(15,10), wirefra
 
 if __name__ == '__main__':
     from os.path import join, expanduser
-    from spectra.io.swan import read_swan
+    from pyspectra.spectra.io.swan import read_swan
     home = expanduser("~")
 
     ds = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn')
