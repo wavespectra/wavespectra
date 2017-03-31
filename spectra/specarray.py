@@ -428,7 +428,7 @@ class SpecArray(object):
             assert set(darr.dims)==self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
                 'in SpecArray (%s) for consistent slicing' % (darr.name, set(darr.dims), self._non_spec_dims))
 
-        from spectra import specpart
+        from spectra.specpart import specpart
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj]
@@ -454,7 +454,7 @@ class SpecArray(object):
                 dep = float(dep_darr[slice_dict])
 
             spectrum = specarr.values
-            part_array = specpart.specpart.partition(spectrum)
+            part_array = specpart.partition(spectrum)
             nparts = part_array.max()
 
             # Assign new partition if multiple valleys and satisfying some conditions
