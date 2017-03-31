@@ -7,8 +7,10 @@ def read_octopus(filename):
     raise NotImplementedError('No Octopus read function defined')
 
 def to_octopus(self,filename,site_id='spec'):
-    if len(self.lon)>1 or len(self.lat)>1:
+    if ('site' in self.dims) and len(self.site)>1:
         raise NotImplementedError('No Octopus export defined for multiple sites')
+    elif ('lon' in self.dims) and (len(self.lon)>1 or len(self.lat)>1):
+        raise NotImplementedError('No Octopus export defined for grids')
     f=open(filename,'w')
     f.write('Forecast valid for %s\n' % (to_datetime(self.time[0]).strftime('%d-%b-%Y %H:%M:%S')))
     fmt=','.join(len(self.freq)*['%6.5f'])+','
@@ -30,7 +32,7 @@ def to_octopus(self,filename,site_id='spec'):
         ws=self.wnd[i]
         s_sea=sea[i].spec
         s_sw=swell[i].spec
-        s=self.isel(time=i,lon=0,lat=0).efth.spec
+        s=self.isel(time=i).efth.squeeze().spec
         f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
         f.write('%s,\'%s,%s,%d,%.2f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.5f,%.5f,%.4f,%d,%d,%d\n' %
                 (to_datetime(t).strftime('%Y%m'),to_datetime(t).strftime('%d%H%M'),lp,wd,ws,

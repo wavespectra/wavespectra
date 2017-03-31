@@ -1,5 +1,4 @@
 import xarray as xr
-from spectra.specarray import SpecArray
 from spectra.io.attributes import *
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):

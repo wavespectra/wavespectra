@@ -1,6 +1,5 @@
 import xarray as xr
 import numpy as np
-from spectra.specarray import SpecArray
 from spectra.io.attributes import *
 
 def read_ww3(filename_or_fileglob, chunks={}):
