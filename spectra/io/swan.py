@@ -1,8 +1,10 @@
+import copy
 import datetime
 import xarray as xr
 import numpy as np
 from pandas import to_datetime
-from attributes import *
+
+from pyspectra.spectra.io.attributes import *
 
 class Error(Exception):
     pass
@@ -69,7 +71,6 @@ class SwanSpecFile(object):
 
     def read(self):
         if not self.f:return None
-        import copy
         if isinstance(self.times,list):
             line=self.f.readline()
             if line:
@@ -167,7 +168,6 @@ class SwanSpecFile(object):
         self.f=False
         self.times=[]
         
-    
 def to_swan(self,filename,id='Swan Spectrum',append=False):
     if 'site' in self.dset.dims:
         xx=self.lon
@@ -180,8 +180,7 @@ def to_swan(self,filename,id='Swan Spectrum',append=False):
         sfile.f.write(to_datetime(t.values).strftime('%Y%m%d.%H%M%S\n'))
         sfile.writeSpectra(self.dset['efth'].sel(time=t).values.reshape(-1,len(self.freq),len(self.dir)))
     sfile.close()
-            
-                
+                    
 def read_swan(filename, dirorder=True):
     """
     Read Spectra off SWAN ASCII file
@@ -189,7 +188,7 @@ def read_swan(filename, dirorder=True):
     Returns:
     - dset :: SpecArray
     """
-    from spectra import SpecDataset
+    from pyspectra.spectra import SpecDataset
 
     swanfile=SwanSpecFile(filename, dirorder=dirorder)
     times=swanfile.times

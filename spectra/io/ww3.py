@@ -1,10 +1,8 @@
 import xarray as xr
 import numpy as np
-from spectra.specarray import SpecArray
-from spectra.io.attributes import *
+from pyspectra.spectra.io.attributes import *
 
 def read_ww3(filename_or_fileglob, chunks={}):
-    from spectra import SpecDataset
     """
     Read Spectra off WW3 in native netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
@@ -14,6 +12,8 @@ def read_ww3(filename_or_fileglob, chunks={}):
     Returns:
     - dset :: SpecDataset instance
     """
+    from pyspectra.spectra import SpecDataset
+    
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
         'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)

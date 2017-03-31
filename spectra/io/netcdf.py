@@ -1,7 +1,7 @@
 #Generic netcdf in/output
 
 import xarray as xr
-from attributes import *
+from pyspectra.spectra.io.attributes import *
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},

@@ -16,7 +16,7 @@ import types
 import copy
 from itertools import product
 
-import spectra.io
+from pyspectra.spectra import io
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
@@ -514,10 +514,10 @@ class DatasetPlugin(type):
     Also add wrapper functions for all the SpecArray methods
     """
     def __new__(cls, name, bases, dct):
-        for fname in dir(spectra.io):
+        for fname in dir(io):
             if 'to_' not in fname:
                 continue
-            function = getattr(spectra.io, fname)
+            function = getattr(io, fname)
             if isinstance(function, types.FunctionType):
                 dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
@@ -581,7 +581,7 @@ if __name__ == '__main__':
     #================
     # Using SpecArray
     #================
-    from spectra.io.swan import read_swan
+    from io.swan import read_swan
     t0 = datetime.datetime.now()
     ds = read_swan(filename, dirorder=True)
     # Fake wsp, wdir, dep
