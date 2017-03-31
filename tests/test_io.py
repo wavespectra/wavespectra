@@ -105,26 +105,26 @@ class TestOctopus(unittest.TestCase):
             print ("Writing %s") %fileout
             self.s.to_octopus(fileout)
             
-    def atest_ww3(self):
+    def test_ww3(self):
         for testfile in WW3_TEST_FILES:
             print ("Reading %s") %testfile
             self.s=read_ww3(testfile)
             fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
             print ("Writing %s") %fileout
-            self.s.to_octopus(fileout)
+            SpecDataset(self.s.isel(site=0)).to_octopus(fileout)
             
-    def atest_ww3_msl(self):
+    def test_ww3_msl(self):
         for testfile in WW3_MSL_TEST_FILES:
             print ("Reading %s") %testfile
             self.s=read_ww3_msl(testfile)
             fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
             print ("Writing %s") %fileout
-            self.s.to_octopus(fileout)
+            SpecDataset(self.s.isel(site=0)).to_octopus(fileout)
     
 if __name__ == '__main__':
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestOctopus("test_ww3"))
-    #runner = unittest.TextTestRunner()
-    #runner.run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestOctopus("test_ww3"))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
     unittest.main()
     
