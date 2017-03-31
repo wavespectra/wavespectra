@@ -1,1 +1,1 @@
-from specarray import SpecDataset, SpecArray
+from pyspectra.spectra.specarray import SpecDataset, SpecArray
