@@ -505,38 +505,6 @@ class SpecArray(object):
                                   attrs=OrderedDict((('standard_name', 'spectral_partition_number'), ('units', '')))
                                   )
         return xr.concat(all_parts, dim=part_coord)
-
-class DatasetPlugin(type):
-    """
-    Add all the export functions at class creation time
-    Also add wrapper functions for all the SpecArray methods
-    """
-    def __new__(cls, name, bases, dct):
-        from spectra import io
-        for fname in dir(io):
-            if 'to_' not in fname:
-                continue
-            function = getattr(io, fname)
-            if isinstance(function, types.FunctionType):
-                dct[function.__name__] = function
-        return type.__new__(cls, name, bases, dct)
-        
-class SpecDataset(object):
-    """
-    Provides a wrapper around the xarray dataset 
-    """
-    __metaclass__ = DatasetPlugin
-    def __init__(self, xarray_dset):
-        self.dset = xarray_dset
-        
-    def __repr__(self):
-        return 'Spectral Dataset wrapper' + str(self.dset)
-    
-    def __getattr__(self, fn):
-        if fn in dir(SpecArray) and (fn[0] != '_'):
-            return getattr(self.dset['efth'].spec, fn)
-        else:
-            return getattr(self.dset, fn)
     
 def wavenuma(ang_freq, water_depth):
     """
