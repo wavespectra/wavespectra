@@ -167,60 +167,6 @@ class SwanSpecFile(object):
         if self.f:self.f.close()
         self.f=False
         self.times=[]
-        
-def to_swan(self,filename,id='Swan Spectrum',append=False):
-    if 'site' in self.dset.dims:
-        xx=self.lon
-        yy=self.lat
-    else:
-        xx=self.lon
-        yy=self.lat
-    sfile=SwanSpecFile(filename,freqs=self.freq,time=True,dirs=self.dir,x=self.lon,y=self.lat,id=id,append=append)
-    for i,t in enumerate(self.time):
-        sfile.f.write(to_datetime(t.values).strftime('%Y%m%d.%H%M%S\n'))
-        sfile.writeSpectra(self.dset['efth'].sel(time=t).values.reshape(-1,len(self.freq),len(self.dir)))
-    sfile.close()
-                    
-def read_swan(filename, dirorder=True):
-    """
-    Read Spectra off SWAN ASCII file
-    - dirorder :: If True reorder spectra read from file so that directions are sorted
-    Returns:
-    - dset :: SpecArray
-    """
-    from spectra import SpecDataset
-
-    swanfile=SwanSpecFile(filename, dirorder=dirorder)
-    times=swanfile.times
-    lons=swanfile.x
-    lats=swanfile.y
-    sites=np.arange(len(lons))+1
-    freqs=swanfile.freqs
-    dirs=swanfile.dirs
-    
-    spec_list=swanfile.readall()
-    if swanfile.is_grid:
-        # Looks like gridded data, grid DataArray accordingly
-        arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
-        dset = xr.DataArray(
-            data=np.swapaxes(arr, 1, 2),
-            coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
-            dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
-            name=SPECNAME,
-            ).to_dataset()
-    else:
-        # Keep it with sites dimension
-        arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
-        dset = xr.DataArray(
-            arr,
-            coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
-            dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
-            name=SPECNAME,
-        ).to_dataset()
-        dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
-        dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
-    set_spec_attributes(dset)
-    return SpecDataset(dset)
 
     
     
