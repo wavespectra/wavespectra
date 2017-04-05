@@ -6,8 +6,9 @@ import numpy as np
 
 from cfjson.xrdataset import *
 
-from pyspectra.spectra.specdataset import SpecDataset
-from pyspectra.spectra.io.attributes import *
+from swan import SwanSpecFile
+from specdataset import SpecDataset
+from attributes import *
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},
