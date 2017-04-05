@@ -8,26 +8,10 @@ from specarray import SpecArray
 from attributes import *
 from swan import SwanSpecFile
 
-# class DatasetPlugin(type):
-#     """
-#     Add all the export functions at class creation time
-#     Also add wrapper functions for all the SpecArray methods
-#     """
-#     def __new__(cls, name, bases, dct):
-#         from spectra import io
-#         for fname in dir(io):
-#             if 'to_' not in fname:
-#                 continue
-#             function = getattr(io, fname)
-#             if isinstance(function, types.FunctionType):
-#                 dct[function.__name__] = function
-#         return type.__new__(cls, name, bases, dct)
-        
-class SpecDataset(type):
+class SpecDataset(object):
     """
     Provides a wrapper around the xarray dataset 
     """
-    # __metaclass__ = DatasetPlugin
     def __init__(self, xarray_dset):
         self.dset = xarray_dset
         
