@@ -42,7 +42,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
     Read Spectra off WW3 in native netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
     - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
-                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
+                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documentation)
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'station']
     Returns:
     - dset :: SpecDataset instance
@@ -59,7 +59,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     Read Spectra off WW3 in MSL netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
     - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
-                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
+                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documentation)
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'site']
     Returns:
     - dset :: SpecDataset instance
@@ -69,7 +69,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden','factor', 'df'])
     set_spec_attributes(dset)
-    return dset
+    return SpecDataset(dset)
 
 def read_swan(filename, dirorder=True):
     """

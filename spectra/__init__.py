@@ -4,12 +4,12 @@ Each module must provide a read_<format> function which returns a SpecArray obje
 And a to_<format> function that writes the file format from a SpecArray object
 Note that you should import the SpecArray object inside the read function to avoid a circular import
 """
-import sys
-from pyspectra.spectra.specarray import SpecArray
-from pyspectra.spectra.specdataset import SpecDataset
+# import sys
+# from pyspectra.spectra.specarray import SpecArray
+# from pyspectra.spectra.specdataset import SpecDataset
 
-from pyspectra.spectra.read_spectra import read_swan, read_ww3, read_ww3_msl, read_octopus, read_json, read_netcdf
-from spectra.io.attributes import *
+# from pyspectra.spectra.read_spectra import read_swan, read_ww3, read_ww3_msl, read_octopus, read_json, read_netcdf
+# from spectra.io.attributes import *
 
 #try: # Check for dependencies (cfjson)
 #    from spectra.io.json import to_json, read_json
