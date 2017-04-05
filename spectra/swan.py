@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 from pandas import to_datetime
 
-from spectra.io.attributes import *
+from attributes import *
 
 class Error(Exception):
     pass
