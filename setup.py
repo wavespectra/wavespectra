@@ -1,20 +1,28 @@
-from numpy.distutils.core import setup
-from numpy.distutils.misc_util import Configuration
+from setuptools import setup
 
-def ext_configuration(parent_package='',top_path=None):
-    config = Configuration('', parent_package, top_path)
-    config.add_extension('spectra.specpart', sources=['spectra/specpart/specpart.pyf',
-                                                                'spectra/specpart/specpart.f90'])
-    return config
+install_requires = [
+    'xarray>=0.9',
+    'dask',
+    'toolz',
+    'numpy',
+    'cloudpickle',
+    ]
 
-k = ext_configuration(top_path='').todict()
-k['packages'] = ['spectra', 'spectra.io']
+test_requires = [
+    'unittest',
+    ]
 
-setup(name='pyspectra',
-      version='1.1.0',
-      description='Spectra base class and tools based on DataArray',
-      author='MetOcean Solutions Ltd.',
-      author_email='r.guedes@metocean.co.nz',
-      url='http://www.metocean.co.nz/',
-      **k
-      )
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+if __name__ == '__main__':
+    setup(name ='spectra',
+          version='0.1',
+          description='Spectra base class and tools based on DataArray',
+          author='MetOcean Solutions Ltd',
+          install_requires=install_requires,
+          test_require=test_requires,
+          author_email='r.guedes@metocean.co.nz',
+          url='http://github.com/metocean/pyspectra',
+          packages=['spectra'],
+)
