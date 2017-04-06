@@ -49,6 +49,9 @@ class SpecArray(object):
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
+    def __repr__(self):
+        return '<%s%s' % (self.__class__.__name__, str(self._obj).replace('<xarray.DataArray',''))
+
     def plot(self):
         """
         Plot spectra
