@@ -11,7 +11,7 @@ PARTNAME = 'part'
 ATTRS = {
     SPECNAME: OrderedDict((
         ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
-        ('units', 'm^2sdeg^-1')
+        ('units', 'm^{2}.s.deg^{-1}')
         )),
     TIMENAME: OrderedDict((
         ('standard_name', 'time'),
@@ -34,7 +34,7 @@ ATTRS = {
         )),
     DIRNAME: OrderedDict((
         ('standard_name', 'sea_surface_wave_from_direction'),
-        ('units', 'Hz')
+        ('units', 'degree')
         )),
     PARTNAME: OrderedDict((
         ('standard_name', 'spectral_partition_number'),
