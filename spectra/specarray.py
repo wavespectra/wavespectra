@@ -518,7 +518,7 @@ def wavenuma(ang_freq, water_depth):
     a = 1.0
     for i in range(1, 6):
         a += D[i] * k0h**i
-    return (k0h * (1 + 1./(k0h*a))**0.5) / water_depth        
+    return (k0h * (1 + 1./(k0h*a))**0.5) / water_depth
 
 def hs(spec, freqs, dirs, tail=True):
     """
