@@ -362,6 +362,16 @@ class SpecArray(object):
         dspr.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dspr.rename('dspr')
 
+    def crsd(self, theta=90., standard_name='sea_surface_wave_update_missing_part_here'):
+        """
+        Add description for this method
+        """
+        cp = np.cos(D2R * (180 + theta - self.dir))
+        sp = np.sin(D2R * (180 + theta - self.dir))
+        crsd = (self.dd * self._obj * cp * sp).sum(dim='dir')
+        crsd.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm2s'))))
+        return crsd.rename('crsd')
+
     def swe(self, standard_name='sea_surface_wave_spectral_width'):
         """
         Spectral width parameter by Cartwright and Longuet-Higgins (1956)
@@ -551,7 +561,7 @@ if __name__ == '__main__':
     #================
     # Using SpecArray
     #================
-    from io.swan import read_swan
+    from readspec import read_swan
     t0 = datetime.datetime.now()
     ds = read_swan(filename, dirorder=True)
     # Fake wsp, wdir, dep
