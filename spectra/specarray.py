@@ -518,7 +518,39 @@ class SpecArray(object):
                                   attrs=OrderedDict((('standard_name', 'spectral_partition_number'), ('units', '')))
                                   )
         return xr.concat(all_parts, dim=part_coord)
-    
+
+    def dpw(self):
+        """
+        Wave spreading at the peak wave frequency
+        """
+        raise NotImplementedError('Wave spreading at the peak wave frequency method not defined')
+
+    def stats(self, stats_list, fmin=None, fmax=None, dmin=None, dmax=None):
+        """
+        Calculate multiple spectral stats into one same DataArray
+            - stats_list :: list of stats to be calculated - need to correspond to implemented methods in this class
+            - fmin, fmax, dmin, dmax :: lower and upper freq/dir boundaries for splitting spectra before calculating stats
+        Returns Dataset containing all required stats
+        """
+        if any((fmin, fmax, dmin, dmax)):
+            spectra = self.split(fmin=fmin, fmax=fmax, dmin=dmin, dmax=dmax)
+        else:
+            spectra = self._obj
+
+        stats = list()
+        for func in stats_list:
+            try:
+                stats_func = getattr(spectra.spec, func)
+            except:
+                raise IOError('%s is not implemented as a method in %s' % (func, self.__class__.__name__))
+            if callable(stats_func):
+                stats.append(stats_func())
+            else:
+                raise IOError('%s attribute of %s is not callable' % (func, self.__class__.__name__))
+
+        return xr.merge(stats)
+
+
 def wavenuma(ang_freq, water_depth):
     """
     Chen and Thomson wavenumber approximation
