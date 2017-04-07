@@ -17,7 +17,7 @@ class SpecDataset(object):
         self.dset = xarray_dset
         
     def __repr__(self):
-        return 'Spectral Dataset wrapper' + str(self.dset)
+        return '<%s%s' % (self.__class__.__name__, str(self.dset).replace('<xarray.Dataset',''))
     
     def __getattr__(self, fn):
         if fn in dir(SpecArray) and (fn[0] != '_'):
