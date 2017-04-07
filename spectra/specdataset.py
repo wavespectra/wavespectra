@@ -8,6 +8,7 @@ from specarray import SpecArray
 from attributes import *
 from swan import SwanSpecFile
 
+@xr.register_dataset_accessor('spec')
 class SpecDataset(object):
     """
     Provides a wrapper around the xarray dataset 

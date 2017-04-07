@@ -35,7 +35,7 @@ def read_netcdf(filename_or_fileglob,
     else: #Gridded
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, lonname: LONNAME, latname: LATNAME, specname: SPECNAME}, inplace=True)
     set_spec_attributes(dset)
-    return SpecDataset(dset)
+    return dset
 
 def read_ww3(filename_or_fileglob, chunks={}):
     """
@@ -52,7 +52,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
         'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     set_spec_attributes(dset)
-    return SpecDataset(dset)
+    return dset
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
     """
@@ -69,14 +69,14 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden','factor', 'df'])
     set_spec_attributes(dset)
-    return SpecDataset(dset)
+    return dset
 
 def read_swan(filename, dirorder=True):
     """
     Read Spectra off SWAN ASCII file
     - dirorder :: If True reorder spectra read from file so that directions are sorted
     Returns:
-    - dset :: SpecArray
+    - dset :: SpecDataset instance
     """
     swanfile = SwanSpecFile(filename, dirorder=dirorder)
     times = swanfile.times
@@ -108,7 +108,7 @@ def read_swan(filename, dirorder=True):
         dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
         dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
     set_spec_attributes(dset)
-    return SpecDataset(dset)
+    return dset
 
 def read_octopus(filename):
     raise NotImplementedError('No Octopus read function defined')
