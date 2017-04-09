@@ -80,27 +80,30 @@ def read_swans(fileglob, dirorder=True):
     Read multiple swan files into single Dataset
         - fileglob :: glob pattern specifying multiple files
         - dirorder :: if True ensures directions are sorted
-    Assumes filenames are the same for the same location
+    Assumes filenames are the same for each site location
+    Output:
+    SpedDataset object containing:
+        - multiple files for same site concatenated along 'cycle' dimension
+        - multiple sites concatenated along the 'site' dimension
     """
     swans = sorted(glob.glob(fileglob))
     assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
 
     sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
     dsets = SortedDict({site: [] for site in sites})
-
     for filename in tqdm(swans):
         site = os.path.splitext(os.path.basename(filename))[0]
-        dsets[site].append(read_swan(filename, dirorder=True))
-
-
-    # import ipdb; ipdb.set_trace()
+        dsets[site].append(expand_cycle(read_swan(filename, dirorder=True, is_grid=False)))
+    dsets = xr.concat([xr.concat(dsets[site], dim=CYCLENAME) for site in sites], dim=SITENAME)
+    dsets[SITENAME].values = range(len(sites))
     return dsets
 
-def read_swan(filename, dirorder=True, cycle=False):
+def read_swan(filename, dirorder=True, cycle=False, is_grid=False):
     """
     Read Spectra off SWAN ASCII file
-    - dirorder :: If True reorder spectra read from file so that directions are sorted
-    - cycle :: If True defines cycle dimension in Dataset
+        - dirorder :: If True reorder spectra read from file so that directions are sorted
+        - cycle :: If True defines cycle dimension in Dataset
+        - is_grid :: grid is inferred from coordinates by default unless this argument is specified
     Returns:
     - dset :: SpecDataset instance
     """
@@ -112,6 +115,8 @@ def read_swan(filename, dirorder=True, cycle=False):
     freqs = swanfile.freqs
     dirs = swanfile.dirs
     
+    swanfile.is_grid = is_grid
+
     spec_list = swanfile.readall()
     if swanfile.is_grid:
         # Looks like gridded data, grid DataArray accordingly
