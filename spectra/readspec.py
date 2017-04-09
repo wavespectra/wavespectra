@@ -148,25 +148,24 @@ def read_json(self,filename):
 
 def expand_cycle(dset):
     """
-    Expand data array dimensions to include cycle
+    Expand data array to include cycle dimension
+        - Input :: xarray Dataset
+        - Output :: same Dataset extended with 'cycle' dimension of length 1
+    Value for cycle coordinate is taken from first value in time coordinate
     """
     dset_out = xr.Dataset()
-    cycle = dset.time[0]
+    cycle_time = dset['time'][0].values
+    cycle_coord = xr.DataArray(data=[cycle_time], coords={CYCLENAME: [cycle_time]}, dims=(CYCLENAME,), name=CYCLENAME)
 
     for dvar in dset.data_vars:
-        coords = {'cycle': cycle}
+        coords = SortedDict({CYCLENAME: cycle_coord})
         coords.update(dset[dvar].coords)
-        dims = ['cycle']+list(dset[dvar].dims)
-        data = np.reshape(dset[dvar].values, [1]+list(dset[dvar].shape))
         dset_out[dvar] = xr.DataArray(data=dset[dvar].values[np.newaxis,...],
                                       coords=coords,
-                                      dims=dims,
+                                      dims=[CYCLENAME]+list(dset[dvar].dims),
                                       name=dvar,
-                                      attrs=dset[dvar].attrs,
-                                      )
-
-    import ipdb; ipdb.set_trace()
-    set_spec_attributes(dset)
+                                      attrs=dset[dvar].attrs)
+    set_spec_attributes(dset_out)
     return dset_out
 
 if __name__ == '__main__':
