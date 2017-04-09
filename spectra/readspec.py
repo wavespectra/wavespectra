@@ -1,8 +1,12 @@
 """
 Functions to read data from different file format into SpecDataset objects
 """
+import os
+import glob
 import xarray as xr
 import numpy as np
+from sortedcontainers import SortedDict, SortedSet
+from tqdm import tqdm
 
 from cfjson.xrdataset import *
 
@@ -71,10 +75,32 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     set_spec_attributes(dset)
     return dset
 
-def read_swan(filename, dirorder=True):
+def read_swans(fileglob, dirorder=True):
+    """
+    Read multiple swan files into single Dataset
+        - fileglob :: glob pattern specifying multiple files
+        - dirorder :: if True ensures directions are sorted
+    Assumes filenames are the same for the same location
+    """
+    swans = sorted(glob.glob(fileglob))
+    assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
+
+    sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
+    dsets = SortedDict({site: [] for site in sites})
+
+    for filename in tqdm(swans):
+        site = os.path.splitext(os.path.basename(filename))[0]
+        dsets[site].append(read_swan(filename, dirorder=True))
+
+
+    # import ipdb; ipdb.set_trace()
+    return dsets
+
+def read_swan(filename, dirorder=True, cycle=False):
     """
     Read Spectra off SWAN ASCII file
     - dirorder :: If True reorder spectra read from file so that directions are sorted
+    - cycle :: If True defines cycle dimension in Dataset
     Returns:
     - dset :: SpecDataset instance
     """
@@ -107,6 +133,10 @@ def read_swan(filename, dirorder=True):
         ).to_dataset()
         dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
         dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
+
+    if cycle:  
+        pass
+
     set_spec_attributes(dset)
     return dset
 
@@ -115,3 +145,30 @@ def read_octopus(filename):
 
 def read_json(self,filename):
     raise NotImplementedError('Cannot read CFJSON format')
+
+def expand_cycle(dset):
+    """
+    Expand data array dimensions to include cycle
+    """
+    dset_out = xr.Dataset()
+    cycle = dset.time[0]
+
+    for dvar in dset.data_vars:
+        coords = {'cycle': cycle}
+        coords.update(dset[dvar].coords)
+        dims = ['cycle']+list(dset[dvar].dims)
+        data = np.reshape(dset[dvar].values, [1]+list(dset[dvar].shape))
+        dset_out[dvar] = xr.DataArray(data=dset[dvar].values[np.newaxis,...],
+                                      coords=coords,
+                                      dims=dims,
+                                      name=dvar,
+                                      attrs=dset[dvar].attrs,
+                                      )
+
+    import ipdb; ipdb.set_trace()
+    set_spec_attributes(dset)
+    return dset_out
+
+if __name__ == '__main__':
+
+    ds = read_swans('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
