@@ -9,6 +9,8 @@ install_requires = [
     'toolz',
     'numpy',
     'cloudpickle',
+    'sortedcontainers',
+    'tqdm',
     ]
 
 test_requires = [
