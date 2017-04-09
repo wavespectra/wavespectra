@@ -8,6 +8,7 @@ LONNAME = 'lon'
 FREQNAME = 'freq'
 DIRNAME = 'dir'
 PARTNAME = 'part'
+CYCLENAME = 'cycle'
 ATTRS = {
     SPECNAME: OrderedDict((
         ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
@@ -39,6 +40,9 @@ ATTRS = {
     PARTNAME: OrderedDict((
         ('standard_name', 'spectral_partition_number'),
         ('units', '')
+        )),
+    CYCLENAME: OrderedDict((
+        ('standard_name', 'forecast_reference_time'),
         )),
 }
 
