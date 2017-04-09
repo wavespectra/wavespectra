@@ -98,12 +98,12 @@ def read_swans(fileglob, dirorder=True):
     dsets[SITENAME].values = range(len(sites))
     return dsets
 
-def read_swan(filename, dirorder=True, cycle=False, is_grid=False):
+def read_swan(filename, dirorder=True, cycle=False, is_grid=None):
     """
     Read Spectra off SWAN ASCII file
         - dirorder :: If True reorder spectra read from file so that directions are sorted
         - cycle :: If True defines cycle dimension in Dataset
-        - is_grid :: grid is inferred from coordinates by default unless this argument is specified
+        - is_grid :: grid/site type is inferred from coordinates unless bool value is specified for this argument
     Returns:
     - dset :: SpecDataset instance
     """
@@ -115,7 +115,8 @@ def read_swan(filename, dirorder=True, cycle=False, is_grid=False):
     freqs = swanfile.freqs
     dirs = swanfile.dirs
     
-    swanfile.is_grid = is_grid
+    if is_grid is not None:
+        swanfile.is_grid = is_grid
 
     spec_list = swanfile.readall()
     if swanfile.is_grid:
