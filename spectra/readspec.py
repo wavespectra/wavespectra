@@ -93,10 +93,74 @@ def read_swans(fileglob, dirorder=True):
     dsets = SortedDict({site: [] for site in sites})
     for filename in tqdm(swans):
         site = os.path.splitext(os.path.basename(filename))[0]
-        dsets[site].append(expand_cycle(read_swan(filename, dirorder=True, is_grid=False)))
+        dsets[site].append(expand_cycle(read_swan(filename, dirorder=dirorder, is_grid=False)))
     dsets = xr.concat([xr.concat(dsets[site], dim=CYCLENAME) for site in sites], dim=SITENAME)
     dsets[SITENAME].values = range(len(sites))
     return dsets
+
+def read_swans2(filename_or_fileglob, dirorder=True, is_grid=None):
+    """
+    Read Spectra off SWAN ASCII file
+        - dirorder :: If True reorder spectra read from file so that directions are sorted
+        - is_grid :: grid/site type is inferred from coordinates unless bool value is specified for this argument
+    Returns:
+    - dset :: SpecDataset instance
+    """
+    swans = sorted(glob.glob(filename_or_fileglob))
+    assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
+
+    sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
+    dsets = SortedDict({site: [] for site in sites})
+    coords = SortedDict({site: {} for site in sites})
+
+    for filename in tqdm(swans):
+        site = os.path.splitext(os.path.basename(filename))[0]
+        swanfile = SwanSpecFile(filename, dirorder=dirorder)
+        site_coord = {'time': swanfile.times,
+                      'lon': swanfile.x,
+                      'lat': swanfile.y,
+                      'site': np.arange(len(swanfile.x))+1,
+                      'freq': swanfile.freqs,
+                      'dir': swanfile.dirs}
+        if not dsets[site]:
+            coords[site].update(site_coord)
+        else:
+            coords[site]['time'].extend(site_coord['time'])
+            for key, val in site_coord.items():
+                if list(val) != list(coords[site][key]) and (key != 'time'):
+                    raise IOError('Coordinate %s in %s not consistent with other sites' % (key, filename))
+        dsets[site].append([s for s in swanfile.readall()])
+
+    return dsets
+    # import ipdb; ipdb.set_trace()
+    
+    # if is_grid is not None:
+    #     swanfile.is_grid = is_grid
+
+    # spec_list = swanfile.readall()
+    # if swanfile.is_grid:
+    #     # Looks like gridded data, grid DataArray accordingly
+    #     arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
+    #     dset = xr.DataArray(
+    #         data=np.swapaxes(arr, 1, 2),
+    #         coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
+    #         dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
+    #         name=SPECNAME,
+    #         ).to_dataset()
+    # else:
+    #     # Keep it with sites dimension
+    #     arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
+    #     dset = xr.DataArray(
+    #         arr,
+    #         coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
+    #         dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
+    #         name=SPECNAME,
+    #     ).to_dataset()
+    #     dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
+    #     dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
+
+    # set_spec_attributes(dset)
+    # return dset
 
 def read_swan(filename, dirorder=True, is_grid=None):
     """
@@ -172,4 +236,16 @@ def expand_cycle(dset):
 
 if __name__ == '__main__':
 
-    ds = read_swans('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
+    import datetime
+    filename = '/source/pyspectra/tests/swan/swn*/*.spec'
+
+    # t0 = datetime.datetime.now()
+    # ds = read_swans('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
+    # print (datetime.datetime.now()-t0).total_seconds()
+
+    t0 = datetime.datetime.now()
+    ds = read_swans2('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
+    print (datetime.datetime.now()-t0).total_seconds()
+
+
+
