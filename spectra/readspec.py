@@ -3,8 +3,10 @@ Functions to read data from different file format into SpecDataset objects
 """
 import os
 import glob
+import pandas as pd
 import xarray as xr
 import numpy as np
+from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
 from tqdm import tqdm
 
@@ -91,11 +93,34 @@ def read_swans(fileglob, dirorder=True):
 
     sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
     dsets = SortedDict({site: [] for site in sites})
+
+    # Reading in all sites
     for filename in tqdm(swans):
         site = os.path.splitext(os.path.basename(filename))[0]
-        dsets[site].append(expand_cycle(read_swan(filename, dirorder=dirorder, is_grid=False)))
-    dsets = xr.concat([xr.concat(dsets[site], dim=CYCLENAME) for site in sites], dim=SITENAME)
-    dsets[SITENAME].values = range(len(sites))
+        dset = read_swan(filename, dirorder=dirorder, as_site=True)
+        dsets[site].append(dset)
+    
+    # Sanity checking
+    time_sizes = [dset.time.size for dset in dsets[site]]
+    cycle_sizes = [len(dsets[site]) for site in sites]
+    cycles = [dset.time[0].values for dset in dsets[site]]
+
+    if len(set(time_sizes)) != 1 or len(set(cycle_sizes)) != 1:
+        raise IOError('Inconsistent number of time records or cycles among sites')
+    
+    # import ipdb; ipdb.set_trace()
+
+    # Merging into one dataset
+    dsets = xr.concat([xr.concat(dsets[site], dim=TIMENAME) for site in sites], dim=SITENAME)
+    dsets[SITENAME].values = np.arange(len(sites))+1
+
+    # Define multi-index coordinate if reading multiple cycles
+    if len(cycles) > 1:
+        cycletime = zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
+                        dsets.time.values)
+        dsets = dsets.rename({'time': 'cycletime'}, inplace=True)
+        dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[CYCLENAME, TIMENAME])
+
     return dsets
 
 def read_swans2(filename_or_fileglob, dirorder=True, is_grid=None):
@@ -112,61 +137,74 @@ def read_swans2(filename_or_fileglob, dirorder=True, is_grid=None):
     sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
     dsets = SortedDict({site: [] for site in sites})
     coords = SortedDict({site: {} for site in sites})
+    cycles = SortedDict({site: [] for site in sites})
 
     for filename in tqdm(swans):
         site = os.path.splitext(os.path.basename(filename))[0]
         swanfile = SwanSpecFile(filename, dirorder=dirorder)
-        site_coord = {'time': swanfile.times,
-                      'lon': swanfile.x,
-                      'lat': swanfile.y,
-                      'site': np.arange(len(swanfile.x))+1,
-                      'freq': swanfile.freqs,
-                      'dir': swanfile.dirs}
-        if not dsets[site]:
-            coords[site].update(site_coord)
+        dsets[site].extend([s for s in swanfile.readall()])
+        site_coord = {TIMENAME: swanfile.times,
+                      LONNAME: swanfile.x.ravel(),
+                      LATNAME: swanfile.y.ravel(),
+                      FREQNAME: swanfile.freqs,
+                      DIRNAME: swanfile.dirs}
+        cycles[site].append(site_coord['time'][0])
+
+        if not coords[site]:
+            coords[site] = site_coord.copy()
         else:
             coords[site]['time'].extend(site_coord['time'])
+            # Check that coordinates are consistent for same sites
             for key, val in site_coord.items():
-                if list(val) != list(coords[site][key]) and (key != 'time'):
+                if list(val) != list(coords[site][key]) and (key not in ['time']):
                     raise IOError('Coordinate %s in %s not consistent with other sites' % (key, filename))
-        dsets[site].append([s for s in swanfile.readall()])
 
-    return dsets
-    # import ipdb; ipdb.set_trace()
+    # Check that times are consistent across different sites
+    times = [coords[site]['time'] for site in sites]
+    if all(x == times[0] for x in times):
+        times = times[0]
+    else:
+        raise IOError('Times differ among different sites read from %s' % (filename_or_fileglob))
+
+    lons = np.array([coords[site][LONNAME] for site in sites]).ravel()
+    lats = np.array([coords[site][LATNAME] for site in sites]).ravel()
+    site_array = np.arange(len(lons)) + 1
+    nparr = np.concatenate([dsets[site] for site in sites], axis=1) # Concatenate sites
+
+    # Define multi-index (cycle,time) if reading from more than one cycle otherwise use only time coordinate
+    if len(cycles[site]) == 1:
+        dset_coords = OrderedDict(((TIMENAME, times),
+                                   (SITENAME, site_array),
+                                   (FREQNAME, site_coord['freq']),
+                                   (DIRNAME, site_coord['dir'])))
+        dset = xr.DataArray(data=nparr, coords=dset_coords, dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME), name=SPECNAME,
+            ).to_dataset()
+    else:
+        # Defining cycle/time MultiIndex
+        extended_cycles = list()
+        for cycle in cycles[site]:
+            extended_cycles.extend([cycle] * len(site_coord['time']))
+        index = pd.MultiIndex.from_tuples(zip(extended_cycles, coords[site]['time']), names=[CYCLENAME, TIMENAME])
+        dset_coords = OrderedDict((('cycletime', index),
+                                   (SITENAME, site_array),
+                                   (FREQNAME, site_coord['freq']),
+                                   (DIRNAME, site_coord['dir'])))
+        dset = xr.DataArray(data=nparr, coords=dset_coords, dims=('cycletime', SITENAME, FREQNAME, DIRNAME), name=SPECNAME,
+            ).to_dataset()
+        dset['cycletime'].attrs = ATTRS[TIMENAME] # Currently not possible setting attrs to each coord in multi-index
+
+    dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: site_array}, dims=[SITENAME])
+    dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: site_array}, dims=[SITENAME])
+
+    set_spec_attributes(dset)
     
-    # if is_grid is not None:
-    #     swanfile.is_grid = is_grid
+    return dset
 
-    # spec_list = swanfile.readall()
-    # if swanfile.is_grid:
-    #     # Looks like gridded data, grid DataArray accordingly
-    #     arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
-    #     dset = xr.DataArray(
-    #         data=np.swapaxes(arr, 1, 2),
-    #         coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
-    #         dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
-    #         name=SPECNAME,
-    #         ).to_dataset()
-    # else:
-    #     # Keep it with sites dimension
-    #     arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
-    #     dset = xr.DataArray(
-    #         arr,
-    #         coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
-    #         dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
-    #         name=SPECNAME,
-    #     ).to_dataset()
-    #     dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
-    #     dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
-
-    # set_spec_attributes(dset)
-    # return dset
-
-def read_swan(filename, dirorder=True, is_grid=None):
+def read_swan(filename, dirorder=True, as_site=None):
     """
     Read Spectra off SWAN ASCII file
         - dirorder :: If True reorder spectra read from file so that directions are sorted
-        - is_grid :: grid/site type is inferred from coordinates unless bool value is specified for this argument
+        - as_site :: If true enforces SpecArray is of 'site' type (1D site coordinate defines location)
     Returns:
     - dset :: SpecDataset instance
     """
@@ -178,8 +216,8 @@ def read_swan(filename, dirorder=True, is_grid=None):
     freqs = swanfile.freqs
     dirs = swanfile.dirs
     
-    if is_grid is not None:
-        swanfile.is_grid = is_grid
+    if as_site:
+        swanfile.is_grid = False
 
     spec_list = swanfile.readall()
     if swanfile.is_grid:
@@ -212,40 +250,20 @@ def read_octopus(filename):
 def read_json(self,filename):
     raise NotImplementedError('Cannot read CFJSON format')
 
-def expand_cycle(dset):
-    """
-    Expand data array to include cycle dimension
-        - Input :: xarray Dataset
-        - Output :: same Dataset extended with 'cycle' dimension of length 1
-    Value for cycle coordinate is taken from first value in time coordinate
-    """
-    dset_out = xr.Dataset()
-    cycle_time = dset['time'][0].values
-    cycle_coord = xr.DataArray(data=[cycle_time], coords={CYCLENAME: [cycle_time]}, dims=(CYCLENAME,), name=CYCLENAME)
-
-    for dvar in dset.data_vars:
-        coords = SortedDict({CYCLENAME: cycle_coord})
-        coords.update(dset[dvar].coords)
-        dset_out[dvar] = xr.DataArray(data=dset[dvar].values[np.newaxis,...],
-                                      coords=coords,
-                                      dims=[CYCLENAME]+list(dset[dvar].dims),
-                                      name=dvar,
-                                      attrs=dset[dvar].attrs)
-    set_spec_attributes(dset_out)
-    return dset_out
-
 if __name__ == '__main__':
 
     import datetime
-    filename = '/source/pyspectra/tests/swan/swn*/*.spec'
-
-    # t0 = datetime.datetime.now()
-    # ds = read_swans('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
-    # print (datetime.datetime.now()-t0).total_seconds()
+    filename_or_fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
 
     t0 = datetime.datetime.now()
-    ds = read_swans2('/source/pyspectra/tests/swan/swn*/*.spec', dirorder=True)
+    ds = read_swans(filename_or_fileglob, dirorder=True)
     print (datetime.datetime.now()-t0).total_seconds()
 
+    t0 = datetime.datetime.now()
+    ds = read_swans2(filename_or_fileglob, dirorder=True)
+    print (datetime.datetime.now()-t0).total_seconds()
+
+    # filename_or_fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
+    # ds = read_swans2(filename_or_fileglob, dirorder=True)
 
 
