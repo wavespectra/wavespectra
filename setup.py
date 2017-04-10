@@ -5,6 +5,7 @@ from numpy.distutils.misc_util import Configuration
 
 install_requires = [
     'xarray>=0.9',
+    'pandas',
     'dask',
     'toolz',
     'numpy',
