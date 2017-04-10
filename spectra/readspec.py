@@ -116,7 +116,7 @@ def read_swans(fileglob, dirorder=True):
     if len(cycles) > 1:
         dsets.rename({'time': 'cycletime'}, inplace=True)
         cycletime = zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
-                        dsets.time.values)
+                        dsets.cycletime.values)
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[CYCLENAME, TIMENAME])
         dsets['cycletime'].attrs = ATTRS[TIMENAME]
 
@@ -181,9 +181,9 @@ if __name__ == '__main__':
     ds = read_swans(fileglob, dirorder=True)
     print (datetime.datetime.now()-t0).total_seconds()
 
-    fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
-    ds = read_swans(fileglob, dirorder=True)
+    # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
+    # ds = read_swans(fileglob, dirorder=True)
 
-    fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/*.spec'
-    ds = read_swans(fileglob, dirorder=True)
+    # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/*.spec'
+    # ds = read_swans(fileglob, dirorder=True)
 
