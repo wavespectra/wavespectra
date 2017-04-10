@@ -120,6 +120,7 @@ def read_swans(fileglob, dirorder=True):
                         dsets.time.values)
         dsets = dsets.rename({'time': 'cycletime'}, inplace=True)
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[CYCLENAME, TIMENAME])
+        dsets['cycletime'].attrs = ATTRS[TIMENAME]
 
     return dsets
 
