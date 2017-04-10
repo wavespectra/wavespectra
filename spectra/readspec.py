@@ -80,13 +80,15 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
 def read_swans(fileglob, dirorder=True):
     """
     Read multiple swan files into single Dataset
-        - fileglob :: glob pattern specifying multiple files
-        - dirorder :: if True ensures directions are sorted
-    Assumes filenames are the same for each site location
+    Input:
+        fileglob :: glob pattern specifying multiple files
+        dirorder :: if True ensures directions are sorted
     Output:
-    SpedDataset object containing:
-        - multiple files for same site concatenated along 'cycle' dimension
-        - multiple sites concatenated along the 'site' dimension
+        SpecDataset object with different sites and cycles concatenated along the 'site' and 'time' dimension
+        If multiple cycles are provided, 'time' coordinate is replaced by 'cycletime' multi-index coordinate
+    Remarks:
+    - Sites are grouped based on filename
+    - If multiple sites are provided in fileglob, each site must have same number of cycles
     """
     swans = sorted(glob.glob(fileglob))
     assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
@@ -108,8 +110,6 @@ def read_swans(fileglob, dirorder=True):
     if len(set(time_sizes)) != 1 or len(set(cycle_sizes)) != 1:
         raise IOError('Inconsistent number of time records or cycles among sites')
     
-    # import ipdb; ipdb.set_trace()
-
     # Merging into one dataset
     dsets = xr.concat([xr.concat(dsets[site], dim=TIMENAME) for site in sites], dim=SITENAME)
     dsets[SITENAME].values = np.arange(len(sites))+1
@@ -122,83 +122,6 @@ def read_swans(fileglob, dirorder=True):
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[CYCLENAME, TIMENAME])
 
     return dsets
-
-def read_swans2(filename_or_fileglob, dirorder=True, is_grid=None):
-    """
-    Read Spectra off SWAN ASCII file
-        - dirorder :: If True reorder spectra read from file so that directions are sorted
-        - is_grid :: grid/site type is inferred from coordinates unless bool value is specified for this argument
-    Returns:
-    - dset :: SpecDataset instance
-    """
-    swans = sorted(glob.glob(filename_or_fileglob))
-    assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
-
-    sites = SortedSet([os.path.splitext(os.path.basename(f))[0] for f in swans])
-    dsets = SortedDict({site: [] for site in sites})
-    coords = SortedDict({site: {} for site in sites})
-    cycles = SortedDict({site: [] for site in sites})
-
-    for filename in tqdm(swans):
-        site = os.path.splitext(os.path.basename(filename))[0]
-        swanfile = SwanSpecFile(filename, dirorder=dirorder)
-        dsets[site].extend([s for s in swanfile.readall()])
-        site_coord = {TIMENAME: swanfile.times,
-                      LONNAME: swanfile.x.ravel(),
-                      LATNAME: swanfile.y.ravel(),
-                      FREQNAME: swanfile.freqs,
-                      DIRNAME: swanfile.dirs}
-        cycles[site].append(site_coord['time'][0])
-
-        if not coords[site]:
-            coords[site] = site_coord.copy()
-        else:
-            coords[site]['time'].extend(site_coord['time'])
-            # Check that coordinates are consistent for same sites
-            for key, val in site_coord.items():
-                if list(val) != list(coords[site][key]) and (key not in ['time']):
-                    raise IOError('Coordinate %s in %s not consistent with other sites' % (key, filename))
-
-    # Check that times are consistent across different sites
-    times = [coords[site]['time'] for site in sites]
-    if all(x == times[0] for x in times):
-        times = times[0]
-    else:
-        raise IOError('Times differ among different sites read from %s' % (filename_or_fileglob))
-
-    lons = np.array([coords[site][LONNAME] for site in sites]).ravel()
-    lats = np.array([coords[site][LATNAME] for site in sites]).ravel()
-    site_array = np.arange(len(lons)) + 1
-    nparr = np.concatenate([dsets[site] for site in sites], axis=1) # Concatenate sites
-
-    # Define multi-index (cycle,time) if reading from more than one cycle otherwise use only time coordinate
-    if len(cycles[site]) == 1:
-        dset_coords = OrderedDict(((TIMENAME, times),
-                                   (SITENAME, site_array),
-                                   (FREQNAME, site_coord['freq']),
-                                   (DIRNAME, site_coord['dir'])))
-        dset = xr.DataArray(data=nparr, coords=dset_coords, dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME), name=SPECNAME,
-            ).to_dataset()
-    else:
-        # Defining cycle/time MultiIndex
-        extended_cycles = list()
-        for cycle in cycles[site]:
-            extended_cycles.extend([cycle] * len(site_coord['time']))
-        index = pd.MultiIndex.from_tuples(zip(extended_cycles, coords[site]['time']), names=[CYCLENAME, TIMENAME])
-        dset_coords = OrderedDict((('cycletime', index),
-                                   (SITENAME, site_array),
-                                   (FREQNAME, site_coord['freq']),
-                                   (DIRNAME, site_coord['dir'])))
-        dset = xr.DataArray(data=nparr, coords=dset_coords, dims=('cycletime', SITENAME, FREQNAME, DIRNAME), name=SPECNAME,
-            ).to_dataset()
-        dset['cycletime'].attrs = ATTRS[TIMENAME] # Currently not possible setting attrs to each coord in multi-index
-
-    dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: site_array}, dims=[SITENAME])
-    dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: site_array}, dims=[SITENAME])
-
-    set_spec_attributes(dset)
-    
-    return dset
 
 def read_swan(filename, dirorder=True, as_site=None):
     """
@@ -253,17 +176,15 @@ def read_json(self,filename):
 if __name__ == '__main__':
 
     import datetime
-    filename_or_fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
+    fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
 
     t0 = datetime.datetime.now()
-    ds = read_swans(filename_or_fileglob, dirorder=True)
+    ds = read_swans(fileglob, dirorder=True)
     print (datetime.datetime.now()-t0).total_seconds()
 
-    t0 = datetime.datetime.now()
-    ds = read_swans2(filename_or_fileglob, dirorder=True)
-    print (datetime.datetime.now()-t0).total_seconds()
+    fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
+    ds = read_swans(fileglob, dirorder=True)
 
-    # filename_or_fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
-    # ds = read_swans2(filename_or_fileglob, dirorder=True)
-
+    fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/*.spec'
+    ds = read_swans(fileglob, dirorder=True)
 
