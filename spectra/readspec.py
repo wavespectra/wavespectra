@@ -105,12 +105,11 @@ def read_swans(fileglob, dirorder=True):
     # Sanity checking
     time_sizes = [dset.time.size for dset in dsets[site]]
     cycle_sizes = [len(dsets[site]) for site in sites]
-    cycles = [dset.time[0].values for dset in dsets[site]]
-
     if len(set(time_sizes)) != 1 or len(set(cycle_sizes)) != 1:
         raise IOError('Inconsistent number of time records or cycles among sites')
     
     # Merging into one dataset
+    cycles = [dset.time[0].values for dset in dsets[site]]
     dsets = xr.concat([xr.concat(dsets[site], dim=TIMENAME) for site in sites], dim=SITENAME)
     dsets[SITENAME].values = np.arange(len(sites))+1
 
