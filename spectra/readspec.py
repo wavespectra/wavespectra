@@ -99,8 +99,7 @@ def read_swans(fileglob, dirorder=True):
     # Reading in all sites
     for filename in tqdm(swans):
         site = os.path.splitext(os.path.basename(filename))[0]
-        dset = read_swan(filename, dirorder=dirorder, as_site=True)
-        dsets[site].append(dset)
+        dsets[site].append(read_swan(filename, dirorder=dirorder, as_site=True))
     
     # Sanity checking
     time_sizes = [dset.time.size for dset in dsets[site]]
@@ -115,9 +114,9 @@ def read_swans(fileglob, dirorder=True):
 
     # Define multi-index coordinate if reading multiple cycles
     if len(cycles) > 1:
+        dsets.rename({'time': 'cycletime'}, inplace=True)
         cycletime = zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
                         dsets.time.values)
-        dsets = dsets.rename({'time': 'cycletime'}, inplace=True)
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[CYCLENAME, TIMENAME])
         dsets['cycletime'].attrs = ATTRS[TIMENAME]
 
