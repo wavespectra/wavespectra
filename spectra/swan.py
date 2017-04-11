@@ -181,34 +181,6 @@ class SwanSpecFile(object):
         else:
             return 'NODATA\n'
 
-    def readTable(self,headers=['X-wsp','Y-wsp','dep']):
-        """
-        Read SWAN tab file for extracting wind parameters
-        """
-        fileroot=os.path.splitext(self.filename)[0]
-        try:
-            with open(fileroot+'.tab') as f:
-                for i in range(0,6):
-                    hline=f.readline()
-                    if i==3:
-                        hline=f.readline()
-                        bits=re.split("\s+",hline)
-                        hind=[bits.index(h)-1 if h in bits else -1 for h in headers]
-                ttime=[]
-                dep=[]
-                uwnd=[]
-                vwnd=[]
-                for line in f.readlines():
-                    ttime.append(datetime.datetime.strptime(line[0:15],'%Y%m%d.%H%M%S'))
-                    bits=re.split('\s+',line)
-                    if hind[0]>0:uwnd.append(float(bits[hind[0]]))
-                    if hind[1]>0:vwnd.append(float(bits[hind[1]]))
-                    if hind[2]>0:dep.append(float(bits[hind[2]]))
-            return ttime,uwnd,vwnd,dep
-        except Exception as e:
-            print str(e)
-            return None
-
     def close(self):
         if self.f:self.f.close()
         self.f=False   
