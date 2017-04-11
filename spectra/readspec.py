@@ -13,9 +13,10 @@ from tqdm import tqdm
 
 from cfjson.xrdataset import *
 
-from swan import SwanSpecFile
+from swan import SwanSpecFile, read_tab
 from specdataset import SpecDataset
 from attributes import *
+from misc import uv_to_spddir
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},
@@ -153,7 +154,12 @@ def read_swan(filename, dirorder=True, as_site=None):
             dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
             ).to_dataset()
-        if swanfile.is_site:
+
+        if swanfile.is_tab:
+            # df = read_tab(swanfile.tabfile)
+            # df['wspd'],df['wdir'] = uv_to_spddir(df['X-wsp'], df['Y-wsp'], ang_rot=180)
+            # import ipdb; ipdb.set_trace()
+
             table_data = swanfile.readTable()
             if table_data:
                 ttime, uwnd, vwnd, dep = table_data
