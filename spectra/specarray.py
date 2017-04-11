@@ -8,6 +8,7 @@ Reference:
         Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
 - Zhang (2011).
 """
+import re
 from collections import OrderedDict
 from datetime import datetime
 import numpy as np
@@ -50,7 +51,7 @@ class SpecArray(object):
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
     def __repr__(self):
-        return '<%s%s' % (self.__class__.__name__, str(self._obj).replace('<xarray.DataArray',''))
+        return re.sub(r'<([^\s]+)', '<%s'%(self.__class__.__name__), str(self._obj))
 
     def plot(self):
         """

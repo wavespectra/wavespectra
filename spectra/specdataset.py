@@ -1,6 +1,7 @@
 """
 Extra functions to attach to main SpecArray class
 """
+import re
 import xarray as xr
 import numpy as np
 
@@ -17,7 +18,7 @@ class SpecDataset(object):
         self.dset = xarray_dset
         
     def __repr__(self):
-        return '<%s%s' % (self.__class__.__name__, str(self.dset).replace('<xarray.Dataset',''))
+        return re.sub(r'<.+>', '<%s>'%(self.__class__.__name__), str(self.dset))
     
     def __getattr__(self, fn):
         if fn in dir(SpecArray) and (fn[0] != '_'):
