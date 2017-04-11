@@ -198,15 +198,15 @@ class SpecArray(object):
         other = self._obj.sel(freq=slice(fmin, fmax))
         
         # Slice directions
-        if 'dir' in other.dims and (dmin is not None or dmax is not None):
+        if 'dir' in other.dims and any(dmin, dmax):
             other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
 
         # Interpolate at fmin
-        if other.freq.min() > fmin:
+        if (other.freq.min() > fmin) and (self.freq.min() <= fmin):
             other = xr.concat([self._interp_freq(fmin), other], dim='freq')
 
         # Interpolate at fmax
-        if other.freq.max() < fmax:
+        if (other.freq.max() < fmax) and (self.freq.max() >= fmax):
             other = xr.concat([other, self._interp_freq(fmax)], dim='freq') 
 
         return other
