@@ -3,6 +3,7 @@ Functions to read data from different file format into SpecDataset objects
 """
 import os
 import glob
+import datetime
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -15,6 +16,8 @@ from cfjson.xrdataset import *
 from swan import SwanSpecFile
 from specdataset import SpecDataset
 from attributes import *
+
+to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},
@@ -142,6 +145,7 @@ def read_swan(filename, dirorder=True, as_site=None):
         swanfile.is_grid = False
 
     spec_list = swanfile.readall()
+
     if swanfile.is_grid:
         # Looks like gridded data, grid DataArray accordingly
         arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
@@ -151,6 +155,21 @@ def read_swan(filename, dirorder=True, as_site=None):
             dims=(TIMENAME, LATNAME, LONNAME, FREQNAME, DIRNAME),
             name=SPECNAME,
             ).to_dataset()
+        if swanfile.is_site:
+            table_data = swanfile.readTable()
+            if table_data:
+                ttime, uwnd, vwnd, dep = table_data
+                if len(ttime) == len(times):
+                    if len(dep):
+                        dset[DEPNAME] = xr.DataArray(data=np.array(dep).reshape(-1,1,1),
+                                                   dims=[TIMENAME, LATNAME, LONNAME])
+                    if len(uwnd):
+                        u = np.array(uwnd)
+                        v = np.array(vwnd)
+                        dset[WSPDNAME] = xr.DataArray(data=np.sqrt(u*u + v*v).reshape(-1,1,1),
+                                                      dims=[TIMENAME, LATNAME, LONNAME])
+                        dset[WDIRNAME] = xr.DataArray(data=np.mod(270-np.pi*np.arctan2(u,v)/180, 360).reshape(-1,1,1),
+                                                      dims=[TIMENAME, LATNAME, LONNAME])
     else:
         # Keep it with sites dimension
         arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
