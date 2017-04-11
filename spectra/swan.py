@@ -7,7 +7,7 @@ import copy
 import datetime
 import xarray as xr
 import numpy as np
-
+import pandas as pd
 from attributes import *
 
 class Error(Exception):
@@ -17,16 +17,20 @@ class SwanSpecFile(object):
     def __init__(self, filename,
                  freqs=None,
                  dirs=None,
-                 x=None, y=None,
+                 x=None,
+                 y=None,
                  time=False,
                  id='Swan Spectrum',
                  dirorder=False,
-                 append=False):
+                 append=False,
+                 tabfile=None):
         """
         Read spectra in SWAN ASCII format
         """
         self.times = False
         self.filename = filename
+        self.tabfile = tabfile or os.path.splitext(self.filename)[0]+'.tab'
+        self.is_tab = False
         self.buf = None
         try:
             if freqs is not None:#Writable file
@@ -69,7 +73,7 @@ class SwanSpecFile(object):
         lons = np.unique(self.x)
         lats = np.unique(self.y)
         self.is_grid = (len(lons)*len(lats) == len(self.x))
-        self.is_site = (len(lons)*len(lats) == 1)
+        self.is_tab = (os.path.isfile(self.tabfile)) & (len(lons)*len(lats) == 1)
 
     def _readhdr(self,keyword,numspec=False):
         if not self.buf:self.buf=self.f.readline()
@@ -165,8 +169,7 @@ class SwanSpecFile(object):
                 for row in S:
                     strout+=(self.fmt % tuple(row/fac)) + '\n'
             self.f.write(strout)
-            
-            
+
     def readSpectrum(self):
         if self.S.any():
             fac = self.S.max()/9998
@@ -208,4 +211,36 @@ class SwanSpecFile(object):
 
     def close(self):
         if self.f:self.f.close()
-        self.f=False    
+        self.f=False   
+
+def read_tab(filename, toff=0):
+    """
+    Read swan tab file, return pandas dataframe
+    Usage:
+        df = read_swan_tab(filename, mask={}, toff=0)
+    Input:
+        filename :: name of SWAN tab file to read
+        toff :: timezone offset
+    """
+    dateparse = lambda x: datetime.datetime.strptime(x, '%Y%m%d.%H%M%S')
+    df = pd.read_csv(filename,
+                     delim_whitespace=True,
+                     skiprows=[0,1,2,3,5,6],
+                     parse_dates=[0],
+                     date_parser=dateparse,
+                     index_col=0,
+                     )
+    df.index.name = TIMENAME
+    df.index = df.index.shift(toff, freq='1H')
+    for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
+        df = df.rename(columns={col2: col1})
+    return df.ix[:, 0:-1]
+
+if __name__ == '__main__':
+
+
+    filename = '/wave/indo/swan_cfsr_west/2012/act.tab'
+
+    t0 = datetime.datetime.now()
+    ds1 = read_tab(filename)
+    print (datetime.datetime.now()-t0).total_seconds()
