@@ -17,8 +17,6 @@ from swan import SwanSpecFile
 from specdataset import SpecDataset
 from attributes import *
 
-to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
-
 def read_netcdf(filename_or_fileglob,
                 chunks={},
                 freqname=FREQNAME,

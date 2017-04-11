@@ -8,7 +8,7 @@ import numpy as np
 from specarray import SpecArray
 from attributes import *
 from swan import SwanSpecFile
-from readspec import to_datetime
+from misc import to_datetime
 
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
