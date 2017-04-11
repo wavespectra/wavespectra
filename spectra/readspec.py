@@ -156,24 +156,23 @@ def read_swan(filename, dirorder=True, as_site=None):
             ).to_dataset()
 
         if swanfile.is_tab:
-            # df = read_tab(swanfile.tabfile)
-            # df['wspd'],df['wdir'] = uv_to_spddir(df['X-wsp'], df['Y-wsp'], ang_rot=180)
-            # import ipdb; ipdb.set_trace()
-
-            table_data = swanfile.readTable()
-            if table_data:
-                ttime, uwnd, vwnd, dep = table_data
-                if len(ttime) == len(times):
-                    if len(dep):
-                        dset[DEPNAME] = xr.DataArray(data=np.array(dep).reshape(-1,1,1),
-                                                   dims=[TIMENAME, LATNAME, LONNAME])
-                    if len(uwnd):
-                        u = np.array(uwnd)
-                        v = np.array(vwnd)
-                        dset[WSPDNAME] = xr.DataArray(data=np.sqrt(u*u + v*v).reshape(-1,1,1),
+            try:
+                df = read_tab(swanfile.tabfile)
+                if dset.time.size == df.index.size:
+                    if 'X-wsp' in df and 'Y-wsp' in df:
+                        df['wspd'], df['wdir'] = uv_to_spddir(df['X-wsp'], df['Y-wsp'], coming_from=True)
+                        dset[WSPDNAME] = xr.DataArray(data=df['wspd'].values.reshape(-1,1,1),
                                                       dims=[TIMENAME, LATNAME, LONNAME])
-                        dset[WDIRNAME] = xr.DataArray(data=np.mod(270-np.pi*np.arctan2(u,v)/180, 360).reshape(-1,1,1),
+                        dset[WDIRNAME] = xr.DataArray(data=df['wdir'].values.reshape(-1,1,1),
                                                       dims=[TIMENAME, LATNAME, LONNAME])
+                    if 'dep' in df:
+                        dset[DEPNAME] = xr.DataArray(data=df['dep'].values.reshape(-1,1,1),
+                                                     dims=[TIMENAME, LATNAME, LONNAME])
+                else:
+                    print "Warning: times in %s and %s not consistent, not parsing winds and depth" % (
+                        swanfile.filename, swanfile.tabfile)
+            except Exception as exc:
+                print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
     else:
         # Keep it with sites dimension
         arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
