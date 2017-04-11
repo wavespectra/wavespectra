@@ -49,15 +49,15 @@ ATTRS = {
         )),
     WSPDNAME: OrderedDict((
         ('standard_name', 'wind_speed'),
-        ('units': 'm/s'),
+        ('units', 'm/s'),
         )),
     WDIRNAME: OrderedDict((
         ('standard_name', 'wind_from_direction'),
-        ('units': 'degree'),
+        ('units', 'degree'),
         )),
     DEPNAME: OrderedDict((
         ('standard_name', 'sea_floor_depth_below_sea_surface'),
-        ('units': 'm'),
+        ('units', 'm'),
         )),
 }
 

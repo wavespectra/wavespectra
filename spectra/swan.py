@@ -7,10 +7,8 @@ import copy
 import datetime
 import xarray as xr
 import numpy as np
-from pandas import to_datetime
 
 from attributes import *
-from readspec import to_datetime
 
 class Error(Exception):
     pass
@@ -24,9 +22,9 @@ class SwanSpecFile(object):
                  id='Swan Spectrum',
                  dirorder=False,
                  append=False):
-    """
-    Read spectra in SWAN ASCII format
-    """
+        """
+        Read spectra in SWAN ASCII format
+        """
         self.times = False
         self.filename = filename
         self.buf = None
