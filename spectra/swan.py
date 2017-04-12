@@ -14,16 +14,8 @@ class Error(Exception):
     pass
   
 class SwanSpecFile(object):
-    def __init__(self, filename,
-                 freqs=None,
-                 dirs=None,
-                 x=None,
-                 y=None,
-                 time=False,
-                 id='Swan Spectrum',
-                 dirorder=False,
-                 append=False,
-                 tabfile=None):
+    def __init__(self, filename, freqs=None, dirs=None, x=None, y=None, time=False,
+                 id='Swan Spectrum', dirorder=False, append=False, tabfile=None):
         """
         Read spectra in SWAN ASCII format
         """
@@ -34,108 +26,119 @@ class SwanSpecFile(object):
         self.buf = None
         try:
             if freqs is not None:#Writable file
-                self.freqs=np.array(freqs)
-                self.dirs=np.array(dirs)
-                self.x=np.array(x)
-                self.y=np.array(y)
-                if time:self.times=[]
-                self.f=open(filename,'w')
-                self.writeHeader(time,id)
-                self.fmt=len(self.dirs)*'%4d '
+                self.freqs = np.array(freqs)
+                self.dirs = np.array(dirs)
+                self.x = np.array(x)
+                self.y = np.array(y)
+                if time:
+                    self.times = []
+                self.f = open(filename, 'w')
+                self.writeHeader(time, id)
+                self.fmt = len(self.dirs) * '%4d '
             else:
-                self.f=open(filename,'r+' if append else 'r')
-                header=self._readhdr('SWAN')
+                self.f = open(filename,'r+' if append else 'r')
+                header = self._readhdr('SWAN')
                 while True:
-                    if not self._readhdr('$'):break
+                    if not self._readhdr('$'):
+                        break
                 if self._readhdr('TIME'):
                     self._readhdr('1')
-                    self.times=[]
-                self.x=[]
-                self.y=[]
-                for ip in self._readhdr('LONLAT',True):
-                    xy=map(float,ip.split())
+                    self.times = []
+                self.x = []
+                self.y = []
+                for ip in self._readhdr('LONLAT', True):
+                    xy = map(float,ip.split())
                     self.x.append(xy[0])
                     self.y.append(xy[1])
-                self.x=np.array(self.x)
-                self.y=np.array(self.y)
-                self.freqs=np.array(map(float,self._readhdr('AFREQ',True)))
-                self.dirs=np.array(map(float,self._readhdr('NDIR',True)))
+                self.x = np.array(self.x)
+                self.y = np.array(self.y)
+
+                self.afreq = self._readhdr('AFREQ', True)
+                self.rfreq = self._readhdr('RFREQ', True)
+                self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
+                self.ndir = self._readhdr('NDIR', True)
+                self.cdir = self._readhdr('CDIR', True)
+                self.dirs = np.array(map(float, self.ndir)) if self.ndir else np.array(map(float, self.cdir))
+
                 self._readhdr('QUANT',True)
                 self.f.readline()
                 self.f.readline()
+
         except Error as e:
-            raise 'File error with %s [%s]' % (filename,e)
+            raise 'File error with %s [%s]' % (filename, e)
         if dirorder:
-            self.dirmap=list(np.argsort(self.dirs % 360.))
-            self.dirs=self.dirs[self.dirmap] % 360.
+            self.dirmap = list(np.argsort(self.dirs % 360.))
+            self.dirs = self.dirs[self.dirmap] % 360.
         else:
-            self.dirmap=False
+            self.dirmap = False
         lons = np.unique(self.x)
         lats = np.unique(self.y)
         self.is_grid = (len(lons)*len(lats) == len(self.x))
         self.is_tab = (os.path.isfile(self.tabfile)) & (len(lons)*len(lats) == 1)
 
-    def _readhdr(self,keyword,numspec=False):
-        if not self.buf:self.buf=self.f.readline()
-        if self.buf.find(keyword)>=0:
+    def _readhdr(self, keyword, numspec=False):
+        if not self.buf:
+            self.buf = self.f.readline()
+        if self.buf.find(keyword) >= 0:
             if numspec:
-                line=self.f.readline()
-                n=int(line[0:min(len(line),20)])
-                self.buf=[self.f.readline() for i in range(0,n)]
-            rtn=self.buf
-            self.buf=None
+                line = self.f.readline()
+                n = int(re.findall(r'\b(\d+)\b', line)[0])
+                self.buf = [self.f.readline() for i in range(0,n)]
+            rtn = self.buf
+            self.buf = None
         else:
-            rtn=False
+            rtn = False
         return rtn
 
     def read(self):
-        if not self.f:return None
-        if isinstance(self.times,list):
-            line=self.f.readline()
+        if not self.f:
+            return None
+        if isinstance(self.times, list):
+            line = self.f.readline()
             if line:
-                ttime=datetime.datetime.strptime(line[0:15],'%Y%m%d.%H%M%S')
+                ttime = datetime.datetime.strptime(line[0:15], '%Y%m%d.%H%M%S')
                 self.times.append(ttime)
             else:
                 return None
-        Sout=[]
+        Sout = []
         for ip,pp in enumerate(self.x):
-            Snew=np.nan*np.zeros((len(self.freqs),len(self.dirs)))
+            Snew = np.zeros((len(self.freqs), len(self.dirs)))
             if self._readhdr('NODATA'):
                 pass
             else:
                 if self._readhdr('ZERO'):
-                    Snew=np.zeros((len(self.f),len(self.dirs)))
+                    Snew = np.zeros((len(self.freqs), len(self.dirs)))
                 elif self._readhdr('FACTOR'):
-                    fac=float(self.f.readline())
+                    fac = float(self.f.readline())
                     for i,f in enumerate(self.freqs):
-                        line=self.f.readline()
-                        lsplit=line.split()
+                        line = self.f.readline()
+                        lsplit = line.split()
                         try:
-                            Snew[i,:]=map(float,lsplit)
+                            Snew[i,:] = map(float, lsplit)
                         except:
                             pass
-                    Snew*=fac
+                    Snew *= fac
                     if self.dirmap:
-                        Snew=Snew[:,self.dirmap]
+                        Snew = Snew[:,self.dirmap]
             Sout.append(Snew)
         return Sout
 
-    def scan(self,time):
-        nf=len(self.S.freqs)+1
-        tstr=time.strftime('%Y%m%d.%H%M%S')
-        i=0
+    def scan(self, time):
+        nf = len(self.S.freqs) + 1
+        tstr = time.strftime('%Y%m%d.%H%M%S')
+        i = 0
         while True:
-            line=self.f.readline()
+            line = self.f.readline()
             if not line:
                 return -1
-            elif line[:15]==tstr:
-                self.f.seek(-len(line),1)
+            elif line[:15] == tstr:
+                self.f.seek(-len(line), 1)
                 return i/nf
-            i+=1
+            i += 1
 
     def readall(self):
         while True:
-            sset=self.read()
+            sset = self.read()
             if sset:
                 yield sset
             else:
