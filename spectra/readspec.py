@@ -11,8 +11,6 @@ from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
 from tqdm import tqdm
 
-from cfjson.xrdataset import *
-
 from swan import SwanSpecFile, read_tab
 from specdataset import SpecDataset
 from attributes import *
@@ -200,6 +198,7 @@ def read_octopus(filename):
     raise NotImplementedError('No Octopus read function defined')
 
 def read_json(self,filename):
+    from cfjson.xrdataset import CFJSONinterface
     raise NotImplementedError('Cannot read CFJSON format')
 
 if __name__ == '__main__':
