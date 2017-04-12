@@ -107,7 +107,7 @@ class SwanSpecFile(object):
                 return None
         Sout = []
         for ip,pp in enumerate(self.x):
-            Snew = np.zeros((len(self.freqs), len(self.dirs)))
+            Snew = np.nan * np.zeros((len(self.freqs), len(self.dirs)))
             if self._readhdr('NODATA'):
                 pass
             else:
