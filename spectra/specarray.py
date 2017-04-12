@@ -326,8 +326,8 @@ class SpecArray(object):
         of the frequency-integrated spectrum is maximum
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')
-        dp = self.dir.values[ipeak] * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
+        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')        
+        dp = self.dir.values[ipeak.values] * (0*ipeak + 1)
         dp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dp.rename('dp')
 
