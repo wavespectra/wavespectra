@@ -158,7 +158,8 @@ def read_swan(filename, dirorder=True, as_site=None):
             print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
 
     if swanfile.is_grid:
-        # Looks like gridded data, grid DataArray accordingly
+        lons = sorted(np.unique(lons))
+        lats = sorted(np.unique(lats))
         arr = np.array(spec_list).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
         dset = xr.DataArray(
             data=np.swapaxes(arr, 1, 2),
@@ -173,7 +174,6 @@ def read_swan(filename, dirorder=True, as_site=None):
         if tab is not None and 'dep' in tab:
             dset[DEPNAME] = xr.DataArray(data=tab['dep'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
     else:
-        # Keep it with sites dimension
         arr = np.array(spec_list).reshape(len(times), len(sites), len(freqs), len(dirs))
         dset = xr.DataArray(
             data=arr,
