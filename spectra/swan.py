@@ -8,7 +8,9 @@ import datetime
 import xarray as xr
 import numpy as np
 import pandas as pd
+
 from attributes import *
+from misc import to_nautical
 
 class Error(Exception):
     pass
@@ -55,10 +57,13 @@ class SwanSpecFile(object):
 
                 self.afreq = self._readhdr('AFREQ', True)
                 self.rfreq = self._readhdr('RFREQ', True)
-                self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
                 self.ndir = self._readhdr('NDIR', True)
                 self.cdir = self._readhdr('CDIR', True)
-                self.dirs = np.array(map(float, self.ndir)) if self.ndir else np.array(map(float, self.cdir))
+                self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
+                if self.ndir:
+                    self.dirs = np.array(map(float, self.ndir))
+                else:
+                    self.dirs = to_nautical(np.array(map(float, self.cdir)))
 
                 self._readhdr('QUANT',True)
                 self.f.readline()
