@@ -139,15 +139,29 @@ def read_swan(filename, dirorder=True, as_site=None):
     sites = np.arange(len(lons))+1
     freqs = swanfile.freqs
     dirs = swanfile.dirs
+    tab = None
     
     if as_site:
         swanfile.is_grid = False
 
-    spec_list = swanfile.readall()
+    spec_list = [s for s in swanfile.readall()]
+
+    if swanfile.is_tab:
+        try:
+            tab = read_tab(swanfile.tabfile)
+            if len(swanfile.times) == tab.index.size:
+                if 'X-wsp' in tab and 'Y-wsp' in tab:
+                    tab['wspd'], tab['wdir'] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
+            else:
+                print "Warning: times in %s and %s not consistent, not appending winds and depth" % (
+                    swanfile.filename, swanfile.tabfile)
+                tab = None
+        except Exception as exc:
+            print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
 
     if swanfile.is_grid:
         # Looks like gridded data, grid DataArray accordingly
-        arr = np.array([s for s in spec_list]).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
+        arr = np.array(spec_list).reshape(len(times), len(lons), len(lats), len(freqs), len(dirs))
         dset = xr.DataArray(
             data=np.swapaxes(arr, 1, 2),
             coords=OrderedDict(((TIMENAME, times), (LATNAME, lats), (LONNAME, lons), (FREQNAME, freqs), (DIRNAME, dirs))),
@@ -155,33 +169,27 @@ def read_swan(filename, dirorder=True, as_site=None):
             name=SPECNAME,
             ).to_dataset()
 
-        if swanfile.is_tab:
-            try:
-                df = read_tab(swanfile.tabfile)
-                if dset.time.size == df.index.size:
-                    if 'X-wsp' in df and 'Y-wsp' in df:
-                        df['wspd'], df['wdir'] = uv_to_spddir(df['X-wsp'], df['Y-wsp'], coming_from=True)
-                        dset[WSPDNAME] = xr.DataArray(data=df['wspd'].values.reshape(-1,1,1),
-                                                      dims=[TIMENAME, LATNAME, LONNAME])
-                        dset[WDIRNAME] = xr.DataArray(data=df['wdir'].values.reshape(-1,1,1),
-                                                      dims=[TIMENAME, LATNAME, LONNAME])
-                    if 'dep' in df:
-                        dset[DEPNAME] = xr.DataArray(data=df['dep'].values.reshape(-1,1,1),
-                                                     dims=[TIMENAME, LATNAME, LONNAME])
-                else:
-                    print "Warning: times in %s and %s not consistent, not parsing winds and depth" % (
-                        swanfile.filename, swanfile.tabfile)
-            except Exception as exc:
-                print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
+        if tab is not None and 'wspd' in tab:
+            dset[WSPDNAME] = xr.DataArray(data=tab['wspd'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
+            dset[WDIRNAME] = xr.DataArray(data=tab['wdir'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
+        if tab is not None and 'dep' in tab:
+            dset[DEPNAME] = xr.DataArray(data=tab['dep'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
     else:
         # Keep it with sites dimension
-        arr = np.array([s for s in spec_list]).reshape(len(times), len(sites), len(freqs), len(dirs))
+        arr = np.array(spec_list).reshape(len(times), len(sites), len(freqs), len(dirs))
         dset = xr.DataArray(
-            arr,
+            data=arr,
             coords=OrderedDict(((TIMENAME, times), (SITENAME, sites), (FREQNAME, freqs), (DIRNAME, dirs))),
             dims=(TIMENAME, SITENAME, FREQNAME, DIRNAME),
             name=SPECNAME,
         ).to_dataset()
+
+        if tab is not None and 'wspd' in tab:
+            dset[WSPDNAME] = xr.DataArray(data=tab['wspd'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
+            dset[WDIRNAME] = xr.DataArray(data=tab['wdir'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
+        if tab is not None and 'dep' in tab:
+            dset[DEPNAME] = xr.DataArray(data=tab['dep'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
+
         dset[LATNAME] = xr.DataArray(data=lats, coords={SITENAME: sites}, dims=[SITENAME])
         dset[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
 
