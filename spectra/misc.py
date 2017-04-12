@@ -7,6 +7,8 @@ import pandas as pd
 
 to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
 
+to_nautical = lambda a: np.mod(270-a, 360)
+
 def spddir_to_uv(spd, direc, coming_from=False):
     """
     converts (spd, dir) to (u, v)
