@@ -3,6 +3,8 @@ import os
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
+import spectra
+
 install_requires = [
     'xarray>=0.9',
     'pandas',
@@ -31,7 +33,7 @@ k = ext_configuration(top_path='').todict()
 
 if __name__ == '__main__':
     setup(name ='spectra',
-          version='0.1',
+          version=spectra.__version__,
           description='Spectra base class and tools based on DataArray',
           long_description=read('README.md'),
           author='MetOcean Solutions Ltd',

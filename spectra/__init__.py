@@ -34,3 +34,5 @@ try:
     from readspec import read_json
 except:
     print "Cannot import reading read_json:", sys.exc_info()[0]
+
+__version__ = '1.0'
