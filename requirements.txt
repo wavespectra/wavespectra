@@ -1,1 +1,6 @@
+xarray
+dask
+toolz
+pandas
 cfjson
+sortedcontainers

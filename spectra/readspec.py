@@ -233,7 +233,6 @@ def read_octopus(filename):
     raise NotImplementedError('No Octopus read function defined')
 
 def read_json(self,filename):
-    from cfjson.xrdataset import CFJSONinterface
     raise NotImplementedError('Cannot read CFJSON format')
 
 if __name__ == '__main__':

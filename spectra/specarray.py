@@ -198,7 +198,7 @@ class SpecArray(object):
         other = self._obj.sel(freq=slice(fmin, fmax))
         
         # Slice directions
-        if 'dir' in other.dims and any(dmin, dmax):
+        if 'dir' in other.dims and (dmin or dmax):
             other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
 
         # Interpolate at fmin
