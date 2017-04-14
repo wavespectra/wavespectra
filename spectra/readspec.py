@@ -77,6 +77,41 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     set_spec_attributes(dset)
     return dset
 
+def read_hotswan(fileglob, dirorder=True):
+    """
+    Read multiple swan hotfiles into single gridded Dataset
+    Input:
+        fileglob :: glob pattern specifying multiple hotfiles
+        dirorder :: if True ensures directions are sorted
+    Output:
+        SpecDataset object with different grid parts concateneted
+    Remark:
+        SWAN hotfiles from mpi runs are split by the number of cores over the largest dim of
+        (lat, lon) with overlapping rows or columns that are computed in only one of the split
+        hotfiles. Here overlappings are concatenated so that those with higher values are kept
+        which assumes non-computed overlapping rows or columns are filled with zeros
+    """
+    hotfiles = sorted(glob.glob(fileglob))
+    assert hotfiles, 'No SWAN file identified with fileglob %s' % (fileglob)
+
+    dsets = [read_swan(hotfiles[0])]
+    for hotfile in tqdm(hotfiles[1:]):
+        dset = read_swan(hotfile)
+        # Ensure we keep non-zeros in overlapping rows or columns 
+        overlap = {'lon': set(dsets[-1].lon.values).intersection(dset.lon.values),
+                   'lat': set(dsets[-1].lat.values).intersection(dset.lat.values)}
+        concat_dim = min(overlap, key=lambda x: len(overlap[x]))
+        for concat_val in overlap[concat_dim]:
+            slc = {concat_dim: [concat_val]}
+            if dsets[-1].efth.loc[slc].sum() > dset.efth.loc[slc].sum():
+                dset.efth.loc[slc] = dsets[-1].efth.loc[slc]
+            else:
+                dsets[-1].efth.loc[slc] = dset.efth.loc[slc]
+        dsets.append(dset)
+    dset = xr.auto_combine(dsets)
+    set_spec_attributes(dset)
+    return dset
+
 def read_swans(fileglob, dirorder=True):
     """
     Read multiple swan files into single Dataset
@@ -204,11 +239,20 @@ def read_json(self,filename):
 if __name__ == '__main__':
 
     import datetime
-    fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
+    import matplotlib.pyplot as plt
 
-    t0 = datetime.datetime.now()
-    ds = read_swans(fileglob, dirorder=True)
-    print (datetime.datetime.now()-t0).total_seconds()
+    # fileglob = '/source/pyspectra/tests/swan/hot/aklislr.20170412_00z.hot-???'
+    fileglob = '/source/pyspectra/tests/swan/hot/aklishr.20170412_12z.hot-???'
+    ds = read_hotswan(fileglob)
+    plt.figure()
+    ds.spec.hs().plot(cmap='jet')
+    plt.show()
+
+    # fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
+
+    # t0 = datetime.datetime.now()
+    # ds = read_swans(fileglob, dirorder=True)
+    # print (datetime.datetime.now()-t0).total_seconds()
 
     # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
     # ds = read_swans(fileglob, dirorder=True)
