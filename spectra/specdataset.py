@@ -4,11 +4,13 @@ Extra functions to attach to main SpecArray class
 import re
 import xarray as xr
 import numpy as np
-
+from cfjson.xrdataset import CFJSONinterface
 from specarray import SpecArray
 from attributes import *
 from swan import SwanSpecFile
 from misc import to_datetime
+
+OCT_MISSING=-99999
 
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
@@ -62,7 +64,7 @@ class SpecDataset(object):
             yy = self.lat
         sfile = SwanSpecFile(filename, freqs=self.freq, time=True, dirs=self.dir,
                              x=self.lon, y=self.lat, id=id, append=append)
-        for i,ct in enumerate(self.time):
+        for i,t in enumerate(self.time):
             sfile.f.write(to_datetime(t.values).strftime('%Y%m%d.%H%M%S\n'))
             sfile.writeSpectra(self.dset['efth'].sel(time=t).values.reshape(-1, len(self.freq), len(self.dir)))
         sfile.close()
@@ -88,25 +90,30 @@ class SpecDataset(object):
             dt = (self.time[1].astype('int') - self.time[0].astype('int')) / 3.6e12 if len(self.time)>1 else 0
             swell = self.split(fmin=0, fmax=0.125)
             sea = self.split(fmin=0.125, fmax=1.)
+            wd = self.wdir.values if hasattr(self,'wdir') else OCT_MISSING*np.ones(len(self.time))
+            ws = self.wspd.values if hasattr(self,'wspd') else OCT_MISSING*np.ones(len(self.time))
+            dpt = self.dpt.values if hasattr(self,'dpt') else OCT_MISSING*np.ones(len(self.time))
             for i, t in enumerate(self.time):
-                s = self.efth
                 if i == 0:
-                    f.write('nfreqs,%d\nndir,%d\nnrecs,%d\nLatitude, %7.4f\nLongitude, %7.4f\nDepth,%f\n\n' %
-                            (len(self.freq), len(self.dir), len(self.time), self.lat[0], self.lon[0], self.dpt[0]))
+                    f.write('nfreqs,%d\nndir,%d\nnrecs,%d\nLatitude,%7.4f\nLongitude,%7.4f\nDepth,%f\n\n' %
+                            (len(self.freq),
+                             len(self.dir),
+                             len(self.time),
+                             self.lat[0].values,
+                             self.lon[0].values,
+                             dpt[0]) )
                     sdirs = np.mod(self.dir.values, 360.)
                     idirs = np.argsort(sdirs)
                     ddir = abs(sdirs[1] - sdirs[0])
                     dfreq = np.hstack((0, self.freq[1:].values - self.freq[:-1].values,0))
                     dfreq = 0.5 * (dfreq[:-1] + dfreq[1:])
                 lp = site_id + to_datetime(t).strftime('_%Y%m%d_%Hz')
-                wd = self.wnddir[i]
-                ws = self.wnd[i]
                 s_sea = sea[i].spec
                 s_sw = swell[i].spec
                 s = self.isel(time=i).efth.squeeze().spec
                 f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
                 f.write('%s,\'%s,%s,%d,%.2f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.5f,%.5f,%.4f,%d,%d,%d\n' %
-                        (to_datetime(t).strftime('%Y%m'), to_datetime(t).strftime('%d%H%M'), lp, wd, ws,
+                        (to_datetime(t).strftime('%Y%m'), to_datetime(t).strftime('%d%H%M'), lp, wd[i], ws[i],
                          (0.25*s.hs())**2, s.tm01(), s.dm(),
                          (0.25*s_sea.hs())**2, s_sea.tm01(), s_sea.dm(),
                          (0.25*s_sw.hs())**2, s_sw.tm01(), s_sw.dm(),
