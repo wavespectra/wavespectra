@@ -6,7 +6,7 @@ Python library for wave spectra
 - [spectra.specdataset.SpecDataset](https://github.com/metocean/pyspectra/blob/master/spectra/specdataset.py#L16): wrapper around [SpecArray](https://github.com/metocean/pyspectra/blob/master/spectra/specarray.py#L31) with methods for saving spectra in different formats
 - [spectra.readspec](https://github.com/metocean/pyspectra/blob/master/spectra/readspec.py): access functions to read spectra from different file formats into [SpecDataset](https://github.com/metocean/pyspectra/blob/master/spectra/specdataset.py#L16) objects
 
-## Structure
+## Code structure
 The two main classes [spectra.specarray.SpecArray](https://github.com/metocean/pyspectra/blob/master/spectra/specarray.py#L31) and [spectra.specdataset.SpecDataset](https://github.com/metocean/pyspectra/blob/master/spectra/specdataset.py#L16) are defined as xarray accessors as described [here](http://xarray.pydata.org/en/stable/internals.html?highlight=accessor). The accessors are registered on [xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html) and [xarray.Dataset](http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html) respectively as a new namespace `spec`.
 
 To use methods in the accessor classes simply import the classes into your code and they will be available to your xarray.Dataset or xarray.DataArray instances through the `spec` attribute, *e.g.*
@@ -36,8 +36,21 @@ Coordinates:
   * dir      (dir) int64 0 120 240
   * time     (time) datetime64[ns] 2017-01-01 2017-01-02
 
-In [2]: efth.spec.hs()
+In [2]: efth.spec
 Out[2]:
+<SpecArray (time: 2, freq: 2, dir: 3)>
+array([[[ 0.100607,  0.328229,  0.332708],
+        [ 0.532   ,  0.665938,  0.177731]],
+
+       [[ 0.469371,  0.002963,  0.627179],
+        [ 0.004523,  0.682717,  0.09766 ]]])
+Coordinates:
+  * freq     (freq) float64 0.05 0.1
+  * dir      (dir) int64 0 120 240
+  * time     (time) datetime64[ns] 2017-01-01 2017-01-02
+  
+In [3]: efth.spec.hs()
+Out[3]:
 <xarray.DataArray 'hs' (time: 2)>
 array([ 10.128485,   9.510618])
 Coordinates:
@@ -46,7 +59,7 @@ Attributes:
     standard_name: sea_surface_wave_significant_height
     units: m
 ```
-## Requirements
+## Data requirements
 [SpecArray](https://github.com/metocean/pyspectra/blob/master/spectra/specarray.py#L31) methods require the following attributes in [xarray.DataArray](http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html):
 - wave frequency coordinate in `Hz` named as `freq` (required)
 - wave direction coordinate in `degree` (coming from) named as `dir` (optional for 1D, required for 2D spectra)
@@ -72,7 +85,9 @@ Attributes:
     units: s
 ```
 
-### Example to define and plot spectra history from example [SWAN spectra](http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html) file:
+## Examples
+
+### Define and plot spectra history from example [SWAN spectra](http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html) file:
 ```python
 from spectra import read_swan
 
