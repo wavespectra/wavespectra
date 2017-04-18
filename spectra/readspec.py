@@ -144,7 +144,7 @@ def read_swans(fileglob, dirorder=True):
     
     # Merging into one dataset
     cycles = [dset.time[0].values for dset in dsets[site]]
-    dsets = xr.concat([xr.concat(dsets[site], dim=TIMENAME) for site in sites], dim=SITENAME)
+    dsets = xr.concat([xr.concat(dsets[site], dim=TIMENAME, data_vars='minimal') for site in sites], dim=SITENAME)
     dsets[SITENAME].values = np.arange(len(sites))+1
 
     # Define multi-index coordinate if reading multiple cycles
