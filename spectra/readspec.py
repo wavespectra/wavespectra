@@ -184,7 +184,7 @@ def read_swan(filename, dirorder=True, as_site=None):
             tab = read_tab(swanfile.tabfile)
             if len(swanfile.times) == tab.index.size:
                 if 'X-wsp' in tab and 'Y-wsp' in tab:
-                    tab['wspd'], tab['wdir'] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
+                    tab[WSPDNAME], tab[WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
             else:
                 print "Warning: times in %s and %s not consistent, not appending winds and depth" % (
                     swanfile.filename, swanfile.tabfile)
@@ -203,9 +203,9 @@ def read_swan(filename, dirorder=True, as_site=None):
             name=SPECNAME,
             ).to_dataset()
 
-        if tab is not None and 'wspd' in tab:
-            dset[WSPDNAME] = xr.DataArray(data=tab['wspd'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
-            dset[WDIRNAME] = xr.DataArray(data=tab['wdir'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
+        if tab is not None and WSPDNAME in tab:
+            dset[WSPDNAME] = xr.DataArray(data=tab[WSPDNAME].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
+            dset[WDIRNAME] = xr.DataArray(data=tab[WDIRNAME].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
         if tab is not None and 'dep' in tab:
             dset[DEPNAME] = xr.DataArray(data=tab['dep'].values.reshape(-1,1,1), dims=[TIMENAME, LATNAME, LONNAME])
     else:
@@ -217,9 +217,9 @@ def read_swan(filename, dirorder=True, as_site=None):
             name=SPECNAME,
         ).to_dataset()
 
-        if tab is not None and 'wspd' in tab:
-            dset[WSPDNAME] = xr.DataArray(data=tab['wspd'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
-            dset[WDIRNAME] = xr.DataArray(data=tab['wdir'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
+        if tab is not None and WSPDNAME in tab:
+            dset[WSPDNAME] = xr.DataArray(data=tab[WSPDNAME].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
+            dset[WDIRNAME] = xr.DataArray(data=tab[WDIRNAME].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
         if tab is not None and 'dep' in tab:
             dset[DEPNAME] = xr.DataArray(data=tab['dep'].values.reshape(-1,1), dims=[TIMENAME, SITENAME])
 
