@@ -8,13 +8,14 @@ import datetime
 import xarray as xr
 import numpy as np
 import pandas as pd
+import gzip
 
 from attributes import *
 from misc import to_nautical
 
 class Error(Exception):
     pass
-  
+
 class SwanSpecFile(object):
     def __init__(self, filename, freqs=None, dirs=None, x=None, y=None, time=False,
                  id='Swan Spectrum', dirorder=False, append=False, tabfile=None):
@@ -26,6 +27,11 @@ class SwanSpecFile(object):
         self.tabfile = tabfile or os.path.splitext(self.filename)[0]+'.tab'
         self.is_tab = False
         self.buf = None
+        extention = os.path.splitext(self.filename)[-1]
+        if extention == '.gz':
+            fopen = gzip.open
+        else:
+            fopen = open
         try:
             if freqs is not None:#Writable file
                 self.freqs = np.array(freqs)
@@ -34,11 +40,11 @@ class SwanSpecFile(object):
                 self.y = np.array(y)
                 if time:
                     self.times = []
-                self.f = open(filename, 'w')
+                self.f = fopen(filename, 'w')
                 self.writeHeader(time, id)
                 self.fmt = len(self.dirs) * '%4d '
             else:
-                self.f = open(filename,'r+' if append else 'r')
+                self.f = fopen(filename,'r+' if append else 'r')
                 header = self._readhdr('SWAN')
                 while True:
                     if not self._readhdr('$'):
@@ -148,7 +154,7 @@ class SwanSpecFile(object):
                 yield sset
             else:
                 break
-            
+
     def writeHeader(self,time=False,str1='',str2=''):
         strout='SWAN   1\n$   '+str1+'\n$   '+str2+'\n'
         if (time):strout+='TIME\n1\n'
@@ -158,13 +164,13 @@ class SwanSpecFile(object):
             strout+='%f %f\n' % (loc,self.y[i])
         strout += 'AFREQ\n%d\n' % (len(self.freqs))
         for freq in self.freqs:strout+='%f\n' % (freq)
-        
+
         strout+='NDIR\n%d\n' % (len(self.dirs))
-        for dir in self.dirs:strout+='%f\n' % (dir)  
-        
+        for dir in self.dirs:strout+='%f\n' % (dir)
+
         strout+='QUANT\n1\nVaDens\nm2/Hz/degr\n-99\tException value\n'
         self.f.write(strout)
-    
+
     def writeSpectra(self,specarray):
         for S in specarray:
             fac = S.max()/9998.
@@ -191,7 +197,7 @@ class SwanSpecFile(object):
 
     def close(self):
         if self.f:self.f.close()
-        self.f=False   
+        self.f=False
 
 def read_tab(filename, toff=0):
     """
