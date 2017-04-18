@@ -23,7 +23,8 @@ coords = {'time': [datetime.datetime(2017,01,n+1) for n in range(2)],
           'dir': np.arange(0,360,120)}
 efth = xr.DataArray(data=np.random.rand(2,2,3), coords=coords, dims=('time','freq', 'dir'))
 
-efth
+In [1]: efth
+Out[1]:
 <xarray.DataArray (time: 2, freq: 2, dir: 3)>
 array([[[ 0.100607,  0.328229,  0.332708],
         [ 0.532   ,  0.665938,  0.177731]],
@@ -35,7 +36,8 @@ Coordinates:
   * dir      (dir) int64 0 120 240
   * time     (time) datetime64[ns] 2017-01-01 2017-01-02
 
-efth.spec.hs()
+In [2]: efth.spec.hs()
+Out[2]:
 <xarray.DataArray 'hs' (time: 2)>
 array([ 10.128485,   9.510618])
 Coordinates:
@@ -56,9 +58,11 @@ Attributes:
 SpecDataset provides a wrapper around the methods in SpecArray accessor. For instance, both of these would produce the same result:
 ```python
 dset = efth.to_dataset(name='efth')
-dset.efth.spec.tm01()
-dset.spec.tm01()
+tm01_specarr = dset.efth.spec.tm01()
+tm01_specdset = dset.spec.tm01()
 
+In [3]: tm01_specarr
+Out[3]: 
 <xarray.DataArray 'tm01' (time: 2)>
 array([ 13.341924,  13.129259])
 Coordinates:
@@ -68,7 +72,7 @@ Attributes:
     units: s
 ```
 
-### Example to define and plot spectra history from SWAN bnd spectra file:
+### Example to define and plot spectra history from example [SWAN spectra](http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html) file:
 ```python
 from spectra import read_swan
 
