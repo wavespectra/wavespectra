@@ -10,8 +10,12 @@ import numpy as np
 import pandas as pd
 import gzip
 
+from scipy.interpolate import griddata
+
 from attributes import *
-from misc import to_nautical
+from misc import to_nautical, D2R
+
+_ = np.newaxis
 
 class Error(Exception):
     pass
@@ -27,6 +31,7 @@ class SwanSpecFile(object):
         self.tabfile = tabfile or os.path.splitext(self.filename)[0]+'.tab'
         self.is_tab = False
         self.buf = None
+
         extention = os.path.splitext(self.filename)[-1]
         if extention == '.gz':
             fopen = gzip.open
@@ -199,6 +204,35 @@ class SwanSpecFile(object):
         if self.f:self.f.close()
         self.f=False
 
+def interp_spec(inspec, infreq, indir, outfreq, outdir, method='linear'):
+    """
+    Interpolate onto new spectral basis
+    Input:
+        inspec :: 2D numpy array, input spectrum S(infreq,indir) to be interpolated
+        infreq :: 1D numpy array, frequencies of input spectrum
+        indir :: 1D numpy array, directions of input spectrum
+        outfreq :: 1D numpy array, frequencies of output interpolated spectrum
+        outdir :: 1D numpy array, directions of output interpolated spectrum
+        method :: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
+    Output:
+        outspec :: 2D numpy array, interpolated ouput spectrum S(outfreq,outdir)
+    """
+    if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
+        outspec = copy.deepcopy(inspec)
+    elif np.array_equal(indir, outdir):
+        outspec = np.zeros((len(outfreq), len(outdir)))
+        for idir in range(len(indir)):
+            outspec[:,idir] = np.interp(outfreq, infreq, inspec[:,idir], left=0., right=0.)
+    else:
+        dirs = D2R * (270-outdir[_,:])
+        dirs2 = D2R * (270-indir[_,:])
+        cosmat = np.dot(outfreq[:,_], np.cos(dirs))
+        sinmat = np.dot(outfreq[:,_], np.sin(dirs))
+        cosmat2 = np.dot(infreq[:,_], np.cos(dirs2))
+        sinmat2 = np.dot(infreq[:,_], np.sin(dirs2))
+        outspec = griddata((cosmat2.flat, sinmat2.flat), inspec.flat, (cosmat,sinmat), method, 0.)
+    return outspec
+
 def read_tab(filename, toff=0):
     """
     Read swan tab file, return pandas dataframe
@@ -221,6 +255,7 @@ def read_tab(filename, toff=0):
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.ix[:, 0:-1]
+
 
 if __name__ == '__main__':
 
