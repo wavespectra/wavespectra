@@ -14,6 +14,7 @@ install_requires = [
     'cloudpickle',
     'sortedcontainers',
     'tqdm',
+    'scipy',
     ]
 
 test_requires = [
