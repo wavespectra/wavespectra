@@ -5,6 +5,10 @@ import datetime
 import numpy as np
 import pandas as pd
 
+GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
+D2R = np.pi/180.
+R2D = 180./np.pi
+
 to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
 
 to_nautical = lambda a: np.mod(270-a, 360)
