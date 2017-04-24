@@ -51,3 +51,15 @@ def uv_to_spddir(u, v, coming_from=False):
     direc = direc + ang_rot
     direc = np.mod(90-direc, 360)
     return mag, direc
+
+
+def flatten_list(l, a):
+    """
+    Flatten list of lists
+    """
+    for i in l:
+        if isinstance(i, list):
+            flatten_list(i, a)
+        else:
+            a.append(i)
+    return a
