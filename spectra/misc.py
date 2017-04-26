@@ -5,6 +5,8 @@ import datetime
 import numpy as np
 import pandas as pd
 
+from scipy.interpolate import griddata
+
 GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
 D2R = np.pi/180.
 R2D = 180./np.pi
@@ -52,6 +54,37 @@ def uv_to_spddir(u, v, coming_from=False):
     direc = np.mod(90-direc, 360)
     return mag, direc
 
+def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear'):
+    """
+    Interpolate onto new spectral basis
+    Input:
+        inspec :: 2D numpy array, input spectrum S(infreq,indir) to be interpolated
+        infreq :: 1D numpy array, frequencies of input spectrum
+        indir :: 1D numpy array, directions of input spectrum
+        outfreq :: 1D numpy array, frequencies of output interpolated spectrum, same as infreq by default
+        outdir :: 1D numpy array, directions of output interpolated spectrum, same as infreq by default
+        method :: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
+    Output:
+        outspec :: 2D numpy array, interpolated ouput spectrum S(outfreq,outdir)
+    Remark :: if either outfreq or outdir is None or False this coordinate is not interpolated
+    """
+    outfreq = outfreq if outfreq is not None and outfreq is not False else infreq
+    outdir = outdir if outdir is not None and outdir is not False else indir
+    if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
+        outspec = copy.deepcopy(inspec)
+    elif np.array_equal(indir, outdir):
+        outspec = np.zeros((len(outfreq), len(outdir)))
+        for idir in range(len(indir)):
+            outspec[:,idir] = np.interp(outfreq, infreq, inspec[:,idir], left=0., right=0.)
+    else:
+        dirs = D2R * (270 - np.expand_dims(outdir,0))
+        dirs2 = D2R * (270 - np.expand_dims(indir,0))
+        cosmat = np.dot(np.expand_dims(outfreq,-1), np.cos(dirs))
+        sinmat = np.dot(np.expand_dims(outfreq,-1), np.sin(dirs))
+        cosmat2 = np.dot(np.expand_dims(infreq,-1), np.cos(dirs2))
+        sinmat2 = np.dot(np.expand_dims(infreq,-1), np.sin(dirs2))
+        outspec = griddata((cosmat2.flat, sinmat2.flat), inspec.flat, (cosmat,sinmat), method, 0.)
+    return outspec
 
 def flatten_list(l, a):
     """

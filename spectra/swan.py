@@ -214,9 +214,10 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear
         method :: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
     Output:
         outspec :: 2D numpy array, interpolated ouput spectrum S(outfreq,outdir)
+    Remark :: if either outfreq or outdir is None or False this coordinate is not interpolated
     """
-    outfreq = outfreq if outfreq is not None else infreq
-    outdir = outdir if outdir is not None else indir
+    outfreq = outfreq if outfreq is not None and outfreq is not False else infreq
+    outdir = outdir if outdir is not None and outdir is not False else indir
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
     elif np.array_equal(indir, outdir):
