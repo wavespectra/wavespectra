@@ -17,14 +17,12 @@ import types
 import copy
 from itertools import product
 
+from misc import GAMMA, D2R, R2D
+
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
 
-# Define some globals
-GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
-D2R = np.pi/180.
-R2D = 180./np.pi
 _ = np.newaxis
 
 @xr.register_dataarray_accessor('spec')
