@@ -11,7 +11,7 @@ import pandas as pd
 import gzip
 
 from attributes import *
-from misc import to_nautical, D2R
+from misc import to_nautical
 
 class Error(Exception):
     pass
