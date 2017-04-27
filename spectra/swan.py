@@ -27,6 +27,7 @@ class SwanSpecFile(object):
         self.tabfile = tabfile or os.path.splitext(self.filename)[0]+'.tab'
         self.is_tab = False
         self.buf = None
+
         extention = os.path.splitext(self.filename)[-1]
         if extention == '.gz':
             fopen = gzip.open
@@ -221,6 +222,7 @@ def read_tab(filename, toff=0):
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.ix[:, 0:-1]
+
 
 if __name__ == '__main__':
 
