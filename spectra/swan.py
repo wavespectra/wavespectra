@@ -24,7 +24,7 @@ class SwanSpecFile(object):
         """
         self.times = False
         self.filename = filename
-        self.tabfile = tabfile or os.path.splitext(self.filename)[0]+'.tab'
+        self.tabfile = tabfile or os.path.splitext(self.filename.replace('.gz',''))[0]+'.tab'
         self.is_tab = False
         self.buf = None
 
