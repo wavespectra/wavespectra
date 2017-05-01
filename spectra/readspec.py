@@ -263,6 +263,8 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=True, dirorder=True)
                 tab = tab[list(set(tab.columns).intersection((DEPNAME, WSPDNAME, WDIRNAME)))]
             except Exception as exc:
                 print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
+        else:
+            tab = pd.DataFrame()
 
         # Shrinking times
         if ndays is not None:
