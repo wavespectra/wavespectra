@@ -360,10 +360,13 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     dsets[LONNAME] = xr.DataArray(data=lons, coords={SITENAME: sites}, dims=[SITENAME])
 
     if wspds is not None:
-        dsets[WSPDNAME] = xr.DataArray(data=wspds, dims=[TIMENAME, SITENAME])
-        dsets[WDIRNAME] = xr.DataArray(data=wdirs, dims=[TIMENAME, SITENAME])
+        dsets[WSPDNAME] = xr.DataArray(data=wspds, dims=[TIMENAME, SITENAME],
+                                       coords=OrderedDict(((TIMENAME, times), (SITENAME, sites))))
+        dsets[WDIRNAME] = xr.DataArray(data=wdirs, dims=[TIMENAME, SITENAME],
+                                       coords=OrderedDict(((TIMENAME, times), (SITENAME, sites))))
     if deps is not None:
-        dsets[DEPNAME] = xr.DataArray(data=deps, dims=[TIMENAME, SITENAME])
+        dsets[DEPNAME] = xr.DataArray(data=deps, dims=[TIMENAME, SITENAME],
+                                      coords=OrderedDict(((TIMENAME, times), (SITENAME, sites))))
 
     # Setting multi-index
     if len(cycles) > 1:
