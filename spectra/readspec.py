@@ -190,7 +190,7 @@ def read_octopus(filename):
 def read_json(self,filename):
     raise NotImplementedError('Cannot read CFJSON format')
 
-def read_swans(fileglob, ndays=None, int_freq=True, int_dir=True, dirorder=True):
+def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True):
     """
     Read multiple swan files into single Dataset
     Input:
