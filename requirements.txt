@@ -1,2 +1,6 @@
 git+https://github.com/metocean/cf-json.git
 sortedcontainers
+numpy
+xarray
+pandas
+tqdm
