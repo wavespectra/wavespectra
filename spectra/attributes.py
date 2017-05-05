@@ -15,7 +15,7 @@ DEPNAME = 'dpt'
 ATTRS = {
     SPECNAME: OrderedDict((
         ('standard_name', 'sea_surface_wave_directional_variance_spectral_density'),
-        ('units', 'm^{2}.s.deg^{-1}'),
+        ('units', 'm^{2}.s.degree^{-1}'),
         )),
     TIMENAME: OrderedDict((
         ('standard_name', 'time'),
@@ -49,7 +49,7 @@ ATTRS = {
         )),
     WSPDNAME: OrderedDict((
         ('standard_name', 'wind_speed'),
-        ('units', 'm/s'),
+        ('units', 'm.s^{-1}'),
         )),
     WDIRNAME: OrderedDict((
         ('standard_name', 'wind_from_direction'),
