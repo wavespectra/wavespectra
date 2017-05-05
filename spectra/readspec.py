@@ -37,12 +37,13 @@ def read_netcdf(filename_or_fileglob,
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset[specname].attrs.get('units','')
+    _variable_name = specname
     if sitename in dset.dims: #Sites based
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, sitename: SITENAME, specname: SPECNAME}, inplace=True)
     else: #Gridded
         dset.rename({freqname: FREQNAME, dirname: DIRNAME, lonname: LONNAME, latname: LATNAME, specname: SPECNAME}, inplace=True)
     set_spec_attributes(dset)
-    dset[SPECNAME].attrs.update({'_units': _units})
+    dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': _variable_name})
     if 'dir' not in dset or len(dset.dir)==1:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s'})
     return dset
@@ -63,7 +64,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
         'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     set_spec_attributes(dset)
-    dset[SPECNAME].attrs.update({'_units': _units})
+    dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': 'efth'})
     if 'dir' not in dset or len(dset.dir)==1:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s'})
     return dset
@@ -84,7 +85,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset[SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden','factor', 'df'])
     set_spec_attributes(dset)
-    dset[SPECNAME].attrs.update({'_units': _units})
+    dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': 'specden'})
     if 'dir' not in dset or len(dset.dir)==1:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s'})
     return dset
@@ -123,9 +124,9 @@ def read_hotswan(fileglob, dirorder=True):
     dset = xr.auto_combine(dsets)
     set_spec_attributes(dset)
     if 'dir' in dset and len(dset.dir)>1:
-        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}'})
+        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
-        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s'})
+        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
         
     return dset
 
@@ -200,9 +201,9 @@ def read_swan(filename, dirorder=True, as_site=None):
 
     set_spec_attributes(dset)
     if 'dir' in dset and len(dset.dir)>1:
-        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}'})
+        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
-        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s'})
+        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
 
     return dset
 
@@ -400,9 +401,9 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
 
     set_spec_attributes(dsets)
     if 'dir' in dset and len(dset.dir)>1:
-        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}'})
+        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
-        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s'})
+        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
 
     return dsets
 
