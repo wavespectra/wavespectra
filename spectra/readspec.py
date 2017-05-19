@@ -236,7 +236,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     - Either all or none of the spectra in fileglob must have tabfile associated to provide wind/depth data
     - Concatenation is done with numpy arrays for efficiency
     """
-    swans = sorted(glob.glob(fileglob))
+    swans = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
     assert swans, 'No SWAN file identified with fileglob %s' % (fileglob)
 
     # Default spectral basis for interpolating
@@ -400,10 +400,10 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
         dsets['cycletime'].attrs = ATTRS[TIMENAME]
 
     set_spec_attributes(dsets)
-    if 'dir' in dset and len(dset.dir)>1:
-        dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
+    if 'dir' in dsets and len(dsets.dir)>1:
+        dsets[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
-        dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
+        dsets[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
 
     return dsets
 
