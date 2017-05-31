@@ -16,6 +16,41 @@ from specdataset import SpecDataset
 from attributes import *
 from misc import uv_to_spddir, to_datetime, interp_spec, flatten_list
 
+from dbfread import DBF
+
+def read_triaxys_dbf(filename):
+    """
+    Read 1D spectra off dbf TRIAXYS files of type:
+    | DATE | TIME | STATUS | SpectraCnt | FirstFreq | FreqSpacin | Field1 | Field2 | ... | FieldN |
+    
+    Returns:
+    - dset :: SpecDataset instance (1D, no direction dimension included)
+    """
+    dframe = pd.DataFrame(iter(DBF(filename)))
+    dframe.set_index(pd.to_datetime(dframe['DATE']) + pd.to_timedelta(dframe['TIME']), inplace=True)
+    dframe.drop(['TIME','DATE'], axis=1, inplace=True)
+    interp_freq = np.arange(dframe['FirstFreq'].min(),
+                            dframe['FirstFreq'].max() + dframe['SpectraCnt'].max()*dframe['FreqSpacin'].min(),
+                            dframe['FreqSpacin'].min())
+    spec_list = list()
+    for index, row in dframe.iterrows():
+        f0 = row['FirstFreq']
+        df = row['FreqSpacin']
+        nf = int(row['SpectraCnt'])
+        vals = [row[col] for col in row.keys() if 'Field' in col]
+        if len(vals) != nf:
+            raise IOError('Spectrum array does not match SpectraCnt for %s' % (index))
+        freq = [f0 + n*df for n in range(nf)]
+        spec_list.append(interp_spec(inspec=vals, infreq=freq, indir=None, outfreq=interp_freq))
+    dset = xr.DataArray(
+            data=spec_list,
+            coords=OrderedDict(((TIMENAME, dframe.index), (FREQNAME, interp_freq))),
+            dims=(TIMENAME, FREQNAME),
+            name=SPECNAME,
+            ).to_dataset()
+    dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
+    return dset
+
 def read_netcdf(filename_or_fileglob,
                 chunks={},
                 freqname=FREQNAME,
