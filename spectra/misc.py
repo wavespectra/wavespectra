@@ -1,6 +1,7 @@
 """
 Miscellaneous
 """
+import copy
 import datetime
 import numpy as np
 import pandas as pd
@@ -66,16 +67,21 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear
         method :: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
     Output:
         outspec :: 2D numpy array, interpolated ouput spectrum S(outfreq,outdir)
-    Remark :: if either outfreq or outdir is None or False this coordinate is not interpolated
+    Remark:
+        - If either outfreq or outdir is None or False this coordinate is not interpolated
+        - Choose indir=None if spectrum is 1D
     """
     outfreq = outfreq if outfreq is not None and outfreq is not False else infreq
     outdir = outdir if outdir is not None and outdir is not False else indir
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
     elif np.array_equal(indir, outdir):
-        outspec = np.zeros((len(outfreq), len(outdir)))
-        for idir in range(len(indir)):
-            outspec[:,idir] = np.interp(outfreq, infreq, inspec[:,idir], left=0., right=0.)
+        if indir is not None:
+            outspec = np.zeros((len(outfreq), len(outdir)))            
+            for idir in range(len(indir)):
+                outspec[:,idir] = np.interp(outfreq, infreq, inspec[:,idir], left=0., right=0.)
+        else:
+            outspec = np.interp(outfreq, infreq, np.array(inspec).ravel(), left=0., right=0.)
     else:
         dirs = D2R * (270 - np.expand_dims(outdir,0))
         dirs2 = D2R * (270 - np.expand_dims(indir,0))
