@@ -15,6 +15,7 @@ install_requires = [
     'sortedcontainers',
     'tqdm',
     'scipy',
+    'dbfread',
     ]
 
 test_requires = [
