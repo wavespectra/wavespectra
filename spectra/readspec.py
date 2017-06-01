@@ -18,7 +18,7 @@ from misc import uv_to_spddir, to_datetime, interp_spec, flatten_list
 
 from dbfread import DBF
 
-def read_triaxys_dbf(filename):
+def read_triaxys_dbf(filename_or_fileglob):
     """
     Read 1D spectra off dbf TRIAXYS files of type:
     | DATE | TIME | STATUS | SpectraCnt | FirstFreq | FreqSpacin | Field1 | Field2 | ... | FieldN |
@@ -26,25 +26,33 @@ def read_triaxys_dbf(filename):
     Returns:
     - dset :: SpecDataset instance (1D, no direction dimension included)
     """
-    dframe = pd.DataFrame(iter(DBF(filename)))
-    dframe.set_index(pd.to_datetime(dframe['DATE']) + pd.to_timedelta(dframe['TIME']), inplace=True)
-    dframe.drop(['TIME','DATE'], axis=1, inplace=True)
-    interp_freq = np.arange(dframe['FirstFreq'].min(),
-                            dframe['FirstFreq'].max() + dframe['SpectraCnt'].max()*dframe['FreqSpacin'].min(),
-                            dframe['FreqSpacin'].min())
+    dbfs = sorted(filename_or_fileglob) if isinstance(filename_or_fileglob, list) else sorted(glob.glob(filename_or_fileglob))
+
     spec_list = list()
-    for index, row in dframe.iterrows():
-        f0 = row['FirstFreq']
-        df = row['FreqSpacin']
-        nf = int(row['SpectraCnt'])
-        vals = [row[col] for col in row.keys() if 'Field' in col]
-        if len(vals) != nf:
-            raise IOError('Spectrum array does not match SpectraCnt for %s' % (index))
-        freq = [f0 + n*df for n in range(nf)]
-        spec_list.append(interp_spec(inspec=vals, infreq=freq, indir=None, outfreq=interp_freq))
+    times = list()
+    for ifile,filename in enumerate(tqdm(dbfs)):
+        dframe = pd.DataFrame(iter(DBF(filename)))
+        dframe.set_index(pd.to_datetime(dframe['DATE']) + pd.to_timedelta(dframe['TIME']), inplace=True)
+        dframe.drop(['TIME','DATE'], axis=1, inplace=True)
+        if ifile == 0:
+            interp_freq = np.arange(dframe['FirstFreq'].min(),
+                                    dframe['FirstFreq'].max() + dframe['SpectraCnt'].max()*dframe['FreqSpacin'].min(),
+                                    dframe['FreqSpacin'].min())
+        for index, row in dframe.iterrows():
+            vals = [row[col] for col in row.keys() if 'Field' in col]
+            if len(vals) != int(row['SpectraCnt']):
+                raise IOError('Spectrum array does not match SpectraCnt for %s' % (index))
+            freq = np.arange(row['FirstFreq'],
+                             row['FirstFreq'] + row['SpectraCnt']*row['FreqSpacin'],
+                             row['FreqSpacin'])[0:int(row['SpectraCnt'])]
+            if len(freq) != len(vals):
+                import ipdb; ipdb.set_trace()
+            spec_list.append(interp_spec(inspec=vals, infreq=freq, indir=None, outfreq=interp_freq))
+        times.extend(dframe.index.tolist())
+
     dset = xr.DataArray(
             data=spec_list,
-            coords=OrderedDict(((TIMENAME, dframe.index), (FREQNAME, interp_freq))),
+            coords=OrderedDict(((TIMENAME, times), (FREQNAME, interp_freq))),
             dims=(TIMENAME, FREQNAME),
             name=SPECNAME,
             ).to_dataset()
