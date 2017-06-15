@@ -10,11 +10,12 @@ import numpy as np
 from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
 from tqdm import tqdm
+from scipy.io import loadmat
 
 from swan import SwanSpecFile, read_tab
 from specdataset import SpecDataset
 from attributes import *
-from misc import uv_to_spddir, to_datetime, interp_spec, flatten_list
+from misc import uv_to_spddir, to_datetime, interp_spec, flatten_list, to_nautical, dnum_to_datetime
 
 from dbfread import DBF
 
@@ -449,6 +450,57 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
         dsets[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
 
     return dsets
+
+def read_diwasp(filename, struct_name='SMout', dnum_name='Dnum', qc=True):
+    """
+    Read spectra from DIWASP Matlab structure
+    Input:
+    - struct_name :: name of matlab data struct saved in the matfile
+    - dnum_name :: name of matlab datenum time vector saved in the matfile
+    - qc :: Bool, if True basic qc is performed before returning spectra
+    Returns:
+    - dset :: SpecDataset instance
+    """
+    # Reading marfile, expecting struct with spectra and array with datenums
+    mat = loadmat(filename)
+    smout = mat[struct_name][0]
+    dnum = mat[dnum_name][0]
+    # Assigning spectra info
+    freqs = set([tuple(s[0].squeeze()) for s in smout if any(s[0])])
+    dirs = set([tuple(s[1].squeeze()) for s in smout if any(s[1])])
+    spec_list = [s[2] for d,s in zip(dnum,smout) if any(s[2].ravel()) and d>0]
+    times = [dnum_to_datetime(d) for d,s in zip(dnum,smout) if any(s[2].ravel()) and d>0]
+    xdir = set([float(s[3]) for s in smout if any(s[3])])
+    units = set([str(s[4].squeeze()) for s in smout if any(s[3])])
+    # Sanity check
+    if len(smout) != len(dnum):
+        raise Exception('Lenght of times and spectra arrays differ')
+    if (len(freqs) == 1) & (len(dirs) == 1) & (len(xdir) == 1) & (len(units) == 1):
+        freqs = np.array(list(freqs)).ravel()
+        dirs = np.array(list(dirs)).ravel()
+        xdir = list(xdir)[0]
+        units = list(units)[0]
+    else:
+        raise Exception('Frequecies or directions not consistent across spectra')
+    # Diwasp output may have last direction duplicated
+    if dirs[0] % 360 == dirs[-1] % 360:
+        dirs = dirs[:-1]
+        spec_list = [s[:,:-1] for s in spec_list]
+    # Ensure Nautical convention
+    if xdir == 90:
+        dirs = np.vectorize(to_nautical)(dirs)
+    # Define specdset
+    dset = xr.DataArray(
+        data=spec_list,
+        coords=OrderedDict(((TIMENAME, times), (FREQNAME, freqs), (DIRNAME, dirs))),
+        dims=(TIMENAME, FREQNAME, DIRNAME),
+        name=SPECNAME,
+        ).to_dataset().sel(**{DIRNAME: sorted(dirs)})
+    dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
+    set_spec_attributes(dset)
+    # Basic QC
+    dset = dset.where((dset.spec.hs()>0) & (dset.spec.hs()<100))
+    return dset
 
 if __name__ == '__main__':
 

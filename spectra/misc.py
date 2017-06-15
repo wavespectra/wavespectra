@@ -14,6 +14,8 @@ R2D = 180./np.pi
 
 to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
 
+dnum_to_datetime = lambda d: datetime.datetime.fromordinal(int(d) - 366) + datetime.timedelta(days=d%1)
+
 to_nautical = lambda a: np.mod(270-a, 360)
 
 def spddir_to_uv(spd, direc, coming_from=False):
