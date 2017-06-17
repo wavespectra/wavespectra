@@ -177,7 +177,7 @@ class SpecArray(object):
         Direction dimension is dropped after integrating
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim='dir')
+            return self.dd * self._obj.sum(dim='dir', skipna=False)
         else:
             return self._obj.copy(deep=True)
 
