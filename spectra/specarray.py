@@ -171,13 +171,14 @@ class SpecArray(object):
                 raise Exception('Dimension %s not in DataArray' % (dim))
         return other
 
-    def oned(self):
+    def oned(self, skipna=True):
         """
         Returns the one-dimensional frequency spectra
         Direction dimension is dropped after integrating
+        - skipna :: if True (xarray's default) sum of all-nan array returns zero preventing hs() to preserve mask 
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim='dir', skipna=False)
+            return self.dd * self._obj.sum(dim='dir', skipna=skipna)
         else:
             return self._obj.copy(deep=True)
 
@@ -215,7 +216,7 @@ class SpecArray(object):
         - tail  :: if True fit high-frequency tail
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        Sf = self.oned()
+        Sf = self.oned(skipna=False)
         E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
@@ -275,7 +276,7 @@ class SpecArray(object):
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
-        return self._twod(mf.sum(dim='freq'))
+        return self._twod(mf.sum(dim='freq', skipna=False))
 
     def momd(self, mom=0, theta=90.):
         """
@@ -283,8 +284,8 @@ class SpecArray(object):
         """
         cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
         sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
-        msin = (self.dd * (self._obj * sp[_,:])).sum(dim='dir')
-        mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir')
+        msin = (self.dd * (self._obj * sp[_,:])).sum(dim='dir', skipna=False)
+        mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir', skipna=False)
         return msin, mcos
 
     def tm01(self, standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment'):
@@ -307,29 +308,30 @@ class SpecArray(object):
         tm02.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
         return tm02.rename('tm02')
 
-    def dm(self, standard_name='sea_surface_wave_from_direction'):
+    def dm(self, standard_name='sea_surface_wave_from_mean_direction'):
         """
         Mean wave direction from the 1st spectral moment
         - standard_name :: CF standard name for defining DataArray attribute
         """
         moms, momc = self.momd(1)
-        dm = np.arctan2(moms.sum(dim='freq'), momc.sum(dim='freq'))
+        dm = np.arctan2(moms.sum(dim='freq', skipna=False), momc.sum(dim='freq', skipna=False))
         dm = (270 - R2D*dm) % 360.
         dm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dm.rename('dm')
 
-    def dp(self, standard_name='sea_surface_wave_direction_at_variance_spectral_density_maximum'):
+    def dp(self, standard_name='sea_surface_wave_from_direction_at_variance_spectral_density_maximum'):
         """
         Peak wave direction defined as the direction where the energy density
         of the frequency-integrated spectrum is maximum
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')        
-        dp = self.dir.values[ipeak.values] * (0*ipeak + 1)
+        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')
+        template = self._obj.sum(dim='freq', skipna=False).sum(dim='dir', skipna=False)
+        dp = self.dir.values[ipeak.values] * (0 * template + 1)
         dp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dp.rename('dp')
 
-    def dpm(self, mask=np.nan, standard_name='sea_surface_wave_peak_direction'):
+    def dpm(self, mask=np.nan, standard_name='sea_surface_wave_from_direction_at_variance_spectral_density_maximum'):
         """
         From WW3 Manual: peak wave direction, defined like the mean direction, using the
         frequency/wavenumber bin containing of the spectrum F(k) that contains the peak frequency only
@@ -354,10 +356,10 @@ class SpecArray(object):
         # Manipulate dimensions so calculations work
         moms = self._twod(moms, dim='dir')
         momc = self._twod(momc, dim='dir')
-        mom0 = self._twod(self.momf(0), dim='freq').spec.oned()
+        mom0 = self._twod(self.momf(0), dim='freq').spec.oned(skipna=False)
 
         dspr = (2 * R2D**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
-        dspr = dspr.sum(dim='freq').sum(dim='dir')
+        dspr = dspr.sum(dim='freq', skipna=False).sum(dim='dir', skipna=False)
         dspr.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dspr.rename('dspr')
 
@@ -578,52 +580,54 @@ def hs(spec, freqs, dirs, tail=True):
     return 4. * np.sqrt(Etot)
 
 if __name__ == '__main__':
-    import datetime
-    import matplotlib.pyplot as plt
-    from os.path import expanduser, join
-    home = expanduser("~")
+    from spectra.readspec import read_hotswan
+    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
+    # import datetime
+    # import matplotlib.pyplot as plt
+    # from os.path import expanduser, join
+    # home = expanduser("~")
 
-    filename = '/source/pyspectra/tests/prelud.spec'
-    # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
+    # filename = '/source/pyspectra/tests/prelud.spec'
+    # # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
 
-    wsp_val = 10
-    wdir_val = 225
-    dep_val = 100
-    #================
-    # Using SpecArray
-    #================
-    from readspec import read_swan
-    t0 = datetime.datetime.now()
-    ds = read_swan(filename, dirorder=True)
-    # Fake wsp, wdir, dep
-    wsp  = ds.hs() * 0 + wsp_val
-    wdir = ds.hs() * 0 + wdir_val
-    dep  = ds.hs() * 0 + dep_val
-    parts = ds.partition(wsp, wdir, dep)
-    # ds.efth['wsp'] = wsp
-    # ds.efth['wdir'] = wdir
-    # ds.efth['dep'] = dep
-    # parts = ds.partition('wsp', 'wdir', 'dep')
-    print 'Elapsed time new: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+    # wsp_val = 10
+    # wdir_val = 225
+    # dep_val = 100
+    # #================
+    # # Using SpecArray
+    # #================
+    # from readspec import read_swan
+    # t0 = datetime.datetime.now()
+    # ds = read_swan(filename, dirorder=True)
+    # # Fake wsp, wdir, dep
+    # wsp  = ds.hs() * 0 + wsp_val
+    # wdir = ds.hs() * 0 + wdir_val
+    # dep  = ds.hs() * 0 + dep_val
+    # parts = ds.partition(wsp, wdir, dep)
+    # # ds.efth['wsp'] = wsp
+    # # ds.efth['wdir'] = wdir
+    # # ds.efth['dep'] = dep
+    # # parts = ds.partition('wsp', 'wdir', 'dep')
+    # print 'Elapsed time new: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    #================
-    # Using pymo
-    #================
-    from pymo.data.spectra import SwanSpecFile
-    t0 = datetime.datetime.now()
-    specfile = SwanSpecFile(filename)
-    spectra = [spec for spec in specfile.readall()]
-    pymo_parts = [s.partition(wsp_val, wdir_val, dep_val) for s in spectra]
-    print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
+    # #================
+    # # Using pymo
+    # #================
+    # from pymo.data.spectra import SwanSpecFile
+    # t0 = datetime.datetime.now()
+    # specfile = SwanSpecFile(filename)
+    # spectra = [spec for spec in specfile.readall()]
+    # pymo_parts = [s.partition(wsp_val, wdir_val, dep_val) for s in spectra]
+    # print 'Elapsed time old: %0.2f s' % ((datetime.datetime.now() - t0).total_seconds())
 
-    for p in range(0,3):
-        hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
-        hs_old = [part[p].hs() for part in pymo_parts]
+    # for p in range(0,3):
+    #     hs_new = parts.isel(part=p, lat=0, lon=0).spec.hs()
+    #     hs_old = [part[p].hs() for part in pymo_parts]
 
-        plt.figure()
-        hs_new.plot()
-        plt.plot(hs_new.time, hs_old)
-        plt.legend(('SpecArray', 'Pymo'))
-        plt.savefig(join(home,'Pictures/compare_hs_part%i.png' % (p)))
+    #     plt.figure()
+    #     hs_new.plot()
+    #     plt.plot(hs_new.time, hs_old)
+    #     plt.legend(('SpecArray', 'Pymo'))
+    #     plt.savefig(join(home,'Pictures/compare_hs_part%i.png' % (p)))
 
-        # break
+    #     # break
