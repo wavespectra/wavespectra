@@ -1,23 +1,118 @@
 """
 Functions to read data from different file format into SpecDataset objects
+
+Commom structure expected to be returned by methods is a SpecDataset with:
+- Following variables from attributes.py module should be used to define standarised coordinates:
+    - FREQNAME
+    - DIRNAME (if 2D)
+    - SPECNAME
+    - LONNAME (if available)
+    - LATNAME (if available)
+    - TIMENAME (if available)
+- Dataset attributes should be defined before returning using `set_spec_attributes` function
 """
 import os
+import copy
 import glob
 import datetime
 import pandas as pd
 import xarray as xr
 import numpy as np
+from dateutil import parser
 from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
 from tqdm import tqdm
 from scipy.io import loadmat
+from dbfread import DBF
 
 from swan import SwanSpecFile, read_tab
 from specdataset import SpecDataset
 from attributes import *
 from misc import uv_to_spddir, to_datetime, interp_spec, flatten_list, to_nautical, dnum_to_datetime
 
-from dbfread import DBF
+def read_triaxys_direc(filename_or_fileglob, toff=0):
+    """
+    Read 2D wave spectra file from TRIAXYS buoy
+    - filename_or_fileglob :: either filename or fileglob specifying multiple files
+    - toff :: time offset in hours to account for time zone differences
+    Returns:
+    - dset :: SpecDataset instance
+    Remark: frequencies and directions from first file are used as reference
+            to interpolate spectra from other files in case they differ
+    """
+    is_triaxys = False
+    is_directional = False
+    time = None
+    nf = None
+    df = None
+    f0 = None
+    ddir = None
+    times = list()
+    spec_list = list()
+
+    filenames = sorted(filename_or_fileglob) if isinstance(filename_or_fileglob, list) else sorted(glob.glob(filename_or_fileglob))
+    assert filenames, "No file found to read"
+
+    for ifile, filename in enumerate(tqdm(filenames)):
+        with open(filename, 'r') as f:
+            # Parsing header
+            for line in f:
+                if 'TRIAXYS BUOY DATA REPORT' in line or 'TRIAXYS BUOY REPORT' in line:
+                    is_triaxys = True
+                if 'DIRECTIONAL SPECTRUM' in line:
+                    is_directional = True
+                if 'DATE' in line:
+                    time = parser.parse(line.split('=')[1].split('(')[0].strip()) - datetime.timedelta(hours=toff)
+                if 'NUMBER OF FREQUENCIES' in line:
+                    nf = int(line.split('=')[1])
+                if 'INITIAL FREQUENCY' in line:
+                    f0 = float(line.split('=')[1])
+                if 'FREQUENCY SPACING' in line:
+                    df = float(line.split('=')[1]) 
+                if 'DIRECTION SPACING' in line:
+                    ddir = float(line.split('=')[1])
+                if 'ROWS' in line:
+                    break
+            if not is_triaxys:
+                raise IOError('Not a TRIAXYS Spectra file.')
+            if not is_directional:
+                raise IOError('Not a directional Spectra file.')
+            if not time:
+                raise IOError('Cannot parse time')
+            if ddir:
+                dirs = list(pd.np.arange(0., 360.+ddir, ddir))
+            else:
+                raise IOError('Not enough info to parse directions')
+            if None not in [nf, f0, df]:
+                freqs = list(pd.np.arange(f0, df*nf, df))
+            else:
+                raise IOError('Not enough info to parse frequencies')
+            
+            # Parsing data
+            spec = pd.np.zeros((len(freqs), len(dirs)))
+            for i in range(nf):
+                spec[i,:] = map(float, f.next().split())
+            
+            # Ensure same spectral basis
+            if ifile == 0:
+                interp_freq = copy.deepcopy(freqs)
+                interp_dir = copy.deepcopy(dirs)
+            spec_list.append(interp_spec(inspec=spec,
+                                         infreq=freqs,
+                                         indir=dirs,
+                                         outfreq=interp_freq,
+                                         outdir=interp_dir))
+            times.append(time)
+    
+    # Construct dataset
+    dset = xr.DataArray(
+            data=spec_list,
+            coords=OrderedDict(((TIMENAME, times), (FREQNAME, freqs), (DIRNAME, dirs))),
+            dims=(TIMENAME, FREQNAME, DIRNAME),
+            name=SPECNAME,
+            ).to_dataset()
+    set_spec_attributes(dset)
+    return dset
 
 def read_triaxys_dbf(filename_or_fileglob):
     """
@@ -46,8 +141,6 @@ def read_triaxys_dbf(filename_or_fileglob):
             freq = np.arange(row['FirstFreq'],
                              row['FirstFreq'] + row['SpectraCnt']*row['FreqSpacin'],
                              row['FreqSpacin'])[0:int(row['SpectraCnt'])]
-            if len(freq) != len(vals):
-                import ipdb; ipdb.set_trace()
             spec_list.append(interp_spec(inspec=vals, infreq=freq, indir=None, outfreq=interp_freq))
         times.extend(dframe.index.tolist())
 
