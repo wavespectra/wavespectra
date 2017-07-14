@@ -199,6 +199,9 @@ def read_ww3(filename_or_fileglob, chunks={}):
     _units = dset.efth.attrs.get('units','')
     dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
         'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
+    if TIMENAME in dset[LONNAME].dims:
+        dset[LONNAME] = dset[LONNAME].isel(drop=True, **{TIMENAME: 0})
+        dset[LATNAME] = dset[LATNAME].isel(drop=True, **{TIMENAME: 0})
     dset[SPECNAME].values = np.radians(dset[SPECNAME].values)
     set_spec_attributes(dset)
     dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': 'efth'})
