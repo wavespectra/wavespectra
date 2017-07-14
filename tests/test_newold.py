@@ -1,11 +1,11 @@
-#This is to test that new and old parameter functions match 
+#This is to test that new and old parameter functions match
 
-import logging
 import unittest
 import time
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+import logging
 
 import sys
 import os
@@ -13,8 +13,8 @@ sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 
 # New imports
 import xarray as xr
-from spectra import SpecArray
-from spectra.io import read_ww3, read_swan, read_ww3_msl
+from spectra.specarray import SpecArray
+from spectra.readspec import read_ww3, read_swan, read_ww3_msl
 
 # Old imports
 from pymo.data.spectra_new import WW3NCSpecFile, SwanSpecFile
@@ -128,7 +128,7 @@ class TestSpecSwan(unittest.TestCase):
                 data.append(getattr(S,method)())
 
             darrays.append(data)
-        time = self.specold.times 
+        time = self.specold.times
         return xr.DataArray(darrays,[('station',np.arange(0,len(lat))), ('time',time)]).transpose()
 
 class TestSpecWW3Native(TestSpecSwan):
@@ -173,6 +173,18 @@ class TestSpecWW3MSL(TestSpecWW3Native):
         # Old spectra
         self.specold=WW3NCSpecFile(testfile)
         self.sites = [Site(x=x,y=y) for x,y in zip(self.specold.lon,self.specold.lat)]
+
+class TestWW3Dims(unittest.TestCase):
+
+    def setUp(self):
+        self.ww3msl = read_ww3_msl('./s20170328_12z.nc')
+        self.ww3native = read_ww3('./snative20141201T00Z_spec.nc')
+
+    def test_lons(self):
+        self.assertEqual(len(self.ww3native.lon.shape), len(self.ww3msl.lon.shape))
+
+    def test_lats(self):
+        self.assertEqual(len(self.ww3native.lon.shape), len(self.ww3msl.lon.shape))
 
 if __name__ == '__main__':
     unittest.main()
