@@ -479,7 +479,7 @@ class SpecArray(object):
                     part_spec[imin[0].squeeze():, :] = 0
                     newpart = part_spec > 0
                     if newpart.sum() > 20:
-                        nparts += 1;
+                        nparts += 1
                         part_array[newpart] = nparts
                 
             # Extend partitions list if any extra one has been detected (+1 because of sea)
@@ -503,6 +503,7 @@ class SpecArray(object):
                     if _hs > hs_min:
                         swells.append(part_spec)
                         hs_swell.append(_hs)
+                        hs_swell = [h + np.random.rand()*1e-10 for h in hs_swell] # If two or more partitions with same Hs
             if len(swells) > 1:
                 swells = [x for (y,x) in sorted(zip(hs_swell, swells), reverse=True)]
 
