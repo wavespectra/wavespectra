@@ -5,3 +5,4 @@ xarray
 pandas
 tqdm
 scipy
+dbfread
