@@ -547,6 +547,17 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
 
     return dsets
 
+def read_swanow(fileglob):
+    """
+    Read SWAN nowcast from fileglob, keep overlapping dates from most recent files
+    Inefficient workaround. This should ideally be handled within read_swans by manipulating multi-indexes
+    """
+    swans = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
+    ds = xr.Dataset()
+    for swan in tqdm(swans):
+        ds = read_swan(swan).combine_first(ds)
+    return ds
+
 def read_diwasp(filename, struct_name='SMout', dnum_name='Dnum', qc=True):
     """
     Read spectra from DIWASP Matlab structure
@@ -603,6 +614,9 @@ if __name__ == '__main__':
     import datetime
     import matplotlib.pyplot as plt
 
+    # fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
+    # ds = read_swanow(fileglob)
+
     # fileglob = '/source/pyspectra/tests/swan/hot/aklislr.20170412_00z.hot-???'
     # fileglob = '/source/pyspectra/tests/swan/hot/aklishr.20170412_12z.hot-???'
     # ds = read_hotswan(fileglob)
@@ -610,11 +624,11 @@ if __name__ == '__main__':
     # ds.spec.hs().plot(cmap='jet')
     # plt.show()
 
-    fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
+    # fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
 
-    t0 = datetime.datetime.now()
-    ds = read_swans(fileglob, dirorder=True)
-    print (datetime.datetime.now()-t0).total_seconds()
+    # t0 = datetime.datetime.now()
+    # ds = read_swans(fileglob, dirorder=True)
+    # print (datetime.datetime.now()-t0).total_seconds()
 
     # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
     # ds = read_swans(fileglob, dirorder=True)
