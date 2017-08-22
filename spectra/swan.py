@@ -41,11 +41,11 @@ class SwanSpecFile(object):
                 self.y = np.array(y)
                 if time:
                     self.times = []
-                self.f = fopen(filename, 'w')
+                self.fid = fopen(filename, 'w')
                 self.writeHeader(time, id)
-                self.fmt = len(self.dirs) * '%4d '
+                self.fmt = len(self.dirs) * '{:5.0f}'
             else:
-                self.f = fopen(filename,'r+' if append else 'r')
+                self.fid = fopen(filename,'r+' if append else 'r')
                 header = self._readhdr('SWAN')
                 while True:
                     if not self._readhdr('$'):
@@ -73,8 +73,8 @@ class SwanSpecFile(object):
                     self.dirs = to_nautical(np.array(map(float, self.cdir)))
 
                 self._readhdr('QUANT',True)
-                self.f.readline()
-                self.f.readline()
+                self.fid.readline()
+                self.fid.readline()
 
         except Error as e:
             raise 'File error with %s [%s]' % (filename, e)
@@ -90,12 +90,12 @@ class SwanSpecFile(object):
 
     def _readhdr(self, keyword, numspec=False):
         if not self.buf:
-            self.buf = self.f.readline()
+            self.buf = self.fid.readline()
         if self.buf.find(keyword) >= 0:
             if numspec:
-                line = self.f.readline()
+                line = self.fid.readline()
                 n = int(re.findall(r'\b(\d+)\b', line)[0])
-                self.buf = [self.f.readline() for i in range(0,n)]
+                self.buf = [self.fid.readline() for i in range(0,n)]
             rtn = self.buf
             self.buf = None
         else:
@@ -103,10 +103,10 @@ class SwanSpecFile(object):
         return rtn
 
     def read(self):
-        if not self.f:
+        if not self.fid:
             return None
         if isinstance(self.times, list):
-            line = self.f.readline()
+            line = self.fid.readline()
             if line:
                 ttime = datetime.datetime.strptime(line[0:15], '%Y%m%d.%H%M%S')
                 self.times.append(ttime)
@@ -121,9 +121,9 @@ class SwanSpecFile(object):
                 if self._readhdr('ZERO'):
                     Snew = np.zeros((len(self.freqs), len(self.dirs)))
                 elif self._readhdr('FACTOR'):
-                    fac = float(self.f.readline())
+                    fac = float(self.fid.readline())
                     for i,f in enumerate(self.freqs):
-                        line = self.f.readline()
+                        line = self.fid.readline()
                         lsplit = line.split()
                         try:
                             Snew[i,:] = map(float, lsplit)
@@ -140,11 +140,11 @@ class SwanSpecFile(object):
         tstr = time.strftime('%Y%m%d.%H%M%S')
         i = 0
         while True:
-            line = self.f.readline()
+            line = self.fid.readline()
             if not line:
                 return -1
             elif line[:15] == tstr:
-                self.f.seek(-len(line), 1)
+                self.fid.seek(-len(line), 1)
                 return i/nf
             i += 1
 
@@ -156,49 +156,74 @@ class SwanSpecFile(object):
             else:
                 break
 
-    def writeHeader(self,time=False,str1='',str2=''):
-        strout='SWAN   1\n$   '+str1+'\n$   '+str2+'\n'
-        if (time):strout+='TIME\n1\n'
-        np=len(self.x)
-        strout+='LONLAT\n'+str(np)+'\n'
-        for i,loc in enumerate(self.x):
-            strout+='%f %f\n' % (loc,self.y[i])
-        strout += 'AFREQ\n%d\n' % (len(self.freqs))
-        for freq in self.freqs:strout+='%f\n' % (freq)
+    def writeHeader(self, time=False, str1='', str2='', timecode=1, excval=-99):
+        # Description
+        strout = '{:40}{}\n'.format('SWAN   1', 'Swan standard spectral file')
+        strout += '{:4}{}\n'.format('$', str1)
+        strout += '{:4}{}\n'.format('$', str2)
+        # Time
+        if (time):
+            strout += '{:40}{}\n'.format('TIME', 'time-dependent data')
+            strout += '{:>6d}{:34}{}\n'.format(timecode, '', 'time coding option')
+        # Location
+        strout += '{:40}{}\n'.format('LONLAT', 'locations in spherical coordinates')
+        strout += '{:>6d}{:34}{}\n'.format(len(self.x), '', 'number of locations')
+        for x,y in zip(self.x, self.y):
+            strout += '{:2}{:<0.6f}{:2}{:<0.6f}\n'.format('', x, '', y)
+        # Frequency
+        strout += '{:40}{}\n'.format('AFREQ', 'absolute frequencies in Hz')
+        strout += '{:6d}{:34}{}\n'.format(len(self.freqs), '', 'number of frequencies')
+        for freq in self.freqs:
+            strout += '{:>11.5f}\n'.format(freq)
+        # Direction
+        strout += '{:40}{}\n'.format('NDIR', 'spectral nautical directions in degr')
+        strout += '{:6d}{:34}{}\n'.format(len(self.dirs), '', 'number of directions')
+        for wdir in self.dirs:
+            strout += '{:>11.4f}\n'.format(wdir)
+        # Data
+        strout += 'QUANT\n{:>6d}{:34}{}\n'.format(1, '', 'number of quantities in table')
+        strout += '{:40}{}\n'.format('VaDens', 'variance densities in m2/Hz/degr')
+        strout += '{:40}{}\n'.format('m2/Hz/degr', 'unit')
+        strout += '{:3}{:<37g}{}\n'.format('', excval, 'exception value')
+        # Dumping
+        self.fid.write(strout)
 
-        strout+='NDIR\n%d\n' % (len(self.dirs))
-        for dir in self.dirs:strout+='%f\n' % (dir)
-
-        strout+='QUANT\n1\nVaDens\nm2/Hz/degr\n-99\tException value\n'
-        self.f.write(strout)
-
-    def writeSpectra(self,specarray):
-        for S in specarray:
-            fac = S.max()/9998.
-            if fac==np.nan:
-                strout='NODATA\n'
-            elif fac<=0:
-                strout='ZERO\n'
+    def writeSpectra(self, arr, time=None):
+        """
+        Dump spectra from single timestamp into SWAN object
+            - arr :: 3D numpy array arr(site,freq,dim)
+            - time :: datetime object for current timestamp
+        """
+        if time is not None:
+            self.fid.write('{:40}{}\n'.format(time.strftime('%Y%m%d.%H%M%S'), 'date and time'))
+        for spec in arr:
+            fac = spec.max()/9998.
+            if np.isnan(fac):
+                strout = 'NODATA\n'
+            elif fac <= 0:
+                strout = 'ZERO\n'
             else:
-                strout='FACTOR\n'+str(fac)+'\n'
-                for row in S:
-                    strout+=(self.fmt % tuple(row/fac)) + '\n'
-            self.f.write(strout)
+                strout = 'FACTOR\n{:4}{:0.8E}\n'.format('', fac)
+                for row in spec:
+                    strout += self.fmt.format(*tuple(row/fac)) + '\n'
+            self.fid.write(strout)
 
     def readSpectrum(self):
         if self.S.any():
             fac = self.S.max()/9998
-            if fac<0:return 'NODATA\n'
-            strout='FACTOR\n'+str(fac)+'\n'
+            if fac < 0:
+                return 'NODATA\n'
+            strout = 'FACTOR\n{:4}{:0.8E}\n'.format('', fac)
             for row in self.S:
-                strout+=(self.fmt % tuple(row/fac)) + '\n'
+                strout += self.fmt.format(*tuple(row/fac)) + '\n'
             return strout
         else:
             return 'NODATA\n'
 
     def close(self):
-        if self.f:self.f.close()
-        self.f=False
+        if self.fid:
+            self.fid.close()
+        self.fid = False
 
 def read_tab(filename, toff=0):
     """

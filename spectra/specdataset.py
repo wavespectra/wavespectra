@@ -55,19 +55,45 @@ class SpecDataset(object):
             other.time.encoding.update(time_encoding)
         other.to_netcdf(filename, format=ncformat, encoding=encoding)
 
-    def to_swan(self,filename, id='Swan Spectrum', append=False):
-        if 'site' in self.dset.dims:
-            xx = self.lon
-            yy = self.lat
+    def to_swan(self, filename, append=False, id='Created by pyspectra'):
+        """
+        Write spectra in SWAN ASCII format
+        Input:
+            - filename :: str, name for output SWAN ASCII file
+            - append :: if True append to existing filename
+            - id :: str, used for header in output file
+        Remark:
+            - Only datasets with lat/lon coordinates are currently supported
+            - Only 2D spectra E(f,d) are currently supported
+            - Extra dimensions (other than time, site, lon, lat, freq, dim) are not yet supported
+        """
+        darray = self.dset['efth'].copy(deep=False)
+        is_time = 'time' in darray.dims
+
+        # If grid reshape into site, if neither define fake site dimension
+        if set(('lon','lat')).issubset(darray.dims):
+            darray = darray.stack(site=('lat','lon'))
+        elif 'site' not in darray.dims:
+            darray = darray.expand_dims('site')
+
+        # Intantiate swan object
+        try:
+            x = darray.lon.values
+            y = darray.lat.values
+        except NotImplementedError('lon/lat not found in dset, cannot dump SWAN file without locations'):
+            raise
+        sfile = SwanSpecFile(filename, freqs=darray.freq, dirs=darray.dir,
+                             time=is_time, x=x, y=y, append=append, id=id)
+
+        # Dump each timestep
+        if is_time:
+            for t in darray.time:
+                sfile.writeSpectra(darray.sel(time=t).transpose('site','freq','dir').values,
+                                   time=to_datetime(t.values))
         else:
-            xx = self.lon
-            yy = self.lat
-        sfile = SwanSpecFile(filename, freqs=self.freq, time=True, dirs=self.dir,
-                             x=self.lon, y=self.lat, id=id, append=append)
-        for i,t in enumerate(self.time):
-            sfile.f.write(to_datetime(t.values).strftime('%Y%m%d.%H%M%S\n'))
-            sfile.writeSpectra(self.dset['efth'].sel(time=t).values.reshape(-1, len(self.freq), len(self.dir)))
+            sfile.writeSpectra(darray.sel(time=t).transpose('site','freq','dir').values)
         sfile.close()
+    
 
     def to_ww3(self, filename):
         raise NotImplementedError('Cannot write to native WW3 format')
@@ -126,3 +152,14 @@ class SpecDataset(object):
                     f.write('%6.5f,\n' % row.sum())
                 f.write(('fSpec,'+fmt+'\n') % tuple(dfreq*s.momd(0)[0].values))
                 f.write(('den,'+fmt+'\n\n') % tuple(s.momd(0)[0].values))
+
+if __name__ == '__main__':
+    from specdataset import SpecDataset
+    from readspec import read_swanow
+    fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
+    ds = read_swanow(fileglob)
+    ds.spec.to_swan('/home/rafael/tmp/test2.spec')
+
+    from spectra.readspec import read_swan
+    ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
+    ds.spec.to_swan('/home/rafael/tmp/test.spec')
