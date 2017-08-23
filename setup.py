@@ -6,7 +6,7 @@ from numpy.distutils.misc_util import Configuration
 import spectra
 
 install_requires = [
-    'xarray>=0.9',
+    'xarray>=0.9.6',
     'pandas',
     'dask',
     'toolz',
