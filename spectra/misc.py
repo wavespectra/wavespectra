@@ -12,11 +12,20 @@ GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)
 D2R = np.pi/180.
 R2D = 180./np.pi
 
-to_datetime = lambda t: datetime.datetime.fromtimestamp(t.astype('int')/1e9)
-
 dnum_to_datetime = lambda d: datetime.datetime.fromordinal(int(d) - 366) + datetime.timedelta(days=d%1)
 
 to_nautical = lambda a: np.mod(270-a, 360)
+
+def to_datetime(np64):
+    """ Convert Datetime64 date to datatime """
+    if isinstance(np64, np.datetime64):
+        dt = pd.to_datetime(str(np64)).to_pydatetime()
+    elif isinstance(np64, xr.DataArray):
+        dt = pd.to_datetime(str(np64.values)).to_pydatetime()
+    else:
+        print IOError('Cannot convert %s into datetime, expected np.datetime64 or xr.DataArray' %
+            type(np64))
+    return dt
 
 def spddir_to_uv(spd, direc, coming_from=False):
     """
