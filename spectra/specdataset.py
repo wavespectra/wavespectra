@@ -78,8 +78,8 @@ class SpecDataset(object):
 
         # Intantiate swan object
         try:
-            x = darray.lon.values
-            y = darray.lat.values
+            x = self.dset.lon.values
+            y = self.dset.lat.values
         except NotImplementedError('lon/lat not found in dset, cannot dump SWAN file without locations'):
             raise
         sfile = SwanSpecFile(filename, freqs=darray.freq, dirs=darray.dir,
