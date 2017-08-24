@@ -5,6 +5,7 @@ import copy
 import datetime
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 from scipy.interpolate import griddata
 
