@@ -48,6 +48,12 @@ class SpecArray(object):
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
+        # df darray with freq dimension - may replace above one in the future
+        self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *\
+                                       (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
+                                  coords={'freq': self.freq},
+                                  dims=('freq'))
+
     def __repr__(self):
         return re.sub(r'<([^\s]+)', '<%s'%(self.__class__.__name__), str(self._obj))
 
@@ -214,10 +220,9 @@ class SpecArray(object):
         """
         Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)
         """
-        import ipdb; ipdb.set_trace()
-        E = 0.5 * (self.df * (self._obj[{'freq': slice(1, None)}] + self._obj[{'freq': slice(None, -1)}].values)) * self.dd
+        E = self._obj * self.dfarr * self.dd
         E.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm^{2}'))))
-        return E
+        return E.rename('energy')
 
     def hs(self, tail=True, standard_name='sea_surface_wave_significant_height'):
         """
