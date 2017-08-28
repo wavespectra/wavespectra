@@ -158,15 +158,9 @@ class SpecDataset(object):
             # Dump each timestep
             for i, t in enumerate(tqdm(self.time)):
                 ds = dset.isel(time=i)
-                
                 # Timestamp header
                 lp = '{}_{:%Y%m%d_%Hz}'.format(site_id, to_datetime(t))
-                # s_sea = sea[i].spec
-                # s_sw = swell[i].spec
-                # s = self.isel(time=i).efth.squeeze().spec
-
                 f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
-                # f.write('%s,\'%s,%s,%d,%.2f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.5f,%.5f,%.4f,%d,%d,%d\n' %
                 # Header and parameters
                 f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
                             to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
@@ -174,25 +168,20 @@ class SpecDataset(object):
                             0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
                             0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
                             float(ds['momf1']), float(ds['momf2']), float(ds['hs']), int(ds['dpm']), int(ds['dspr']), int(i*dt)))
-                        # to_datetime(t).strftime('%Y%m'), to_datetime(t).strftime('%d%H%M'), lp, wd[i], ws[i],
-                        #  (0.25*s.hs())**2, s.tm01(), s.dm(),
-                        #  (0.25*s_sea.hs())**2, s_sea.tm01(), s_sea.dm(),
-                        #  (0.25*s_sw.hs())**2, s_sw.tm01(), s_sw.dm(),
-                        #  s.momf(1).sum(), s.momf(2).sum(), s.hs(), s.dpm(), s.dspr(), i*dt))
                 # Frequencies
                 f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
                 # Spectra
-                
-                # import ipdb; ipdb.set_trace()
                 energy = ds.spec.to_energy().squeeze().T
-                for direc in self.dir:
+                specdump = ''
+                for direc in self.dir[0:1]:
                     row = np.hstack((direc, energy.sel(dir=direc).values))
-                    f.write('{:d},'.format(int(direc)))
-                    f.write(fmt.format(*row))
-                    f.write('{:6.5f},\n'.format(row.sum()))
-                # x = fmt2.format(np.column_stack((ds.dir.values,
-                #                                     dd * ds.spec.to_energy().squeeze().T))) #,
-                #                                     # ds.efth.sum(dim='freq').squeeze().values))))
+                    specdump += '{:d},'.format(int(direc))
+                    specdump += fmt.format(*row)
+                    specdump += '{:6.5f},\n'.format(row.sum())
+                f.write(specdump)
+                # import ipdb; ipdb.set_trace()
+                f.write(('fSpec,' + fmt + '\n').format(*(self.efth.spec.dfarr.values * df.momd.squeeze().values))) 
+                
                 # np.savetxt(f, x, fmt=fmt2)
                     # spec = 
                 # for idir in idirs:
