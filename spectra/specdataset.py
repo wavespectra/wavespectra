@@ -128,6 +128,8 @@ class SpecDataset(object):
 
         fmt = ','.join(len(self.freq)*['{:6.5f}']) + ','
         fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt])
+        fmt3 = '{:d},' + fmt# + '{:6.5f},'
+        # fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt + '{:6.5f},'])
         dt = (to_datetime(dset.time[1]) - to_datetime(dset.time[0])).total_seconds() / 3600
 
         # Start site loop here
@@ -181,26 +183,33 @@ class SpecDataset(object):
                 f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
                 # Spectra
                 
-                import ipdb; ipdb.set_trace()
-
-                spec = np.column_stack((ds.dir.values, dd * ds.efth.values.squeeze().T))
-                # for direc in ds.dir:
+                # import ipdb; ipdb.set_trace()
+                energy = ds.spec.to_energy().squeeze().T
+                for direc in self.dir:
+                    row = np.hstack((direc, energy.sel(dir=direc).values))
+                    f.write('{:d},'.format(int(direc)))
+                    f.write(fmt.format(*row))
+                    f.write('{:6.5f},\n'.format(row.sum()))
+                # x = fmt2.format(np.column_stack((ds.dir.values,
+                #                                     dd * ds.spec.to_energy().squeeze().T))) #,
+                #                                     # ds.efth.sum(dim='freq').squeeze().values))))
+                # np.savetxt(f, x, fmt=fmt2)
                     # spec = 
-                for idir in idirs:
-                    f.write('%d,' % (np.round(sdirs[idir])))
-                    row = dset.spec.dd * dfreq * s._obj.isel(dir=idir)
-                    f.write(fmt.format(*row.values))
-                    f.write('%6.5f,\n' % row.sum())
-                f.write(('fSpec,'+fmt+'\n').format(*dfreq*s.momd(0)[0].values))
-                f.write(('den,'+fmt+'\n\n').format(*s.momd(0)[0].values))
+                # for idir in idirs:
+                #     f.write('%d,' % (np.round(sdirs[idir])))
+                #     row = dset.spec.dd * dfreq * s._obj.isel(dir=idir)
+                #     f.write(fmt.format(*row.values))
+                #     f.write('%6.5f,\n' % row.sum())
+                # f.write(('fSpec,'+fmt+'\n').format(*dfreq*s.momd(0)[0].values))
+                # f.write(('den,'+fmt+'\n\n').format(*s.momd(0)[0].values))
 
 if __name__ == '__main__':
     from specdataset import SpecDataset
-    from readspec import read_swanow
-    fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_00z/*.spec'
-    ds = read_swanow(fileglob)
-    # ds.spec.to_octopus('/home/rafael/tmp/test.oct')
+    from readspec import read_swan
+    fileglob = '/source/pyspectra/tests/manus.spec'
+    ds = read_swan(fileglob)
+    ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
 
-    from spectra.readspec import read_swan
-    ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
+    # from spectra.readspec import read_swan
+    # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
     # ds.spec.to_swan('/home/rafael/tmp/test.spec')
