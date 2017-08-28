@@ -210,6 +210,15 @@ class SpecArray(object):
 
         return other
 
+    def to_energy(self, standard_name='sea_surface_wave_directional_energy_spectra'):
+        """
+        Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)
+        """
+        import ipdb; ipdb.set_trace()
+        E = 0.5 * (self.df * (self._obj[{'freq': slice(1, None)}] + self._obj[{'freq': slice(None, -1)}].values)) * self.dd
+        E.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm^{2}'))))
+        return E
+
     def hs(self, tail=True, standard_name='sea_surface_wave_significant_height'):
         """
         Spectral significant wave height Hm0
@@ -276,7 +285,7 @@ class SpecArray(object):
         fp = self.freq.values**mom
         mf = (0.5 * self.df[:,_] *
             (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
-        return self._twod(mf.sum(dim='freq', skipna=False))
+        return self._twod(mf.sum(dim='freq', skipna=False)).rename('mom{:d}'.format(mom))
 
     def momd(self, mom=0, theta=90.):
         """
@@ -527,30 +536,49 @@ class SpecArray(object):
         """
         raise NotImplementedError('Wave spreading at the peak wave frequency method not defined')
 
-    def stats(self, stats_list, fmin=None, fmax=None, dmin=None, dmax=None):
+    def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
         """
         Calculate multiple spectral stats into one same DataArray
-            - stats_list :: list of stats to be calculated - need to correspond to implemented methods in this class
-            - fmin, fmax, dmin, dmax :: lower and upper freq/dir boundaries for splitting spectra before calculating stats
-        Returns Dataset containing all required stats
+        Input:
+            - stats :: list of strings specifying stats to be calculated, or alternatively dictionary where
+                       keys are stats and values are dictionaries with kwargs to use with corresponding method
+            - fmin, fmax :: float, lower and upper frequencies for splitting spectra before calculating stats
+            - dmin, dmax :: float, lower and upper directions for splitting spectra before calculating stats
+            - names :: list of strings, used to rename each stat in output Dataset
+        Returns:
+            - DataArray if only one stat, Dataset otherwise
+        Remarks:
+            - all stats must correspond to implemented methods in this class
+            - if names is provided, its length must correspond to the length of stats
         """
         if any((fmin, fmax, dmin, dmax)):
             spectra = self.split(fmin=fmin, fmax=fmax, dmin=dmin, dmax=dmax)
         else:
             spectra = self._obj
+        
+        if isinstance(stats, (list, tuple)):
+            stats_dict = {s: {} for s in stats}
+        elif isinstance(stats, dict):
+            stats_dict = stats
+        else:
+            raise ValueError('stats must be either a container or a dictionary')
+        
+        names = names or stats_dict.keys()
+        if len(names) != len(stats_dict):
+            raise ValueError('length of names does not correspond to the number of stats')
 
-        stats = list()
-        for func in stats_list:
+        params = list()
+        for name, (func, kwargs) in zip(names, stats_dict.items()):
             try:
                 stats_func = getattr(spectra.spec, func)
             except:
                 raise IOError('%s is not implemented as a method in %s' % (func, self.__class__.__name__))
             if callable(stats_func):
-                stats.append(stats_func())
+                params.append(stats_func(**kwargs).rename(name))
             else:
                 raise IOError('%s attribute of %s is not callable' % (func, self.__class__.__name__))
 
-        return xr.merge(stats)
+        return xr.merge(params)
 
 
 def wavenuma(ang_freq, water_depth):

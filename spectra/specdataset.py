@@ -4,13 +4,12 @@ Extra functions to attach to main SpecArray class
 import re
 import xarray as xr
 import numpy as np
+from tqdm import tqdm
 from cfjson.xrdataset import CFJSONinterface
 from specarray import SpecArray
 from attributes import *
 from swan import SwanSpecFile
 from misc import to_datetime
-
-OCT_MISSING=-99999
 
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
@@ -67,7 +66,7 @@ class SpecDataset(object):
             - Only 2D spectra E(f,d) are currently supported
             - Extra dimensions (other than time, site, lon, lat, freq, dim) are not yet supported
         """
-        darray = self.dset['efth'].copy(deep=False)
+        darray = self.dset['efth'].copy(deep=True)
         is_time = 'time' in darray.dims
 
         # If grid reshape into site, if neither define fake site dimension
@@ -101,7 +100,7 @@ class SpecDataset(object):
     def to_ww3_msl(filename):
         raise NotImplementedError('Cannot write to native WW3 format')
 
-    def to_octopus(self, filename, site_id='spec'):
+    def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
         """
         Save spectra in Octopus format
         """
@@ -110,56 +109,98 @@ class SpecDataset(object):
         elif ('lon' in self.dims) and (len(self.lon)>1 or len(self.lat)>1):
             raise NotImplementedError('No Octopus export defined for grids')
         
+        # Update dataset with parameters
+        stats = ['hs', 'tm01', 'dm']
+        dset = xr.merge([self.dset,
+                         self.spec.stats(stats+['dpm','dspr']),
+                         self.spec.stats(stats, names=[s+'_swell' for s in stats], fmax=fcut),
+                         self.spec.stats(stats, names=[s+'_sea' for s in stats], fmin=fcut),
+                         self.spec.momf(mom=1).sum(dim='dir').rename('momf1'),
+                         self.spec.momf(mom=2).sum(dim='dir').rename('momf2'),
+                         self.spec.momd(mom=0)[0].rename('momd'),
+                         ]).sortby('dir')
+        if WDIRNAME not in dset:
+            dset[WDIRNAME] = 0 * dset['hs'] + missing_val
+        if WSPDNAME not in dset:
+            dset[WSPDNAME] = 0 * dset['hs'] + missing_val
+        if DEPNAME not in dset:
+            dset[DEPNAME] = 0 * dset['hs'] + missing_val
+
+        fmt = ','.join(len(self.freq)*['{:6.5f}']) + ','
+        fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt])
+        dt = (to_datetime(dset.time[1]) - to_datetime(dset.time[0])).total_seconds() / 3600
+
+        # Start site loop here
+        lat = float(self.lat[0])
+        lon = float(self.lon[0])
+        
         with open(filename, 'w') as f:
-            f.write('Forecast valid for %s\n' % (to_datetime(self.time[0]).strftime('%d-%b-%Y %H:%M:%S')))
-            fmt = ','.join(len(self.freq)*['%6.5f'])+','
-            dt = (self.time[1].astype('int') - self.time[0].astype('int')) / 3.6e12 if len(self.time)>1 else 0
-            swell = self.split(fmin=0, fmax=0.125)
-            sea = self.split(fmin=0.125, fmax=1.)
-            wd = self.wdir.values if hasattr(self,'wdir') else OCT_MISSING*np.ones(len(self.time))
-            ws = self.wspd.values if hasattr(self,'wspd') else OCT_MISSING*np.ones(len(self.time))
-            dpt = self.dpt.values if hasattr(self,'dpt') else OCT_MISSING*np.ones(len(self.time))
-            for i, t in enumerate(self.time):
-                if i == 0:
-                    f.write('nfreqs,%d\nndir,%d\nnrecs,%d\nLatitude,%7.4f\nLongitude,%7.4f\nDepth,%f\n\n' %
-                            (len(self.freq),
-                             len(self.dir),
-                             len(self.time),
-                             self.lat[0].values,
-                             self.lon[0].values,
-                             dpt[0]) )
-                    sdirs = np.mod(self.dir.values, 360.)
-                    idirs = np.argsort(sdirs)
-                    ddir = abs(sdirs[1] - sdirs[0])
-                    dfreq = np.hstack((0, self.freq[1:].values - self.freq[:-1].values,0))
-                    dfreq = 0.5 * (dfreq[:-1] + dfreq[1:])
-                lp = site_id + to_datetime(t).strftime('_%Y%m%d_%Hz')
-                s_sea = sea[i].spec
-                s_sw = swell[i].spec
-                s = self.isel(time=i).efth.squeeze().spec
+
+            # General header
+            f.write('Forecast valid for {:%d-%b-%Y %H:%M:%S}\n'.format(to_datetime(self.time[0])))
+            f.write('nfreqs,{:d}\n'.format(len(self.freq)))
+            f.write('ndir,{:d}\n'.format(len(self.dir)))
+            f.write('nrecs,{:d}\n'.format(len(self.time)))
+            f.write('Latitude,{:0.6f}\n'.format(lat))
+            f.write('Longitude,{:0.6f}\n'.format(lon))
+            f.write('Depth,{:0.2f}\n\n'.format(float(dset[DEPNAME].isel(time=0))))
+
+            # Frequency resolution
+            sdirs = np.mod(self.dir.values, 360.)
+            idirs = np.argsort(sdirs)
+            # ddir = abs(sdirs[1] - sdirs[0])
+            dd = dset.efth.spec.dd
+            dfreq = np.hstack((0, dset['efth'].spec.df, 0))
+            dfreq = 0.5 * (dfreq[:-1] + dfreq[1:])
+
+            # Dump each timestep
+            for i, t in enumerate(tqdm(self.time)):
+                ds = dset.isel(time=i)
+                
+                # Timestamp header
+                lp = '{}_{:%Y%m%d_%Hz}'.format(site_id, to_datetime(t))
+                # s_sea = sea[i].spec
+                # s_sw = swell[i].spec
+                # s = self.isel(time=i).efth.squeeze().spec
+
                 f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
-                f.write('%s,\'%s,%s,%d,%.2f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.5f,%.5f,%.4f,%d,%d,%d\n' %
-                        (to_datetime(t).strftime('%Y%m'), to_datetime(t).strftime('%d%H%M'), lp, wd[i], ws[i],
-                         (0.25*s.hs())**2, s.tm01(), s.dm(),
-                         (0.25*s_sea.hs())**2, s_sea.tm01(), s_sea.dm(),
-                         (0.25*s_sw.hs())**2, s_sw.tm01(), s_sw.dm(),
-                         s.momf(1).sum(), s.momf(2).sum(), s.hs(), s.dpm(), s.dspr(), i*dt))
-                f.write(('freq,'+fmt+'anspec\n') % tuple(self.freq))
+                # f.write('%s,\'%s,%s,%d,%.2f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.4f,%.2f,%.1f,%.5f,%.5f,%.4f,%d,%d,%d\n' %
+                # Header and parameters
+                f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
+                            to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
+                            0.25*float(ds['hs'])**2, float(ds['tm01']), float(ds['dm']),
+                            0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
+                            0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
+                            float(ds['momf1']), float(ds['momf2']), float(ds['hs']), int(ds['dpm']), int(ds['dspr']), int(i*dt)))
+                        # to_datetime(t).strftime('%Y%m'), to_datetime(t).strftime('%d%H%M'), lp, wd[i], ws[i],
+                        #  (0.25*s.hs())**2, s.tm01(), s.dm(),
+                        #  (0.25*s_sea.hs())**2, s_sea.tm01(), s_sea.dm(),
+                        #  (0.25*s_sw.hs())**2, s_sw.tm01(), s_sw.dm(),
+                        #  s.momf(1).sum(), s.momf(2).sum(), s.hs(), s.dpm(), s.dspr(), i*dt))
+                # Frequencies
+                f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
+                # Spectra
+                
+                import ipdb; ipdb.set_trace()
+
+                spec = np.column_stack((ds.dir.values, dd * ds.efth.values.squeeze().T))
+                # for direc in ds.dir:
+                    # spec = 
                 for idir in idirs:
                     f.write('%d,' % (np.round(sdirs[idir])))
-                    row = ddir * dfreq * s._obj.isel(dir=idir)
-                    f.write(fmt % tuple(row.values))
+                    row = dset.spec.dd * dfreq * s._obj.isel(dir=idir)
+                    f.write(fmt.format(*row.values))
                     f.write('%6.5f,\n' % row.sum())
-                f.write(('fSpec,'+fmt+'\n') % tuple(dfreq*s.momd(0)[0].values))
-                f.write(('den,'+fmt+'\n\n') % tuple(s.momd(0)[0].values))
+                f.write(('fSpec,'+fmt+'\n').format(*dfreq*s.momd(0)[0].values))
+                f.write(('den,'+fmt+'\n\n').format(*s.momd(0)[0].values))
 
 if __name__ == '__main__':
     from specdataset import SpecDataset
     from readspec import read_swanow
-    fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
+    fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_00z/*.spec'
     ds = read_swanow(fileglob)
-    ds.spec.to_swan('/home/rafael/tmp/test2.spec')
+    ds.spec.to_octopus('/home/rafael/tmp/test.oct')
 
-    from spectra.readspec import read_swan
-    ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
-    ds.spec.to_swan('/home/rafael/tmp/test.spec')
+    # from spectra.readspec import read_swan
+    # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
+    # ds.spec.to_swan('/home/rafael/tmp/test.spec')
