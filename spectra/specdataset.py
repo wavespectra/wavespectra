@@ -199,8 +199,8 @@ if __name__ == '__main__':
     from readspec import read_swanow
     fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_00z/*.spec'
     ds = read_swanow(fileglob)
-    ds.spec.to_octopus('/home/rafael/tmp/test.oct')
+    # ds.spec.to_octopus('/home/rafael/tmp/test.oct')
 
-    # from spectra.readspec import read_swan
-    # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
+    from spectra.readspec import read_swan
+    ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
     # ds.spec.to_swan('/home/rafael/tmp/test.spec')
