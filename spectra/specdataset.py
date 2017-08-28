@@ -54,6 +54,23 @@ class SpecDataset(object):
             other.time.encoding.update(time_encoding)
         other.to_netcdf(filename, format=ncformat, encoding=encoding)
 
+    def _to_dump(self):
+        """
+        Ensure dimensions are suitable for dumping
+        - grid is converted to site dimension which can be iterated over
+        - site is defined if not in dataset and not a grid
+        - spectral coordinates are checked to ensure they are supported for dumping
+        """
+        darray = self.dset['efth'].copy(deep=True)
+
+        # If grid reshape into site, if neither define fake site dimension
+        if set(('lon','lat')).issubset(darray.dims):
+            darray = darray.stack(site=('lat','lon'))
+        elif 'site' not in darray.dims:
+            darray = darray.expand_dims('site')
+
+        return darray
+
     def to_swan(self, filename, append=False, id='Created by pyspectra'):
         """
         Write spectra in SWAN ASCII format
@@ -104,6 +121,8 @@ class SpecDataset(object):
         """
         Save spectra in Octopus format
         """
+        darray = self._to_dump()
+
         if ('site' in self.dims) and len(self.site)>1:
             raise NotImplementedError('No Octopus export defined for multiple sites')
         elif ('lon' in self.dims) and (len(self.lon)>1 or len(self.lat)>1):
@@ -128,8 +147,6 @@ class SpecDataset(object):
 
         fmt = ','.join(len(self.freq)*['{:6.5f}']) + ','
         fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt])
-        fmt3 = '{:d},' + fmt# + '{:6.5f},'
-        # fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt + '{:6.5f},'])
         dt = (to_datetime(dset.time[1]) - to_datetime(dset.time[0])).total_seconds() / 3600
 
         # Start site loop here
@@ -147,14 +164,6 @@ class SpecDataset(object):
             f.write('Longitude,{:0.6f}\n'.format(lon))
             f.write('Depth,{:0.2f}\n\n'.format(float(dset[DEPNAME].isel(time=0))))
 
-            # Frequency resolution
-            sdirs = np.mod(self.dir.values, 360.)
-            idirs = np.argsort(sdirs)
-            # ddir = abs(sdirs[1] - sdirs[0])
-            dd = dset.efth.spec.dd
-            dfreq = np.hstack((0, dset['efth'].spec.df, 0))
-            dfreq = 0.5 * (dfreq[:-1] + dfreq[1:])
-
             # Dump each timestep
             for i, t in enumerate(tqdm(self.time)):
                 ds = dset.isel(time=i)
@@ -171,33 +180,24 @@ class SpecDataset(object):
                 # Frequencies
                 f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
                 # Spectra
-                energy = ds.spec.to_energy().squeeze().T
+                energy = ds.spec.to_energy().squeeze().T.values
                 specdump = ''
-                for direc in self.dir[0:1]:
-                    row = np.hstack((direc, energy.sel(dir=direc).values))
+                for idir,direc in enumerate(self.dir):
+                    row = np.hstack((direc, energy[idir]))
                     specdump += '{:d},'.format(int(direc))
                     specdump += fmt.format(*row)
                     specdump += '{:6.5f},\n'.format(row.sum())
                 f.write(specdump)
-                # import ipdb; ipdb.set_trace()
-                f.write(('fSpec,' + fmt + '\n').format(*(self.efth.spec.dfarr.values * df.momd.squeeze().values))) 
-                
-                # np.savetxt(f, x, fmt=fmt2)
-                    # spec = 
-                # for idir in idirs:
-                #     f.write('%d,' % (np.round(sdirs[idir])))
-                #     row = dset.spec.dd * dfreq * s._obj.isel(dir=idir)
-                #     f.write(fmt.format(*row.values))
-                #     f.write('%6.5f,\n' % row.sum())
-                # f.write(('fSpec,'+fmt+'\n').format(*dfreq*s.momd(0)[0].values))
-                # f.write(('den,'+fmt+'\n\n').format(*s.momd(0)[0].values))
+                f.write(('fSpec,' + fmt + '\n').format(*(self.efth.spec.dfarr.values * ds.momd.squeeze().values)))
+                f.write(('den,' + fmt + '\n\n').format(*ds.momd.squeeze().values))
 
 if __name__ == '__main__':
     from specdataset import SpecDataset
     from readspec import read_swan
     fileglob = '/source/pyspectra/tests/manus.spec'
     ds = read_swan(fileglob)
-    ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
+    # ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
+    ds.spec.to_octopus('/home/rafael/tmp/test.oct')
 
     # from spectra.readspec import read_swan
     # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
