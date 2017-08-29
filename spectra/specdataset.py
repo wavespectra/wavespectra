@@ -2,8 +2,10 @@
 Extra functions to attach to main SpecArray class
 """
 import re
+import sys
 import xarray as xr
 import numpy as np
+import zipfile
 from tqdm import tqdm
 from cfjson.xrdataset import CFJSONinterface
 from specarray import SpecArray
@@ -54,22 +56,32 @@ class SpecDataset(object):
             other.time.encoding.update(time_encoding)
         other.to_netcdf(filename, format=ncformat, encoding=encoding)
 
-    def _to_dump(self):
+    def _to_dump(self, supported_dims=['time','site','lat','lon','freq','dir']):
         """
-        Ensure dimensions are suitable for dumping
-        - grid is converted to site dimension which can be iterated over
-        - site is defined if not in dataset and not a grid
-        - spectral coordinates are checked to ensure they are supported for dumping
+        Ensure dimensions are suitable for dumping in some ascii formats
+        Input:
+            - supported_dims :: list of dimensions that are supported by the dumping method
+        Returns:
+            - Dataset object with site dimension and with no grid dimensions
+        Remark:
+            - grid is converted to site dimension which can be iterated over
+            - site is defined if not in dataset and not a grid
+            - spectral coordinates are checked to ensure they are supported for dumping
         """
-        darray = self.dset['efth'].copy(deep=True)
+        dset = self.dset.copy(deep=True)
+
+        unsupported_dims = set(dset.dims) - set(supported_dims)
+        if unsupported_dims:
+            raise NotImplementedError('Dimensions {} are not supported by {} method'.format(
+                unsupported_dims, sys._getframe().f_back.f_code.co_name))
 
         # If grid reshape into site, if neither define fake site dimension
-        if set(('lon','lat')).issubset(darray.dims):
-            darray = darray.stack(site=('lat','lon'))
-        elif 'site' not in darray.dims:
-            darray = darray.expand_dims('site')
+        if set(('lon','lat')).issubset(dset.dims):
+            dset = dset.stack(site=('lat','lon'))
+        elif 'site' not in dset.dims:
+            dset = dset.expand_dims('site')
 
-        return darray
+        return dset
 
     def to_swan(self, filename, append=False, id='Created by pyspectra'):
         """
@@ -117,11 +129,11 @@ class SpecDataset(object):
     def to_ww3_msl(filename):
         raise NotImplementedError('Cannot write to native WW3 format')
 
-    def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
+    def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999, zip=True):
         """
         Save spectra in Octopus format
         """
-        darray = self._to_dump()
+        dset = self._to_dump()
 
         if ('site' in self.dims) and len(self.site)>1:
             raise NotImplementedError('No Octopus export defined for multiple sites')
@@ -130,13 +142,16 @@ class SpecDataset(object):
         
         # Update dataset with parameters
         stats = ['hs', 'tm01', 'dm']
-        dset = xr.merge([self.dset,
-                         self.spec.stats(stats+['dpm','dspr']),
-                         self.spec.stats(stats, names=[s+'_swell' for s in stats], fmax=fcut),
-                         self.spec.stats(stats, names=[s+'_sea' for s in stats], fmin=fcut),
-                         self.spec.momf(mom=1).sum(dim='dir').rename('momf1'),
-                         self.spec.momf(mom=2).sum(dim='dir').rename('momf2'),
-                         self.spec.momd(mom=0)[0].rename('momd'),
+        
+        import ipdb; ipdb.set_trace()
+
+        dset = xr.merge([dset,
+                         dset.spec.stats(stats+['dpm','dspr']),
+                         dset.spec.stats(stats, names=[s+'_swell' for s in stats], fmax=fcut),
+                         dset.spec.stats(stats, names=[s+'_sea' for s in stats], fmin=fcut),
+                         dset.spec.momf(mom=1).sum(dim='dir').rename('momf1'),
+                         dset.spec.momf(mom=2).sum(dim='dir').rename('momf2'),
+                         dset.spec.momd(mom=0)[0].rename('momd'),
                          ]).sortby('dir')
         if WDIRNAME not in dset:
             dset[WDIRNAME] = 0 * dset['hs'] + missing_val
@@ -146,10 +161,11 @@ class SpecDataset(object):
             dset[DEPNAME] = 0 * dset['hs'] + missing_val
 
         fmt = ','.join(len(self.freq)*['{:6.5f}']) + ','
-        fmt2 = '\n'.join(len(self.dir) * ['{:d},' + fmt])
         dt = (to_datetime(dset.time[1]) - to_datetime(dset.time[0])).total_seconds() / 3600
 
         # Start site loop here
+        import ipdb; ipdb.set_trace()
+        # for site in darray.site:
         lat = float(self.lat[0])
         lon = float(self.lon[0])
         
@@ -166,10 +182,13 @@ class SpecDataset(object):
 
             # Dump each timestep
             for i, t in enumerate(tqdm(self.time)):
+
                 ds = dset.isel(time=i)
+
                 # Timestamp header
                 lp = '{}_{:%Y%m%d_%Hz}'.format(site_id, to_datetime(t))
                 f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
+
                 # Header and parameters
                 f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
                             to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
@@ -177,8 +196,10 @@ class SpecDataset(object):
                             0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
                             0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
                             float(ds['momf1']), float(ds['momf2']), float(ds['hs']), int(ds['dpm']), int(ds['dspr']), int(i*dt)))
+                
                 # Frequencies
                 f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
+                
                 # Spectra
                 energy = ds.spec.to_energy().squeeze().T.values
                 specdump = ''
@@ -196,8 +217,8 @@ if __name__ == '__main__':
     from readspec import read_swan
     fileglob = '/source/pyspectra/tests/manus.spec'
     ds = read_swan(fileglob)
-    # ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
-    ds.spec.to_octopus('/home/rafael/tmp/test.oct')
+    ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
+    # ds.spec.to_octopus('/home/rafael/tmp/test.oct')
 
     # from spectra.readspec import read_swan
     # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
