@@ -290,9 +290,8 @@ class SpecArray(object):
         """
         Calculate given frequency moment
         """
-        fp = self.freq.values**mom
-        mf = (0.5 * self.df[:,_] *
-            (fp[1:,_] * self._obj[{'freq': slice(1, None)}] + fp[:-1,_] * self._obj[{'freq': slice(None,-1)}].values))
+        fp = self.freq**mom
+        mf = self.dfarr * fp * self._obj
         return self._twod(mf.sum(dim='freq', skipna=False)).rename('mom{:d}'.format(mom))
 
     def momd(self, mom=0, theta=90.):
@@ -618,14 +617,16 @@ def hs(spec, freqs, dirs, tail=True):
 
 if __name__ == '__main__':
     from spectra.readspec import read_hotswan
-    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
+    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklislr*.hot*')
     # import datetime
     # import matplotlib.pyplot as plt
     # from os.path import expanduser, join
     # home = expanduser("~")
 
+    # from spectra.readspec import read_swan
     # filename = '/source/pyspectra/tests/prelud.spec'
     # # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
+    # ds = read_swan(filename)
 
     # wsp_val = 10
     # wdir_val = 225
