@@ -16,6 +16,7 @@ install_requires = [
     'tqdm',
     'scipy',
     'dbfread',
+    'zipfile',
     ]
 
 test_requires = [
