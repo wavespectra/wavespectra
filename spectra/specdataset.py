@@ -192,7 +192,7 @@ class SpecDataset(object):
                 f.write('Depth,{:0.2f}\n\n'.format(float(dsite[DEPNAME].isel(time=0))))
 
                 # Dump each timestep
-                for i, t in enumerate(tqdm(dsite.time)):
+                for i, t in enumerate(dsite.time):
                     ds = dsite.isel(time=i)
 
                     # Timestamp header
@@ -200,19 +200,13 @@ class SpecDataset(object):
                     f.write('CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n')
 
                     # Header and parameters
-                    try:
-                        f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
-                                    to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
-                                    0.25*float(ds['hs'])**2, float(ds['tm01']), float(ds['dm']),
-                                    0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
-                                    0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
-                                    float(ds['momf1']), float(ds['momf2']), float(ds['hs']), int(ds['dpm']), int(ds['dspr']), int(i*dt)))
-                    except:
-                        import ipdb; ipdb.set_trace()
-                    
-                    # Frequencies
-                    f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
-                    
+                    f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
+                                to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
+                                0.25*float(ds['hs'])**2, float(ds['tm01']), float(ds['dm']),
+                                0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
+                                0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
+                                float(ds['momf1']), float(ds['momf2']), float(ds['hs']), int(ds['dpm']), int(ds['dspr']), int(i*dt)))
+                                        
                     # Spectra
                     energy = ds['energy'].squeeze().T.values
                     specdump = ''
@@ -221,19 +215,21 @@ class SpecDataset(object):
                         specdump += '{:d},'.format(int(direc))
                         specdump += fmt.format(*row)
                         specdump += '{:6.5f},\n'.format(row.sum())
+                    f.write(('freq,'+fmt+'anspec\n').format(*ds.freq.values))
                     f.write(specdump)
                     f.write(('fSpec,' + fmt + '\n').format(*ds['fSpec'].squeeze().values))
                     f.write(('den,' + fmt + '\n\n').format(*ds['momd'].squeeze().values))
 
 if __name__ == '__main__':
     # from specdataset import SpecDataset
-    # from readspec import read_swan
-    # fileglob = '/source/pyspectra/tests/manus.spec'
-    # ds = read_swan(fileglob)
+    from readspec import read_swan
+    fileglob = '/source/pyspectra/tests/manus.spec'
+    ds = read_swan(fileglob)
     # ds.spec.to_octopus('/Users/rafaguedes/tmp/test.oct')
     # ds.spec.to_octopus('/home/rafael/tmp/test.oct')
+    ds.spec.to_swan('/home/rafael/tmp/test.swn')
 
-    from spectra.readspec import read_swan
-    ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
-    ds.spec.to_swan('/home/rafael/tmp/test.spec')
-    ds.spec.to_octopus('/home/rafael/tmp/test.oct')
+    # from spectra.readspec import read_swan
+    # ds = read_swan('/source/pyspectra/tests/antf0.20170208_06z.hot-001')
+    # ds.spec.to_swan('/home/rafael/tmp/test.spec')
+    # ds.spec.to_octopus('/home/rafael/tmp/test.oct')
