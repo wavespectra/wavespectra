@@ -127,6 +127,15 @@ class SpecDataset(object):
     def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
         """
         Save spectra in Octopus format
+        Input:
+            - filename :: str, name for output OCTOPUS file
+            - site_id :: str, used to construct LPoint header
+            - fcut :: float, frequency for splitting spectra to calculate some parameters
+            - missing_value :: int, missing value in output file
+        Remark:
+            - dataset needs to have lon/lat/time coordinates
+            - 1D spectra are not supported
+            - dataset with multiple locations is dumped at same file with one location header per site
         """
         assert 'time' in self.dims, "Octopus output requires time dimension"
 
