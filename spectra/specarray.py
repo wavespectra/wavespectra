@@ -234,9 +234,9 @@ class SpecArray(object):
         - standard_name :: CF standard name for defining DataArray attribute
         """
         Sf = self.oned(skipna=False)
-        E = 0.5 * (self.df * (Sf[{'freq': slice(1, None)}] + Sf[{'freq': slice(None, -1)}].values)).sum(dim='freq')
+        E = (Sf * self.dfarr).sum(dim='freq')
         if tail and Sf.freq[-1] > 0.333:
-            E += 0.25 * Sf[{'freq': -1}].values * Sf.freq[-1].values
+            E += 0.25 * Sf[{'freq': -1}] * Sf.freq[-1].values
         hs = 4 * np.sqrt(E)
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
@@ -298,10 +298,10 @@ class SpecArray(object):
         """
         Directional moment
         """
-        cp = np.cos(np.radians(180 + theta - self.dir.values))**mom
-        sp = np.sin(np.radians(180 + theta - self.dir.values))**mom
-        msin = (self.dd * (self._obj * sp[_,:])).sum(dim='dir', skipna=False)
-        mcos = (self.dd * (self._obj * cp[_,:])).sum(dim='dir', skipna=False)
+        cp = np.cos(np.radians(180 + theta - self.dir))**mom
+        sp = np.sin(np.radians(180 + theta - self.dir))**mom
+        msin = (self.dd * self._obj * sp).sum(dim='dir', skipna=False)
+        mcos = (self.dd * self._obj * cp).sum(dim='dir', skipna=False)
         return msin, mcos
 
     def tm01(self, standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment'):
@@ -617,16 +617,14 @@ def hs(spec, freqs, dirs, tail=True):
 
 if __name__ == '__main__':
     from spectra.readspec import read_hotswan
-    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklislr*.hot*')
+    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
     # import datetime
     # import matplotlib.pyplot as plt
     # from os.path import expanduser, join
     # home = expanduser("~")
 
-    # from spectra.readspec import read_swan
     # filename = '/source/pyspectra/tests/prelud.spec'
     # # filename = '/source/pyspectra/tests/antf0.20170207_06z.bnd.swn'
-    # ds = read_swan(filename)
 
     # wsp_val = 10
     # wdir_val = 225
