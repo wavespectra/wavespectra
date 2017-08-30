@@ -51,9 +51,9 @@ class SpecArray(object):
         # df darray with freq dimension - may replace above one in the future
         if len(self.freq) > 2:
             self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *\
-                                        (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
-                                    coords={'freq': self.freq},
-                                    dims=('freq'))
+                                           (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
+                                      coords={'freq': self.freq},
+                                      dims=('freq'))
         else:
             self.dfarr = None
 
