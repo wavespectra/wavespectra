@@ -355,7 +355,7 @@ def read_octopus(filename):
 def read_json(self,filename):
     raise NotImplementedError('Cannot read CFJSON format')
 
-def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True):
+def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True, ntimes=None):
     """
     Read multiple swan files into single Dataset
     Input:
@@ -370,6 +370,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
             - True: circular array is constructed so dd=10 degrees
             - False: No interpolation performed in the direction space (keep it from original spectrum)
         dirorder :: if True ensures directions are sorted
+        ntimes :: int, use it to read only specific number of times. Useful for checking headers only
     Output:
         SpecDataset object with different sites and cycles concatenated along the 'site' and 'time' dimension
         If multiple cycles are provided, 'time' coordinate is replaced by 'cycletime' multi-index coordinate
@@ -411,7 +412,10 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
         freqs = swanfile.freqs
         dirs = swanfile.dirs
 
-        spec_list = [s for s in swanfile.readall()]
+        if ntimes is None:
+            spec_list = [s for s in swanfile.readall()]
+        else:
+            spec_list = [swanfile.read() for itime in range(ntimes)]
 
         # Read tab files for winds / depth
         if swanfile.is_tab:
@@ -616,6 +620,7 @@ if __name__ == '__main__':
     import datetime
     import matplotlib.pyplot as plt
 
+    ds = read_swan('/source/pyspectra/tests/manus.spec')
     # fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
     # ds = read_swanow(fileglob)
 
