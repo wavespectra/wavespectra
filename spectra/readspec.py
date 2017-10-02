@@ -68,7 +68,7 @@ def read_triaxys_direc(filename_or_fileglob, toff=0):
                 if 'INITIAL FREQUENCY' in line:
                     f0 = float(line.split('=')[1])
                 if 'FREQUENCY SPACING' in line:
-                    df = float(line.split('=')[1]) 
+                    df = float(line.split('=')[1])
                 if 'DIRECTION SPACING' in line:
                     ddir = float(line.split('=')[1])
                 if 'ROWS' in line:
@@ -87,12 +87,12 @@ def read_triaxys_direc(filename_or_fileglob, toff=0):
                 freqs = list(pd.np.arange(f0, df*nf, df))
             else:
                 raise IOError('Not enough info to parse frequencies')
-            
+
             # Parsing data
             spec = pd.np.zeros((len(freqs), len(dirs)))
             for i in range(nf):
                 spec[i,:] = map(float, f.next().split())
-            
+
             # Ensure same spectral basis
             if ifile == 0:
                 interp_freq = copy.deepcopy(freqs)
@@ -103,7 +103,7 @@ def read_triaxys_direc(filename_or_fileglob, toff=0):
                                          outfreq=interp_freq,
                                          outdir=interp_dir))
             times.append(time)
-    
+
     # Construct dataset
     dset = xr.DataArray(
             data=spec_list,
@@ -118,7 +118,7 @@ def read_triaxys_dbf(filename_or_fileglob):
     """
     Read 1D spectra off dbf TRIAXYS files of type:
     | DATE | TIME | STATUS | SpectraCnt | FirstFreq | FreqSpacin | Field1 | Field2 | ... | FieldN |
-    
+
     Returns:
     - dset :: SpecDataset instance (1D, no direction dimension included)
     """
@@ -194,11 +194,13 @@ def read_ww3(filename_or_fileglob, chunks={}):
                 Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'station']
     Returns:
     - dset :: SpecDataset instance
-    """    
+    """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.efth.attrs.get('units','')
-    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME, 'station': SITENAME, 'efth': SPECNAME,
-        'longitude': LONNAME, 'latitude': LATNAME}, inplace=True)
+    dset.rename({'frequency': FREQNAME, 'direction': DIRNAME,
+        'station': SITENAME, 'efth': SPECNAME, 'longitude': LONNAME,
+        'latitude': LATNAME, 'wnddir': WDIRNAME, 'wnd': WSPDNAME},
+        inplace=True)
     if TIMENAME in dset[LONNAME].dims:
         dset[LONNAME] = dset[LONNAME].isel(drop=True, **{TIMENAME: 0})
         dset[LATNAME] = dset[LATNAME].isel(drop=True, **{TIMENAME: 0})
@@ -250,7 +252,7 @@ def read_hotswan(fileglob, dirorder=True):
     dsets = [read_swan(hotfiles[0])]
     for hotfile in tqdm(hotfiles[1:]):
         dset = read_swan(hotfile)
-        # Ensure we keep non-zeros in overlapping rows or columns 
+        # Ensure we keep non-zeros in overlapping rows or columns
         overlap = {'lon': set(dsets[-1].lon.values).intersection(dset.lon.values),
                    'lat': set(dsets[-1].lat.values).intersection(dset.lat.values)}
         concat_dim = min(overlap, key=lambda x: len(overlap[x]))
@@ -267,7 +269,7 @@ def read_hotswan(fileglob, dirorder=True):
         dset[SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
-        
+
     return dset
 
 def read_swan(filename, dirorder=True, as_site=None):
@@ -286,7 +288,7 @@ def read_swan(filename, dirorder=True, as_site=None):
     freqs = swanfile.freqs
     dirs = swanfile.dirs
     tab = None
-    
+
     if as_site:
         swanfile.is_grid = False
 
@@ -446,7 +448,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
             spec_list = [interp_spec(spec, freqs, dirs, int_freq, int_dir) for spec in spec_list]
             freqs = int_freq if int_freq is not None else freqs
             dirs = int_dir if int_dir is not None else dirs
-    
+
         # Appending
         try:
             arr = np.array(spec_list).reshape(len(times), len(sites), len(freqs), len(dirs))
@@ -495,7 +497,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
         deps[cycle] = np.vstack([tab[DEPNAME].values for tab in tabs[cycle]]).T if DEPNAME in tabs[cycle][0] else None
         wspds[cycle] = np.vstack([tab[WSPDNAME].values for tab in tabs[cycle]]).T if WSPDNAME in tabs[cycle][0] else None
         wdirs[cycle] = np.vstack([tab[WDIRNAME].values for tab in tabs[cycle]]).T if WDIRNAME in tabs[cycle][0] else None
-        
+
     time_sizes = [dsets[cycle].shape[0] for cycle in cycles]
 
     # Concat cycles
