@@ -160,7 +160,8 @@ def read_netcdf(filename_or_fileglob,
                 sitename=SITENAME,
                 specname=SPECNAME,
                 lonname=LONNAME,
-                latname=LATNAME):
+                latname=LATNAME,
+                timename=TIMENAME):
     """
     Read Spectra off generic netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
@@ -180,7 +181,8 @@ def read_netcdf(filename_or_fileglob,
                  lonname: LONNAME,
                  latname: LATNAME,
                  sitename: SITENAME,
-                 specname: SPECNAME}
+                 specname: SPECNAME,
+                 timename: TIMENAME}
     dset.rename({k:v for k,v in coord_map.items() if k in dset}, inplace=True)
     dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': _variable_name})
     if 'dir' not in dset or len(dset.dir)==1:
