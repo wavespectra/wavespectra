@@ -164,22 +164,24 @@ def read_netcdf(filename_or_fileglob,
     """
     Read Spectra off generic netCDF format
     - filename_or_fileglob :: either filename or fileglob specifying multiple files
-    - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
-                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documtation)
-                Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'station']
+    - chunks :: dictionary specifying chunk sizes for each dimensions to read as chunked dask array
+                By default dataset is loaded using single chunk for all arrays, see xr.open_mfdataset documentation
+    - <coord>name :: coordinate name in netcdf for renaming them, by default those defined in attributes.py
     Returns:
     - dset :: SpecDataset instance
     -----
-    Note that this current assumes frequency as Hz, direction as degrees and spectral energy as m^2s
+    Assumes frequency in Hz, direction in degrees and spectral energy in m^2/Hz[/degree]
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset[specname].attrs.get('units','')
     _variable_name = specname
-    if sitename in dset.dims: #Sites based
-        dset.rename({freqname: FREQNAME, dirname: DIRNAME, sitename: SITENAME, specname: SPECNAME}, inplace=True)
-    else: #Gridded
-        dset.rename({freqname: FREQNAME, dirname: DIRNAME, lonname: LONNAME, latname: LATNAME, specname: SPECNAME}, inplace=True)
-    set_spec_attributes(dset)
+    coord_map = {freqname: FREQNAME,
+                 dirname: DIRNAME,
+                 lonname: LONNAME,
+                 latname: LATNAME,
+                 sitename: SITENAME,
+                 specname: SPECNAME}
+    dset.rename({k:v for k,v in coord_map.items() if k in dset}, inplace=True)
     dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': _variable_name})
     if 'dir' not in dset or len(dset.dir)==1:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s'})
