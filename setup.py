@@ -10,7 +10,7 @@ install_requires = [
     'pandas',
     'dask',
     'toolz',
-    'numpy>=1.11',
+    'numpy>=1.11,<=1.12',
     'cloudpickle',
     'sortedcontainers',
     'tqdm',
