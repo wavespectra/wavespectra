@@ -20,7 +20,7 @@ from spectra.readspec import read_ww3, read_swan, read_ww3_msl
 from pymo.data.spectra_new import WW3NCSpecFile, SwanSpecFile
 from pymo.core.basetype import Site
 
-D2R=np.pi/180.
+D2R = np.pi/180.
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]',
@@ -37,7 +37,7 @@ class TestSpecSwan(unittest.TestCase):
         startTime = time.time()
         self.specnew = read_swan(testfile)
         # Old spectra
-        self.specold=SwanSpecFile(testfile)
+        self.specold = SwanSpecFile(testfile)
         self.sites = self.specold.locations
 
     def tearDown(self):
