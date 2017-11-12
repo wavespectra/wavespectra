@@ -8,7 +8,7 @@ d2r = np.pi/180
 #Generic spreading function such that \int{G1 d\theta}=1*
 def spread(dp_matrix,dspr_matrix,dirs):
     adirs = np.array(dirs).reshape((1,-1))
-    pidirs = d2r*(270.-np.array(adirs))
+    pidirs = d2r * (270.-np.array(adirs))
     st1 = np.sin(0.5*d2r*(270.-dp_matrix))
     ct1 = np.cos(0.5*d2r*(270.-dp_matrix))
     a = np.maximum(np.cos(0.5*pidirs)*ct1+np.sin(0.5*pidirs)*st1,0.0)
@@ -23,8 +23,8 @@ def arrange_inputs(*args):
     for arg in args:
         argm = np.array(arg)
         if (argm.shape==()) and shape0!=():#Broadcast scalar across matrix
-            argm=arg*np.ones(shape0)
-        elif argm.shape!=shape0:
+            argm = arg * np.ones(shape0)
+        elif argm.shape != shape0:
             raise 'Input shapes must be the same'
         argout.append(argm[...,np.newaxis,np.newaxis])
     return argout

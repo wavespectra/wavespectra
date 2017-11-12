@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 from helpers import *
 
-gamma=lambda x:np.sqrt(2.*np.pi/x)*((x/np.exp(1.))*np.sqrt(x*np.sinh(1./x)))**x
+gamma = lambda x:np.sqrt(2.*np.pi/x)*((x/np.exp(1.))*np.sqrt(x*np.sinh(1./x)))**x
 
 #OchiHubble construct function
 def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,360,10),coordinates=[]):
@@ -20,7 +20,7 @@ def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,3
     dspr_m = []
     for i,h in enumerate(hs):
         #arrange all input parameters onto consistent matrices
-        hs_tmp,tp_tmp,l_tmp,dp_tmp,dspr_tmp=arrange_inputs(h,tp[i],L[i],dp[i],dspr[i])
+        hs_tmp,tp_tmp,l_tmp,dp_tmp,dspr_tmp = arrange_inputs(h,tp[i],L[i],dp[i],dspr[i])
         hs_m.append(hs_tmp)
         tp_m.append(tp_tmp)
         l_m.append(l_tmp)
@@ -28,7 +28,7 @@ def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,3
         dspr_m.append(dspr_tmp)
     hs_m0 = hs_m[0]
     for hs_m1 in hs_m:
-        if hs_m1.shape!=hs_m0.shape:
+        if hs_m1.shape != hs_m0.shape:
             raise 'Shapes of parameter arguments must match'
     #Create spectra matrix
     spec = np.zeros(hs_m0.shape[:-2]+(len(freqs),len(dirs),))
