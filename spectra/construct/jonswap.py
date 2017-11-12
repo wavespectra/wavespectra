@@ -13,7 +13,7 @@ def jonswap(tp,dp,alpha,gamma=3.3,dspr=20,freqs=np.arange(0.04,1.0,0.02),dirs=np
     fp = 1.0/np.array(tp_m)
     sig = np.where(f<=fp,0.07,0.09)
     r = np.exp(-(f-fp)**2./(2*sig**2*fp**2))
-    S = 0.0617*np.array(alpha_m)*f**(-5)*np.exp(-1.25*(f/fp)**(-4))*gamma_m**r
+    S = 0.0617*alpha_m*f**(-5)*np.exp(-1.25*(f/fp)**(-4))*gamma_m**r
 
     #Apply spreading
     G1 = spread(dp_m,dspr_m,dirs)
