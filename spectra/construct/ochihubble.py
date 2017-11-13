@@ -3,7 +3,7 @@ from helpers import *
 
 gamma = lambda x:np.sqrt(2.*np.pi/x)*((x/np.exp(1.))*np.sqrt(x*np.sinh(1./x)))**x
 #OchiHubble construct function
-def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,360,10),coordinates=[("part",[0,1])]):
+def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,360,10),coordinates=[("part",[0,1])],sumpart=True):
     check_coordinates(hs,coordinates)
     #Arrange inputs
     hs_m,tp_m,l_m,dp_m,dspr_m = arrange_inputs(hs,tp,L,dp,dspr)
@@ -21,9 +21,10 @@ def ochihubble(hs,tp,L,dp,dspr,freqs=np.arange(0.02,1.0,0.02),dirs=np.arange(0,3
     spec = S*G1
 
     # sum partitions
-    idimpart = [i for i, t in enumerate(coordinates) if t[0]=='part'] 
-    if idimpart: 
-        spec = np.sum(spec,axis=idimpart[0]) 
-        coordinates.pop(idimpart[0])
+    if sumpart:
+        idimpart = [i for i, t in enumerate(coordinates) if t[0]=='part'] 
+        if idimpart: 
+            spec = np.sum(spec,axis=idimpart[0]) 
+            coordinates.pop(idimpart[0])
        
     return make_dataset(spec,freqs,dirs,coordinates)
