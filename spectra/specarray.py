@@ -240,6 +240,10 @@ class SpecArray(object):
         hs = 4 * np.sqrt(E)
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
+    
+    def change_hs(self, hsnew): # prototype
+        k = (hsnew/self.hs()) ** 2
+        self._obj = k * self._obj      
 
     def tp(self, smooth=True, mask=np.nan, standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum'):
         """
