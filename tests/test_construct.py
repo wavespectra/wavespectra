@@ -40,7 +40,7 @@ class TestJonswap(unittest.TestCase):
 
     def test_jonswap_scalar(self):
         dset = jonswap(tp=10,dp=90,alpha=0.01)
-        if plo t:
+        if plot:
             plt.pcolormesh(dset['freq'][:],dset['dir'][:],dset['efth'][:,:].T)
             plt.show()
         assert_array_almost_equal(integrate_2d_hs(dset['freq'][:],dset['dir'][:],dset['efth'][:,:]),self.hs(10,0.01),decimal=3)
