@@ -80,8 +80,8 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear
         - Choose indir=None if spectrum is 1D
     """
  
-    outfreq = infreq if outfreq is None or outfreq is False
-    outdir = indir if outdir is None or outdir is False
+    outfreq = infreq if outfreq is None or outfreq is False else outfreq
+    outdir = indir if outdir is None or outdir is False else outdir
     
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
