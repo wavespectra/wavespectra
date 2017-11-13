@@ -3,7 +3,7 @@ from helpers import *
 
 
 #Constructs JONSWAP spectra from peak period and peak direction
-def jonswap(tp,dp,alpha,gamma=3.3,dspr=20,freqs=np.arange(0.04,1.0,0.02),dirs=np.arange(0,360,10),coordinates=[]):
+def jonswap(tp,dp,alpha,gamma=3.3,dspr=20,freqs=np.arange(0.04,1.0,0.02),dirs=np.arange(0,360,10),coordinates=[],sumpart=True):
     check_coordinates(tp,coordinates)
     #Arrange inputs
     tp_m,dp_m,alpha_m,gamma_m,dspr_m = arrange_inputs(tp,dp,alpha,gamma,dspr)
@@ -20,9 +20,11 @@ def jonswap(tp,dp,alpha,gamma=3.3,dspr=20,freqs=np.arange(0.04,1.0,0.02),dirs=np
     spec = S*G1
     
     # sum partitions
-    idimpart = [i for i, t in enumerate(coordinates) if t[0]=='part'] 
-    if idimpart: 
-        spec = np.sum(spec,axis=idimpart[0]) 
-        coordinates.pop(idimpart[0])
+    
+    if sumpart:
+        idimpart = [i for i, t in enumerate(coordinates) if t[0]=='part'] 
+        if idimpart: 
+            spec = np.sum(spec,axis=idimpart[0]) 
+            coordinates.pop(idimpart[0])
 
     return make_dataset(spec,freqs,dirs,coordinates)
