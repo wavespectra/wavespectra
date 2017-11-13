@@ -18,5 +18,11 @@ def jonswap(tp,dp,alpha,gamma=3.3,dspr=20,freqs=np.arange(0.04,1.0,0.02),dirs=np
     #Apply spreading
     G1 = spread(dp_m,dspr_m,dirs)
     spec = S*G1
+    
+    # sum partitions
+    idimpart = [i for i, t in enumerate(coordinates) if t[0]=='part'] 
+    if idimpart: 
+        spec = np.sum(spec,axis=idimpart[0]) 
+        coordinates.pop(idimpart[0])
 
     return make_dataset(spec,freqs,dirs,coordinates)
