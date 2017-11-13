@@ -33,19 +33,16 @@ def spddir_to_uv(spd, direc, coming_from=False):
     converts (spd, dir) to (u, v)
     Input:
         spd :: array with magnitudes to convert
-        dired :: array with directions to convert (degree)
+        direc :: array with directions to convert (degree)
         coming_from :: set True if input directions are coming-from convention, False if in going-to
     Output:
         u :: array of same shape as spd and direc with eastward wind component
         v :: array of same shape as spd and direc with northward wind component
     """
     ang_rot = 180 if coming_from else 0
-    direc = np.deg2rad(direc % 360)
-    ang_rot = np.deg2rad(ang_rot)
-    u = spd*np.sin(direc)
-    v = spd*np.cos(direc)
-    u = u*np.cos(ang_rot) - v*np.sin(ang_rot)
-    v = u*np.sin(ang_rot) + v*np.cos(ang_rot)
+    direcR = np.deg2rad(direc + ang_rot)     
+    u = spd*np.sin(direcR)
+    v = spd*np.cos(direcR)
     return u, v
 
 def uv_to_spddir(u, v, coming_from=False):
@@ -61,8 +58,7 @@ def uv_to_spddir(u, v, coming_from=False):
     ang_rot = 180 if coming_from else 0
     vetor = u + v*1j
     mag = np.abs(vetor)
-    direc = np.angle(vetor)
-    direc = direc * 180/np.pi
+    direc = np.angle(vetor, deg=True)
     direc = direc + ang_rot
     direc = np.mod(90-direc, 360)
     return mag, direc
@@ -83,8 +79,10 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear
         - If either outfreq or outdir is None or False this coordinate is not interpolated
         - Choose indir=None if spectrum is 1D
     """
-    outfreq = outfreq if outfreq is not None and outfreq is not False else infreq
-    outdir = outdir if outdir is not None and outdir is not False else indir
+ 
+    outfreq = infreq if outfreq is None or outfreq is False else outfreq
+    outdir = indir if outdir is None or outdir is False else outdir
+    
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
     elif np.array_equal(indir, outdir):
