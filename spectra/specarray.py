@@ -16,6 +16,9 @@ import xarray as xr
 import types
 import copy
 from itertools import product
+from sympy import Symbol
+from sympy.utilities.lambdify import lambdify
+from sympy.parsing.sympy_parser import parse_expr
 
 from misc import GAMMA, D2R, R2D
 
@@ -240,6 +243,23 @@ class SpecArray(object):
         hs = 4 * np.sqrt(E)
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
+    
+    def change_hs(self, hsnew): # prototype
+        k = (hsnew/self.hs()) ** 2
+        self._obj = k * self._obj
+    
+    def scale_hs(self, expr, inplace=True):
+        """
+        Correct spectra using equation based on hs
+        - expr :: str - expression, e.g. '0.13*hs + 0.02'
+        - inplace :: bool - use True to apply transformation in place, False otherwise
+        """
+        func = lambdify(Symbol('hs'), parse_expr(expr.lower()))
+        k = (func(self.hs()) / self.hs())**2
+        if inplace:
+            self._obj *= k
+        else:
+            return self._obj * k
 
     def tp(self, smooth=True, mask=np.nan, standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum'):
         """
@@ -616,8 +636,21 @@ def hs(spec, freqs, dirs, tail=True):
     return 4. * np.sqrt(Etot)
 
 if __name__ == '__main__':
-    from spectra.readspec import read_hotswan
-    hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
+    import matplotlib.pyplot as plt
+    from spectra.readspec import read_swan
+
+    ds1 = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn')
+    ds2 = ds1.copy(deep=True)
+    ds2.spec.scale_hs('2*hs', inplace=False)
+    hs1 = ds1.spec.hs().values.ravel()
+    hs2 = ds2.spec.hs().values.ravel()
+    fig = plt.figure()
+    plt.plot(hs1, color='k')
+    plt.plot(hs2, color='b')
+    plt.show()
+
+    # from spectra.readspec import read_hotswan
+    # hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
     # import datetime
     # import matplotlib.pyplot as plt
     # from os.path import expanduser, join
