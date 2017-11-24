@@ -11,16 +11,16 @@ sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 from spectra.specdataset import SpecDataset
 from spectra import read_ww3, read_swan, read_ww3_msl, read_netcdf
 
-D2R=np.pi/180.
+D2R = np.pi/180.
 
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                     datefmt='[%Y-%m-%d %H:%M:%S]',
                     level=10)
 
-WW3_TEST_FILES=['snative20141201T00Z_spec.nc']
-WW3_MSL_TEST_FILES=['s20170328_12z.nc']
-SWAN_TEST_FILES=['manus.spec','antf0.20170207_06z.bnd.swn'] #Not yet quite right for hot files,'antf0.20170208_06z.hot-001',]
-TMP_DIR='/tmp'
+WW3_TEST_FILES = ['snative20141201T00Z_spec.nc']
+WW3_MSL_TEST_FILES = ['s20170328_12z.nc']
+SWAN_TEST_FILES = ['manus.spec','antf0.20170207_06z.bnd.swn'] #Not yet quite right for hot files,'antf0.20170208_06z.hot-001',]
+TMP_DIR = '/tmp'
 
 
 def check_equal(one,other):
@@ -38,12 +38,12 @@ class TestSwanIO(unittest.TestCase):
     
     def _test_swan(self,testfile):
         print ("Reading %s") %testfile
-        self.s=read_swan(testfile)
-        fileout=os.path.join(TMP_DIR,'test.spec')
+        self.s = read_swan(testfile)
+        fileout = os.path.join(TMP_DIR,'test.spec')
         print ("Writing %s") %fileout
         self.s.spec.to_swan(fileout)
         print ("Verifying %s") %fileout
-        tmpspec=read_swan(fileout)
+        tmpspec = read_swan(fileout)
         check_equal(self.s,tmpspec)
         
 class TestNCIO(unittest.TestCase):
@@ -53,16 +53,16 @@ class TestNCIO(unittest.TestCase):
     def test_swan_files(self):
         for swanfile in SWAN_TEST_FILES:
             print ("Reading %s") %swanfile
-            self.s=read_swan(swanfile)
+            self.s = read_swan(swanfile)
             self._test_netcdf(swanfile)
     
     def _test_netcdf(self,testfile):
-        fileout=os.path.join(TMP_DIR,os.path.basename(testfile)+'.nc')
+        fileout = os.path.join(TMP_DIR,os.path.basename(testfile)+'.nc')
         print ("Writing %s") %fileout
         self.s.spec.to_netcdf(fileout,'w')
         self.s.close()
         print ("Verifying %s") %fileout
-        tmpspec=read_netcdf(fileout)
+        tmpspec = read_netcdf(fileout)
         check_equal(self.s,tmpspec)
         
 class TestJSONIO(unittest.TestCase):
@@ -72,15 +72,15 @@ class TestJSONIO(unittest.TestCase):
     def test_swan(self):
         for testfile in SWAN_TEST_FILES:
             print ("Reading %s") %testfile
-            self.s=read_swan(testfile)
-            fileout=os.path.join(TMP_DIR,os.path.basename(testfile)+'.json')
+            self.s = read_swan(testfile)
+            fileout = os.path.join(TMP_DIR,os.path.basename(testfile)+'.json')
             print ("Writing %s") %fileout
             self.s.spec.to_json(fileout)
             
     def test_ww3(self):
         for testfile in WW3_TEST_FILES:
             print ("Reading %s") %testfile
-            self.s=read_ww3(testfile)
+            self.s = read_ww3(testfile)
             fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.json'))
             print ("Writing %s") %fileout
             self.s.spec.to_json(fileout)
@@ -88,8 +88,8 @@ class TestJSONIO(unittest.TestCase):
     def test_ww3_msl(self):
         for testfile in WW3_MSL_TEST_FILES:
             print ("Reading %s") %testfile
-            self.s=read_ww3_msl(testfile)
-            fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.json'))
+            self.s = read_ww3_msl(testfile)
+            fileout = os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.json'))
             print ("Writing %s") %fileout
             self.s.spec.to_json(fileout)
             
@@ -100,24 +100,24 @@ class TestOctopus(unittest.TestCase):
     def test_swan(self):
         for testfile in SWAN_TEST_FILES[0:1]:
             print ("Reading %s") %testfile
-            self.s=read_swan(testfile)
-            fileout=os.path.join(TMP_DIR,os.path.basename(testfile)+'.oct')
+            self.s = read_swan(testfile)
+            fileout = os.path.join(TMP_DIR,os.path.basename(testfile)+'.oct')
             print ("Writing %s") %fileout
             self.s.spec.to_octopus(fileout)
             
     def test_ww3(self):
         for testfile in WW3_TEST_FILES:
             print ("Reading %s") %testfile
-            self.s=read_ww3(testfile)
-            fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
+            self.s = read_ww3(testfile)
+            fileout = os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
             print ("Writing %s") %fileout
             SpecDataset(self.s.isel(site=0)).to_octopus(fileout)
             
     def test_ww3_msl(self):
         for testfile in WW3_MSL_TEST_FILES:
             print ("Reading %s") %testfile
-            self.s=read_ww3_msl(testfile)
-            fileout=os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
+            self.s = read_ww3_msl(testfile)
+            fileout = os.path.join(TMP_DIR,os.path.basename(testfile).replace('.nc','.oct'))
             print ("Writing %s") %fileout
             SpecDataset(self.s.isel(site=0)).to_octopus(fileout)
     
