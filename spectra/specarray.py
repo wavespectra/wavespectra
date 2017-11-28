@@ -244,14 +244,10 @@ class SpecArray(object):
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
     
-    def change_hs(self, hsnew): # prototype
-        k = (hsnew/self.hs()) ** 2
-        self._obj = k * self._obj
-    
-    def scale_hs(self, expr, inplace=True):
+    def scale_by_hs(self, expr, inplace=True):
         """
         Correct spectra using equation based on hs
-        - expr :: str - expression, e.g. '0.13*hs + 0.02'
+        - expr :: str - expression to apply, e.g. '0.13*hs + 0.02'
         - inplace :: bool - use True to apply transformation in place, False otherwise
         """
         func = lambdify(Symbol('hs'), parse_expr(expr.lower()))
