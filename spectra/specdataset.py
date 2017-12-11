@@ -82,13 +82,14 @@ class SpecDataset(object):
 
         return dset
 
-    def to_swan(self, filename, append=False, id='Created by pyspectra'):
+    def to_swan(self, filename, append=False, id='Created by pyspectra', unique_times=False):
         """
         Write spectra in SWAN ASCII format
         Input:
             - filename :: str, name for output SWAN ASCII file
             - append :: if True append to existing filename
             - id :: str, used for header in output file
+            - unique_times :: if True, only last time is taken from duplicate indices
         Remark:
             - Only datasets with lat/lon coordinates are currently supported
             - Only 2D spectra E(f,d) are currently supported
@@ -111,10 +112,19 @@ class SpecDataset(object):
         # Dump each timestep
         if is_time:
             for t in darray.time:
-                sfile.writeSpectra(darray.sel(time=t).transpose('site','freq','dir').values,
-                                   time=to_datetime(t.values))
+                darrout = darray.sel(time=t)
+                if darrout.time.size == 1:
+                    sfile.writeSpectra(darrout.transpose('site','freq','dir').values,
+                                       time=to_datetime(t.values))
+                elif unique_times:
+                    sfile.writeSpectra(darrout.isel(time=-1).transpose('site','freq','dir').values,
+                                       time=to_datetime(t.values))
+                else:
+                    for it,tt in enumerate(darrout.time):
+                            sfile.writeSpectra(darrout.isel(time=it).transpose('site','freq','dir').values,
+                                               time=to_datetime(t.values))
         else:
-            sfile.writeSpectra(darray.sel(time=t).transpose('site','freq','dir').values)
+            sfile.writeSpectra(darray.transpose('site','freq','dir').values)
         sfile.close()
     
 
