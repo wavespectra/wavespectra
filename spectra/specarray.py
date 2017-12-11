@@ -244,18 +244,31 @@ class SpecArray(object):
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
     
-    def scale_by_hs(self, expr, inplace=True):
+    def scale_by_hs(self, expr, inplace=True, hs_min=-np.inf, hs_max=np.inf,
+                    tp_min=-np.inf, tp_max=np.inf, dpm_min=-np.inf, dpm_max=np.inf):
         """
         Correct spectra using equation based on hs
         - expr :: str - expression to apply, e.g. '0.13*hs + 0.02'
         - inplace :: bool - use True to apply transformation in place, False otherwise
+        - hs_min, hs_max :: float or inf specifying Hs range over which expr is applied
+        - tp_min, tp_max :: float or inf specifying Tp range over which expr is applied
+        - dpm_min, dpm_max :: float or inf specifying Dpm range over which expr is applied
         """
         func = lambdify(Symbol('hs'), parse_expr(expr.lower()))
-        k = (func(self.hs()) / self.hs())**2
+        hs = self.hs()
+        k = (func(hs) / hs)**2
+        scaled = k * self._obj
+        if any([abs(arg) != np.inf for arg in [hs_min, hs_max, tp_min, tp_max, dpm_min, dpm_max]]):
+            tp = self.tp()
+            dpm = self.dpm()
+            scaled = scaled.where(( (hs>=hs_min) & (hs<=hs_max) &
+                                    (tp>=tp_min) & (tp<=tp_max) & 
+                                    (dpm>=dpm_min) & (dpm<=dpm_max)
+                                   )).combine_first(self._obj)
         if inplace:
-            self._obj *= k
+            self._obj = scaled
         else:
-            return self._obj * k
+            return scaled
 
     def tp(self, smooth=True, mask=np.nan, standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum'):
         """
