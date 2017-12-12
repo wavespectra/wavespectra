@@ -21,6 +21,7 @@ class SwanSpecFile(object):
                  id='Swan Spectrum', dirorder=False, append=False, tabfile=None):
         """
         Read spectra in SWAN ASCII format
+        TODO: Exception value is parsed but is not applied when reading spectra. Make sure this is ok
         """
         self.times = False
         self.filename = filename
@@ -74,7 +75,7 @@ class SwanSpecFile(object):
 
                 self._readhdr('QUANT',True)
                 self.fid.readline()
-                self.fid.readline()
+                self.excval = int(float(self.fid.readline().split()[0]))
 
         except Error as e:
             raise 'File error with %s [%s]' % (filename, e)
