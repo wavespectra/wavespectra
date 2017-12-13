@@ -266,7 +266,7 @@ class SpecArray(object):
                                     (dpm>=dpm_min) & (dpm<=dpm_max)
                                    )).combine_first(self._obj)
         if inplace:
-            self._obj = scaled
+            self._obj.values = scaled.values
         else:
             return scaled
 
@@ -650,7 +650,7 @@ if __name__ == '__main__':
 
     ds1 = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn')
     ds2 = ds1.copy(deep=True)
-    ds2.spec.scale_hs('2*hs', inplace=False)
+    ds2.spec.scale_by_hs('2*hs', inplace=True)
     hs1 = ds1.spec.hs().values.ravel()
     hs2 = ds2.spec.hs().values.ravel()
     fig = plt.figure()
