@@ -25,7 +25,7 @@ def arrange_inputs(*args):
         if (argm.shape==()) and shape0!=():#Broadcast scalar across matrix
             argm = arg * np.ones(shape0)
         elif argm.shape != shape0:
-            raise 'Input shapes must be the same'
+            raise Exception('Input shapes must be the same')
         argout.append(argm[...,np.newaxis,np.newaxis])
     return argout
 
@@ -46,7 +46,7 @@ def make_dataset(spec,freqs,dirs,coordinates=[]):
 def check_coordinates(param,coordinates):
     pshape = np.array(param).shape
     if len(pshape) != len(coordinates):
-        raise 'Incorrect number of coordinates for parameter'
+        raise Exception('Incorrect number of coordinates for parameter')
     for idim,dim in enumerate(pshape):
         if dim != len(coordinates[idim][1]):
-            raise 'Dimension of coordinate %s at position %d does not match parameter' %(coordinates[idim][0],dim)
+            raise Exception('Dimension of coordinate %s at position %d does not match parameter' %(coordinates[idim][0],dim))

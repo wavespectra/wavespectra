@@ -6,3 +6,4 @@ pandas
 tqdm
 scipy
 dbfread
+sympy

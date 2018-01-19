@@ -44,6 +44,6 @@ if __name__ == '__main__':
           test_require=test_requires,
           author_email='r.guedes@metocean.co.nz',
           url='http://github.com/metocean/pyspectra',
-          packages=['spectra'],
+          packages=['spectra','spectra.construct'],
           **k
 )
