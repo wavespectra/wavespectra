@@ -254,7 +254,7 @@ class SpecArray(object):
         - tp_min, tp_max :: float or inf specifying Tp range over which expr is applied
         - dpm_min, dpm_max :: float or inf specifying Dpm range over which expr is applied
         """
-        func = lambdify(Symbol('hs'), parse_expr(expr.lower()))
+        func = lambdify(Symbol('hs'), parse_expr(expr.lower()), modules=['numpy'])
         hs = self.hs()
         k = (func(hs) / hs)**2
         scaled = k * self._obj
