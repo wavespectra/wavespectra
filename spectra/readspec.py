@@ -21,7 +21,6 @@ import numpy as np
 from dateutil import parser
 from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
-from tqdm import tqdm
 from scipy.io import loadmat
 from dbfread import DBF
 
@@ -131,7 +130,7 @@ def read_hotswan(fileglob, dirorder=True):
     assert hotfiles, 'No SWAN file identified with fileglob %s' % (fileglob)
 
     dsets = [read_swan(hotfiles[0])]
-    for hotfile in tqdm(hotfiles[1:]):
+    for hotfile in hotfiles[1:]:
         dset = read_swan(hotfile)
         # Ensure we keep non-zeros in overlapping rows or columns
         overlap = {'lon': set(dsets[-1].lon.values).intersection(dset.lon.values),
@@ -284,7 +283,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     wspds     = SortedDict()
     wdirs     = SortedDict()
 
-    for filename in tqdm(swans):
+    for filename in swans:
         swanfile = SwanSpecFile(filename, dirorder=dirorder)
         times = swanfile.times
         lons = list(swanfile.x)
@@ -441,7 +440,7 @@ def read_swanow(fileglob):
     """
     swans = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
     ds = xr.Dataset()
-    for swan in tqdm(swans):
+    for swan in swans:
         ds = read_swan(swan).combine_first(ds)
     return ds
 

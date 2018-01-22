@@ -5,7 +5,6 @@ import re
 import sys
 import xarray as xr
 import numpy as np
-from tqdm import tqdm
 from cfjson.xrdataset import CFJSONinterface
 from specarray import SpecArray
 from attributes import *
