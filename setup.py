@@ -6,16 +6,12 @@ from numpy.distutils.misc_util import Configuration
 import spectra
 
 install_requires = [
-    'xarray>=0.9.6',
-    'pandas',
+    'xarray>=0.10.0',
     'dask',
     'toolz',
-    'numpy>=1.11,<=1.12',
     'cloudpickle',
     'sortedcontainers',
-    'tqdm',
     'scipy',
-    'dbfread',
     'sympy',
     ]
 
