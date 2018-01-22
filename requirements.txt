@@ -1,8 +1,5 @@
 git+https://github.com/metocean/cf-json.git
 sortedcontainers
-numpy>=1.11,>=1.12
 xarray
-pandas
 scipy
-dbfread
 sympy
