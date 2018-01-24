@@ -90,6 +90,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
     dset[SPECNAME].attrs.update({'_units': _units, '_variable_name': 'efth'})
     if 'dir' not in dset or len(dset.dir)==1:
         dset[SPECNAME].attrs.update({'units': 'm^{2}.s'})
+    dset['dir'] = (dset['dir']+180) % 360 # directions in native ww3 spectra netcdf files are in nautical convention
     return dset
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
