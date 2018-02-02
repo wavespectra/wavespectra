@@ -129,6 +129,21 @@ class SpecArray(object):
         # else:
         #     return None
 
+    def _peak_new(self, arr):
+        """
+        Returns the indices ipeak of largest peaks along freq dim in a ND-array
+        arr representing a dataset of 1D spectra (integrated over directions)
+        A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+        """
+        ispeak = np.logical_and(
+        xr.concat((arr.isel(freq=0), arr), dim='freq').diff('freq', 1) > 0, 
+        xr.concat((arr, arr.isel(freq=-1)), dim='freq').diff('freq', 1) < 0)
+
+        ipeak = arr.where(ispeak).fillna(-1).argmax(dim='freq') # zero when no peaks (all values are -1 and the first index is picked)
+        
+        return ipeak #ipeak==0 means no valid value, it has to be taken into account in other parts of the code
+
+
     def _product(self, dict_of_ids):
         """
         Dot product of a dictionary of ids used to construct arbitrary slicing dictionaries
