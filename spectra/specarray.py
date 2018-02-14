@@ -259,6 +259,21 @@ class SpecArray(object):
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
     
+    def hmax(self):
+        """
+        The MOST PROBABLE value of the maximum individual wave height for each
+        sea state. Note that maximum wave height can be higher (but not by much
+        because the probability density function is rather narrow) 
+        """
+        if 'time' in self._obj.coords and self._obj.time.size > 1:
+            dt = np.diff(self._obj.time).astype('timedelta64[s]').mean()
+            N = (dt.astype(float)/self.tm02()).round() # N is the number of waves in a sea state
+            k = np.sqrt(0.5*np.log(N)) 
+        else:
+            k = 1.86 # assumes N = 3*3600 / 10.8
+        
+        return k * self.hs() 
+        
     def scale_by_hs(self, expr, inplace=True, hs_min=-np.inf, hs_max=np.inf,
                     tp_min=-np.inf, tp_max=np.inf, dpm_min=-np.inf, dpm_max=np.inf):
         """
