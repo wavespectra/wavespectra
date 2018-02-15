@@ -263,7 +263,8 @@ class SpecArray(object):
         """
         The MOST PROBABLE value of the maximum individual wave height for each
         sea state. Note that maximum wave height can be higher (but not by much
-        because the probability density function is rather narrow) 
+        because the probability density function is rather narrow).
+        Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82)
         """
         if 'time' in self._obj.coords and self._obj.time.size > 1:
             dt = np.diff(self._obj.time).astype('timedelta64[s]').mean()
