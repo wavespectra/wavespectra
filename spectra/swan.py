@@ -13,6 +13,8 @@ import gzip
 from attributes import *
 from misc import to_nautical
 
+#TODO: sort out import *
+
 class Error(Exception):
     pass
 

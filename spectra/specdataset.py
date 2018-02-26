@@ -11,6 +11,8 @@ from attributes import *
 from swan import SwanSpecFile
 from misc import to_datetime
 
+#TODO: sort out import *
+
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
     """
