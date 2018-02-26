@@ -1,5 +1,0 @@
-git+https://github.com/metocean/cf-json.git
-sortedcontainers
-xarray
-scipy
-sympy
