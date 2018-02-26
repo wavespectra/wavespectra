@@ -7,7 +7,7 @@ from attributes import *
 
 #TODO: sort out import *
 
-__version__ = '1.0'
+__version__ = '0.1.0'
 __author__ = 'MetOcean Solutions Ltd'
 __contact__ = 'r.guedes@metocean.co.nz'
 __url__ = 'http://github.com/metocean/pyspectra'
