@@ -81,7 +81,7 @@ setup(
     name=NAME,
     version=spectra.__version__,
     description=spectra.__description__,
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     keywords=spectra.__keywords__,
     author=spectra.__author__,
     author_email=spectra.__contact__,
