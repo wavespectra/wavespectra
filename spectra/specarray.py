@@ -17,6 +17,7 @@ import types
 import copy
 from itertools import product
 
+import spectra.attributes as attrs
 from spectra.misc import GAMMA, D2R, R2D
 
 try:
@@ -41,16 +42,16 @@ class SpecArray(object):
         #     xarray_obj = xarray_obj.rename(dim_map)
         
         # # Ensure frequencies and directions are sorted
-        # for dim in ['freq', 'dir']:
+        # for dim in [attrs.FREQNAME, attrs.DIRNAME]:
         #     if dim in xarray_obj.dims and not self._strictly_increasing(xarray_obj[dim].values):
         #         xarray_obj = self.sort(xarray_obj, dims=[dim])
 
         self._obj = xarray_obj
-        self._non_spec_dims = set(self._obj.dims).difference(('freq', 'dir'))
+        self._non_spec_dims = set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
 
         # Create attributes for accessor 
         self.freq = xarray_obj.freq
-        self.dir = xarray_obj.dir if 'dir' in xarray_obj.dims else None
+        self.dir = xarray_obj.dir if attrs.DIRNAME in xarray_obj.dims else None
 
         self.df = abs(self.freq[1:].values - self.freq[:-1].values) if len(self.freq) > 1 else np.array((1.0,))
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
@@ -59,12 +60,12 @@ class SpecArray(object):
         if len(self.freq) > 1:
             self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *\
                                            (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
-                                      coords={'freq': self.freq},
-                                      dims=('freq'))
+                                      coords={attrs.FREQNAME: self.freq},
+                                      dims=(attrs.FREQNAME))
         else:
             self.dfarr  = xr.DataArray(data=np.array((1.0,)),
-                                       coords={'freq': self.freq},
-                                       dims=('freq'))
+                                       coords={attrs.FREQNAME: self.freq},
+                                       dims=(attrs.FREQNAME))
 
     def __repr__(self):
         return re.sub(r'<([^\s]+)', '<%s'%(self.__class__.__name__), str(self._obj))
@@ -90,7 +91,7 @@ class SpecArray(object):
         magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
         return arr[magic_index]
 
-    def _twod(self, darray, dim='dir'):
+    def _twod(self, darray, dim=attrs.DIRNAME):
         """
         Add dir and|or freq dimension if 1D spectra to ensure moment calculations won't break
         """
@@ -123,7 +124,7 @@ class SpecArray(object):
         A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
         """
         # Temporary - only max values but ensures there is no peak at last value which will break sig2 indexing in tp
-        ipeak = arr.argmax(dim='freq')
+        ipeak = arr.argmax(dim=attrs.FREQNAME)
         return ipeak.where(ipeak < self.freq.size-1).fillna(0).astype(int)
 
         # ispeak = (np.diff(np.append(arr[0], arr))>0) &\
@@ -134,6 +135,20 @@ class SpecArray(object):
         #     return ipeak[-1]
         # else:
         #     return None
+
+    def _peak_new(self, arr):
+        """
+        Returns the indices ipeak of largest peaks along freq dim in a ND-array
+        arr representing a dataset of 1D spectra (integrated over directions)
+        A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+        """
+        ispeak = np.logical_and(
+        xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) > 0, 
+        xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) < 0)
+
+        ipeak = arr.where(ispeak).fillna(-1).argmax(dim=attrs.FREQNAME) # zero when no peaks (all values are -1 and the first index is picked)
+        
+        return ipeak #ipeak==0 means no valid value, it has to be taken into account in other parts of the code
 
     def _product(self, dict_of_ids):
         """
@@ -196,7 +211,7 @@ class SpecArray(object):
         - skipna :: if True (xarray's default) sum of all-nan array returns zero preventing hs() to preserve mask 
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim='dir', skipna=skipna)
+            return self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
         else:
             return self._obj.copy(deep=True)
 
@@ -215,16 +230,16 @@ class SpecArray(object):
         other = self._obj.sel(freq=slice(fmin, fmax))
         
         # Slice directions
-        if 'dir' in other.dims and (dmin or dmax):
-            other = self.sort(other, dims=['dir']).sel(dir=slice(dmin, dmax))
+        if attrs.DIRNAME in other.dims and (dmin or dmax):
+            other = self.sort(other, dims=[attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
         # Interpolate at fmin
         if (other.freq.min() > fmin) and (self.freq.min() <= fmin):
-            other = xr.concat([self._interp_freq(fmin), other], dim='freq')
+            other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
         if (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim='freq') 
+            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME) 
 
         return other
 
@@ -243,13 +258,29 @@ class SpecArray(object):
         - standard_name :: CF standard name for defining DataArray attribute
         """
         Sf = self.oned(skipna=False)
-        E = (Sf * self.dfarr).sum(dim='freq')
+        E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
         if tail and Sf.freq[-1] > 0.333:
-            E += 0.25 * Sf[{'freq': -1}] * Sf.freq[-1].values
+            E += 0.25 * Sf[{attrs.FREQNAME: -1}] * Sf.freq[-1].values
         hs = 4 * np.sqrt(E)
         hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
         return hs.rename('hs')
     
+    def hmax(self):
+        """
+        The MOST PROBABLE value of the maximum individual wave height for each
+        sea state. Note that maximum wave height can be higher (but not by much
+        because the probability density function is rather narrow).
+        Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82)
+        """
+        if attrs.TIMENAME in self._obj.coords and self._obj.time.size > 1:
+            dt = np.diff(self._obj.time).astype('timedelta64[s]').mean()
+            N = (dt.astype(float)/self.tm02()).round() # N is the number of waves in a sea state
+            k = np.sqrt(0.5*np.log(N)) 
+        else:
+            k = 1.86 # assumes N = 3*3600 / 10.8
+        
+        return k * self.hs() 
+        
     def scale_by_hs(self, expr, inplace=True, hs_min=-np.inf, hs_max=np.inf,
                     tp_min=-np.inf, tp_max=np.inf, dpm_min=-np.inf, dpm_max=np.inf):
         """
@@ -260,7 +291,7 @@ class SpecArray(object):
         - tp_min, tp_max :: float or inf specifying Tp range over which expr is applied
         - dpm_min, dpm_max :: float or inf specifying Dpm range over which expr is applied
         """
-        func = lambdify(Symbol('hs'), parse_expr(expr.lower()))
+        func = lambdify(Symbol('hs'), parse_expr(expr.lower()), modules=['numpy'])
         hs = self.hs()
         k = (func(hs) / hs)**2
         scaled = k * self._obj
@@ -289,7 +320,7 @@ class SpecArray(object):
         Sf = self.oned()
         ipeak = self._peak(Sf)
         if smooth:
-            freq_axis = Sf.get_axis_num(dim='freq')
+            freq_axis = Sf.get_axis_num(dim=attrs.FREQNAME)
             if len(ipeak.dims) > 1:
                 sig1 = np.empty(ipeak.shape)
                 sig2 = np.empty(ipeak.shape)
@@ -327,7 +358,7 @@ class SpecArray(object):
         """
         fp = self.freq**mom
         mf = self.dfarr * fp * self._obj
-        return self._twod(mf.sum(dim='freq', skipna=False)).rename('mom{:d}'.format(mom))
+        return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename('mom{:d}'.format(mom))
 
     def momd(self, mom=0, theta=90.):
         """
@@ -335,8 +366,8 @@ class SpecArray(object):
         """
         cp = np.cos(np.radians(180 + theta - self.dir))**mom
         sp = np.sin(np.radians(180 + theta - self.dir))**mom
-        msin = (self.dd * self._obj * sp).sum(dim='dir', skipna=False)
-        mcos = (self.dd * self._obj * cp).sum(dim='dir', skipna=False)
+        msin = (self.dd * self._obj * sp).sum(dim=attrs.DIRNAME, skipna=False)
+        mcos = (self.dd * self._obj * cp).sum(dim=attrs.DIRNAME, skipna=False)
         return msin, mcos
 
     def tm01(self, standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment'):
@@ -345,7 +376,7 @@ class SpecArray(object):
         true average period from the 1st spectral moment
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        tm01 = self.momf(0).sum(dim='dir') / self.momf(1).sum(dim='dir')
+        tm01 = self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)
         tm01.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
         return tm01.rename('tm01')
 
@@ -355,7 +386,7 @@ class SpecArray(object):
         Average period of zero up-crossings (Zhang, 2011)
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        tm02 = np.sqrt(self.momf(0).sum(dim='dir')/self.momf(2).sum(dim='dir'))
+        tm02 = np.sqrt(self.momf(0).sum(dim=attrs.DIRNAME)/self.momf(2).sum(dim=attrs.DIRNAME))
         tm02.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
         return tm02.rename('tm02')
 
@@ -365,7 +396,7 @@ class SpecArray(object):
         - standard_name :: CF standard name for defining DataArray attribute
         """
         moms, momc = self.momd(1)
-        dm = np.arctan2(moms.sum(dim='freq', skipna=False), momc.sum(dim='freq', skipna=False))
+        dm = np.arctan2(moms.sum(dim=attrs.FREQNAME, skipna=False), momc.sum(dim=attrs.FREQNAME, skipna=False))
         dm = (270 - R2D*dm) % 360.
         dm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dm.rename('dm')
@@ -376,8 +407,8 @@ class SpecArray(object):
         of the frequency-integrated spectrum is maximum
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        ipeak = self._obj.sum(dim='freq').argmax(dim='dir')
-        template = self._obj.sum(dim='freq', skipna=False).sum(dim='dir', skipna=False)
+        ipeak = self._obj.sum(dim=attrs.FREQNAME).argmax(dim=attrs.DIRNAME)
+        template = self._obj.sum(dim=attrs.FREQNAME, skipna=False).sum(dim=attrs.DIRNAME, skipna=False)
         dp = self.dir.values[ipeak.values] * (0 * template + 1)
         dp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dp.rename('dp')
@@ -391,8 +422,8 @@ class SpecArray(object):
         """
         ipeak = self._peak(self.oned())
         moms, momc = self.momd(1)
-        moms_peak = self._collapse_array(moms.values, ipeak.values, axis=moms.get_axis_num(dim='freq'))
-        momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim='freq'))
+        moms_peak = self._collapse_array(moms.values, ipeak.values, axis=moms.get_axis_num(dim=attrs.FREQNAME))
+        momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim=attrs.FREQNAME))
         dpm = np.arctan2(moms_peak, momc_peak) * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
         dpm = (270 - R2D*dpm) % 360.
         dpm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
@@ -405,12 +436,12 @@ class SpecArray(object):
         """
         moms, momc = self.momd(1)
         # Manipulate dimensions so calculations work
-        moms = self._twod(moms, dim='dir')
-        momc = self._twod(momc, dim='dir')
-        mom0 = self._twod(self.momf(0), dim='freq').spec.oned(skipna=False)
+        moms = self._twod(moms, dim=attrs.DIRNAME)
+        momc = self._twod(momc, dim=attrs.DIRNAME)
+        mom0 = self._twod(self.momf(0), dim=attrs.FREQNAME).spec.oned(skipna=False)
 
         dspr = (2 * R2D**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
-        dspr = dspr.sum(dim='freq', skipna=False).sum(dim='dir', skipna=False)
+        dspr = dspr.sum(dim=attrs.FREQNAME, skipna=False).sum(dim=attrs.DIRNAME, skipna=False)
         dspr.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
         return dspr.rename('dspr')
 
@@ -420,7 +451,7 @@ class SpecArray(object):
         """
         cp = np.cos(D2R * (180 + theta - self.dir))
         sp = np.sin(D2R * (180 + theta - self.dir))
-        crsd = (self.dd * self._obj * cp * sp).sum(dim='dir')
+        crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
         crsd.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm2s'))))
         return crsd.rename('crsd')
 
@@ -430,7 +461,7 @@ class SpecArray(object):
         Represents the range of frequencies where the dominant energy exists
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        swe = (1. - self.momf(2).sum(dim='dir')**2 / (self.momf(0).sum(dim='dir')*self.momf(4).sum(dim='dir')))**0.5
+        swe = (1. - self.momf(2).sum(dim=attrs.DIRNAME)**2 / (self.momf(0).sum(dim=attrs.DIRNAME)*self.momf(4).sum(dim=attrs.DIRNAME)))**0.5
         swe.values[swe.values < 0.001] = 1.
         swe.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return swe.rename('swe')
@@ -442,7 +473,7 @@ class SpecArray(object):
         - mask :: value for missing data in output (for when Hs is smaller then 0.001 m)
         - standard_name :: CF standard name for defining DataArray attribute
         """
-        sw = (self.momf(0).sum(dim='dir') * self.momf(2).sum(dim='dir') / self.momf(1).sum(dim='dir')**2 - 1.0)**0.5
+        sw = (self.momf(0).sum(dim=attrs.DIRNAME) * self.momf(2).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)**2 - 1.0)**0.5
         sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
         return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
 
@@ -484,7 +515,7 @@ class SpecArray(object):
         """
 
         # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
-        assert 'freq' in self._obj.dims and 'dir' in self._obj.dims, ('partition requires E(freq,dir) but freq|dir '
+        assert attrs.FREQNAME in self._obj.dims and attrs.DIRNAME in self._obj.dims, ('partition requires E(freq,dir) but freq|dir '
             'dimensions not in SpecArray dimensions (%s)' % (self._obj.dims))
         for darr in (wsp_darr, wdir_darr, dep_darr):
             # Conditional below aims at allowing wsp, wdir, dep to be DataArrays within the SpecArray. not working yet

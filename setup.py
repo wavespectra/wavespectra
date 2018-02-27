@@ -6,10 +6,6 @@ from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
 import spectra
-#TODO: what license should we use
-#TODO: what needs to go in extra
-#TODO: convert readme to srt
-#TODO: can we name it spectra?
 
 NAME = 'spectra'
 
