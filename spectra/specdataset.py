@@ -5,13 +5,15 @@ import re
 import sys
 import xarray as xr
 import numpy as np
-from cfjson.xrdataset import CFJSONinterface
-from specarray import SpecArray
-from attributes import *
-from swan import SwanSpecFile
-from misc import to_datetime
 
-#TODO: sort out import *
+from cfjson.xrdataset import CFJSONinterface
+
+import spectra.attributes as attrs
+from spectra.specarray import SpecArray
+from spectra.swan import SwanSpecFile
+from spectra.misc import to_datetime
+
+# TODO: Ensure cf-json import won't break it here
 
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
@@ -36,7 +38,7 @@ class SpecDataset(object):
             f.write(strout)
 
     def to_netcdf(self, filename,
-                  specname='efth',
+                  specname=attrs.SPECNAME,
                   ncformat='NETCDF4_CLASSIC',
                   compress=True,
                   time_encoding={'units': 'days since 1900-01-01'}):
@@ -56,7 +58,8 @@ class SpecDataset(object):
             other.time.encoding.update(time_encoding)
         other.to_netcdf(filename, format=ncformat, encoding=encoding)
 
-    def _to_dump(self, supported_dims=['time','site','lat','lon','freq','dir']):
+    def _to_dump(self, supported_dims=[attrs.TIMENAME, attrs.SITENAME,
+            attrs.LATNAME, attrs.LONNAME, attrs.FREQNAME, attrs.DIRNAME]):
         """
         Ensure dimensions are suitable for dumping in some ascii formats
         Input:
@@ -98,8 +101,8 @@ class SpecDataset(object):
         """
         # If grid reshape into site, otherwise ensure there is site dim to iterate over
         dset = self._to_dump()
-        darray = dset['efth']
-        is_time = 'time' in darray.dims
+        darray = dset[attrs.SPECNAME]
+        is_time = attrs.TIMENAME in darray.dims
 
         # Instantiate swan object
         try:
@@ -115,20 +118,19 @@ class SpecDataset(object):
             for t in darray.time:
                 darrout = darray.sel(time=t)
                 if darrout.time.size == 1:
-                    sfile.writeSpectra(darrout.transpose('site','freq','dir').values,
+                    sfile.writeSpectra(darrout.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
                                        time=to_datetime(t.values))
                 elif unique_times:
-                    sfile.writeSpectra(darrout.isel(time=-1).transpose('site','freq','dir').values,
+                    sfile.writeSpectra(darrout.isel(time=-1).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
                                        time=to_datetime(t.values))
                 else:
                     for it,tt in enumerate(darrout.time):
-                            sfile.writeSpectra(darrout.isel(time=it).transpose('site','freq','dir').values,
+                            sfile.writeSpectra(darrout.isel(time=it).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
                                                time=to_datetime(t.values))
         else:
-            sfile.writeSpectra(darray.transpose('site','freq','dir').values)
+            sfile.writeSpectra(darray.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values)
         sfile.close()
     
-
     def to_ww3(self, filename):
         raise NotImplementedError('Cannot write to native WW3 format')
 
@@ -186,12 +188,12 @@ class SpecDataset(object):
                                 (dsite.efth.spec.dfarr * dsite.spec.momd(mom=0)[0]).rename('fSpec'),
                                 ]).sortby('dir').fillna(missing_val)
 
-                if WDIRNAME not in dsite:
-                    dsite[WDIRNAME] = 0 * dsite['hs'] + missing_val
-                if WSPDNAME not in dsite:
-                    dsite[WSPDNAME] = 0 * dsite['hs'] + missing_val
-                if DEPNAME not in dsite:
-                    dsite[DEPNAME] = 0 * dsite['hs'] + missing_val
+                if attrs.WDIRNAME not in dsite:
+                    dsite[attrs.WDIRNAME] = 0 * dsite['hs'] + missing_val
+                if attrs.WSPDNAME not in dsite:
+                    dsite[attrs.WSPDNAME] = 0 * dsite['hs'] + missing_val
+                if attrs.DEPNAME not in dsite:
+                    dsite[attrs.DEPNAME] = 0 * dsite['hs'] + missing_val
                 
                 # General header
                 f.write('Forecast valid for {:%d-%b-%Y %H:%M:%S}\n'.format(to_datetime(dsite.time[0])))
@@ -200,7 +202,7 @@ class SpecDataset(object):
                 f.write('nrecs,{:d}\n'.format(len(dsite.time)))
                 f.write('Latitude,{:0.6f}\n'.format(lat))
                 f.write('Longitude,{:0.6f}\n'.format(lon))
-                f.write('Depth,{:0.2f}\n\n'.format(float(dsite[DEPNAME].isel(time=0))))
+                f.write('Depth,{:0.2f}\n\n'.format(float(dsite[attrs.DEPNAME].isel(time=0))))
 
                 # Dump each timestep
                 for i, t in enumerate(dsite.time):
@@ -212,7 +214,7 @@ class SpecDataset(object):
 
                     # Header and parameters
                     f.write("{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
-                                to_datetime(t), lp, int(ds[WDIRNAME]), float(ds[WSPDNAME]),
+                                to_datetime(t), lp, int(ds[attrs.WDIRNAME]), float(ds[attrs.WSPDNAME]),
                                 0.25*float(ds['hs'])**2, float(ds['tm01']), float(ds['dm']),
                                 0.25*float(ds['hs_sea'])**2, float(ds['tm01_sea']), float(ds['dm_sea']),
                                 0.25*float(ds['hs_swell'])**2, float(ds['tm01_swell']), float(ds['dm_swell']),
