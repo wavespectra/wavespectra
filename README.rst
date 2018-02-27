@@ -10,7 +10,48 @@ Main contents:
 
 Install:
 --------
-Installation instructions
+Where to get it
+~~~~~~~~~~~~~~~
+The source code is currently hosted on GitHub at: https://github.com/metocean/pyspectra
+
+Binary installers for the latest released version are available at the `Python package index`_
+
+Install from pypi
+~~~~~~~~~~~~~~~~~
+.. code:: bash
+
+   # Default install, miss some dependencies and functionality
+   pip install -U --index-url https://test.pypi.org/simple/ spectra
+
+   # Complete install
+   pip install -U --index-url https://test.pypi.org/simple/ spectra[extra]
+
+Install from sources
+~~~~~~~~~~~~~~~~~~~~
+Install requirements. Navigate to the base root of pyspectra_ and execute:
+
+.. code:: bash
+
+   # Default install, miss some dependencies and functionality
+   pip install -r requirements/default.txt
+
+   # Also, for complete install
+   pip install -r requirements/extra.txt
+
+   # Also, for testing requirements
+   pip install -r requirements/test.txt
+
+Then install pyspectra:
+
+.. code:: bash
+
+   python setup.py install
+
+Alternatively, to install in `development mode`_:
+
+.. code:: bash
+
+   pip install -e .
 
 Code structure
 --------------
@@ -112,3 +153,6 @@ Define and plot spectra history from example SWAN_ spectra file:
 .. _readspec: https://github.com/metocean/pyspectra/blob/master/spectra/readspec.py
 .. _xarray accessors: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor
 .. _SWAN: http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html
+.. _Python package index: https://testpypi.python.org/pypi/spectra
+.. _pyspectra: https://github.com/metocean/pyspectra
+.. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
