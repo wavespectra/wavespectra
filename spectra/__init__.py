@@ -1,11 +1,6 @@
 """
-Making all reading functions from readspec.py available at module level
-Writing functions are defined in the specdataset module as methods of SpecDataset class
+Define some attributes for packaging
 """
-import sys
-from attributes import *
-
-#TODO: sort out import *
 
 __version__ = '0.1.0'
 __author__ = 'MetOcean Solutions Ltd'
