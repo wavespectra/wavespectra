@@ -89,7 +89,7 @@ SpecArray_ methods require DataArray_ to have the following attributes:
 
 SpecDataset_ methods require xarray's Dataset_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- spectra DataArray named as `efth` complying to the specifications above
+- spectra DataArray named as `efth`, complying with the above specifications
 
 Examples:
 ---------
