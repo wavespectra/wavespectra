@@ -13,7 +13,10 @@ from spectra.specarray import SpecArray
 from spectra.swan import SwanSpecFile
 from spectra.misc import to_datetime
 
-# TODO: Ensure cf-json import won't break it here
+try:
+    from cfjson.xrdataset import CFJSONinterface
+except ImportError:
+    print 'Warning: cannot import cf-json, install "metocean" dependencies for full functionality'
 
 @xr.register_dataset_accessor('spec')
 class SpecDataset(object):
