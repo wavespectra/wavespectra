@@ -1,12 +1,14 @@
-from ..attributes import *
 import numpy as np
 import xarray as xr
 from collections import OrderedDict
 
+import spectra.attributes as attrs
+
 d2r = np.pi/180
 
-#Generic spreading function such that \int{G1 d\theta}=1*
-def spread(dp_matrix,dspr_matrix,dirs):
+def spread(dp_matrix, dspr_matrix, dirs):
+    """Generic spreading function such that \int{G1 d\theta}=1*
+    """
     adirs = np.array(dirs).reshape((1,-1))
     pidirs = d2r * (270.-np.array(adirs))
     st1 = np.sin(0.5*d2r*(270.-dp_matrix))
@@ -16,37 +18,40 @@ def spread(dp_matrix,dspr_matrix,dirs):
     G1 /= np.expand_dims(G1.sum(axis=-1)*abs(dirs[1]-dirs[0]),axis=-1)
     return G1
 
-#Check all inputs are same shape and add frequency and direction dims
 def arrange_inputs(*args):
+    """Check all inputs are same shape and add frequency and direction dims
+    """
     argout = []
     shape0 = np.array(args[0]).shape
     for arg in args:
         argm = np.array(arg)
-        if (argm.shape==()) and shape0!=():#Broadcast scalar across matrix
+        if (argm.shape==()) and shape0!=(): # Broadcast scalar across matrix
             argm = arg * np.ones(shape0)
         elif argm.shape != shape0:
             raise Exception('Input shapes must be the same')
-        argout.append(argm[...,np.newaxis,np.newaxis])
+        argout.append(argm[..., np.newaxis, np.newaxis])
     return argout
 
-#Package spectral matrix to xarray
-def make_dataset(spec,freqs,dirs,coordinates=[]):
+def make_dataset(spec, freqs, dirs, coordinates=[]):
+    """Package spectral matrix to xarray
+    """
     coords = tuple(coordinates)+((FREQNAME, freqs), (DIRNAME, dirs),)
     dimensions = tuple([c[0] for c in coords])
     dset = xr.DataArray(
             data=spec,
             coords=coords,
             dims=dimensions,
-            name=SPECNAME,
+            name=attrs.SPECNAME,
             ).to_dataset()
-    set_spec_attributes(dset)
+    attrs.set_spec_attributes(dset)
     return dset
 
-#Check coordinates are consistent with parameter
-def check_coordinates(param,coordinates):
+def check_coordinates(param, coordinates):
+    """Check coordinates are consistent with parameter
+    """
     pshape = np.array(param).shape
     if len(pshape) != len(coordinates):
         raise Exception('Incorrect number of coordinates for parameter')
     for idim,dim in enumerate(pshape):
         if dim != len(coordinates[idim][1]):
-            raise Exception('Dimension of coordinate %s at position %d does not match parameter' %(coordinates[idim][0],dim))
+            raise Exception('Dimension of coordinate %s at position %d does not match parameter' % (coordinates[idim][0], dim))
