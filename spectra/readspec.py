@@ -60,7 +60,7 @@ def read_netcdf(filename_or_fileglob,
                  timename: attrs.TIMENAME}
     dset.rename({k:v for k,v in coord_map.items() if k in dset}, inplace=True)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': _variable_name})
-    if 'dir' not in dset or len(dset.dir)==1:
+    if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
     return dset
 
@@ -75,7 +75,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
     - dset :: SpecDataset instance
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    _units = dset.efth.attrs.get('units','')
+    _units = dset.efth.attrs.get('units', '')
     dset.rename({'frequency': attrs.FREQNAME, 'direction': attrs.DIRNAME,
         'station': attrs.SITENAME, 'efth': attrs.SPECNAME, 'longitude': attrs.LONNAME,
         'latitude': attrs.LATNAME, 'wnddir': attrs.WDIRNAME, 'wnd': attrs.WSPDNAME},
@@ -85,9 +85,10 @@ def read_ww3(filename_or_fileglob, chunks={}):
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
     dset[attrs.SPECNAME].values = np.radians(dset[attrs.SPECNAME].values)
     attrs.set_spec_attributes(dset)
-    dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': 'efth'})
-    if 'dir' not in dset or len(dset.dir)==1:
+    dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
+    if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
+    dset[attrs.DIRNAME] = (dset[attrs.DIRNAME]+180) % 360
     return dset
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
@@ -102,12 +103,12 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.specden.attrs.get('units','')
-    dset.rename({'freq': attrs.FREQNAME, 'dir': attrs.DIRNAME, 'wsp': attrs.WSPDNAME}, inplace=True)#, 'SITE': attrs.SITENAME})
+    dset.rename({'freq': attrs.FREQNAME, 'dir': attrs.DIRNAME, 'wsp': attrs.WSPDNAME}, inplace=True)
     dset[attrs.SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
-    dset = dset.drop(['specden','factor', 'df'])
+    dset = dset.drop(['specden', 'factor', 'df'])
     attrs.set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': 'specden'})
-    if 'dir' not in dset or len(dset.dir)==1:
+    if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
     return dset
 
@@ -132,8 +133,8 @@ def read_hotswan(fileglob, dirorder=True):
     for hotfile in hotfiles[1:]:
         dset = read_swan(hotfile)
         # Ensure we keep non-zeros in overlapping rows or columns
-        overlap = {'lon': set(dsets[-1].lon.values).intersection(dset.lon.values),
-                   'lat': set(dsets[-1].lat.values).intersection(dset.lat.values)}
+        overlap = {attrs.LONNAME: set(dsets[-1].lon.values).intersection(dset.lon.values),
+                   attrs.LATNAME: set(dsets[-1].lat.values).intersection(dset.lat.values)}
         concat_dim = min(overlap, key=lambda x: len(overlap[x]))
         for concat_val in overlap[concat_dim]:
             slc = {concat_dim: [concat_val]}
@@ -144,7 +145,7 @@ def read_hotswan(fileglob, dirorder=True):
         dsets.append(dset)
     dset = xr.auto_combine(dsets)
     attrs.set_spec_attributes(dset)
-    if 'dir' in dset and len(dset.dir)>1:
+    if attrs.DIRNAME in dset and len(dset.dir)>1:
         dset[attrs.SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s', '_units': 'm^{2}.s', '_variable_name': 'VaDens'})
@@ -303,7 +304,6 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
                 if len(swanfile.times) == tab.index.size:
                     if 'X-wsp' in tab and 'Y-wsp' in tab:
                         tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
-
                 else:
                     print "Warning: times in %s and %s not consistent, not appending winds and depth" % (
                         swanfile.filename, swanfile.tabfile)
@@ -418,7 +418,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
 
     # Setting multi-index
     if len(cycles) > 1:
-        dsets.rename({'time': 'cycletime'}, inplace=True)
+        dsets.rename({attrs.TIMENAME: 'cycletime'}, inplace=True)
         cycletime = zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
                         dsets.cycletime.values)
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[attrs.CYCLENAME, attrs.TIMENAME])
