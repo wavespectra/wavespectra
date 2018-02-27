@@ -10,10 +10,8 @@ import numpy as np
 import pandas as pd
 import gzip
 
-from attributes import *
-from misc import to_nautical
-
-#TODO: sort out import *
+import spectra.attributes as attrs
+from spectra.misc import to_nautical
 
 class Error(Exception):
     pass
@@ -245,7 +243,7 @@ def read_tab(filename, toff=0):
                      date_parser=dateparse,
                      index_col=0,
                      )
-    df.index.name = TIMENAME
+    df.index.name = attrs.TIMENAME
     df.index = df.index.shift(toff, freq='1H')
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
