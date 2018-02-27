@@ -52,13 +52,15 @@ class SpecArray(object):
         self.dd = abs(self.dir[1].values - self.dir[0].values) if self.dir is not None and len(self.dir) > 1 else 1.0
 
         # df darray with freq dimension - may replace above one in the future
-        if len(self.freq) > 2:
+        if len(self.freq) > 1:
             self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *\
                                            (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
                                       coords={'freq': self.freq},
                                       dims=('freq'))
         else:
-            self.dfarr = None
+            self.dfarr  = xr.DataArray(data=np.array((1.0,)),
+                                       coords={'freq': self.freq},
+                                       dims=('freq'))
 
     def __repr__(self):
         return re.sub(r'<([^\s]+)', '<%s'%(self.__class__.__name__), str(self._obj))
