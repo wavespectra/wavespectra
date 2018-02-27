@@ -16,15 +16,17 @@ import xarray as xr
 import types
 import copy
 from itertools import product
+
 from sympy import Symbol
 from sympy.utilities.lambdify import lambdify
 from sympy.parsing.sympy_parser import parse_expr
 
-from misc import GAMMA, D2R, R2D
+from spectra.misc import GAMMA, D2R, R2D
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
 # TODO: Implement true_peak method for both tp() and dpm()
+# TODO: Ensure sympy imports won't break it
 
 _ = np.newaxis
 
