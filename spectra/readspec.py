@@ -23,14 +23,10 @@ from collections import OrderedDict
 from sortedcontainers import SortedDict, SortedSet
 from scipy.io import loadmat
 
-from dbfread import DBF
-
 from spectra.swan import SwanSpecFile, read_tab
 from spectra.specdataset import SpecDataset
 import spectra.attributes as attrs
 from spectra.misc import uv_to_spddir, to_datetime, interp_spec, flatten_list, to_nautical, dnum_to_datetime
-
-# TODO: Ensure dbfread import won't break this
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},
