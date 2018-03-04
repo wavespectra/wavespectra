@@ -6,14 +6,19 @@ from spectra.specdataset import SpecDataset
 from spectra.attributes import attrs, set_spec_attributes
 
 def read_ww3_msl(filename_or_fileglob, chunks={}):
-    """
-    Read Spectra off WW3 in MSL netCDF format
-    - filename_or_fileglob :: either filename or fileglob specifying multiple files
-    - chunks :: Chunking dictionary specifying chunk sizes for dimensions for dataset into dask arrays.
-                By default dataset is loaded using single chunk for all arrays (see xr.open_mfdataset documentation)
-                Typical dimensions in native WW3 netCDF considering chunking are: ['time', 'site']
+    """Read Spectra from WAVEWATCHIII MetOcean Solutions netCDF format.
+
+    Args:
+        filename_or_fileglob (str): filename or fileglob specifying multiple files to read
+        chunks (dict): chunk sizes for dimensions in dataset. By default dataset is loaded
+                       using single chunk for all dimensions (see xr.open_mfdataset documentation)
+
     Returns:
-    - dset :: SpecDataset instance
+        dset (SpecDataset): spectra dataset object read from ww3 file
+
+    Note:
+        If file is large to fit in memory, consider specifying chunks for 'time' and/or 'site' dims
+
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.specden.attrs.get('units','')
