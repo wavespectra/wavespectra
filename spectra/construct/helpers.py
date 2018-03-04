@@ -2,12 +2,24 @@ import numpy as np
 import xarray as xr
 from collections import OrderedDict
 
-import spectra.attributes as attrs
+from spectra.attributes import attrs, set_spec_attributes
 
 d2r = np.pi/180
 
 def spread(dp_matrix, dspr_matrix, dirs):
-    """Generic spreading function such that \int{G1 d\theta}=1*
+    """Generic spreading function.
+    
+    Args:
+        dp_matrix:
+        dspr_matrix:
+        dirs:
+
+    Returns:
+        G1:
+
+    Note:
+        Function defined such that \int{G1 d\theta}=1*
+    
     """
     adirs = np.array(dirs).reshape((1,-1))
     pidirs = d2r * (270.-np.array(adirs))
@@ -19,8 +31,7 @@ def spread(dp_matrix, dspr_matrix, dirs):
     return G1
 
 def arrange_inputs(*args):
-    """Check all inputs are same shape and add frequency and direction dims
-    """
+    """Check all inputs are same shape and add frequency and direction dims."""
     argout = []
     shape0 = np.array(args[0]).shape
     for arg in args:
@@ -33,7 +44,17 @@ def arrange_inputs(*args):
     return argout
 
 def make_dataset(spec, freqs, dirs, coordinates=[]):
-    """Package spectral matrix to xarray
+    """Package spectral matrix to xarray.
+    
+    Args:
+        spec:
+        freqs:
+        dirs:
+        coordinates:
+
+    Returns:
+        dset: SpecDset object
+
     """
     coords = tuple(coordinates)+((FREQNAME, freqs), (DIRNAME, dirs),)
     dimensions = tuple([c[0] for c in coords])
@@ -43,11 +64,16 @@ def make_dataset(spec, freqs, dirs, coordinates=[]):
             dims=dimensions,
             name=attrs.SPECNAME,
             ).to_dataset()
-    attrs.set_spec_attributes(dset)
+    set_spec_attributes(dset)
     return dset
 
 def check_coordinates(param, coordinates):
-    """Check coordinates are consistent with parameter
+    """Check coordinates are consistent with parameter.
+    
+    Args:
+        param:
+        coordinates:
+    
     """
     pshape = np.array(param).shape
     if len(pshape) != len(coordinates):

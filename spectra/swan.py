@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import gzip
 
-import spectra.attributes as attrs
+from spectra.attributes import attrs
 from spectra.misc import to_nautical
 
 class Error(Exception):

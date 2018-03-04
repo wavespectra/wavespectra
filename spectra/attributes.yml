@@ -1,0 +1,47 @@
+SPECNAME: &SPECNAME efth
+TIMENAME: &TIMENAME time
+SITENAME: &SITENAME site
+LATNAME: &LATNAME lat
+LONNAME: &LONNAME lon
+FREQNAME: &FREQNAME freq
+DIRNAME: &DIRNAME dir
+PARTNAME: &PARTNAME part
+CYCLENAME: &CYCLENAME cycle
+WSPDNAME: &WSPDNAME wspd
+WDIRNAME: &WDIRNAME wdir
+DEPNAME: &DEPNAME dpt
+ATTRS:
+    *SPECNAME:
+        standard_name: sea_surface_wave_directional_variance_spectral_density
+        units: m^{2}.s.degree^{-1}
+    *TIMENAME:
+        standard_name: time
+    *LATNAME:
+        standard_name: latitude
+        units: degrees_north
+    *LONNAME:
+        standard_name: longitude
+        units: degrees_east
+    *SITENAME:
+        standard_name: site
+        units: ''
+    *FREQNAME:
+        standard_name: sea_surface_wave_frequency
+        units: Hz
+    *DIRNAME:
+        standard_name: sea_surface_wave_from_direction
+        units: degree
+    *PARTNAME:
+        standard_name: spectral_partition_number
+        units: ''
+    *CYCLENAME:
+        standard_name: forecast_reference_time
+    *WSPDNAME:
+        standard_name: wind_speed
+        units: m.s^{-1}
+    *WDIRNAME:
+        standard_name: wind_from_direction
+        units: degree
+    *DEPNAME:
+        standard_name: sea_floor_depth_below_sea_surface
+        units: m

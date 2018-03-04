@@ -1,6 +1,4 @@
-"""
-Define some attributes for packaging
-"""
+"""Define some attributes for packaging."""
 
 __version__ = '0.1.0'
 __author__ = 'MetOcean Solutions Ltd'
