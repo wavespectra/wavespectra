@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 from spectra.attributes import attrs
-from spectra.misc import to_nautical
+from spectra.core.misc import to_nautical
 
 class SwanSpecFile(object):
     """Read spectra in SWAN ASCII format."""
