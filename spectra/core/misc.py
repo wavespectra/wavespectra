@@ -1,6 +1,4 @@
-"""
-Miscellaneous
-"""
+"""Miscellaneous functions."""
 import copy
 import datetime
 import numpy as np

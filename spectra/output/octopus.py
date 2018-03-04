@@ -7,7 +7,7 @@ to_octopus :: write spectra in octopus spectrum format
 import xarray as xr
 
 from spectra.attributes import attrs
-from spectra.misc import to_datetime
+from spectra.core.misc import to_datetime
 
 def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
     """Save spectra in Octopus format.
