@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from collections import OrderedDict
 
-from spectra.attributes import attrs, set_spec_attributes
+from spectra.core.attributes import attrs, set_spec_attributes
 
 d2r = np.pi/180
 

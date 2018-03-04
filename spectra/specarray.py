@@ -17,7 +17,7 @@ import types
 import copy
 from itertools import product
 
-from spectra.attributes import attrs
+from spectra.core.attributes import attrs
 from spectra.core.misc import GAMMA, D2R, R2D
 
 try:

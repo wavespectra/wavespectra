@@ -4,7 +4,7 @@ MetOcean Solutions WAVEWATCH3 output plugin.
 to_json :: write spectra in cf-json netcdf format
 
 """
-from spectra.attributes import attrs
+from spectra.core.attributes import attrs
 
 try:
     from cfjson.xrdataset import CFJSONinterface
