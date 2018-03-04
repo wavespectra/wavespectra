@@ -1,28 +1,19 @@
-"""
-Auxiliary class to parse spectra from SWAN ASCII format
-"""
+"""Read and write swan spectra files"""
 import os
 import re
-import copy
-import datetime
-import xarray as xr
-import numpy as np
-import pandas as pd
 import gzip
+import datetime
+import pandas as pd
+import numpy as np
 
 from spectra.attributes import attrs
 from spectra.misc import to_nautical
 
-class Error(Exception):
-    pass
-
 class SwanSpecFile(object):
+    """Read spectra in SWAN ASCII format."""
+
     def __init__(self, filename, freqs=None, dirs=None, x=None, y=None, time=False,
                  id='Swan Spectrum', dirorder=False, append=False, tabfile=None):
-        """
-        Read spectra in SWAN ASCII format
-        TODO: Exception value is parsed but is not applied when reading spectra. Make sure this is ok
-        """
         self.times = False
         self.filename = filename
         self.tabfile = tabfile or os.path.splitext(self.filename.replace('.gz',''))[0]+'.tab'
@@ -34,51 +25,46 @@ class SwanSpecFile(object):
             fopen = gzip.open
         else:
             fopen = open
-        try:
-            if freqs is not None:#Writable file
-                self.freqs = np.array(freqs)
-                self.dirs = np.array(dirs)
-                self.x = np.array(x)
-                self.y = np.array(y)
-                if time:
-                    self.times = []
-                self.fid = fopen(filename, 'w')
-                self.writeHeader(time, id)
-                self.fmt = len(self.dirs) * '{:5.0f}'
+        if freqs is not None: # Writable file
+            self.freqs = np.array(freqs)
+            self.dirs = np.array(dirs)
+            self.x = np.array(x)
+            self.y = np.array(y)
+            if time:
+                self.times = []
+            self.fid = fopen(filename, 'w')
+            self.write_header(time, id)
+            self.fmt = len(self.dirs) * '{:5.0f}'
+        else:
+            self.fid = fopen(filename,'r+' if append else 'r')
+            header = self._read_header('SWAN')
+            while True:
+                if not self._read_header('$'):
+                    break
+            if self._read_header('TIME'):
+                self._read_header('1')
+                self.times = []
+            self.x = []
+            self.y = []
+            for ip in self._read_header('LONLAT', True):
+                xy = map(float,ip.split())
+                self.x.append(xy[0])
+                self.y.append(xy[1])
+            self.x = np.array(self.x)
+            self.y = np.array(self.y)
+            self.afreq = self._read_header('AFREQ', True)
+            self.rfreq = self._read_header('RFREQ', True)
+            self.ndir = self._read_header('NDIR', True)
+            self.cdir = self._read_header('CDIR', True)
+            self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
+            if self.ndir:
+                self.dirs = np.array(map(float, self.ndir))
             else:
-                self.fid = fopen(filename,'r+' if append else 'r')
-                header = self._readhdr('SWAN')
-                while True:
-                    if not self._readhdr('$'):
-                        break
-                if self._readhdr('TIME'):
-                    self._readhdr('1')
-                    self.times = []
-                self.x = []
-                self.y = []
-                for ip in self._readhdr('LONLAT', True):
-                    xy = map(float,ip.split())
-                    self.x.append(xy[0])
-                    self.y.append(xy[1])
-                self.x = np.array(self.x)
-                self.y = np.array(self.y)
+                self.dirs = to_nautical(np.array(map(float, self.cdir)))
+            self._read_header('QUANT',True)
+            self.fid.readline()
+            self.excval = int(float(self.fid.readline().split()[0]))
 
-                self.afreq = self._readhdr('AFREQ', True)
-                self.rfreq = self._readhdr('RFREQ', True)
-                self.ndir = self._readhdr('NDIR', True)
-                self.cdir = self._readhdr('CDIR', True)
-                self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
-                if self.ndir:
-                    self.dirs = np.array(map(float, self.ndir))
-                else:
-                    self.dirs = to_nautical(np.array(map(float, self.cdir)))
-
-                self._readhdr('QUANT',True)
-                self.fid.readline()
-                self.excval = int(float(self.fid.readline().split()[0]))
-
-        except Error as e:
-            raise 'File error with %s [%s]' % (filename, e)
         if dirorder:
             self.dirmap = list(np.argsort(self.dirs % 360.))
             self.dirs = self.dirs[self.dirmap] % 360.
@@ -89,7 +75,7 @@ class SwanSpecFile(object):
         self.is_grid = (len(lons)*len(lats) == len(self.x))
         self.is_tab = (os.path.isfile(self.tabfile)) & (len(lons)*len(lats) == 1)
 
-    def _readhdr(self, keyword, numspec=False):
+    def _read_header(self, keyword, numspec=False):
         if not self.buf:
             self.buf = self.fid.readline()
         if self.buf.find(keyword) >= 0:
@@ -104,6 +90,7 @@ class SwanSpecFile(object):
         return rtn
 
     def read(self):
+        """Read single timestep from current position in file."""
         if not self.fid:
             return None
         if isinstance(self.times, list):
@@ -116,12 +103,12 @@ class SwanSpecFile(object):
         Sout = []
         for ip,pp in enumerate(self.x):
             Snew = np.nan * np.zeros((len(self.freqs), len(self.dirs)))
-            if self._readhdr('NODATA'):
+            if self._read_header('NODATA'):
                 pass
             else:
-                if self._readhdr('ZERO'):
+                if self._read_header('ZERO'):
                     Snew = np.zeros((len(self.freqs), len(self.dirs)))
-                elif self._readhdr('FACTOR'):
+                elif self._read_header('FACTOR'):
                     fac = float(self.fid.readline())
                     for i,f in enumerate(self.freqs):
                         line = self.fid.readline()
@@ -136,20 +123,8 @@ class SwanSpecFile(object):
             Sout.append(Snew)
         return Sout
 
-    def scan(self, time):
-        nf = len(self.S.freqs) + 1
-        tstr = time.strftime('%Y%m%d.%H%M%S')
-        i = 0
-        while True:
-            line = self.fid.readline()
-            if not line:
-                return -1
-            elif line[:15] == tstr:
-                self.fid.seek(-len(line), 1)
-                return i/nf
-            i += 1
-
     def readall(self):
+        """Read the entire file."""
         while True:
             sset = self.read()
             if sset:
@@ -157,7 +132,8 @@ class SwanSpecFile(object):
             else:
                 break
 
-    def writeHeader(self, time=False, str1='', str2='', timecode=1, excval=-99):
+    def write_header(self, time=False, str1='', str2='', timecode=1, excval=-99):
+        """Write header to file."""
         # Description
         strout = '{:40}{}\n'.format('SWAN   1', 'Swan standard spectral file')
         strout += '{:4}{}\n'.format('$', str1)
@@ -189,16 +165,18 @@ class SwanSpecFile(object):
         # Dumping
         self.fid.write(strout)
 
-    def writeSpectra(self, arr, time=None):
-        """
-        Dump spectra from single timestamp into SWAN object
-            - arr :: 3D numpy array arr(site,freq,dim)
-            - time :: datetime object for current timestamp
+    def write_spectra(self, arr, time=None):
+        """Write spectra from single timestamp.
+
+        Args:
+            arr (3D ndarray): spectra to write S(site, freq, dim)
+            time (datetime): timeof spectra to write
+
         """
         if time is not None:
             self.fid.write('{:40}{}\n'.format(time.strftime('%Y%m%d.%H%M%S'), 'date and time'))
         for spec in arr:
-            fac = spec.max()/9998.
+            fac = spec.max() / 9998.
             if np.isnan(fac):
                 strout = 'NODATA\n'
             elif fac <= 0:
@@ -209,31 +187,22 @@ class SwanSpecFile(object):
                     strout += self.fmt.format(*tuple(row/fac)) + '\n'
             self.fid.write(strout)
 
-    def readSpectrum(self):
-        if self.S.any():
-            fac = self.S.max()/9998
-            if fac < 0:
-                return 'NODATA\n'
-            strout = 'FACTOR\n{:4}{:0.8E}\n'.format('', fac)
-            for row in self.S:
-                strout += self.fmt.format(*tuple(row/fac)) + '\n'
-            return strout
-        else:
-            return 'NODATA\n'
-
     def close(self):
+        """Close file handle."""
         if self.fid:
             self.fid.close()
         self.fid = False
 
 def read_tab(filename, toff=0):
-    """
-    Read swan tab file, return pandas dataframe
-    Usage:
-        df = read_swan_tab(filename, mask={}, toff=0)
-    Input:
-        filename :: name of SWAN tab file to read
-        toff :: timezone offset
+    """Read swan table file.
+
+    Args:
+        filename (str): name of SWAN tab file to read
+        toff (float): timezone offset in hours
+    
+    Returns:
+        Pandas DataFrame object
+
     """
     dateparse = lambda x: datetime.datetime.strptime(x, '%Y%m%d.%H%M%S')
     df = pd.read_csv(filename,
@@ -248,13 +217,3 @@ def read_tab(filename, toff=0):
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.ix[:, 0:-1]
-
-
-if __name__ == '__main__':
-
-
-    filename = '/wave/indo/swan_cfsr_west/2012/act.tab'
-
-    t0 = datetime.datetime.now()
-    ds1 = read_tab(filename)
-    print (datetime.datetime.now()-t0).total_seconds()

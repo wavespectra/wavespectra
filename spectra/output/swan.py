@@ -5,7 +5,7 @@ to_swan :: write spectra in swan spectrum format
 
 """
 from spectra.attributes import attrs
-from spectra.swan import SwanSpecFile
+from spectra.core.swan import SwanSpecFile
 from spectra.misc import to_datetime
 
 def to_swan(self, filename, append=False, id='Created by pyspectra', unique_times=False):

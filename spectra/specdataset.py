@@ -61,7 +61,7 @@ class SpecDataset(object):
             site is defined if not in dataset and not a grid
             spectral coordinates are checked to ensure they are supported for dumping
         """
-        dset = self.dset.copy(deep=True)
+        dset = self.dset.load().copy(deep=True)
 
         unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(supported_dims)
         if unsupported_dims:
