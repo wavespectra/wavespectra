@@ -4,7 +4,7 @@ SWAN ASCII output plugin.
 to_swan :: write spectra in swan spectrum format
 
 """
-from spectra.attributes import attrs
+from spectra.core.attributes import attrs
 from spectra.core.swan import SwanSpecFile
 from spectra.core.misc import to_datetime
 

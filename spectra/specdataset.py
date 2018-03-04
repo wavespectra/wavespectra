@@ -5,7 +5,7 @@ import re
 import sys
 import xarray as xr
 
-from spectra.attributes import attrs
+from spectra.core.attributes import attrs
 from spectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))

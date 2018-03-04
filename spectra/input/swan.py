@@ -18,7 +18,7 @@ from sortedcontainers import SortedDict
 
 from spectra.specdataset import SpecDataset
 from spectra.core.swan import SwanSpecFile, read_tab
-from spectra.attributes import attrs, set_spec_attributes
+from spectra.core.attributes import attrs, set_spec_attributes
 from spectra.core.misc import uv_to_spddir, interp_spec, flatten_list
 
 def read_swan(filename, dirorder=True, as_site=None):
