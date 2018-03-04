@@ -43,15 +43,15 @@ def to_swan(self, filename, append=False, id='Created by pyspectra', unique_time
         for t in darray.time:
             darrout = darray.sel(time=t)
             if darrout.time.size == 1:
-                sfile.writeSpectra(darrout.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
-                                   time=to_datetime(t.values))
+                sfile.write_spectra(darrout.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
+                                    time=to_datetime(t.values))
             elif unique_times:
-                sfile.writeSpectra(darrout.isel(time=-1).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
-                                   time=to_datetime(t.values))
+                sfile.write_spectra(darrout.isel(time=-1).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
+                                    time=to_datetime(t.values))
             else:
                 for it,tt in enumerate(darrout.time):
-                        sfile.writeSpectra(darrout.isel(time=it).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
-                                           time=to_datetime(t.values))
+                    sfile.write_spectra(darrout.isel(time=it).transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
+                                        time=to_datetime(t.values))
     else:
-        sfile.writeSpectra(darray.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values)
+        sfile.write_spectra(darray.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values)
     sfile.close()
