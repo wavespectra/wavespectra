@@ -6,3 +6,4 @@ dask
 toolz
 sortedcontainers
 scipy
+attrdict

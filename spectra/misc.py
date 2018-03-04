@@ -10,15 +10,15 @@ import xarray as xr
 from scipy.interpolate import griddata
 
 GAMMA = lambda x: np.sqrt(2.*np.pi/x) * ((x/np.exp(1)) * np.sqrt(x*np.sinh(1./x)))**x
-D2R = np.pi/180.
-R2D = 180./np.pi
+D2R = np.pi / 180.
+R2D = 180. / np.pi
 
 dnum_to_datetime = lambda d: datetime.datetime.fromordinal(int(d) - 366) + datetime.timedelta(days=d%1)
 
 to_nautical = lambda a: np.mod(270-a, 360)
 
 def to_datetime(np64):
-    """ Convert Datetime64 date to datatime """
+    """Convert Datetime64 date to datatime."""
     if isinstance(np64, np.datetime64):
         dt = pd.to_datetime(str(np64)).to_pydatetime()
     elif isinstance(np64, xr.DataArray):
@@ -29,31 +29,35 @@ def to_datetime(np64):
     return dt
 
 def spddir_to_uv(spd, direc, coming_from=False):
-    """
-    converts (spd, dir) to (u, v)
-    Input:
-        spd :: array with magnitudes to convert
-        direc :: array with directions to convert (degree)
-        coming_from :: set True if input directions are coming-from convention, False if in going-to
-    Output:
-        u :: array of same shape as spd and direc with eastward wind component
-        v :: array of same shape as spd and direc with northward wind component
+    """Converts (spd, dir) to (u, v).
+
+    Args:
+        spd (array): magnitudes to convert
+        direc (array): directions to convert (degree)
+        coming_from (bool): True if directions in coming-from convention, False if in going-to
+
+    Returns:
+        u (array): eastward wind component
+        v (array): northward wind component
+
     """
     ang_rot = 180 if coming_from else 0
     direcR = np.deg2rad(direc + ang_rot)     
-    u = spd*np.sin(direcR)
-    v = spd*np.cos(direcR)
+    u = spd * np.sin(direcR)
+    v = spd * np.cos(direcR)
     return u, v
 
 def uv_to_spddir(u, v, coming_from=False):
-    """
-    Converts (u, v) to (spd, dir)
-    Input:
-        u, v :: arrays with eastward and northward wind components
-        coming_from :: True for output directions in coming-from convention, False for going-to
-    Output:
-        mag :: array of same shape as u and v with magnitudes
-        direc :: array of same shape as u and v with directions (degree)
+    """Converts (u, v) to (spd, dir).
+
+    Args:
+        u (array): eastward wind component
+        v (array): northward wind component
+        coming_from (bool): True for output directions in coming-from convention, False for going-to
+
+    Returns:
+        mag (array): magnitudes
+        direc (array): directions (degree)
     """
     ang_rot = 180 if coming_from else 0
     vetor = u + v*1j
@@ -64,22 +68,24 @@ def uv_to_spddir(u, v, coming_from=False):
     return mag, direc
 
 def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear'):
+    """Interpolate onto new spectral basis.
+
+    Args:
+        inspec (2D ndarray): input spectrum E(infreq,indir) to be interpolated
+        infreq (1D ndarray): frequencies of input spectrum
+        indir (1D ndarray): directions of input spectrum
+        outfreq (1D ndarray): frequencies of output interpolated spectrum, same as infreq by default
+        outdir (1D ndarray): directions of output interpolated spectrum, same as infreq by default
+        method: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
+
+    Returns:
+        outspec (2D ndarray): interpolated ouput spectrum E(outfreq,outdir)
+
+    Note:
+        If either outfreq or outdir is None or False this coordinate is not interpolated
+        Choose indir=None if spectrum is 1D
+
     """
-    Interpolate onto new spectral basis
-    Input:
-        inspec :: 2D numpy array, input spectrum S(infreq,indir) to be interpolated
-        infreq :: 1D numpy array, frequencies of input spectrum
-        indir :: 1D numpy array, directions of input spectrum
-        outfreq :: 1D numpy array, frequencies of output interpolated spectrum, same as infreq by default
-        outdir :: 1D numpy array, directions of output interpolated spectrum, same as infreq by default
-        method :: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
-    Output:
-        outspec :: 2D numpy array, interpolated ouput spectrum S(outfreq,outdir)
-    Remark:
-        - If either outfreq or outdir is None or False this coordinate is not interpolated
-        - Choose indir=None if spectrum is 1D
-    """
- 
     outfreq = infreq if outfreq is None or outfreq is False else outfreq
     outdir = indir if outdir is None or outdir is False else outdir
     
@@ -103,9 +109,7 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method='linear
     return outspec
 
 def flatten_list(l, a):
-    """
-    Flatten list of lists
-    """
+    """Flatten list of lists"""
     for i in l:
         if isinstance(i, list):
             flatten_list(i, a)

@@ -1,5 +1,5 @@
 """
-Functions to read data from different file format into SpecDataset objects
+Functions to read data from different file format into SpecDataset objects.
 
 Commom structure expected to be returned by methods is a SpecDataset with:
 - Following variables from attributes.py module should be used to define standarised coordinates:
@@ -25,7 +25,7 @@ from scipy.io import loadmat
 
 from spectra.swan import SwanSpecFile, read_tab
 from spectra.specdataset import SpecDataset
-import spectra.attributes as attrs
+from spectra.attributes import attrs, set_spec_attributes
 from spectra.misc import uv_to_spddir, to_datetime, interp_spec, flatten_list, to_nautical, dnum_to_datetime
 
 def read_netcdf(filename_or_fileglob,
@@ -84,7 +84,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
     dset[attrs.SPECNAME].values = np.radians(dset[attrs.SPECNAME].values)
-    attrs.set_spec_attributes(dset)
+    set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
     if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
@@ -106,7 +106,7 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     dset.rename({'freq': attrs.FREQNAME, 'dir': attrs.DIRNAME, 'wsp': attrs.WSPDNAME}, inplace=True)
     dset[attrs.SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden', 'factor', 'df'])
-    attrs.set_spec_attributes(dset)
+    set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': 'specden'})
     if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
@@ -144,7 +144,7 @@ def read_hotswan(fileglob, dirorder=True):
                 dsets[-1].efth.loc[slc] = dset.efth.loc[slc]
         dsets.append(dset)
     dset = xr.auto_combine(dsets)
-    attrs.set_spec_attributes(dset)
+    set_spec_attributes(dset)
     if attrs.DIRNAME in dset and len(dset.dir)>1:
         dset[attrs.SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
@@ -221,7 +221,7 @@ def read_swan(filename, dirorder=True, as_site=None):
         dset[attrs.LATNAME] = xr.DataArray(data=lats, coords={attrs.SITENAME: sites}, dims=[attrs.SITENAME])
         dset[attrs.LONNAME] = xr.DataArray(data=lons, coords={attrs.SITENAME: sites}, dims=[attrs.SITENAME])
 
-    attrs.set_spec_attributes(dset)
+    set_spec_attributes(dset)
     if 'dir' in dset and len(dset.dir)>1:
         dset[attrs.SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
@@ -424,7 +424,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[attrs.CYCLENAME, attrs.TIMENAME])
         dsets['cycletime'].attrs = attrs.ATTRS[attrs.TIMENAME]
 
-    attrs.set_spec_attributes(dsets)
+    set_spec_attributes(dsets)
     if 'dir' in dsets and len(dsets.dir)>1:
         dsets[attrs.SPECNAME].attrs.update({'_units': 'm^{2}.s.degree^{-1}', '_variable_name': 'VaDens'})
     else:
