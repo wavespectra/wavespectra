@@ -146,11 +146,11 @@ Define and plot spectra history from example SWAN_ spectra file:
    spec_hist = dset.isel(lat=0, lon=0).sel(freq=slice(0.05,0.2)).spec.oned().T
    spec_hist.plot.contourf(levels=10)
 
-.. _SpecArray: https://github.com/metocean/pyspectra/blob/master/spectra/specarray.py
-.. _SpecDataset: https://github.com/metocean/pyspectra/blob/master/spectra/specdataset.py
+.. _SpecArray: https://github.com/metocean/pyspectra/blob/master/wavespectra/specarray.py
+.. _SpecDataset: https://github.com/metocean/pyspectra/blob/master/wavespectra/specdataset.py
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
-.. _readspec: https://github.com/metocean/pyspectra/blob/master/spectra/readspec.py
+.. _readspec: https://github.com/metocean/pyspectra/blob/master/wavespectra/readspec.py
 .. _xarray accessors: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor
 .. _SWAN: http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html
 .. _Python package index: https://testpypi.python.org/pypi/spectra

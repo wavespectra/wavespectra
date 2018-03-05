@@ -26,7 +26,7 @@ class Plugin(type):
 class SpecDataset(object):
     """Wrapper around the xarray dataset.
     
-    Plugin functions defined in spectra/output/<module>
+    Plugin functions defined in wavespectra/output/<module>
     are attached as methods in this accessor class.
 
     """
