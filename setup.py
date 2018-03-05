@@ -67,7 +67,7 @@ def read(fname):
 
 def ext_configuration(parent_package='', top_path=None):
     config = Configuration('', '', '')
-    config.add_extension('spectra.specpart', sources=['spectra/specpart/specpart.pyf',
+    config.add_extension('wavespectra.specpart', sources=['spectra/specpart/specpart.pyf',
                                                       'spectra/specpart/specpart.f90'])
     config.add_data_files('LICENSE.txt', 'spectra/core/attributes.yml')
     return config
@@ -76,13 +76,13 @@ kwargs = ext_configuration(top_path='').todict()
 
 setup(
     name=NAME,
-    version=spectra.__version__,
-    description=spectra.__description__,
+    version=wavespectra.__version__,
+    description=wavespectra.__description__,
     long_description=read('README.rst'),
-    keywords=spectra.__keywords__,
-    author=spectra.__author__,
-    author_email=spectra.__contact__,
-    url=spectra.__url__,
+    keywords=wavespectra.__keywords__,
+    author=wavespectra.__author__,
+    author_email=wavespectra.__contact__,
+    url=wavespectra.__url__,
     license='GPL',
     packages=setuptools.find_packages(exclude=['test*']),
     include_package_data=True,

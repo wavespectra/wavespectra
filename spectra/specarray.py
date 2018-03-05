@@ -17,8 +17,8 @@ import types
 import copy
 from itertools import product
 
-from spectra.core.attributes import attrs
-from spectra.core.misc import GAMMA, D2R, R2D
+from wavespectra.core.attributes import attrs
+from wavespectra.core.misc import GAMMA, D2R, R2D
 
 try:
     from sympy import Symbol
@@ -524,7 +524,7 @@ class SpecArray(object):
             assert set(darr.dims)==self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
                 'in SpecArray (%s) for consistent slicing' % (darr.name, set(darr.dims), self._non_spec_dims))
 
-        from spectra.specpart import specpart
+        from wavespectra.specpart import specpart
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj]
@@ -643,7 +643,7 @@ class SpecArray(object):
         params = list()
         for name, (func, kwargs) in zip(names, stats_dict.items()):
             try:
-                stats_func = getattr(spectra.spec, func)
+                stats_func = getattr(wavespectra.spec, func)
             except:
                 raise IOError('%s is not implemented as a method in %s' % (func, self.__class__.__name__))
             if callable(stats_func):
@@ -683,7 +683,7 @@ def hs(spec, freqs, dirs, tail=True):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from spectra.readspec import read_swan
+    from wavespectra.readspec import read_swan
 
     ds1 = read_swan('/source/pyspectra/tests/antf0.20170207_06z.bnd.swn')
     ds2 = ds1.copy(deep=True)
@@ -695,7 +695,7 @@ if __name__ == '__main__':
     plt.plot(hs2, color='b')
     plt.show()
 
-    # from spectra.readspec import read_hotswan
+    # from wavespectra.readspec import read_hotswan
     # hot = read_hotswan('/source/pyspectra/tests/swan/hot/aklishr*.hot*')
     # import datetime
     # import matplotlib.pyplot as plt

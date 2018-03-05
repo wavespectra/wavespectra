@@ -4,7 +4,7 @@ Generic netCDF output plugin.
 to_netcdf :: write spectra in pre-defined netcdf format
 
 """
-from spectra.core.attributes import attrs
+from wavespectra.core.attributes import attrs
 
 def to_netcdf(self, filename,
               specname=attrs.SPECNAME,
