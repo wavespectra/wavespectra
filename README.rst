@@ -153,6 +153,6 @@ Define and plot spectra history from example SWAN_ spectra file:
 .. _readspec: https://github.com/metocean/pyspectra/blob/master/wavespectra/readspec.py
 .. _xarray accessors: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor
 .. _SWAN: http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html
-.. _Python package index: https://testpypi.python.org/pypi/spectra
+.. _Python package index: https://pypi.python.org/pypi/wavespectra
 .. _pyspectra: https://github.com/metocean/pyspectra
 .. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
