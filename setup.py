@@ -15,6 +15,7 @@ CLASSIFIERS = [
     'License :: OSI Approved :: GNU General Public License (GPL)',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
+    'Topic :: Scientific/Engineering',
     'Topic :: Scientific/Engineering :: Physics',
     'Topic :: Scientific/Engineering :: Visualization',
 ]
@@ -68,8 +69,9 @@ def read(fname):
 def ext_configuration(parent_package='', top_path=None):
     config = Configuration('', '', '')
     config.add_extension('wavespectra.specpart', sources=['wavespectra/specpart/specpart.pyf',
-                                                      'wavespectra/specpart/specpart.f90'])
-    config.add_data_files('LICENSE.txt', 'wavespectra/core/attributes.yml')
+                                                          'wavespectra/specpart/specpart.f90'])
+    config.add_data_files('LICENSE.txt',
+                          'wavespectra/core/attributes.yml')
     return config
 
 kwargs = ext_configuration(top_path='').todict()
