@@ -1,2 +1,5 @@
-# Include the license file
 include LICENSE.txt
+include spectra/core/attributes.yml
+include spectra/specpart/specpart.f90
+include spectra/specpart/specpart.pyf
+recursive-include requirements *.txt
