@@ -44,23 +44,24 @@ def _reqs(*f):
         ) if r]
 
 def reqs(*f):
-    """Parse requirement file
+    """Parse requirement file.
+
+    Returns:
+        List[str]: list of requirements specified in the file.
+
     Example:
         reqs('default.txt')          # requirements/default.txt
         reqs('extras', 'redis.txt')  # requirements/extras/redis.txt
-    Returns:
-        List[str]: list of requirements specified in the file.
+
     """
     return [req for subreq in _reqs(*f) for req in subreq]
 
 def install_requires():
-    """Get list of requirements required for installation
-    """
+    """Get list of requirements required for installation."""
     return reqs('default.txt')
 
 def extras_require():
-    """Get map of all extra requirements
-    """
+    """Get map of all extra requirements."""
     return {'extra': reqs('extra.txt')}
 
 def read(fname):
