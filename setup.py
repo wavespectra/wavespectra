@@ -84,6 +84,8 @@ setup(
     url=spectra.__url__,
     license='GPL',
     packages=setuptools.find_packages(exclude=['test*']),
+    include_package_data=True,
+    package_data={'attributes': ['spectra/core/attributes.yml']},
     platforms=['any'],
     install_requires=install_requires(),
     extras_require=extras_require(),
