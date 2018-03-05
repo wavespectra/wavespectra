@@ -140,7 +140,7 @@ Define and plot spectra history from example SWAN_ spectra file:
 
 .. code:: python
 
-   from spectra import read_swan
+   from wavespectra import read_swan
 
    dset = read_swan('/source/pyspectra/tests/manus.spec')
    spec_hist = dset.isel(lat=0, lon=0).sel(freq=slice(0.05,0.2)).spec.oned().T
