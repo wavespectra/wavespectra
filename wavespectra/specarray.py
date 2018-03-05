@@ -707,7 +707,7 @@ class SpecArray(object):
         params = list()
         for name, (func, kwargs) in zip(names, stats_dict.items()):
             try:
-                stats_func = getattr(wavespectra.spec, func)
+                stats_func = getattr(spectra.spec, func)
             except:
                 raise IOError('%s is not implemented as a method in %s' % (func, self.__class__.__name__))
             if callable(stats_func):
