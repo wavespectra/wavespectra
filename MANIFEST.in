@@ -1,5 +1,5 @@
 include LICENSE.txt
-include spectra/core/attributes.yml
-include spectra/specpart/specpart.f90
-include spectra/specpart/specpart.pyf
+include wavespectra/core/attributes.yml
+include wavespectra/specpart/specpart.f90
+include wavespectra/specpart/specpart.pyf
 recursive-include requirements *.txt

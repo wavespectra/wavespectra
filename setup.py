@@ -5,9 +5,9 @@ from codecs import open
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
-import spectra
+import wavespectra
 
-NAME = 'spectra'
+NAME = 'wavespectra'
 
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
@@ -67,9 +67,9 @@ def read(fname):
 
 def ext_configuration(parent_package='', top_path=None):
     config = Configuration('', '', '')
-    config.add_extension('wavespectra.specpart', sources=['spectra/specpart/specpart.pyf',
-                                                      'spectra/specpart/specpart.f90'])
-    config.add_data_files('LICENSE.txt', 'spectra/core/attributes.yml')
+    config.add_extension('wavespectra.specpart', sources=['wavespectra/specpart/specpart.pyf',
+                                                      'wavespectra/specpart/specpart.f90'])
+    config.add_data_files('LICENSE.txt', 'wavespectra/core/attributes.yml')
     return config
 
 kwargs = ext_configuration(top_path='').todict()
@@ -86,7 +86,7 @@ setup(
     license='GPL',
     packages=setuptools.find_packages(exclude=['test*']),
     include_package_data=True,
-    package_data={'attributes': ['spectra/core/attributes.yml']},
+    package_data={'attributes': ['wavespectra/core/attributes.yml']},
     platforms=['any'],
     install_requires=install_requires(),
     extras_require=extras_require(),
