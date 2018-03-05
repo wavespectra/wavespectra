@@ -9,7 +9,7 @@ import os
 sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 
 from wavespectra.specdataset import SpecDataset
-from spectra import read_ww3, read_swan, read_ww3_msl, read_netcdf
+from wavespectra import read_ww3, read_swan, read_ww3_msl, read_netcdf
 
 D2R = np.pi/180.
 
