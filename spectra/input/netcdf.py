@@ -1,8 +1,8 @@
 """Read generic netCDF spectra files."""
 import xarray as xr
 
-from spectra.specdataset import SpecDataset
-from spectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.specdataset import SpecDataset
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 def read_netcdf(filename_or_fileglob,
                 chunks={},

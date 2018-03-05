@@ -12,7 +12,7 @@ import sys
 import os
 sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 
-from spectra.construct import jonswap,ochihubble
+from wavespectra.construct import jonswap,ochihubble
 
 def check_equal(one,other):
     assert_array_almost_equal(one['efth'],other['efth'],decimal=4)

@@ -13,8 +13,8 @@ sys.path.insert(0,os.path.join(os.path.dirname(__file__),'..'))
 
 # New imports
 import xarray as xr
-from spectra.specarray import SpecArray
-from spectra.readspec import read_ww3, read_swan, read_ww3_msl
+from wavespectra.specarray import SpecArray
+from wavespectra.readspec import read_ww3, read_swan, read_ww3_msl
 
 # Old imports
 from pymo.data.spectra_new import WW3NCSpecFile, SwanSpecFile

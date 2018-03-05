@@ -1,6 +1,6 @@
 """Read cf-json spectra files."""
-from spectra.specdataset import SpecDataset
-from spectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.specdataset import SpecDataset
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 def read_json(self,filename):
     raise NotImplementedError('Cannot read CFJSON format')

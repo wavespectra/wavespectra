@@ -6,8 +6,8 @@ import datetime
 import pandas as pd
 import numpy as np
 
-from spectra.core.attributes import attrs
-from spectra.core.misc import to_nautical
+from wavespectra.core.attributes import attrs
+from wavespectra.core.misc import to_nautical
 
 class SwanSpecFile(object):
     """Read spectra in SWAN ASCII format."""

@@ -2,8 +2,8 @@
 import xarray as xr
 import numpy as np
 
-from spectra.specdataset import SpecDataset
-from spectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.specdataset import SpecDataset
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 def read_ww3(filename_or_fileglob, chunks={}):
     """Read Spectra from WAVEWATCHIII native netCDF format.

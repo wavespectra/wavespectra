@@ -5,15 +5,15 @@ import re
 import sys
 import xarray as xr
 
-from spectra.core.attributes import attrs
-from spectra.specarray import SpecArray
+from wavespectra.core.attributes import attrs
+from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
 
 class Plugin(type):
     """Add all the export functions at class creation time."""
     def __new__(cls, name, bases, dct):
-        modules = [__import__('spectra.output.{}'.format(os.path.splitext(fname)[0]), fromlist=['*'])
+        modules = [__import__('wavespectra.output.{}'.format(os.path.splitext(fname)[0]), fromlist=['*'])
                     for fname in os.listdir(os.path.join(here, 'output')) if fname.endswith('.py')]
         for module in modules:
             for name in dir(module):

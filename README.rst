@@ -65,8 +65,8 @@ To use methods in the accessor classes simply import the classes into your code 
    import numpy as np
    import xarray as xr
 
-   from spectra.specarray import SpecArray
-   from spectra.specdataset import SpecDataset
+   from wavespectra.specarray import SpecArray
+   from wavespectra.specdataset import SpecDataset
 
    coords = {'time': [datetime.datetime(2017,01,n+1) for n in range(2)],
              'freq': [0.05,0.1],
