@@ -69,6 +69,7 @@ def ext_configuration(parent_package='', top_path=None):
     config = Configuration('', '', '')
     config.add_extension('spectra.specpart', sources=['spectra/specpart/specpart.pyf',
                                                       'spectra/specpart/specpart.f90'])
+    config.add_data_files('LICENSE.txt', 'spectra/core/attributes.yml')
     return config
 
 kwargs = ext_configuration(top_path='').todict()
