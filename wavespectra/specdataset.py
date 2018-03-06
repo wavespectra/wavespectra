@@ -79,7 +79,7 @@ class SpecDataset(object):
 
 if __name__ == '__main__':
     from readspec import read_swan
-    # ds = read_swan('/source/pyspectra/tests/manus.spec')
+    # ds = read_swan('/source/wavespectra/tests/manus.spec')
     # ds.spec.to_octopus('/tmp/test.oct')
     # ds.spec.to_swan('/tmp/test.swn')
     # ds.spec.to_netcdf('/tmp/test.nc')

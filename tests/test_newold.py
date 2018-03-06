@@ -48,7 +48,7 @@ class TestSpecSwan(unittest.TestCase):
         startTime = time.time()
         self.new = getattr(spec,method)()
         self.ntime = time.time() - startTime
-        print ('%s: pyspectra: \t\t %s' % (method, self.ntime))
+        print ('%s: wavespectra: \t\t %s' % (method, self.ntime))
 
     def calcOld(self,spec,method='hs'):
         startTime = time.time()

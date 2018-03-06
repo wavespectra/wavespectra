@@ -8,7 +8,7 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.swan import SwanSpecFile
 from wavespectra.core.misc import to_datetime
 
-def to_swan(self, filename, append=False, id='Created by pyspectra', unique_times=False):
+def to_swan(self, filename, append=False, id='Created by wavespectra', unique_times=False):
     """Write spectra in SWAN ASCII format.
 
     Args:

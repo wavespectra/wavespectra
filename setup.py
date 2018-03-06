@@ -23,8 +23,8 @@ CLASSIFIERS = [
 PROJECT_URLS = {
     'Funding': 'http://www.metocean.co.nz',
     'Say Thanks!': 'http://www.metocean.co.nz',
-    'Source': 'https://github.com/metocean/pyspectra',
-    'Bug Reports': 'https://github.com/metocean/pyspectra/issues',
+    'Source': 'https://github.com/metocean/wavespectra',
+    'Bug Reports': 'https://github.com/metocean/wavespectra/issues',
 }
 
 def _strip_comments(l):
