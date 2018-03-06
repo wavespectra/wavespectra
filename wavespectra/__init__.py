@@ -25,7 +25,8 @@ def _import_read_functions(pkgname='input'):
     import glob
     from importlib import import_module
 
-    for filename in glob.glob1(pkgname, '*.py'):
+    here = os.path.dirname(os.path.abspath(__file__))
+    for filename in glob.glob1(os.path.join(here, pkgname), '*.py'):
         module = os.path.splitext(filename)[0]
         if module == '__init__':
             continue
