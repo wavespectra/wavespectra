@@ -111,28 +111,25 @@ class SpecArray(object):
         return Sint/df
 
     def _peak(self, arr):
-        """Returns the index ipeak of largest peak in 1D-array arr.
+        """Returns indices of largest peaks along freq dim in a ND-array.
 
-        A peak is found IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+        Args:
+            arr (SpecArray): 1D spectra (integrated over directions)
 
-        """
-        ipeak = arr.argmax(dim=attrs.FREQNAME)
-        return ipeak.where(ipeak < self.freq.size-1).fillna(0).astype(int)
+        Returns:
+            ipeak (SpecArray): indices for slicing arr at the frequency peak
 
-    def _peak_new(self, arr):
-        """Returns the indices ipeak of largest peaks along freq dim in a ND-array.
-
-        arr representing a dataset of 1D spectra (integrated over directions)
-        A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
-
+        Note:
+            A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
+            ipeak==0 does not satisfy above condition and is assumed to be
+                missing_value in other parts of the code
         """
         ispeak = np.logical_and(
-        xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) > 0, 
-        xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) < 0)
-
-        ipeak = arr.where(ispeak).fillna(-1).argmax(dim=attrs.FREQNAME) # zero when no peaks (all values are -1 and the first index is picked)
-        
-        return ipeak #ipeak==0 means no valid value, it has to be taken into account in other parts of the code
+            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) > 0,
+            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) < 0
+            )
+        ipeak = arr.where(ispeak).fillna(0).argmax(dim=attrs.FREQNAME).astype(int)
+        return ipeak
 
     def _product(self, dict_of_ids):
         """Dot product of a dictionary of ids used to construct arbitrary slicing dicts.
