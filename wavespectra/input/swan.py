@@ -359,26 +359,26 @@ def read_swanow(fileglob):
 
 if __name__ == '__main__':
     pass
-    # ds = read_swan('/source/pyspectra/tests/manus.spec')
+    # ds = read_swan('/source/wavespectra/tests/manus.spec')
     # fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
     # ds = read_swanow(fileglob)
 
-    # fileglob = '/source/pyspectra/tests/swan/hot/aklislr.20170412_00z.hot-???'
-    # fileglob = '/source/pyspectra/tests/swan/hot/aklishr.20170412_12z.hot-???'
+    # fileglob = '/source/wavespectra/tests/swan/hot/aklislr.20170412_00z.hot-???'
+    # fileglob = '/source/wavespectra/tests/swan/hot/aklishr.20170412_12z.hot-???'
     # ds = read_hotswan(fileglob)
     # plt.figure()
     # ds.spec.hs().plot(cmap='jet')
     # plt.show()
 
-    # fileglob = '/source/pyspectra/tests/swan/swn*/*.spec'
+    # fileglob = '/source/wavespectra/tests/swan/swn*/*.spec'
 
     # t0 = datetime.datetime.now()
     # ds = read_swans(fileglob, dirorder=True)
     # print (datetime.datetime.now()-t0).total_seconds()
 
-    # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/aucki.spec'
+    # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/aucki.spec'
     # ds = read_swans(fileglob, dirorder=True)
 
-    # fileglob = '/source/pyspectra/tests/swan/swn20170407_12z/*.spec'
+    # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/*.spec'
     # ds = read_swans(fileglob, dirorder=True)
 

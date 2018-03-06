@@ -1,4 +1,4 @@
-pyspectra
+wavespectra
 =========
 Python library for wave spectra
 
@@ -12,7 +12,7 @@ Install:
 --------
 Where to get it
 ~~~~~~~~~~~~~~~
-The source code is currently hosted on GitHub at: https://github.com/metocean/pyspectra
+The source code is currently hosted on GitHub at: https://github.com/metocean/wavespectra
 
 Binary installers for the latest released version are available at the `Python package index`_
 
@@ -28,7 +28,7 @@ Install from pypi
 
 Install from sources
 ~~~~~~~~~~~~~~~~~~~~
-Install requirements. Navigate to the base root of pyspectra_ and execute:
+Install requirements. Navigate to the base root of wavespectra_ and execute:
 
 .. code:: bash
 
@@ -41,7 +41,7 @@ Install requirements. Navigate to the base root of pyspectra_ and execute:
    # Also, for testing requirements
    pip install -r requirements/test.txt
 
-Then install pyspectra:
+Then install wavespectra:
 
 .. code:: bash
 
@@ -142,17 +142,17 @@ Define and plot spectra history from example SWAN_ spectra file:
 
    from wavespectra import read_swan
 
-   dset = read_swan('/source/pyspectra/tests/manus.spec')
+   dset = read_swan('/source/wavespectra/tests/manus.spec')
    spec_hist = dset.isel(lat=0, lon=0).sel(freq=slice(0.05,0.2)).spec.oned().T
    spec_hist.plot.contourf(levels=10)
 
-.. _SpecArray: https://github.com/metocean/pyspectra/blob/master/wavespectra/specarray.py
-.. _SpecDataset: https://github.com/metocean/pyspectra/blob/master/wavespectra/specdataset.py
+.. _SpecArray: https://github.com/metocean/wavespectra/blob/master/wavespectra/specarray.py
+.. _SpecDataset: https://github.com/metocean/wavespectra/blob/master/wavespectra/specdataset.py
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
-.. _readspec: https://github.com/metocean/pyspectra/blob/master/wavespectra/readspec.py
+.. _readspec: https://github.com/metocean/wavespectra/blob/master/wavespectra/readspec.py
 .. _xarray accessors: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor
 .. _SWAN: http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html
 .. _Python package index: https://pypi.python.org/pypi/wavespectra
-.. _pyspectra: https://github.com/metocean/pyspectra
+.. _wavespectra: https://github.com/metocean/wavespectra
 .. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
