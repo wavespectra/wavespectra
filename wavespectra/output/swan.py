@@ -41,7 +41,7 @@ def to_swan(self, filename, append=False, id='Created by pyspectra', unique_time
     # Dump each timestep
     if is_time:
         for t in darray.time:
-            darrout = darray.sel(time=t)
+            darrout = darray.sel(time=t, method='nearest')
             if darrout.time.size == 1:
                 sfile.write_spectra(darrout.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values,
                                     time=to_datetime(t.values))
