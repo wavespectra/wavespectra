@@ -17,9 +17,9 @@ class Plugin(type):
         modules = [__import__('wavespectra.output.{}'.format(os.path.splitext(fname)[0]), fromlist=['*'])
                     for fname in os.listdir(os.path.join(here, 'output')) if fname.endswith('.py')]
         for module in modules:
-            for name in dir(module):
-                function = getattr(module, name)
-                if isinstance(function, types.FunctionType) and name.startswith('to_'):
+            for module_attr in dir(module):
+                function = getattr(module, module_attr)
+                if isinstance(function, types.FunctionType) and module_attr.startswith('to_'):
                     dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
 
