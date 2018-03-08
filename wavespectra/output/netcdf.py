@@ -6,7 +6,8 @@ to_netcdf :: write spectra in pre-defined netcdf format
 """
 from wavespectra.core.attributes import attrs
 
-def to_netcdf(self, filename,
+def to_netcdf(self,
+              filename,
               specname=attrs.SPECNAME,
               ncformat='NETCDF4_CLASSIC',
               compress=True,
