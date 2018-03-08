@@ -9,3 +9,4 @@ specpart-f2pywrappers2.f90
 specpartmodule.c
 .vscode
 *.ipynb_checkpoints
+_build
