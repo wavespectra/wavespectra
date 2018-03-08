@@ -35,36 +35,44 @@ class SpecDataset(object):
 
     def __init__(self, xarray_dset):
         self.dset = xarray_dset
-        
+        self._wrapper()
+        self.supported_dims = [attrs.TIMENAME, attrs.SITENAME, attrs.LATNAME,
+                               attrs.LONNAME, attrs.FREQNAME, attrs.DIRNAME]
+
+    def __getattr__(self, attr):
+        return getattr(self.dset, attr)
+
     def __repr__(self):
         return re.sub(r'<.+>', '<{}>'.format(self.__class__.__name__),
                       str(self.dset))
 
-    def __getattr__(self, fn):
-        if fn in dir(SpecArray) and (fn[0] != '_'):
-            return getattr(self.dset['efth'].spec, fn)
-        else:
-            return getattr(self.dset, fn)
+    def _wrapper(self):
+        """Wraper around SpecArray methods.
 
-    def _check_and_stack_dims(self,
-                              supported_dims=[attrs.TIMENAME, attrs.SITENAME, attrs.LATNAME,
-                                              attrs.LONNAME, attrs.FREQNAME, attrs.DIRNAME]):
+        Allows calling public SpecArray methods from SpecDataset.
+        For example:
+            self.spec.hs() becomes equivalent to self.efth.spec.hs()
+
+        """
+        for method_name in dir(self.dset[attrs.SPECNAME].spec):
+            if not method_name.startswith('_'):
+                method = getattr(self.dset[attrs.SPECNAME].spec, method_name)
+                setattr(self, method_name, method)
+
+    def _check_and_stack_dims(self):
         """Ensure dimensions are suitable for dumping in some ascii formats.
-
-        Args:
-            supported_dims (list): dimensions that are supported by the dumping method
 
         Returns:
             Dataset object with site dimension and with no grid dimensions
 
         Note:
-            grid is converted to site dimension which can be iterated over
-            site is defined if not in dataset and not a grid
-            spectral coordinates are checked to ensure they are supported for dumping
+            Grid is converted to site dimension which can be iterated over
+            Site is defined if not in dataset and not a grid
+            Dimensions are checked to ensure they are supported for dumping
         """
         dset = self.dset.load().copy(deep=True)
 
-        unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(supported_dims)
+        unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(self.supported_dims)
         if unsupported_dims:
             raise NotImplementedError('Dimensions {} are not supported by {} method'.format(
                 unsupported_dims, sys._getframe().f_back.f_code.co_name))
@@ -78,8 +86,9 @@ class SpecDataset(object):
         return dset
 
 if __name__ == '__main__':
-    from readspec import read_swan
-    # ds = read_swan('/source/wavespectra/tests/manus.spec')
+    from wavespectra.input.swan import read_swan
+    here = os.path.dirname(os.path.abspath(__file__))
+    ds = read_swan(os.path.join(here, '../tests/swanfile.spec'))
     # ds.spec.to_octopus('/tmp/test.oct')
     # ds.spec.to_swan('/tmp/test.swn')
     # ds.spec.to_netcdf('/tmp/test.nc')
