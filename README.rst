@@ -1,5 +1,5 @@
 wavespectra
-=========
+===========
 Python library for wave spectra
 
 Main contents:
