@@ -24,7 +24,7 @@ def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
         1D spectra not supported
 
     """
-    assert 'time' in self.dims, "Octopus output requires time dimension"
+    assert attrs.TIMENAME in self.dims, "Octopus output requires time dimension"
 
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
