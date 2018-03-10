@@ -93,6 +93,7 @@ setup(
     platforms=['any'],
     install_requires=install_requires(),
     extras_require=extras_require(),
+    setup_requires=['pytest-runner'],
     tests_require=reqs('test.txt'),
     python_requires=">=2.7, <3",
     classifiers=CLASSIFIERS,
