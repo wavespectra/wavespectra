@@ -1,25 +1,23 @@
 """Unit testing for stats methods in SpecArray."""
 import os
-import inspect
 import pytest
 import pandas as pd
 
 from wavespectra import read_swan
-from wavespectra.core.swan import read_tab
+
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '../sample_files')
 
 class TestSpecArray(object):
     """Test methods from SpecArray class."""
 
     @classmethod
     def setup_class(self):
-        """Read test spectra and pre-calculated stats from file.
-        
-        self.control: pandas DataFrame object with control stats read from file
-        self.swanspec: SpecDataset object read from file
-        """
-        here = os.path.dirname(os.path.abspath(__file__))
-        self.control = pd.read_csv(os.path.join(here, '../swanfile.txt'), sep='\t')
-        self.swanspec = read_swan(os.path.join(here, '../swanfile.spec'))
+        """Read test spectra and pre-calculated stats from file."""
+
+        self.control = pd.read_csv(os.path.join(FILES_DIR, 'swanfile.txt'),
+                                   sep='\t')
+        self.swanspec = read_swan(os.path.join(FILES_DIR, 'swanfile.spec'))
 
     @pytest.mark.parametrize('stat_name, rel', [
         ('hs', 1e-3),
