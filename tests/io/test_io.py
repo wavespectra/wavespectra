@@ -7,7 +7,8 @@ from wavespectra import (read_swan, read_netcdf, read_ww3, read_ww3_msl,
     read_octopus, read_json)
 from wavespectra.core.attributes import attrs
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         '../sample_files')
 
 class TestIO(object):
     """Test reading and writing of different file formats.
@@ -22,7 +23,6 @@ class TestIO(object):
     def setup_class(self):
         """Setup class."""
         self.tmp_dir = mkdtemp()
-        self.file_path = os.path.join(HERE, '../')
 
     @classmethod
     def teardown_class(self):
@@ -47,7 +47,7 @@ class TestIO(object):
                   "skipping output tests").format(filename)
 
     def _read(self):
-        self.infile = os.path.join(self.file_path, self.filename)
+        self.infile = os.path.join(FILES_DIR, self.filename)
         self.ds = self.read_func(self.infile)
 
     def _write(self):
