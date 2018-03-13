@@ -7,4 +7,3 @@ toolz
 sortedcontainers
 scipy
 attrdict
-ruamel.yaml
