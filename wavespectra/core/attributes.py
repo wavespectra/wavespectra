@@ -4,13 +4,13 @@ attrs (dict): standarised names for spectral variables, standard_names and units
 """
 # from collections import OrderedDict
 import os
-import ruamel.yaml as yaml
+import yaml
 from attrdict import AttrDict
 
-here = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(here, 'attributes.yml')) as fid:
-    attrs =  AttrDict(yaml.load(fid, Loader=yaml.RoundTripLoader))
+with open(os.path.join(HERE, 'attributes.yml')) as stream:
+    attrs =  AttrDict(yaml.load(stream, yaml.SafeLoader))
 
 def set_spec_attributes(dset):
     """
