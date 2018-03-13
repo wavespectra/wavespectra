@@ -7,3 +7,4 @@ toolz
 sortedcontainers
 scipy
 attrdict
+pyaml
