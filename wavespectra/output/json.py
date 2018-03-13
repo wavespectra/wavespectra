@@ -9,7 +9,7 @@ from wavespectra.core.attributes import attrs
 try:
     from cfjson.xrdataset import CFJSONinterface
 except ImportError:
-    print 'Warning: cannot import cf-json, install "metocean" dependencies for full functionality'
+    print('Warning: cannot import cf-json, install "metocean" dependencies for full functionality')
 
 def to_json(self, filename, attributes={}):
     """Save spectra in CF-JSON format.

@@ -42,25 +42,25 @@ class TestSpecSwan(unittest.TestCase):
 
     def tearDown(self):
         t = time.time() - self.startTime
-        print ("%s: %.3f" % (self.id(), t))
+        print("%s: %.3f" % (self.id(), t))
 
     def calcNew(self,spec,method='hs'):
         startTime = time.time()
         self.new = getattr(spec,method)()
         self.ntime = time.time() - startTime
-        print ('%s: wavespectra: \t\t %s' % (method, self.ntime))
+        print('%s: wavespectra: \t\t %s' % (method, self.ntime))
 
     def calcOld(self,spec,method='hs'):
         startTime = time.time()
         self.old = self.calcOldTs(spec,method=method)
         self.otime = time.time() - startTime
-        print ('%s: pymo: \t\t %s' % (method, self.otime))
+        print('%s: pymo: \t\t %s' % (method, self.otime))
 
     def check_method(self, method):
         print("\nChecking %s:" % method)
         self.calcOld(self.specold,method=method)
         self.calcNew(self.specnew,method=method)
-        print ('x times improvement: \t%s' % (self.otime/self.ntime))
+        print('x times improvement: \t%s' % (self.otime/self.ntime))
         assert_array_almost_equal(self.old.values.squeeze(),self.new.values.squeeze(), decimal=4,)
         # self.plot()
         # plt.title(method)
@@ -91,11 +91,11 @@ class TestSpecSwan(unittest.TestCase):
 #        startTime = time.time()
 #        nsw = self.specnew.split(fmin=1./split)
 #        nsea = self.specnew.split(fmax=1./split)
-#        print ('pymsl split: %s' % (time.time() - startTime))
+#        print('pymsl split: %s' % (time.time() - startTime))
 #        startTime = time.time()
 #        osw = self.specold.split(fmin=1./split)
 #        osea = self.specold.split(fmax=1./split)
-#        print ('pymo split: %s' % (time.time() - startTime))
+#        print('pymo split: %s' % (time.time() - startTime))
 #        for method in ('hs',):
 #            self.calcOld(nsea,method=method)
 #            self.calcNew(osea,method=method)
