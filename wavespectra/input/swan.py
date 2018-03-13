@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
     # t0 = datetime.datetime.now()
     # ds = read_swans(fileglob, dirorder=True)
-    # print (datetime.datetime.now()-t0).total_seconds()
+    # print((datetime.datetime.now()-t0).total_seconds())
 
     # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/aucki.spec'
     # ds = read_swans(fileglob, dirorder=True)
