@@ -26,7 +26,7 @@ try:
     from sympy.utilities.lambdify import lambdify
     from sympy.parsing.sympy_parser import parse_expr
 except ImportError:
-    print 'Warning: cannot import sympy, install "extra" dependencies for full functionality'
+    print('Warning: cannot import sympy, install "extra" dependencies for full functionality')
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association

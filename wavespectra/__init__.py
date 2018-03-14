@@ -36,8 +36,7 @@ def _import_read_functions(pkgname='input'):
                 import_module('wavespectra.{}.{}'.format(pkgname, module)),
                 func_name
                 )
-        except:
-            print('Cannot import reading function:'.format(func_name),
-                    sys.exc_info()[0])
+        except Exception as exc:
+            print('Cannot import reading function {}:\n{}'.format(func_name, exc))
 
 _import_read_functions()
