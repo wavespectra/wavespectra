@@ -1,11 +1,10 @@
-"""
-Spectra object based on DataArray to calculate spectral statistics.
+"""Spectra object based on DataArray to calculate spectral statistics.
 
 Reference:
-    Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
+    - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
         Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
-    Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
-    Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
+    - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+    - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
         Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
 
 """

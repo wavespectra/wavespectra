@@ -1,5 +1,4 @@
-"""
-Generic netCDF output plugin.
+"""Generic netCDF output plugin.
 
 to_netcdf :: write spectra in pre-defined netcdf format
 

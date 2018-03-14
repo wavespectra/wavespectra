@@ -1,5 +1,4 @@
-"""
-Native WAVEWATCH3 output plugin.
+"""Native WAVEWATCH3 output plugin.
 
 to_ww3 :: write spectra in ww3 netcdf format
 

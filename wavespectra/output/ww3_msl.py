@@ -1,5 +1,4 @@
-"""
-MetOcean Solutions WAVEWATCH3 output plugin.
+"""MetOcean Solutions WAVEWATCH3 output plugin.
 
 to_ww3_msl :: write spectra in custom ww3 netcdf format
 
