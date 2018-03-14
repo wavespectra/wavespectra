@@ -53,11 +53,11 @@ def read_swan(filename, dirorder=True, as_site=None):
                 if 'X-wsp' in tab and 'Y-wsp' in tab:
                     tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
             else:
-                print "Warning: times in %s and %s not consistent, not appending winds and depth" % (
-                    swanfile.filename, swanfile.tabfile)
+                print("Warning: times in %s and %s not consistent, not appending winds and depth" %
+                    (swanfile.filename, swanfile.tabfile))
                 tab = None
         except Exception as exc:
-            print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
+            print("Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc))
 
     if swanfile.is_grid:
         lons = sorted(np.unique(lons))
@@ -175,12 +175,12 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
                     if 'X-wsp' in tab and 'Y-wsp' in tab:
                         tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
                 else:
-                    print "Warning: times in %s and %s not consistent, not appending winds and depth" % (
-                        swanfile.filename, swanfile.tabfile)
+                    print("Warning: times in %s and %s not consistent, not appending winds and depth" %
+                        (swanfile.filename, swanfile.tabfile))
                     tab = pd.DataFrame()
                 tab = tab[list(set(tab.columns).intersection((attrs.DEPNAME, attrs.WSPDNAME, attrs.WDIRNAME)))]
             except Exception as exc:
-                print "Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)
+                print("Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc))
         else:
             tab = pd.DataFrame()
 
@@ -374,7 +374,7 @@ if __name__ == '__main__':
 
     # t0 = datetime.datetime.now()
     # ds = read_swans(fileglob, dirorder=True)
-    # print (datetime.datetime.now()-t0).total_seconds()
+    # print((datetime.datetime.now()-t0).total_seconds())
 
     # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/aucki.spec'
     # ds = read_swans(fileglob, dirorder=True)

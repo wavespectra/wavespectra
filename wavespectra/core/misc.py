@@ -22,7 +22,7 @@ def to_datetime(np64):
     elif isinstance(np64, xr.DataArray):
         dt = pd.to_datetime(str(np64.values)).to_pydatetime()
     else:
-        print IOError('Cannot convert %s into datetime, expected np.datetime64 or xr.DataArray' %
+        IOError('Cannot convert %s into datetime, expected np.datetime64 or xr.DataArray' %
             type(np64))
     return dt
 

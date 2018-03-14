@@ -10,3 +10,5 @@ specpartmodule.c
 .vscode
 *.ipynb_checkpoints
 _build
+.eggs
+.pytest_cache

@@ -47,6 +47,9 @@ Then install wavespectra:
 
    python setup.py install
 
+   # Run pytest integration
+   python setup.py test
+
 Alternatively, to install in `development mode`_:
 
 .. code:: bash

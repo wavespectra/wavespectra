@@ -47,7 +47,7 @@ class SwanSpecFile(object):
             self.x = []
             self.y = []
             for ip in self._read_header('LONLAT', True):
-                xy = map(float,ip.split())
+                xy = [float(val) for val in ip.split()]
                 self.x.append(xy[0])
                 self.y.append(xy[1])
             self.x = np.array(self.x)
@@ -56,11 +56,14 @@ class SwanSpecFile(object):
             self.rfreq = self._read_header('RFREQ', True)
             self.ndir = self._read_header('NDIR', True)
             self.cdir = self._read_header('CDIR', True)
-            self.freqs = np.array(map(float, self.afreq)) if self.afreq else np.array(map(float, self.rfreq))
-            if self.ndir:
-                self.dirs = np.array(map(float, self.ndir))
+            if self.afreq:
+                self.freqs = np.array([float(val) for val in self.afreq])
             else:
-                self.dirs = to_nautical(np.array(map(float, self.cdir)))
+                self.freqs = np.array([float(val) for val in self.rfreq])
+            if self.ndir:
+                self.dirs = np.array([float(val) for val in self.ndir])
+            else:
+                self.dirs = to_nautical(np.array([float(val) for val in self.cdir]))
             self._read_header('QUANT',True)
             self.fid.readline()
             self.excval = int(float(self.fid.readline().split()[0]))
@@ -114,7 +117,7 @@ class SwanSpecFile(object):
                         line = self.fid.readline()
                         lsplit = line.split()
                         try:
-                            Snew[i,:] = map(float, lsplit)
+                            Snew[i,:] = [float(val) for val in lsplit]
                         except:
                             pass
                     Snew *= fac
