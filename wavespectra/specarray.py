@@ -210,7 +210,8 @@ class SpecArray(object):
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
-        Direction dimension is dropped after integrating
+        Direction dimension is dropped after integrating.
+
         Args:
             - skipna (bool): choose it to skip nans when integrating spectra.
               This is the default behaviour for sum() in DataArray. Notice it
