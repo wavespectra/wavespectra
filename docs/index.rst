@@ -10,13 +10,12 @@ Python library for wave spectra
 -------------------------------
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
     :caption: Contents:
 
     How to install <install>
     Library documentation <library>
     support
-
 
 Indices and tables
 ==================
