@@ -171,4 +171,7 @@ texinfo_documents = [
 ]
 
 
+# -- Options for sorting by source in autodoc -----------------------------
+
+autodoc_member_order = 'bysource'
 
