@@ -2,11 +2,10 @@
 Support
 =======
 
-The easiest way to get help with the project is to join the ``#crawler``
-channel on Freenode_. We hang out there and you can get real-time help with
-your projects.  The other good way is to open an issue on Github_.
+Wavespectra is an open source project developed by `MetOcean Solutions`_.
+The easiest way to get help with the project is to open an issue on Github_.
 
-The mailing list at https://groups.google.com/forum/#!forum/crawler is also available for support.
+We welcome contributions!
 
-.. _Freenode: irc://freenode.net
-.. _Github: http://github.com/example/crawler/issues
+.. _Github: https://github.com/metocean/wavespectra/issues
+.. _`MetOcean Solutions`: http://www.metocean.co.nz/
