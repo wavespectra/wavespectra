@@ -36,6 +36,7 @@ _ = np.newaxis
 
 @xr.register_dataarray_accessor('spec')
 class SpecArray(object):
+
     def __init__(self, xarray_obj, dim_map=None):
         """Define spectral attributes."""
         # # Rename spectra coordinates if not 'freq' and/or 'dir'
