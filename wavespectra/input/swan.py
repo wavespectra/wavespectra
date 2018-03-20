@@ -25,11 +25,12 @@ def read_swan(filename, dirorder=True, as_site=None):
     """Read Spectra from SWAN ASCII file.
 
     Args:
-        dirorder (bool): If True reorder spectra so that directions are sorted
-        as_site (bool): If True locations are defined by 1D site dimension
+        - dirorder (bool): If True reorder spectra so that directions are
+          sorted.
+        - as_site (bool): If True locations are defined by 1D site dimension.
         
     Returns:
-        dset (SpecDataset): spectra dataset object read from file
+        - dset (SpecDataset): spectra dataset object read from file.
 
     """
     swanfile = SwanSpecFile(filename, dirorder=dirorder)
@@ -105,28 +106,35 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     """Read multiple swan files into single Dataset.
 
     Args:
-        fileglob (str, list): glob pattern specifying files to read
-        ndays (float): number of days to keep from each file, choose None to keep entire period
-        int_freq (ndarray, bool): frequency array for interpolating onto
-            - ndarray: 1d array specifying frequencies to interpolate onto
-            - True: logarithm array is constructed such that fmin=0.0418 Hz, fmax=0.71856 Hz, df=0.1f
-            - False: No interpolation performed in frequency space
-        int_dir (ndarray, bool): direction array for interpolating onto
-            - ndarray: 1d array specifying directions to interpolate onto
-            - True: circular array is constructed such that dd=10 degrees
-            - False: No interpolation performed in direction space
-        dirorder (bool): if True ensures directions are sorted
-        ntimes (int): use it to read only specific number of times, useful for checking headers only
+        - fileglob (str, list): glob pattern specifying files to read.
+        - ndays (float): number of days to keep from each file, choose None to
+          keep entire period.
+        - int_freq (ndarray, bool): frequency array for interpolating onto:
+            - ndarray: 1d array specifying frequencies to interpolate onto.
+            - True: logarithm array is constructed such that fmin=0.0418 Hz,
+              fmax=0.71856 Hz, df=0.1f.
+            - False: No interpolation performed in frequency space.
+        - int_dir (ndarray, bool): direction array for interpolating onto:
+            - ndarray: 1d array specifying directions to interpolate onto.
+            - True: circular array is constructed such that dd=10 degrees.
+            - False: No interpolation performed in direction space.
+        - dirorder (bool): if True ensures directions are sorted.
+        - ntimes (int): use it to read only specific number of times, useful
+          for checking headers only.
         
     Returns:
-        dset (SpecDataset): spectra dataset object read from file with different sites and cycles
-                            concatenated along the 'site' and 'time' dimensions
+        - dset (SpecDataset): spectra dataset object read from file with
+          different sites and cycles concatenated along the 'site' and 'time'
+          dimensions.
 
     Note:
-        If multiple cycles are provided, 'time' coordinate is replaced by 'cycletime' multi-index coordinate
-        If more than one cycle is prescribed from fileglob, each cycle must have same number of sites
-        Either all or none of the spectra in fileglob must have tabfile associated to provide wind/depth data
-        Concatenation is done with numpy arrays for efficiency
+        - If multiple cycles are provided, 'time' coordinate is replaced by
+          'cycletime' multi-index coordinate.
+        - If more than one cycle is prescribed from fileglob, each cycle must
+          have same number of sites.
+        - Either all or none of the spectra in fileglob must have tabfile
+          associated to provide wind/depth data.
+        - Concatenation is done with numpy arrays for efficiency.
 
     """
     swans = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
@@ -306,17 +314,20 @@ def read_hotswan(fileglob, dirorder=True):
     """Read multiple swan hotfiles into single gridded Dataset.
 
     Args:
-        fileglob (str, list): glob pattern specifying hotfiles to read and merge
-        dirorder (bool): if True ensures directions are sorted
+        - fileglob (str, list): glob pattern specifying hotfiles to read and
+          merge.
+        - dirorder (bool): if True ensures directions are sorted.
 
     Returns:
-        dset (SpecDataset): spectra dataset object with different grid parts merged
+        - dset (SpecDataset): spectra dataset object with different grid parts
+          merged.
 
     Note:
-        SWAN hotfiles from mpi runs are split by the number of cores over the largest dim of
-        (lat, lon) with overlapping rows or columns that are computed in only one of the split
-        hotfiles. Here overlappings are merged so that those with higher values are kept
-        which assumes non-computed overlapping rows or columns are filled with zeros.
+        - SWAN hotfiles from mpi runs are split by the number of cores over the
+          largest dim of (lat, lon) with overlapping rows or columns that are
+          computed in only one of the split hotfiles. Here overlappings are
+          merged so that those with higher values are kept which assumes
+          non-computed overlapping rows or columns are filled with zeros.
 
     """
     hotfiles = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
@@ -346,9 +357,11 @@ def read_hotswan(fileglob, dirorder=True):
     return dset
 
 def read_swanow(fileglob):
-    """Read SWAN nowcast from fileglob, keep overlapping dates from most recent files.
+    """Read SWAN nowcast from fileglob, keep overlapping dates from most recent
+    files.
 
-    Inefficient workaround. This should ideally be handled within read_swans by manipulating multi-indexes
+    Inefficient workaround. This should ideally be handled within read_swans by
+    manipulating multi-indexes
 
     """
     swans = sorted(fileglob) if isinstance(fileglob, list) else sorted(glob.glob(fileglob))
@@ -356,29 +369,4 @@ def read_swanow(fileglob):
     for swan in swans:
         ds = read_swan(swan).combine_first(ds)
     return ds
-
-if __name__ == '__main__':
-    pass
-    # ds = read_swan('/source/wavespectra/tests/manus.spec')
-    # fileglob = '/mnt/data/work/Hindcast/jogchum/veja/model/swn20161101_??z/*.spec'
-    # ds = read_swanow(fileglob)
-
-    # fileglob = '/source/wavespectra/tests/swan/hot/aklislr.20170412_00z.hot-???'
-    # fileglob = '/source/wavespectra/tests/swan/hot/aklishr.20170412_12z.hot-???'
-    # ds = read_hotswan(fileglob)
-    # plt.figure()
-    # ds.spec.hs().plot(cmap='jet')
-    # plt.show()
-
-    # fileglob = '/source/wavespectra/tests/swan/swn*/*.spec'
-
-    # t0 = datetime.datetime.now()
-    # ds = read_swans(fileglob, dirorder=True)
-    # print((datetime.datetime.now()-t0).total_seconds())
-
-    # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/aucki.spec'
-    # ds = read_swans(fileglob, dirorder=True)
-
-    # fileglob = '/source/wavespectra/tests/swan/swn20170407_12z/*.spec'
-    # ds = read_swans(fileglob, dirorder=True)
 

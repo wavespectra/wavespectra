@@ -16,17 +16,22 @@ def read_netcdf(filename_or_fileglob,
     """Read Spectra from generic netCDF format.
 
     Args:
-        filename_or_fileglob (str): filename or fileglob specifying multiple files to read
-        chunks (dict): chunk sizes for dimensions in dataset. By default dataset is loaded
-                       using single chunk for all dimensions (see xr.open_mfdataset documentation)
-        <coord>name :: coordinate name in netcdf, used for standarising dataset
+        - filename_or_fileglob (str): filename or fileglob specifying multiple
+          files to read.
+        - chunks (dict): chunk sizes for dimensions in dataset. By default
+          dataset is loaded using single chunk for all dimensions (see
+          xr.open_mfdataset documentation).
+        - <coord>name :: coordinate name in netcdf, used for standarising
+          dataset.
 
     Returns:
-        dset (SpecDataset): spectra dataset object read from netcdf file
+        - dset (SpecDataset): spectra dataset object read from netcdf file
 
     Note:
-        Assumes frequency in Hz, direction in degrees and spectral energy in m^2/Hz[/degree]
-        If file is large to fit in memory, consider specifying chunks for 'time' and/or 'station' dims
+        - Assumes frequency in Hz, direction in degrees and spectral energy in
+          m^2/Hz[/degree].
+        - If file is large to fit in memory, consider specifying chunks for
+          'time' and/or 'station' dims.
 
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)

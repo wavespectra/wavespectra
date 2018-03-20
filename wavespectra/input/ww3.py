@@ -9,15 +9,18 @@ def read_ww3(filename_or_fileglob, chunks={}):
     """Read Spectra from WAVEWATCHIII native netCDF format.
 
     Args:
-        filename_or_fileglob (str): filename or fileglob specifying multiple files to read
-        chunks (dict): chunk sizes for dimensions in dataset. By default dataset is loaded
-                       using single chunk for all dimensions (see xr.open_mfdataset documentation)
+        - filename_or_fileglob (str): filename or fileglob specifying multiple
+          files to read.
+        - chunks (dict): chunk sizes for dimensions in dataset. By default
+          dataset is loaded using single chunk for all dimensions (see
+          xr.open_mfdataset documentation).
 
     Returns:
-        dset (SpecDataset): spectra dataset object read from ww3 file
+        - dset (SpecDataset): spectra dataset object read from ww3 file
 
     Note:
-        If file is large to fit in memory, consider specifying chunks for 'time' and/or 'station' dims
+        - If file is large to fit in memory, consider specifying chunks for
+          'time' and/or 'station' dims.
 
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
