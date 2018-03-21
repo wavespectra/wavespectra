@@ -1,8 +1,4 @@
-"""OCTOPUS output plugin.
-
-to_octopus :: write spectra in octopus spectrum format
-
-"""
+"""OCTOPUS output plugin."""
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
@@ -12,15 +8,16 @@ def to_octopus(self, filename, site_id='spec', fcut=0.125, missing_val=-99999):
     """Save spectra in Octopus format.
 
     Args:
-        filename (str): name for output OCTOPUS file
-        site_id (str): used to construct LPoint header
-        fcut (float): frequency for splitting spectra
-        missing_value (int): missing value in output file
+        - filename (str): name for output OCTOPUS file.
+        - site_id (str): used to construct LPoint header.
+        - fcut (float): frequency for splitting spectra.
+        - missing_value (int): missing value in output file.
 
     Note:
-        dataset needs to have lon/lat/time coordinates
-        dataset with multiple locations dumped at same file with one location header per site
-        1D spectra not supported
+        - dataset needs to have lon/lat/time coordinates.
+        - dataset with multiple locations dumped at same file with one location
+          header per site.
+        - 1D spectra not supported.
 
     """
     assert attrs.TIMENAME in self.dims, "Octopus output requires time dimension"
