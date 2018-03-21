@@ -15,6 +15,9 @@ Python library for wave spectra
 
     How to install <install>
     Library documentation <library>
+    input
+    output
+    conventions
     support
 
 Indices and tables
