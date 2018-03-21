@@ -346,7 +346,6 @@ class SpecArray(object):
             return None
         Sf = self.oned()
         ipeak = self._peak(Sf)
-        
         fp = self.freq[ipeak].drop('freq')
         if smooth:
             f1, f2, f3 = [self.freq[ipeak+i].values for i in [-1, 0, 1]]
@@ -358,13 +357,12 @@ class SpecArray(object):
             qa[qa>=0] = np.nan
             fpsmothed = (s12-q12/qa) / 2.
             fp.values[qa<0] = fpsmothed[qa<0]
-            
         tp = (1 / fp).where(ipeak>0).fillna(mask).rename('tp')
         tp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
             ))
-        return tp # Returns masked dataarray
+        return tp
 
     def momf(self, mom=0):
         """Calculate given frequency moment."""
