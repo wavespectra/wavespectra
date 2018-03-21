@@ -1,13 +1,22 @@
+"""Read spectra from dictionary."""
 import xarray as xr
+
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import set_spec_attributes
+
 def read_dictionary(spcdict):
     """Read spectra from generic dictionary.
 
     Args:
-        - spcdict (dict): information for spectra. For example:
+        - spcdict (dict): information for defining SpecDataset. Keys define
+          spectral coordinates and variables, and should be named using the
+          attributes from :py:mod:`wavespectra.core.attributes.attrs`.
     
+    Example:
+        .. code:: python
+
             from wavespectra.core.attributes import attrs
+
             spcdict = {
                 attrs.TIMENAME: {'dims': (attrs.TIMENAME), 'data': time},
                 attrs.FREQNAME: {'dims': (attrs.FREQNAME), 'data': freq},
@@ -20,7 +29,6 @@ def read_dictionary(spcdict):
                 attrs.WDIRNAME: {'dims': (attrs.TIMENAME), 'data': wdir},
                 attrs.WSPDNAME: {'dims': (attrs.TIMENAME), 'data': wnd},
                 }
-    units have to be as defined in attrs.
 
     """
     spcdict = {k: v for k, v in spcdict.items() if len(v['data'])}
