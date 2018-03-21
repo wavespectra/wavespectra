@@ -72,6 +72,7 @@ The following methods are available in
 
 .. autoclass:: wavespectra.specarray.SpecArray
    :members:
+   :noindex:
 
 SpecDataset
 -----------
@@ -99,6 +100,7 @@ The following methods are available in SpecDataset:
 
 .. autoclass:: wavespectra.specdataset.SpecDataset
    :members:
+   :noindex:
    :exclude-members: to_datetime
 
 .. _xarray: https://xarray.pydata.org/en/stable/

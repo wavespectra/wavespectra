@@ -35,6 +35,7 @@ The module also provides a function to standarise coordinate and variable
 attributes in a Dataset object using the information defined in `attributes.yml`_:
 
 .. autofunction:: wavespectra.core.attributes.set_spec_attributes
+   :noindex:
 
 .. _xarray: https://xarray.pydata.org/en/stable/
 .. _attributes.yml: https://github.com/metocean/wavespectra/blob/master/wavespectra/core/attributes.yml
