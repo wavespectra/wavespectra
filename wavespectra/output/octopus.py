@@ -1,5 +1,4 @@
-"""
-OCTOPUS output plugin.
+"""OCTOPUS output plugin.
 
 to_octopus :: write spectra in octopus spectrum format
 

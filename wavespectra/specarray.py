@@ -1,12 +1,11 @@
-"""
-Spectra object based on DataArray to calculate spectral statistics.
+"""Spectra object based on DataArray to calculate spectral statistics.
 
 Reference:
-    Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
-        Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
-    Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
-    Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
-        Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
+    - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
+      Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
+    - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+    - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
+      Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
 
 """
 import re
@@ -17,6 +16,7 @@ import xarray as xr
 import types
 import copy
 from itertools import product
+import inspect
 
 from wavespectra.core.attributes import attrs
 from wavespectra.core.misc import GAMMA, D2R, R2D
@@ -36,6 +36,7 @@ _ = np.newaxis
 
 @xr.register_dataarray_accessor('spec')
 class SpecArray(object):
+
     def __init__(self, xarray_obj, dim_map=None):
         """Define spectral attributes."""
         # # Rename spectra coordinates if not 'freq' and/or 'dir'
@@ -175,6 +176,26 @@ class SpecArray(object):
         """
         return set(other.dims) == self._non_spec_dims
 
+    def _my_name(self):
+        """Returns the caller's name."""
+        return inspect.stack()[1][3]
+
+    def _standard_name(self, varname):
+        try:
+            return attrs.ATTRS[varname]['standard_name']
+        except AttributeError:
+            print('Cannot set standard_name for variable {}. '
+                  'Ensure it is defined in attributes.yml'.format(varname))
+            return ''
+
+    def _units(self, varname):
+        try:
+            return attrs.ATTRS[varname]['units']
+        except AttributeError:
+            print('Cannot set units for variable {}. '
+                  'Ensure it is defined in attributes.yml'.format(varname))
+            return ''
+
     def sort(self, darray, dims, inplace=False):
         """Sort darray along dims list so that the respective coordinates are sorted."""
         other = darray.copy(deep=not inplace)
@@ -190,10 +211,12 @@ class SpecArray(object):
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
-        Direction dimension is dropped after integrating
+        Direction dimension is dropped after integrating.
+
         Args:
-            skipna (bool): if True (xarray's default) sum of all-nan array returns zero
-                           which will result in some methods like self.hs dropping mask
+            - skipna (bool): choose it to skip nans when integrating spectra.
+              This is the default behaviour for sum() in DataArray. Notice it
+              converts masks, where the entire array is nan, into zero.
 
         """
         if self.dir is not None:
@@ -205,13 +228,13 @@ class SpecArray(object):
         """Split spectra over freq and/or dir dims.
 
         Args:
-            fmin (float): lowest frequency to split spectra, by default the lowest
-            fmax (float): highest frequency to split spectra, by default the highest
-            dmin (float): lowest direction to split spectra over, by default min(dir)
-            dmax (float): highest direction to split spectra over, by default max(dir)
+            - fmin (float): lowest frequency to split spectra, by default the lowest.
+            - fmax (float): highest frequency to split spectra, by default the highest.
+            - dmin (float): lowest direction to split spectra over, by default min(dir).
+            - dmax (float): highest direction to split spectra over, by default max(dir).
 
         Note:
-            spectra are interpolated at fmin / fmax if they are not present in self.freq
+            - spectra are interpolated at `fmin` / `fmax` if they are not present in self.freq
 
         """
         assert fmax > fmin if fmax else True, 'fmax needs to be greater than fmin'
@@ -240,12 +263,11 @@ class SpecArray(object):
         E.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm^{2}'))))
         return E.rename('energy')
 
-    def hs(self, tail=True, standard_name='sea_surface_wave_significant_height'):
+    def hs(self, tail=True):
         """Spectral significant wave height Hm0.
 
         Args:
-            tail (bool): if True fit high-frequency tail before integrating spectra
-            standard_name (str): CF standard name for defining DataArray attribute
+            - tail (bool): if True fit high-frequency tail before integrating spectra.
 
         """
         Sf = self.oned(skipna=False)
@@ -253,10 +275,13 @@ class SpecArray(object):
         if tail and Sf.freq[-1] > 0.333:
             E += 0.25 * Sf[{attrs.FREQNAME: -1}] * Sf.freq[-1].values
         hs = 4 * np.sqrt(E)
-        hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
-        return hs.rename('hs')
+        hs.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return hs.rename(self._my_name())
     
-    def hmax(self, standard_name='sea_surface_wave_maximum_height'):
+    def hmax(self):
         """Maximum wave height Hmax.
 
         hmax is the most probably value of the maximum individual wave height
@@ -264,7 +289,7 @@ class SpecArray(object):
         not by much since the probability density function is rather narrow).
 
         Reference:
-            Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82)
+            - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
 
         """
         if attrs.TIMENAME in self._obj.coords and self._obj.time.size > 1:
@@ -273,20 +298,23 @@ class SpecArray(object):
             k = np.sqrt(0.5*np.log(N)) 
         else:
             k = 1.86 # assumes N = 3*3600 / 10.8
-        hs = self.hs()
-        hs.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm'))))
-        return k * hs
-        
+        hmax = k * self.hs()
+        hmax.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return hmax.rename(self._my_name())
+
     def scale_by_hs(self, expr, inplace=True, hs_min=-np.inf, hs_max=np.inf,
                     tp_min=-np.inf, tp_max=np.inf, dpm_min=-np.inf, dpm_max=np.inf):
         """Scale spectra using equation based on Significant Wave Height Hs.
 
         Args:
-            expr (str): expression to apply, e.g. '0.13*hs + 0.02'
-            inplace (bool): use True to apply transformation in place, False otherwise
-            hs_min, hs_max (float): Hs range over which expr is applied
-            tp_min, tp_max (float): Tp range over which expr is applied
-            dpm_min, dpm_max (float) Dpm range over which expr is applied
+            - expr (str): expression to apply, e.g. '0.13*hs + 0.02'.
+            - inplace (bool): use True to apply transformation in place, False otherwise.
+            - hs_min, hs_max (float): Hs range over which expr is applied.
+            - tp_min, tp_max (float): Tp range over which expr is applied.
+            - dpm_min, dpm_max (float) Dpm range over which expr is applied.
 
         """
         func = lambdify(Symbol('hs'), parse_expr(expr.lower()), modules=['numpy'])
@@ -305,15 +333,13 @@ class SpecArray(object):
         else:
             return scaled
 
-    def tp(self, smooth=True, mask=np.nan,
-           standard_name='sea_surface_wave_period_at_variance_spectral_density_maximum'):
+    def tp(self, smooth=True, mask=np.nan):
         """Peak wave period Tp.
 
         Args:
-            smooth (bool): True for the smooth wave period, False for simply the discrete period
-                           corresponding to the maxima in the direction-integrated spectra
-            mask (float): value for missing data in output, if there is no peak in the spectra)
-            standard_name (str): CF standard name for defining DataArray attribute
+            - smooth (bool): True for the smooth wave period, False for simply the discrete
+              period corresponding to the maxima in the direction-integrated spectra.
+            - mask (float): value for missing data in output, if there is no peak in the spectra).
 
         """
         if len(self.freq) < 3:
@@ -334,7 +360,10 @@ class SpecArray(object):
             fp.values[qa<0] = fpsmothed[qa<0]
             
         tp = (1 / fp).where(ipeak>0).fillna(mask).rename('tp')
-        tp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
+        tp.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
         return tp # Returns masked dataarray
 
     def momf(self, mom=0):
@@ -351,74 +380,68 @@ class SpecArray(object):
         mcos = (self.dd * self._obj * cp).sum(dim=attrs.DIRNAME, skipna=False)
         return msin, mcos
 
-    def tm01(self,
-             standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment'):
+    def tm01(self):
         """Mean absolute wave period Tm01.
 
         True average period from the 1st spectral moment.
 
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
-
         """
         tm01 = self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)
-        tm01.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
-        return tm01.rename('tm01')
+        tm01.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return tm01.rename(self._my_name())
 
-    def tm02(self,
-             standard_name='sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment'):
+    def tm02(self):
         """Mean absolute wave period Tm02.
 
         Average period of zero up-crossings (Zhang, 2011).
 
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
-
         """
         tm02 = np.sqrt(self.momf(0).sum(dim=attrs.DIRNAME)/self.momf(2).sum(dim=attrs.DIRNAME))
-        tm02.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 's'))))
-        return tm02.rename('tm02')
+        tm02.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return tm02.rename(self._my_name())
 
-    def dm(self, standard_name='sea_surface_wave_from_mean_direction'):
-        """Mean wave direction from the 1st spectral moment Dm.
-
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
-
-        """
+    def dm(self):
+        """Mean wave direction from the 1st spectral moment Dm."""
         moms, momc = self.momd(1)
         dm = np.arctan2(moms.sum(dim=attrs.FREQNAME, skipna=False), momc.sum(dim=attrs.FREQNAME, skipna=False))
         dm = (270 - R2D*dm) % 360.
-        dm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
-        return dm.rename('dm')
+        dm.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return dm.rename(self._my_name())
 
-    def dp(self,
-           standard_name='sea_surface_wave_from_direction_at_variance_spectral_density_maximum'):
+    def dp(self):
         """Peak wave direction Dp.
 
-        Defined as the direction where the energy density of
-        the frequency-integrated spectrum is maximum.
-
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
+        Defined as the direction where the energy density of the
+        frequency-integrated spectrum is maximum.
 
         """
         ipeak = self._obj.sum(dim=attrs.FREQNAME).argmax(dim=attrs.DIRNAME)
         template = self._obj.sum(dim=attrs.FREQNAME, skipna=False).sum(dim=attrs.DIRNAME, skipna=False)
         dp = self.dir.values[ipeak.values] * (0 * template + 1)
-        dp.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
-        return dp.rename('dp')
+        dp.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return dp.rename(self._my_name())
 
-    def dpm(self, mask=np.nan,
-            standard_name='sea_surface_wave_from_direction_at_variance_spectral_density_maximum'):
+    def dpm(self, mask=np.nan):
         """Peak wave direction Dpm.
 
-        From WW3 Manual: peak wave direction, defined like the mean direction, using the
-        frequency/wavenumber bin containing of the spectrum F(k) that contains the peak frequency only.
+        From WW3 Manual: peak wave direction, defined like the mean direction,
+        using the frequency/wavenumber bin containing of the spectrum F(k)
+        that contains the peak frequency only.
 
         Args:
-            mask (float): value for missing data in output
-            standard_name (str): CF standard name for defining DataArray attribute
+            - mask (float): value for missing data in output.
 
         """
         ipeak = self._peak(self.oned())
@@ -427,16 +450,16 @@ class SpecArray(object):
         momc_peak = self._collapse_array(momc.values, ipeak.values, axis=momc.get_axis_num(dim=attrs.FREQNAME))
         dpm = np.arctan2(moms_peak, momc_peak) * (ipeak*0+1) # Cheap way to turn dp into appropriate DataArray
         dpm = (270 - R2D*dpm) % 360.
-        dpm.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
-        return dpm.where(ipeak>0).fillna(mask).rename('dpm')
+        dpm.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return dpm.where(ipeak>0).fillna(mask).rename(self._my_name())
 
-    def dspr(self, standard_name='sea_surface_wave_directional_spread'):
+    def dspr(self):
         """Directional wave spreading Dspr.
 
         The one-sided directional width of the spectrum.
-
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
 
         """
         moms, momc = self.momd(1)
@@ -447,64 +470,72 @@ class SpecArray(object):
 
         dspr = (2 * R2D**2 * (1 - ((moms.spec.momf()**2 + momc.spec.momf()**2)**0.5 / mom0)))**0.5
         dspr = dspr.sum(dim=attrs.FREQNAME, skipna=False).sum(dim=attrs.DIRNAME, skipna=False)
-        dspr.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'degree'))))
-        return dspr.rename('dspr')
+        dspr.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return dspr.rename(self._my_name())
 
-    def crsd(self, theta=90., standard_name='sea_surface_wave_update_missing_part_here'):
-        """Add description for this method."""
+    def crsd(self, theta=90.):
+        """Add description."""
         cp = np.cos(D2R * (180 + theta - self.dir))
         sp = np.sin(D2R * (180 + theta - self.dir))
         crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
-        crsd.attrs.update(OrderedDict((('standard_name', standard_name), ('units', 'm2s'))))
-        return crsd.rename('crsd')
+        crsd.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return crsd.rename(self._my_name())
 
-    def swe(self, standard_name='sea_surface_wave_spectral_width'):
+    def swe(self):
         """Spectral width parameter by Cartwright and Longuet-Higgins (1956).
 
         Represents the range of frequencies where the dominant energy exists.
 
-        Args:
-            standard_name (str): CF standard name for defining DataArray attribute
-
         Reference:
-            Cartwright and Longuet-Higgins (1956). The statistical distribution
-            of maxima of a random function. Proc. R. Soc. A237, 212-232.
+            - Cartwright and Longuet-Higgins (1956). The statistical distribution
+              of maxima of a random function. Proc. R. Soc. A237, 212-232.
 
         """
         swe = (1. - self.momf(2).sum(dim=attrs.DIRNAME)**2 / (self.momf(0).sum(dim=attrs.DIRNAME)*self.momf(4).sum(dim=attrs.DIRNAME)))**0.5
         swe.values[swe.values < 0.001] = 1.
-        swe.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
-        return swe.rename('swe')
+        swe.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return swe.rename(self._my_name())
 
-    def sw(self, mask=np.nan, standard_name='sea_surface_wave_spectral_width'):
+    def sw(self, mask=np.nan):
         """Spectral width parameter by Longuet-Higgins (1975).
 
         Represents energy distribution over entire frequency range.
 
         Args:
-            mask (float): value for missing data in output
-            standard_name (str): CF standard name for defining DataArray attribute
+            - mask (float): value for missing data in output
 
         Reference:
-            Longuet-Higgins (1975). On the joint distribution of the periods and
-            amplitudes of sea waves. JGR, 80, 2688-2694.
+            - Longuet-Higgins (1975). On the joint distribution of the periods and
+              amplitudes of sea waves. JGR, 80, 2688-2694.
 
         """
         sw = (self.momf(0).sum(dim=attrs.DIRNAME) * self.momf(2).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)**2 - 1.0)**0.5
-        sw.attrs.update(OrderedDict((('standard_name', standard_name), ('units', ''))))
-        return sw.where(self.hs() >= 0.001).fillna(mask).rename('sw')
+        sw.attrs.update(OrderedDict((
+            ('standard_name', self._standard_name(self._my_name())),
+            ('units', self._units(self._my_name())))
+            ))
+        return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
 
     def celerity(self, depth=False, freq=None):
         """Wave celerity C.
 
         Args:
-            depth (float): depths for calculating C, if not provided
-                           the deep water approximation is returned
-            freq (ndarray): frequencies for calculating C, by default
-                            calculate from self.freq
+            - depth (float): depths for calculating C, if not provided
+              the deep water approximation is returned.
+            - freq (ndarray): frequencies for calculating C, by default
+              calculate from self.freq.
 
         Returns;
-            C: ndarray of same shape as freq with wave celerity for each frequency
+            - C: ndarray of same shape as freq with wave celerity for each frequency.
 
         """
         if freq is None:
@@ -519,11 +550,11 @@ class SpecArray(object):
         """Wavelength L.
 
         Args:
-            depth (float): depths for calculating L, if not provided
-                           the deep water approximation is returned
+            - depth (float): depths for calculating L, if not provided
+              the deep water approximation is returned.
 
         Returns;
-            L: ndarray of same shape as freq with wavelength for each frequency
+            - L: ndarray of same shape as freq with wavelength for each frequency.
 
         """
         if depth:
@@ -537,23 +568,26 @@ class SpecArray(object):
         """Partition wave spectra using WW3 watershed algorithm.
 
         Args:
-            wsp_darr (DataArray): wind speed (m/s)
-            wdir_darr (DataArray): Wind direction (degree)
-            dep_darr (DataArray): Water depth (m)
-            agefac (float): Age factor
-            wscut (float): Wind speed cutoff
-            hs_min (float): minimum Hs for assigning swell partition
-            nearest (bool): if True, wsp, wdir and dep are allowed to be taken from the
-                            nearest point if not matching positions in SpecArray (slower)
+            - wsp_darr (DataArray): wind speed (m/s).
+            - wdir_darr (DataArray): Wind direction (degree).
+            - dep_darr (DataArray): Water depth (m).
+            - agefac (float): Age factor.
+            - wscut (float): Wind speed cutoff.
+            - hs_min (float): minimum Hs for assigning swell partition.
+            - nearest (bool): if True, wsp, wdir and dep are allowed to be taken from the.
+              nearest point if not matching positions in SpecArray (slower).
 
         Returns:
-            part_spec :: SpecArray object with one extra dimension representig partition number
+            - part_spec (SpecArray): partitioned spectra with one extra dimension
+              representig partition number.
 
         Note:
-            All input DataArray objects must have same non-spectral dimensions as SpecArray
+            - All input DataArray objects must have same non-spectral
+              dimensions as SpecArray.
 
-        TODO: We currently loop through each spectrum to calculate the partitions which is slow.
-              Ideally we should handle the problem in a multi-dimensional way.
+        TODO:
+            - We currently loop through each spectrum to calculate the partitions which
+              is slow. Ideally we should handle the problem in a multi-dimensional way.
 
         """
         # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
@@ -653,20 +687,21 @@ class SpecArray(object):
         """Calculate multiple spectral stats into a Dataset.
 
         Args:
-            stats (list): strings specifying stats to be calculated
-                  (dict): keys are stats names, vals are dicts with kwargs to use with corresponding method
-            fmin (float): lower frequencies for splitting spectra before calculating stats
-            fmax (float): upper frequencies for splitting spectra before calculating stats
-            dmin (float): lower directions for splitting spectra before calculating stats
-            dmax (float): upper directions for splitting spectra before calculating stats
-            names (list): strings to rename each stat in output Dataset (not working as expected though)
+            - stats (list): strings specifying stats to be calculated.
+              (dict): keys are stats names, vals are dicts with kwargs to use with corresponding method.
+            - fmin (float): lower frequencies for splitting spectra before
+              calculating stats.
+            - fmax (float): upper frequencies for splitting spectra before calculating stats.
+            - dmin (float): lower directions for splitting spectra before calculating stats.
+            - dmax (float): upper directions for splitting spectra before calculating stats.
+            - names (list): strings to rename each stat in output Dataset (not working as expected though).
 
         Returns:
-            Dataset with all spectral statistics specified
+            - Dataset with all spectral statistics specified.
 
         Note:
-            All stats names must correspond to methods implemented in this class
-            If names is provided, its length must correspond to the length of stats
+            - All stats names must correspond to methods implemented in this class.
+            - If names is provided, its length must correspond to the length of stats.
 
         """
         if any((fmin, fmax, dmin, dmax)):
@@ -713,10 +748,10 @@ def hs(spec, freqs, dirs, tail=True):
     Copied as a function so it can be used in a generic context.
 
     Args:
-        spec (ndarray): wave spectrum array
-        freqs (darray): wave frequency array
-        dirs (darray): wave direction array
-        tail (bool): if True fit high-frequency tail before integrating spectra
+        - spec (ndarray): wave spectrum array
+        - freqs (darray): wave frequency array
+        - dirs (darray): wave direction array
+        - tail (bool): if True fit high-frequency tail before integrating spectra
 
     """
     df = abs(freqs[1:] - freqs[:-1])
@@ -729,6 +764,3 @@ def hs(spec, freqs, dirs, tail=True):
     if tail and freqs[-1] > 0.333:
         Etot += 0.25 * E[-1] * freqs[-1]
     return 4. * np.sqrt(Etot)
-
-if __name__ == '__main__':
-    pass

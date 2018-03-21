@@ -45,3 +45,36 @@ ATTRS:
     *DEPNAME:
         standard_name: sea_floor_depth_below_sea_surface
         units: m
+    hs:
+        standard_name: sea_surface_wave_significant_height
+        units: m
+    hmax:
+        standard_name: sea_surface_wave_maximum_height
+        units: m
+    tp:
+        standard_name: sea_surface_wave_period_at_variance_spectral_density_maximum
+        units: s
+    dpm:
+        standard_name: sea_surface_wave_from_direction_at_variance_spectral_density_maximum
+        units: degree
+    dp:
+        standard_name: sea_surface_wave_from_direction_at_variance_spectral_density_maximum
+        units: degree
+    dm:
+        standard_name: sea_surface_wave_from_mean_direction
+        units: degree
+    dspr:
+        standard_name: sea_surface_wave_directional_spread
+        units: degree
+    sw:
+        standard_name: sea_surface_wave_spectral_width
+        units: ""
+    swe:
+        standard_name: sea_surface_wave_spectral_width
+        units: ""
+    tm01:
+        standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment
+        units: s
+    tm02:
+        standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment
+        units: s
