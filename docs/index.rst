@@ -19,7 +19,8 @@ Python library for wave spectra
     output
     conventions
     support
-
+    source/modules
+    
 Indices and tables
 ==================
 

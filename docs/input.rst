@@ -45,31 +45,37 @@ NETCDF
 ~~~~~~
 
 .. autofunction:: wavespectra.read_netcdf
+   :noindex:
 
 SWAN
 ~~~~
 
 .. autofunction:: wavespectra.read_swan
+   :noindex:
 
 WW3
 ~~~
 
 .. autofunction:: wavespectra.read_ww3
+   :noindex:
 
 WW3-MSL
 ~~~~~~~
 
 .. autofunction:: wavespectra.read_ww3_msl
+   :noindex:
 
 OCTOPUS
 ~~~~~~~
 
 .. autofunction:: wavespectra.read_octopus
+   :noindex:
 
 JSON
 ~~~~
 
 .. autofunction:: wavespectra.read_json
+   :noindex:
 
 Other functions
 ~~~~~~~~~~~~~~~
@@ -77,5 +83,10 @@ These functions are not accessible from the main module level and need to be
 imported from their full module path:
 
 .. autofunction:: wavespectra.input.swan.read_hotswan
+   :noindex:
+
 .. autofunction:: wavespectra.input.swan.read_swans
+   :noindex:
+
 .. autofunction:: wavespectra.input.swan.read_swanow
+   :noindex:
