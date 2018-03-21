@@ -14,13 +14,18 @@ Python library for wave spectra
     :caption: Contents:
 
     How to install <install>
-    Library documentation <library>
+    Library <library>
     input
     output
     conventions
     support
-    source/modules
-    
+
+.. toctree::
+    :maxdepth: 3
+    :caption: API documentation:
+
+    Wavespectra <source/modules>
+
 Indices and tables
 ==================
 
