@@ -5,12 +5,12 @@
 
 """
 
-__version__ = '0.0.0'
-__author__ = 'MetOcean Solutions Ltd'
+__version__ = '0.1.0'
+__author__ = 'MetOcean Solutions'
 __contact__ = 'r.guedes@metocean.co.nz'
 __url__ = 'http://github.com/metocean/wavespectra'
 __description__ = 'Ocean wave spectra tools'
-__keywords__ = 'wave spectra xarray statistics analysis'
+__keywords__ = 'wave spectra ocean xarray statistics analysis'
 
 def _import_read_functions(pkgname='input'):
     """Make read functions available at module level.
