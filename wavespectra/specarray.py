@@ -346,41 +346,25 @@ class SpecArray(object):
             return None
         Sf = self.oned()
         ipeak = self._peak(Sf)
+        
+        fp = self.freq[ipeak].drop('freq')
         if smooth:
-            freq_axis = Sf.get_axis_num(dim=attrs.FREQNAME)
-            if len(ipeak.dims) > 1:
-                sig1 = np.empty(ipeak.shape)
-                sig2 = np.empty(ipeak.shape)
-                sig3 = np.empty(ipeak.shape)
-                for dim in range(ipeak.shape[1]):
-                    sig1[:,dim] = self.freq[ipeak[:,dim]-1].values
-                    sig2[:,dim] = self.freq[ipeak[:,dim]+1].values
-                    sig3[:,dim] = self.freq[ipeak[:,dim]].values
-            else:
-                sig1 = self.freq[ipeak-1].values
-                sig2 = self.freq[ipeak+1].values
-                sig3 = self.freq[ipeak].values
-            e1 = self._collapse_array(Sf.values, ipeak.values-1, axis=freq_axis)
-            e2 = self._collapse_array(Sf.values, ipeak.values+1, axis=freq_axis)
-            e3 = self._collapse_array(Sf.values, ipeak.values, axis=freq_axis)
-            p = sig1 + sig2
-            q = (e1-e2) / (sig1-sig2)
-            r = sig1 + sig3
-            t = (e1-e3) / (sig1-sig3)
-            a = (t-q) / (r-p)
-            fp = (-q+p*a) / (2.*a)
-            fp[a>=0] = sig3[a>=0]
-        else:
-            fp = self.freq.values[ipeak]
-
-        tp = (1+0*ipeak) / fp # Cheap way to turn Tp into appropriate DataArray object
+            f1, f2, f3 = [self.freq[ipeak+i].values for i in [-1, 0, 1]]
+            e1, e2, e3 = [Sf.isel(freq=ipeak+i).values for i in [-1, 0, 1]]
+            s12 = f1 + f2
+            q12 = (e1-e2) / (f1-f2)
+            q13 = (e1-e3) / (f1-f3)
+            qa = (q13-q12) / (f3-f2)
+            qa[qa>=0] = np.nan
+            fpsmothed = (s12-q12/qa) / 2.
+            fp.values[qa<0] = fpsmothed[qa<0]
+            
+        tp = (1 / fp).where(ipeak>0).fillna(mask).rename('tp')
         tp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
             ))
-
-        # Returns masked dataarray
-        return tp.where(ipeak>0).fillna(mask).rename(self._my_name())
+        return tp # Returns masked dataarray
 
     def momf(self, mom=0):
         """Calculate given frequency moment."""
@@ -620,7 +604,7 @@ class SpecArray(object):
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj]
-
+        
         # Predefine these for speed
         dirs = self.dir.values
         freqs = self.freq.values
