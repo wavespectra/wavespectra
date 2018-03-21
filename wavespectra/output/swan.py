@@ -1,5 +1,4 @@
-"""
-SWAN ASCII output plugin.
+"""SWAN ASCII output plugin.
 
 to_swan :: write spectra in swan spectrum format
 
