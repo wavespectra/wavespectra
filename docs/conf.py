@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'wavespectra'
-copyright = '2018, Rafael Guedes'
-author = 'Rafael Guedes'
+copyright = '2018, MetOcean Solutions'
+author = 'MetOcean Solutions'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
