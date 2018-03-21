@@ -13,7 +13,7 @@ The code is based on two `accessor classes`_:
   with methods for writing spectra in different formats.
 
 These accessors are registered to `xarray.DataArray`_ and `xarray.Dataset`_
-objects as a new namespece called `spec`. To attach the namespace simply import
+objects as a new namespece called ``spec``. To attach the namespace simply import
 the accessors into your code, e.g.:
 
 .. code:: python
@@ -123,8 +123,8 @@ The following convention is expected for defining reading functions:
 
 - Funcions for different file types are defined in different modules within
   :py:mod:`wavespectra.input` subpackage.
-- Modules are named as <`filetype`>.py, e.g., `swan.py`.
-- Functions are named as read_<`filetype`>, e.g., `read_swan`.
+- Modules are named as <`filetype`>.py, e.g., ``swan.py``.
+- Functions are named as read_<`filetype`>, e.g., ``read_swan``.
 
 Input functions can also be defined without following this convention. However
 they are not accessible from the main module level and need to be imported from
@@ -177,6 +177,25 @@ imported from their full module path:
 .. autofunction:: wavespectra.input.swan.read_hotswan
 .. autofunction:: wavespectra.input.swan.read_swans
 .. autofunction:: wavespectra.input.swan.read_swanow
+
+Output
+------
+
+Functions to write :py:class:`wavespectra.specdataset.SpecDataset` into files.
+
+The output functions are attached as methods in the SpecDataset accessor. They
+are defined in modules within :py:mod:`wavespectra.output` subpackage and are
+dynamically plugged as SpecDataset methods.
+
+The following convention is expected for defining output functions:
+
+- Funcions for different file types are defined in different modules within
+  :py:mod:`wavespectra.output` subpackage.
+- Modules are named as <`filetype`>.py, e.g., ``swan.py``.
+- Functions are named as to_<`filetype`>, e.g., ``to_swan``.
+- Function **must** accept ``self`` as the first input argument.
+
+The ouput functions are described in :py:class:`wavespectra.specdataset.SpecDataset`.
 
 .. _xarray: https://xarray.pydata.org/en/stable/
 .. _SpecArray: https://github.com/metocean/wavespectra/blob/master/wavespectra/specarray.py
