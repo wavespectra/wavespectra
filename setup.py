@@ -12,7 +12,7 @@ NAME = 'wavespectra'
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Science/Research',
-    'License :: OSI Approved :: GNU General Public License (GPL)',
+    'License :: OSI Approved :: MIT License',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.7',
     'Topic :: Scientific/Engineering',
@@ -86,7 +86,7 @@ setup(
     author=wavespectra.__author__,
     author_email=wavespectra.__contact__,
     url=wavespectra.__url__,
-    license='GPL',
+    license='MIT',
     packages=setuptools.find_packages(exclude=['test*']),
     include_package_data=True,
     package_data={'attributes': ['wavespectra/core/attributes.yml']},
