@@ -1,3 +1,7 @@
+.. image:: ../_static/Gradient_wide.png
+   :width: 150 px
+   :align: right
+
 wavespectra.input package
 =========================
 
