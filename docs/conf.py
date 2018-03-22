@@ -149,6 +149,7 @@ latex_documents = [
      'MetOcean Solutions', 'manual'),
 ]
 
+latex_logo = '_static/Gradient_wide.png'
 
 # -- Options for manual page output ---------------------------------------
 
