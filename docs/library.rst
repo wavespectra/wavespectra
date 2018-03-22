@@ -61,8 +61,9 @@ heights:
 .. code:: python
 
     from wavespectra import read_swan
+
     dset = read_swan('my_swan_file')
-    hs = dset.hs()
+    hs = dset.spec.hs()
 
 
 Details of each class are below. 
