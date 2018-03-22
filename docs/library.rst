@@ -6,10 +6,14 @@ Wavespectra
 ===========
 **Python library for ocean wave spectra.**
 
-Wavespectra is a library built on top of `xarray`_ for reading, manipulating,
-processing, and writing ocean wave spectra data.
+Wavespectra is a library for processing ocean wave spectral data. It provides
+reading and writing of common spectral data formats, calculation of common
+integrated wave paramaters, several methods of spectral partitioning and
+spectral manipulation in a package focussed on speed and efficiency for large
+numbers of spectra.
 
-The code is based on two `accessor classes`_:
+The library built on top of `xarray`_. The extended functionality is based on
+two `accessor classes`_:
 
 - :py:class:`~wavespectra.specarray.SpecArray`: extends xarray's `DataArray`_
   with methods to manipulate wave spectra and calculate integrated spectral
@@ -46,6 +50,22 @@ the accessors into your code, e.g.:
     Attributes:
         standard_name: sea_surface_wave_significant_height
         units: m
+
+Using accessors in this way provides an elegant way to extend and leverage the
+power of `xarray`_.  In common usage, this mechanism is largely transparent,
+with the provided reading functions , returning the above classes from which
+the spectral methods can be directly accessed (see :ref:`Input`).  For example,
+to read a swan spectral file and calculate the corresponing significant wave
+heights: 
+
+.. code:: python
+
+    from wavespectra import read_swan
+    dset = read_swan('my_swan_file')
+    hs = dset.hs()
+
+
+Details of each class are below. 
 
 SpecArray
 ---------
