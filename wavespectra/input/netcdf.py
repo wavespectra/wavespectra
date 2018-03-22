@@ -28,8 +28,8 @@ def read_netcdf(filename_or_fileglob,
         - dset (SpecDataset): spectra dataset object read from netcdf file
 
     Note:
-        - Assumes frequency in Hz, direction in degrees and spectral energy in
-          m^2/Hz[/degree].
+        - Assumes frequency in :math:`Hz`, direction in :math:`degree` and
+          spectral energy in :math:`m^{2}degree^{-1}{s}`.
         - If file is large to fit in memory, consider specifying chunks for
           'time' and/or 'station' dims.
 

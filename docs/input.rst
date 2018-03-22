@@ -42,7 +42,7 @@ their full module path, for instance:
 
     dset = read_hotswan('my_swan_hotfiles')
 
-The following input functions are currently availeble from the main module
+The following input functions are currently available from the main module
 level:
 
 NETCDF
