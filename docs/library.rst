@@ -108,7 +108,7 @@ share some common dimensions. It provides methods for writing wave spectra into
 different file formats.
 
 SpecDataset works as a wrapper around
-:py:class:`wavespectra.specarray.SpecArray`. All public methods from SpecArray
+:py:class:`~wavespectra.specarray.SpecArray`. All public methods from SpecArray
 can be directly accessed from SpecDataset. For instance, these two calls are
 equivalent:
 
