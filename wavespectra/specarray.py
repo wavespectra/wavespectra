@@ -46,7 +46,7 @@ class SpecArray(object):
         # # Ensure frequencies and directions are sorted
         # for dim in [attrs.FREQNAME, attrs.DIRNAME]:
         #     if dim in xarray_obj.dims and not self._strictly_increasing(xarray_obj[dim].values):
-        #         xarray_obj = self.sort(xarray_obj, dims=[dim])
+        #         xarray_obj = self._obj.sortby([dim])
 
         self._obj = xarray_obj
         self._non_spec_dims = set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
@@ -196,18 +196,6 @@ class SpecArray(object):
                   'Ensure it is defined in attributes.yml'.format(varname))
             return ''
 
-    def sort(self, darray, dims, inplace=False):
-        """Sort darray along dims list so that the respective coordinates are sorted."""
-        other = darray.copy(deep=not inplace)
-        dims = [dims] if not isinstance(dims, list) else dims
-        for dim in dims:
-            if dim in other.dims:
-                if not self._strictly_increasing(darray[dim].values):
-                    other = other.isel(**{dim: np.argsort(darray[dim]).values})
-            else:
-                raise Exception('Dimension %s not in DataArray' % (dim))
-        return other
-
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
@@ -245,7 +233,7 @@ class SpecArray(object):
         
         # Slice directions
         if attrs.DIRNAME in other.dims and (dmin or dmax):
-            other = self.sort(other, dims=[attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
+            other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
         # Interpolate at fmin
         if (other.freq.min() > fmin) and (self.freq.min() <= fmin):
