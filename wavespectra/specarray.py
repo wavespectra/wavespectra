@@ -30,7 +30,6 @@ except ImportError:
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
 #       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
-# TODO: Implement true_peak method for both tp() and dpm()
 
 _ = np.newaxis
 
