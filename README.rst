@@ -1,12 +1,11 @@
 wavespectra
 ===========
-Python library for wave spectra
+Python library for ocean wave spectra.
 
 Main contents:
 --------------
-- SpecArray_: object based on xarray's `DataArray`_ to manipulate wave spectra and calculate spectral statistics
-- SpecDataset_: wrapper around `SpecArray`_ with methods for saving spectra in different formats
-- readspec_: access functions to read spectra from different file formats into SpecDataset_ objects
+- SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
+- SpecDataset_: wrapper around `SpecArray`_ with methods for saving spectra in different formats.
 
 Install:
 --------
@@ -74,7 +73,10 @@ To use methods in the accessor classes simply import the classes into your code 
    coords = {'time': [datetime.datetime(2017,01,n+1) for n in range(2)],
              'freq': [0.05,0.1],
              'dir': np.arange(0,360,120)}
-   efth = xr.DataArray(data=np.random.rand(2,2,3), coords=coords, dims=('time','freq', 'dir'))
+   efth = xr.DataArray(data=np.random.rand(2,2,3),
+                       coords=coords,
+                       dims=('time','freq', 'dir'),
+                       name='efth')
 
    In [1]: efth
    Out[1]:
@@ -112,7 +114,7 @@ To use methods in the accessor classes simply import the classes into your code 
        standard_name: sea_surface_wave_significant_height
        units: m
 
-SpecDataset provides a wrapper around the methods in SpecArray accessor. For instance, these produce same result:
+SpecDataset provides a wrapper around the methods in SpecArray. For instance, these produce same result:
 
 .. code:: python
 
@@ -127,9 +129,9 @@ Data requirements
 -----------------
 SpecArray_ methods require DataArray_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- wave frequency coordinate in Hz named as `freq` (required)
-- wave direction coordinate in degree (coming from) named as `dir` (optional for 1D, required for 2D spectra)
-- wave spectra data in m2/Hz/degree (2D) or m2/Hz (1D) named as `efth`
+- wave frequency coordinate in :math:`Hz` named as `freq` (required).
+- wave direction coordinate in :math:`degree` (coming from) named as `dir` (optional for 1D, required for 2D spectra).
+- wave energy density data in :math:`m2/Hz/degree` (2D) or :math:`m2/Hz` (1D) named as `efth`
 
 SpecDataset_ methods require xarray's Dataset_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
