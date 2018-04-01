@@ -20,10 +20,10 @@ Install from pypi
 .. code:: bash
 
    # Default install, miss some dependencies and functionality
-   pip install -U --index-url https://test.pypi.org/simple/ wavespectra
+   pip install wavespectra
 
    # Complete install
-   pip install -U --index-url https://test.pypi.org/simple/ wavespectra[extra]
+   pip install wavespectra[extra]
 
 Install from sources
 ~~~~~~~~~~~~~~~~~~~~
