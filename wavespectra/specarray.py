@@ -125,8 +125,8 @@ class SpecArray(object):
                 missing_value in other parts of the code
         """
         ispeak = np.logical_and(
-            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) > 0,
-            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(attrs.FREQNAME, 1) < 0
+            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(attrs.FREQNAME, n=1, label='upper') > 0,
+            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(attrs.FREQNAME, n=1, label='lower') < 0
             )
         ipeak = arr.where(ispeak).fillna(0).argmax(dim=attrs.FREQNAME).astype(int)
         return ipeak
@@ -341,9 +341,10 @@ class SpecArray(object):
             q12 = (e1-e2) / (f1-f2)
             q13 = (e1-e3) / (f1-f3)
             qa = (q13-q12) / (f3-f2)
-            qa[qa>=0] = np.nan
-            fpsmothed = (s12-q12/qa) / 2.
-            fp.values[qa<0] = fpsmothed[qa<0]
+            qa = np.ma.masked_array(qa, qa>=0)
+            ind = ~qa.mask
+            fpsmothed = (s12[ind] - q12[ind]/qa[ind]) / 2.
+            fp.values[ind] = fpsmothed
         tp = (1 / fp).where(ipeak>0).fillna(mask).rename('tp')
         tp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
