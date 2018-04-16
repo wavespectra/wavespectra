@@ -43,4 +43,4 @@ class TestSpecArray(object):
               must be the name of a valid method in SpecArray class.
 
         """
-        stat = getattr(self.swanspec.spec, stat_name)()
+        stat = getattr(self.wshed.spec, stat_name)()
