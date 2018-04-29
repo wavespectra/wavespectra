@@ -260,7 +260,7 @@ class SpecArray(object):
         Sf = self.oned(skipna=False)
         E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
         if tail and Sf.freq[-1] > 0.333:
-            E += 0.25 * Sf[{attrs.FREQNAME: -1}] * Sf.freq[-1].values
+            E += 0.25 * Sf[{attrs.FREQNAME: -1}].drop(attrs.FREQNAME) * Sf.freq[-1].values
         hs = 4 * np.sqrt(E)
         hs.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
