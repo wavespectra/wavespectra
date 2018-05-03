@@ -5,6 +5,8 @@ import numpy as np
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
+D2R = np.pi / 180
+
 def read_ww3(filename_or_fileglob, chunks={}):
     """Read Spectra from WAVEWATCHIII native netCDF format.
 
@@ -32,7 +34,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
-    dset[attrs.SPECNAME].values = np.radians(dset[attrs.SPECNAME].values)
+    dset[attrs.SPECNAME] *= D2R
     set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
     if attrs.DIRNAME not in dset or len(dset.dir)==1:
