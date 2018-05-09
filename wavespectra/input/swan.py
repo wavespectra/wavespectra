@@ -47,6 +47,9 @@ def read_swan(filename, dirorder=True, as_site=None):
 
     spec_list = [s for s in swanfile.readall()]
 
+    # Create fake time if no timestamp
+    times = times or [datetime.datetime.now().replace(second=0, microsecond=0)]
+
     if swanfile.is_tab:
         try:
             tab = read_tab(swanfile.tabfile)
@@ -369,4 +372,3 @@ def read_swanow(fileglob):
     for swan in swans:
         ds = read_swan(swan).combine_first(ds)
     return ds
-

@@ -123,6 +123,8 @@ class SwanSpecFile(object):
                     Snew *= fac
                     if self.dirmap:
                         Snew = Snew[:,self.dirmap]
+                else: # For files with no timestamp
+                    return None
             Sout.append(Snew)
         return Sout
 
