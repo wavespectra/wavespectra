@@ -4,7 +4,7 @@ import pytest
 from tempfile import mkdtemp
 
 from wavespectra import (read_swan, read_netcdf, read_ww3, read_ww3_msl,
-    read_octopus, read_json)
+    read_octopus, read_cf_json)
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
