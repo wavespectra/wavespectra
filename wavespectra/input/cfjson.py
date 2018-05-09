@@ -1,7 +1,6 @@
 """Read cf-json spectra files."""
 import json
-from collections import OrderedDict
-import numpy as np
+import dateutil
 import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
@@ -20,11 +19,17 @@ def read_cfjson(filename):
     with open(filename, 'r') as stream:
         spec_dict = json.load(stream)
 
-    dims = set()
-    data = OrderedDict()
+    data = {}
     for varname, vardata in spec_dict['variables'].items():
-        shape = vardata.get('shape', [])
-        dims.update(shape)
-        data.update({varname: (shape, np.array(vardata['data']), vardata['attributes'])})
-
+        dims = vardata.get('shape',[])
+        if varname == 'time':
+            attrs = {}
+            vals = to_datetime(vardata['data'])
+        else:
+            attrs = vardata['attributes']
+            vals = vardata['data']
+        data.update({varname: (dims, vals, attrs)})
     return xr.Dataset(data)
+
+def to_datetime(times):
+    return [dateutil.parser.parse(t) for t in times]
