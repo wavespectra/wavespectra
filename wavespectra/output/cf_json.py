@@ -1,4 +1,4 @@
-"""MetOcean Solutions WAVEWATCH3 output plugin."""
+"""MetOcean cf-json output plugin."""
 from wavespectra.core.attributes import attrs
 
 try:
@@ -6,10 +6,8 @@ try:
 except ImportError:
     print('Warning: cannot import cf-json, install "metocean" dependencies for full functionality')
 
-def to_json(self, filename, attributes={}):
+def to_cf_json(self, filename, attributes={}):
     """Save spectra in CF-JSON format.
-
-    Not implemented!
 
     Args:
         - filename (str): name for output WW3 file.

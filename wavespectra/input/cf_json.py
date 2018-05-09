@@ -6,7 +6,7 @@ import xarray as xr
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
-def read_cfjson(filename):
+def read_cf_json(filename):
     """Read Spectra from cf-json format from MSL spectra API.
 
     Args:
