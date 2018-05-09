@@ -18,7 +18,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
           xr.open_mfdataset documentation).
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from ww3 file
+        - dset (SpecDataset): spectra dataset object read from ww3 file.
 
     Note:
         - If file is large to fit in memory, consider specifying chunks for
