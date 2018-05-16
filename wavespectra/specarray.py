@@ -550,7 +550,7 @@ class SpecArray(object):
             return 1.56 / self.freq**2
 
     def partition(self, wsp_darr, wdir_darr, dep_darr, agefac=1.7,
-                  wscut=0.3333, hs_min=0.001, nearest=False):
+                  wscut=0.3333, hs_min=0.001, nearest=False, max_swells=5):
         """Partition wave spectra using WW3 watershed algorithm.
 
         Args:
@@ -562,6 +562,7 @@ class SpecArray(object):
             - hs_min (float): minimum Hs for assigning swell partition.
             - nearest (bool): if True, wsp, wdir and dep are allowed to be taken from the.
               nearest point if not matching positions in SpecArray (slower).
+            - max_swells: maximum number of swells to extract
 
         Returns:
             - part_spec (SpecArray): partitioned spectra with one extra dimension
@@ -589,7 +590,7 @@ class SpecArray(object):
         from wavespectra.specpart import specpart
 
         # Initialise output - one SpecArray for each partition
-        all_parts = [0 * self._obj]
+        #all_parts = [0 * self._obj]
         
         # Predefine these for speed
         dirs = self.dir.values
@@ -627,27 +628,37 @@ class SpecArray(object):
                         part_array[newpart] = nparts
                 
             # Extend partitions list if any extra one has been detected (+1 because of sea)
-            if len(all_parts) < nparts+1:
-                for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
-                    all_parts.append(0 * self._obj)
+            #if len(all_parts) < nparts+1:
+            #    for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
+            #        all_parts.append(0 * self._obj)
 
             # Assign sea and swells partitions based on wind and wave properties
-            sea = 0 * spectrum
+            #sea = 0 * spectrum
             swells = list()
             hs_swell = list()
             Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
+            windbool = np.tile(Up, (nfreq, 1)) >  np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))
+                
+            hsparts =  np.zeros(nparts+1)
             for part in range(1, nparts+1):
                 part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
-                W = part_spec[np.tile(Up, (nfreq, 1)) > \
-                    np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))].sum() / part_spec.sum()
+                W = part_spec[windbool].sum() / part_spec.sum()
                 if W > wscut:
-                    sea += part_spec
+                    part_array[part_array == part] = 0
+                    hsparts[part] = 0
+                    #sea += part_spec
                 else:
-                    _hs = hs(part_spec, freqs, dirs)
-                    if _hs > hs_min:
-                        swells.append(part_spec)
-                        hs_swell.append(_hs)
-                        hs_swell = [h + np.random.rand()*1e-10 for h in hs_swell] # If two or more partitions with same Hs
+                    hsparts[part] = hs(part_spec, freqs, dirs)
+
+            #part_sea = np.where(part_array==0, spectrum, 0.)
+            #hsparts[0] = hs(part_sea, freqs, dirs)
+
+            sortedparts = sorted(zip(hsparts[1:],range(1, nparts+1))
+            #valid_swell,parts = sortedparts[:min(max_swells, argsorted(hsmin))]
+            if _hs > hs_min:
+                swells.append(part_spec)
+                hs_swell.append(_hs)
+                hs_swell = [h + np.random.rand()*1e-10 for h in hs_swell] # If two or more partitions with same Hs
             if len(swells) > 1:
                 swells = [x for (y,x) in sorted(zip(hs_swell, swells), reverse=True)]
 
