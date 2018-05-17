@@ -33,6 +33,7 @@ except ImportError:
 
 _ = np.newaxis
 
+
 @xr.register_dataarray_accessor('spec')
 class SpecArray(object):
 
@@ -59,12 +60,12 @@ class SpecArray(object):
 
         # df darray with freq dimension - may replace above one in the future
         if len(self.freq) > 1:
-            self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *\
+            self.dfarr = xr.DataArray(data=np.hstack((1.0, np.full(len(self.freq)-2, 0.5), 1.0)) *
                                            (np.hstack((0.0, np.diff(self.freq))) + np.hstack((np.diff(self.freq), 0.0))),
                                       coords={attrs.FREQNAME: self.freq},
                                       dims=(attrs.FREQNAME))
         else:
-            self.dfarr  = xr.DataArray(data=np.array((1.0,)),
+            self.dfarr = xr.DataArray(data=np.array((1.0,)),
                                        coords={attrs.FREQNAME: self.freq},
                                        dims=(attrs.FREQNAME))
 
@@ -73,7 +74,7 @@ class SpecArray(object):
 
     def _strictly_increasing(self, arr):
         """Check if array is sorted in increasing order."""
-        return all(x<y for x, y in zip(arr, arr[1:]))
+        return all(x < y for x, y in zip(arr, arr[1:]))
 
     def _collapse_array(self, arr, indices, axis):
         """Collapse ndim array [arr] along [axis] using [indices]."""
@@ -155,10 +156,10 @@ class SpecArray(object):
         """
         if len(self.freq) > 1:
             sf = fdspec.sum(axis=1)
-            nsmooth = int(dfres / self.df[0]) # Window size
+            nsmooth = int(dfres / self.df[0])  # Window size
             if nsmooth > 1:
-                sf = np.convolve(sf, np.hamming(nsmooth), 'same') # Smoothed f-spectrum
-            sf[(sf<0) | (self.freq.values<fmin)] = 0
+                sf = np.convolve(sf, np.hamming(nsmooth), 'same')  # Smoothed f-spectrum
+            sf[(sf < 0) | (self.freq.values < fmin)] = 0
             diff = np.diff(sf)
             imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
             imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
@@ -240,7 +241,7 @@ class SpecArray(object):
 
         # Interpolate at fmax
         if (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME) 
+            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
         return other
 
@@ -284,7 +285,7 @@ class SpecArray(object):
             N = (dt.astype(float)/self.tm02()).round() # N is the number of waves in a sea state
             k = np.sqrt(0.5*np.log(N)) 
         else:
-            k = 1.86 # assumes N = 3*3600 / 10.8
+            k = 1.86  # assumes N = 3*3600 / 10.8
         hmax = k * self.hs()
         hmax.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
@@ -311,9 +312,9 @@ class SpecArray(object):
         if any([abs(arg) != np.inf for arg in [hs_min, hs_max, tp_min, tp_max, dpm_min, dpm_max]]):
             tp = self.tp()
             dpm = self.dpm()
-            scaled = scaled.where(( (hs>=hs_min) & (hs<=hs_max) &
-                                    (tp>=tp_min) & (tp<=tp_max) & 
-                                    (dpm>=dpm_min) & (dpm<=dpm_max)
+            scaled = scaled.where(((hs >= hs_min) & (hs <= hs_max) &
+                                   (tp >= tp_min) & (tp <= tp_max) &
+                                   (dpm >= dpm_min) & (dpm <= dpm_max)
                                    )).combine_first(self._obj)
         if inplace:
             self._obj.values = scaled.values
@@ -341,11 +342,11 @@ class SpecArray(object):
             q12 = (e1-e2) / (f1-f2)
             q13 = (e1-e3) / (f1-f3)
             qa = (q13-q12) / (f3-f2)
-            qa = np.ma.masked_array(qa, qa>=0)
+            qa = np.ma.masked_array(qa, qa >= 0)
             ind = ~qa.mask
             fpsmothed = (s12[ind] - q12[ind]/qa[ind]) / 2.
             fp.values[ind] = fpsmothed
-        tp = (1 / fp).where(ipeak>0).fillna(mask).rename('tp')
+        tp = (1 / fp).where(ipeak > 0).fillna(mask).rename('tp')
         tp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
@@ -385,7 +386,7 @@ class SpecArray(object):
         Average period of zero up-crossings (Zhang, 2011).
 
         """
-        tm02 = np.sqrt(self.momf(0).sum(dim=attrs.DIRNAME)/self.momf(2).sum(dim=attrs.DIRNAME))
+        tm02 = np.sqrt(self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(2).sum(dim=attrs.DIRNAME))
         tm02.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
@@ -395,7 +396,8 @@ class SpecArray(object):
     def dm(self):
         """Mean wave direction from the 1st spectral moment Dm."""
         moms, momc = self.momd(1)
-        dm = np.arctan2(moms.sum(dim=attrs.FREQNAME, skipna=False), momc.sum(dim=attrs.FREQNAME, skipna=False))
+        dm = np.arctan2(moms.sum(dim=attrs.FREQNAME, skipna=False),
+                        momc.sum(dim=attrs.FREQNAME, skipna=False))
         dm = (270 - R2D*dm) % 360.
         dm.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
@@ -440,7 +442,7 @@ class SpecArray(object):
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
             ))
-        return dpm.where(ipeak>0).fillna(mask).rename(self._my_name())
+        return dpm.where(ipeak > 0).fillna(mask).rename(self._my_name())
 
     def dspr(self):
         """Directional wave spreading Dspr.
@@ -483,7 +485,8 @@ class SpecArray(object):
               of maxima of a random function. Proc. R. Soc. A237, 212-232.
 
         """
-        swe = (1. - self.momf(2).sum(dim=attrs.DIRNAME)**2 / (self.momf(0).sum(dim=attrs.DIRNAME)*self.momf(4).sum(dim=attrs.DIRNAME)))**0.5
+        swe = (1. - self.momf(2).sum(dim=attrs.DIRNAME)**2 /
+               (self.momf(0).sum(dim=attrs.DIRNAME)*self.momf(4).sum(dim=attrs.DIRNAME)))**0.5
         swe.values[swe.values < 0.001] = 1.
         swe.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
@@ -504,7 +507,8 @@ class SpecArray(object):
               amplitudes of sea waves. JGR, 80, 2688-2694.
 
         """
-        sw = (self.momf(0).sum(dim=attrs.DIRNAME) * self.momf(2).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)**2 - 1.0)**0.5
+        sw = (self.momf(0).sum(dim=attrs.DIRNAME) * self.momf(2).sum(dim=attrs.DIRNAME) /
+              self.momf(1).sum(dim=attrs.DIRNAME)**2 - 1.0)**0.5
         sw.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
@@ -584,13 +588,13 @@ class SpecArray(object):
             # Conditional below aims at allowing wsp, wdir, dep to be DataArrays within the SpecArray. not working yet
             if isinstance(darr, str):
                 darr = getattr(self, darr)
-            assert set(darr.dims)==self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
+            assert set(darr.dims) == self._non_spec_dims, ('%s dimensions (%s) need matching non-spectral dimensions '
                 'in SpecArray (%s) for consistent slicing' % (darr.name, set(darr.dims), self._non_spec_dims))
 
         from wavespectra.specpart import specpart
 
         # Initialise output - one SpecArray for each partition
-        #all_parts = [0 * self._obj]
+        all_parts = [0 * self._obj]
         
         # Predefine these for speed
         dirs = self.dir.values
@@ -603,7 +607,7 @@ class SpecArray(object):
         for slice_dict in self._product(slice_ids):
             specarr = self._obj[slice_dict]
             if nearest:
-                slice_dict_nearest = {key: self._obj[key][val].values for key,val in slice_dict.items()}
+                slice_dict_nearest = {key: self._obj[key][val].values for key, val in slice_dict.items()}
                 wsp = float(wsp_darr.sel(method='nearest', **slice_dict_nearest))
                 wdir = float(wdir_darr.sel(method='nearest', **slice_dict_nearest))
                 dep = float(dep_darr.sel(method='nearest', **slice_dict_nearest))
@@ -612,60 +616,49 @@ class SpecArray(object):
                 wdir = float(wdir_darr[slice_dict])
                 dep = float(dep_darr[slice_dict])
 
+            Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
+            windbool = np.tile(Up, (nfreq, 1)) > np.tile(
+                self.celerity(dep, freqs)[:, _], (1, ndir))
+
             spectrum = specarr.values
             part_array = specpart.partition(spectrum)
-            nparts = part_array.max()
+            part_array_max = part_array.max()
 
+            #TODO: join the two loops in a while loop  
             # Assign new partition if multiple valleys and satisfying some conditions
-            for part in range(1, nparts+1):
-                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+            for part in range(1, part_array_max+1):
+                part_spec = np.where(part_array == part, spectrum, 0.) # Current partition
+
                 imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    part_spec[imin[0].squeeze():, :] = 0
-                    newpart = part_spec > 0
+                    newpart = copy.deepcopy(part_spec)
+                    newpart[imin[0].squeeze():, :] = 0
+                    newpart = newpart > 0
                     if newpart.sum() > 20:
-                        nparts += 1
-                        part_array[newpart] = nparts
-                
-            # Extend partitions list if any extra one has been detected (+1 because of sea)
-            #if len(all_parts) < nparts+1:
-            #    for new_part_number in set(range(nparts+1)).difference(range(len(all_parts))):
-            #        all_parts.append(0 * self._obj)
+                        part_array_max += 1
+                        part_array[newpart] = part_array_max
 
-            # Assign sea and swells partitions based on wind and wave properties
-            #sea = 0 * spectrum
-            swells = list()
-            hs_swell = list()
-            Up = agefac * wsp * np.cos(D2R*(dirs - wdir))
-            windbool = np.tile(Up, (nfreq, 1)) >  np.tile(self.celerity(dep, freqs)[:,_], (1, ndir))
-                
-            hsparts =  np.zeros(nparts+1)
-            for part in range(1, nparts+1):
-                part_spec = np.where(part_array==part, spectrum, 0.) # Current partition only
+            # Group sea partitions and sort swells by hs
+            swell_hs_parts = np.zeros(part_array_max+1) # +1 because of sea
+            for part in range(1, part_array_max+1):                
+                part_spec = np.where(part_array == part, spectrum, 0.) # Current partition
                 W = part_spec[windbool].sum() / part_spec.sum()
                 if W > wscut:
                     part_array[part_array == part] = 0
-                    hsparts[part] = 0
-                    #sea += part_spec
+                    swell_hs_parts[part] = 0 # not really needed
                 else:
-                    hsparts[part] = hs(part_spec, freqs, dirs)
+                    swell_hs_parts[part] = hs(part_spec, freqs, dirs)
+            sortedparts = np.flipud(swell_hs_parts[1:].argsort()+1)
+            num_swells = min(max_swells, sum(swell_hs_parts[1:] > hs_min))
+            swell_parts = sortedparts[:num_swells]
 
-            #part_sea = np.where(part_array==0, spectrum, 0.)
-            #hsparts[0] = hs(part_sea, freqs, dirs)
+            # Extend partitions list if any extra one has been detected
+            for dummy in range(1 + num_swells - len(all_parts)):
+                all_parts.append(0 * self._obj)
 
-            sortedparts = sorted(zip(hsparts[1:],range(1, nparts+1))
-            #valid_swell,parts = sortedparts[:min(max_swells, argsorted(hsmin))]
-            if _hs > hs_min:
-                swells.append(part_spec)
-                hs_swell.append(_hs)
-                hs_swell = [h + np.random.rand()*1e-10 for h in hs_swell] # If two or more partitions with same Hs
-            if len(swells) > 1:
-                swells = [x for (y,x) in sorted(zip(hs_swell, swells), reverse=True)]
-
-            # Updating partition SpecArrays for current slice
-            all_parts[0][slice_dict] = sea
-            for ind, swell in enumerate(swells):
-                all_parts[ind+1][slice_dict] = swell
+            for ind, part in enumerate([0] + swell_parts):
+                all_parts[ind][slice_dict] = np.where(
+                    part_array == part, spectrum, 0.)
 
         # Concatenate partitions along new axis
         part_coord = xr.DataArray(data=range(len(all_parts)),
@@ -730,14 +723,16 @@ class SpecArray(object):
 
         return xr.merge(params)
 
+
 def wavenuma(ang_freq, water_depth):
     """Chen and Thomson wavenumber approximation."""
     k0h = 0.10194 * ang_freq * ang_freq * water_depth
-    D = [0,0.6522,0.4622,0,0.0864,0.0675]
+    D = [0, 0.6522, 0.4622, 0, 0.0864, 0.0675]
     a = 1.0
     for i in range(1, 6):
         a += D[i] * k0h**i
     return (k0h * (1 + 1./(k0h*a))**0.5) / water_depth
+
 
 def hs(spec, freqs, dirs, tail=True):
     """Significant wave height Hmo.
