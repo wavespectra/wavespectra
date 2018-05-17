@@ -650,13 +650,12 @@ class SpecArray(object):
                     swell_hs_parts[part] = hs(part_spec, freqs, dirs)
             sortedparts = np.flipud(swell_hs_parts[1:].argsort()+1)
             num_swells = min(max_swells, sum(swell_hs_parts[1:] > hs_min))
-            swell_parts = sortedparts[:num_swells]
-
+            parts = np.concatenate(([0], sortedparts[:num_swells]))
             # Extend partitions list if any extra one has been detected
             for dummy in range(1 + num_swells - len(all_parts)):
                 all_parts.append(0 * self._obj)
-
-            for ind, part in enumerate([0] + swell_parts):
+            #import ipdb; ipdb.set_trace()
+            for ind, part in enumerate(parts):
                 all_parts[ind][slice_dict] = np.where(
                     part_array == part, spectrum, 0.)
 
