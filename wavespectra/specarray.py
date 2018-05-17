@@ -631,9 +631,8 @@ class SpecArray(object):
 
                 imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    newpart = copy.deepcopy(part_spec)
-                    newpart[imin[0].squeeze():, :] = 0
-                    newpart = newpart > 0
+                    part_spec[imin[0].squeeze():, :] = 0
+                    newpart = part_spec > 0
                     if newpart.sum() > 20:
                         part_array_max += 1
                         part_array[newpart] = part_array_max
@@ -654,7 +653,7 @@ class SpecArray(object):
             # Extend partitions list if any extra one has been detected
             for dummy in range(1 + num_swells - len(all_parts)):
                 all_parts.append(0 * self._obj)
-            #import ipdb; ipdb.set_trace()
+
             for ind, part in enumerate(parts):
                 all_parts[ind][slice_dict] = np.where(
                     part_array == part, spectrum, 0.)
