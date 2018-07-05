@@ -690,36 +690,37 @@ class SpecArray(object):
         Note:
             - All stats names must correspond to methods implemented in this class.
             - If names is provided, its length must correspond to the length of stats.
+            - If names is provided and stats is a dict, stats must be OrderedDict.
 
         """
         if any((fmin, fmax, dmin, dmax)):
             spectra = self.split(fmin=fmin, fmax=fmax, dmin=dmin, dmax=dmax)
         else:
             spectra = self._obj
-        
+
         if isinstance(stats, (list, tuple)):
-            stats_dict = {s: {} for s in stats}
+            stats_dict = OrderedDict((s, {}) for s in stats)
         elif isinstance(stats, dict):
             stats_dict = stats
         else:
             raise ValueError('stats must be either a container or a dictionary')
-        
+
         names = names or stats_dict.keys()
         if len(names) != len(stats_dict):
             raise ValueError('length of names does not correspond to the number of stats')
 
         params = list()
-        for name, (func, kwargs) in zip(names, stats_dict.items()):
+        for func, kwargs in stats_dict.items():
             try:
                 stats_func = getattr(spectra.spec, func)
             except:
                 raise IOError('%s is not implemented as a method in %s' % (func, self.__class__.__name__))
             if callable(stats_func):
-                params.append(stats_func(**kwargs).rename(name))
+                params.append(stats_func(**kwargs))
             else:
                 raise IOError('%s attribute of %s is not callable' % (func, self.__class__.__name__))
 
-        return xr.merge(params)
+        return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
 
 def wavenuma(ang_freq, water_depth):
