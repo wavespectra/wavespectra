@@ -575,7 +575,10 @@ class SpecArray(object):
         Note:
             - All input DataArray objects must have same non-spectral
               dimensions as SpecArray.
-
+        References:
+            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three numerical 
+              wave models." Journal of Atmospheric and Oceanic Technology 26.8 (2009): 1614-1633.
+        
         TODO:
             - We currently loop through each spectrum to calculate the partitions which
               is slow. Ideally we should handle the problem in a multi-dimensional way.
