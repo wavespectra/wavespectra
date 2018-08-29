@@ -247,7 +247,6 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     lons = all_lons[cycle]
     lats = all_lats[cycle]
     for site, lon, lat in zip(all_sites.values(), all_lons.values(), all_lats.values()):
-        if (site != sites) or (lon != lons) or (lat != lats):
         if (list(site) != list(sites)) or (list(lon) != list(lons)) or (list(lat) != list(lats)):
             raise IOError('Inconsistent sites across cycles in glob pattern provided')
 
