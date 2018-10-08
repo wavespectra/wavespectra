@@ -7,8 +7,8 @@ Main contents:
 - SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
 - SpecDataset_: wrapper around `SpecArray`_ with methods for saving spectra in different formats.
 
-Documentation
--------------
+Documentation:
+--------------
 The documentation is hosted on ReadTheDocs at https://wavespectra.readthedocs.io/en/docs/.
 
 Install:
@@ -59,8 +59,8 @@ Alternatively, to install in `development mode`_:
 
    pip install -e .
 
-Code structure
---------------
+Code structure:
+---------------
 The two main classes SpecArray_ and SpecDataset_ are defined as `xarray accessors`_. The accessors are registered on xarray's DataArray_ and Dataset_ respectively as a new namespace called `spec`.
 
 To use methods in the accessor classes simply import the classes into your code and they will be available to your xarray.Dataset or xarray.DataArray instances through the `spec` attribute, e.g.
@@ -129,8 +129,8 @@ SpecDataset provides a wrapper around the methods in SpecArray. For instance, th
    In [6]: tm01.identical(dset.efth.spec.tm01())
    Out[6]: True
 
-Data requirements
------------------
+Data requirements:
+------------------
 SpecArray_ methods require DataArray_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 - wave frequency coordinate in :math:`Hz` named as `freq` (required).
