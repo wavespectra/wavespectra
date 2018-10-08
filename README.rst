@@ -7,13 +7,17 @@ Main contents:
 - SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
 - SpecDataset_: wrapper around `SpecArray`_ with methods for saving spectra in different formats.
 
+Documentation
+-------------
+The documentation is hosted on ReadTheDocs at https://wavespectra.readthedocs.io/en/docs/.
+
 Install:
 --------
 Where to get it
 ~~~~~~~~~~~~~~~
 The source code is currently hosted on GitHub at: https://github.com/metocean/wavespectra
 
-Binary installers for the latest released version are available at the `Python package index`_
+Binary installers for the latest released version are available at the `Python package index`_.
 
 Install from pypi
 ~~~~~~~~~~~~~~~~~
