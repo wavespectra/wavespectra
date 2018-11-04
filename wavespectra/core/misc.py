@@ -60,8 +60,7 @@ def uv_to_spddir(u, v, coming_from=False):
     ang_rot = 180 if coming_from else 0
     vetor = u + v*1j
     mag = np.abs(vetor)
-    direc = np.angle(vetor, deg=True)
-    direc = direc + ang_rot
+    direc = xr.ufuncs.angle(vetor, deg=True) + ang_rot
     direc = np.mod(90-direc, 360)
     return mag, direc
 
