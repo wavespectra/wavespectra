@@ -4,7 +4,7 @@ import pytest
 from tempfile import mkdtemp
 
 from wavespectra import (read_swan, read_netcdf, read_ww3, read_ww3_msl,
-    read_octopus, read_cf_json)
+    read_octopus, read_cf_json, read_ncswan)
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -32,6 +32,7 @@ class TestIO(object):
         ('swanfile.spec', read_swan, 'to_swan'),
         ('ww3file.nc', read_ww3, None),
         ('ww3mslfile.nc', read_ww3_msl, None),
+        ('swanspecfile.nc', read_ncswan, None),
         ])
     def test_io(self, filename, read_func, write_method_name):
         self.filename = filename
