@@ -32,7 +32,7 @@ class TestIO(object):
         ('swanfile.spec', read_swan, 'to_swan'),
         ('ww3file.nc', read_ww3, None),
         ('ww3mslfile.nc', read_ww3_msl, None),
-        ('swanspecfile.nc', read_ncswan, None),
+        ('swanfile.nc', read_ncswan, None),
         ])
     def test_io(self, filename, read_func, write_method_name):
         self.filename = filename
