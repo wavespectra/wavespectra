@@ -15,6 +15,11 @@ dnum_to_datetime = lambda d: datetime.datetime.fromordinal(int(d) - 366) + datet
 
 to_nautical = lambda a: np.mod(270-a, 360)
 
+def unique_times(ds):
+    """Remove duplicate times from dataset."""
+    _, index = np.unique(ds['time'], return_index=True)
+    return ds.isel(time=index)
+
 def to_datetime(np64):
     """Convert Datetime64 date to datatime."""
     if isinstance(np64, np.datetime64):
