@@ -7,9 +7,9 @@ from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.misc import uv_to_spddir
 
-D2R = np.pi / 180
+R2D = 180 / np.pi
 
-def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
+def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True, sort_dirs=True):
     """Read Spectra from SWAN native netCDF format.
 
     Args:
@@ -20,6 +20,7 @@ def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
           xr.open_mfdataset documentation).
         - convert_wind_vectors (bool): choose it to convert wind vectors into
           speed / direction data arrays.
+        - sort_dirs (bool): choose it to sort spectra by directions.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -46,6 +47,13 @@ def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
     # Setting standard names and storing original file attributes
     set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
+    # Converting from radians
+    dset[attrs.SPECNAME].values /= R2D
+    if attrs.DIRNAME in dset:
+        dset[attrs.DIRNAME].values *= R2D
+        dset[attrs.DIRNAME].values %= 360
+        if sort_dirs:
+            dset = dset.sortby(attrs.DIRNAME)
     # Adjustting attributes if 1D
     if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
@@ -60,4 +68,5 @@ if __name__ == '__main__':
         os.path.dirname(os.path.abspath(__file__)),
         '../../tests/sample_files'
     )
-    ds_spec = read_ncswan(os.path.join(FILES_DIR, 'swanfile.nc'))
+    ds_spec = read_ncswan(os.path.join(FILES_DIR, 'swanfile.nc'),
+        sort_dirs=True)
