@@ -2,7 +2,7 @@ numpy
 pandas
 xarray>=0.10.0
 python-dateutil
-dask
+dask>=0.17.1
 toolz
 sortedcontainers
 scipy
