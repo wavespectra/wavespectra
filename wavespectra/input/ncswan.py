@@ -60,6 +60,9 @@ def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True, sort
     # Returns only selected variables
     to_drop = [dvar for dvar in dset.data_vars if dvar not in [attrs.SPECNAME,
         attrs.WSPDNAME, attrs.WDIRNAME, attrs.DEPNAME, attrs.LONNAME, attrs.LATNAME]]
+    # Ensure site is a coordinate
+    if attrs.SITENAME in dset.dims and attrs.SITENAME not in dset.coords:
+        dset[attrs.SITENAME] = np.arange(1,len(dset[attrs.SITENAME])+1)
     return dset.drop(to_drop)
 
 if __name__ == '__main__':
@@ -70,3 +73,4 @@ if __name__ == '__main__':
     )
     ds_spec = read_ncswan(os.path.join(FILES_DIR, 'swanfile.nc'),
         sort_dirs=True)
+    ds_swan = xr.open_dataset(os.path.join(FILES_DIR, 'swanfile.nc'))
