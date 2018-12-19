@@ -4,15 +4,14 @@ import shutil
 import pytest
 from tempfile import mkdtemp
 
-from wavespectra import (read_swan, read_netcdf, read_ww3, read_ww3_msl,
-    read_octopus, read_cf_json, read_ncswan)
+from wavespectra import read_ncswan
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), '../sample_files'
 )
 
-class TestIO(object):
+class TestNcSwan(object):
     """Test output from read_ncswan function looks sound."""
 
     @classmethod
