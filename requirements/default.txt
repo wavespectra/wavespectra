@@ -8,4 +8,3 @@ sortedcontainers
 scipy
 attrdict
 pyaml
-tqdm
