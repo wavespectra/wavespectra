@@ -43,8 +43,10 @@ def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
     set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
     # Assigning spectral coordinates
-    dset[attrs.FREQNAME] = dset.SPSIG.values
+    dset[attrs.FREQNAME] = dset.SPSIG.values / (2 * np.pi) # convert rad to Hz
     dset[attrs.DIRNAME] = dset.SPDIR.values
+    # converting Action to Energy density and adjust density to Hz
+    dset[attrs.SPECNAME] = dset[attrs.SPECNAME] * dset.SPSIG * (2 * np.pi)
     # Converting from radians
     dset[attrs.DIRNAME].values *= R2D
     dset[attrs.SPECNAME].values /= R2D
