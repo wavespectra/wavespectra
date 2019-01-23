@@ -334,7 +334,7 @@ class SpecArray(object):
             return None
         Sf = self.oned()
         ipeak = self._peak(Sf).load()
-        fp = self.freq[ipeak].drop('freq')
+        fp = self.freq.astype('float64')[ipeak].drop('freq')
         if smooth:
             f1, f2, f3 = [self.freq[ipeak+i].values for i in [-1, 0, 1]]
             e1, e2, e3 = [Sf.isel(freq=ipeak+i).values for i in [-1, 0, 1]]
