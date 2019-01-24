@@ -48,10 +48,10 @@ def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True, sort
     set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': attrs.SPECNAME})
     # Converting from radians
-    dset[attrs.SPECNAME].values /= R2D
+    dset[attrs.SPECNAME] /= R2D
     if attrs.DIRNAME in dset:
-        dset[attrs.DIRNAME].values *= R2D
-        dset[attrs.DIRNAME].values %= 360
+        dset[attrs.DIRNAME] *= R2D
+        dset[attrs.DIRNAME] %= 360
         if sort_dirs:
             dset = dset.sortby(attrs.DIRNAME)
     # Adjustting attributes if 1D
