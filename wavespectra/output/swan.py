@@ -3,7 +3,8 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.swan import SwanSpecFile
 from wavespectra.core.misc import to_datetime
 
-def to_swan(self, filename, append=False, id='Created by wavespectra', unique_times=False):
+def to_swan(self, filename, append=False, id='Created by wavespectra',
+            unique_times=False, dircap_270=False):
     """Write spectra in SWAN ASCII format.
 
     Args:
@@ -12,6 +13,8 @@ def to_swan(self, filename, append=False, id='Created by wavespectra', unique_ti
         - id (str): used for header in output file.
         - unique_times (bool): if True, only last time is taken from
           duplicate indices.
+        - dircap_270 (bool): if True, ensure directions do not exceed 270 degrees
+          as requerid for swan to prescribe boundaries.
 
     Note:
         - Only datasets with lat/lon coordinates are currently supported.
@@ -22,7 +25,13 @@ def to_swan(self, filename, append=False, id='Created by wavespectra', unique_ti
     """
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
-    
+
+    # When prescribing bnds, SWAN doesn't like dir>270
+    if dircap_270:
+        direc = dset[attrs.DIRNAME].values
+        direc[direc>270] = direc[direc>270]-360
+        dset = dset.update({attrs.DIRNAME: direc}).sortby('dir', ascending=False)
+
     darray = dset[attrs.SPECNAME]
     is_time = attrs.TIMENAME in darray.dims
 
