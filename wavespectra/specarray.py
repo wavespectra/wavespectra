@@ -266,7 +266,7 @@ class SpecArray(object):
         hs.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return hs.rename(self._my_name())
     
     def hmax(self):
@@ -290,7 +290,7 @@ class SpecArray(object):
         hmax.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return hmax.rename(self._my_name())
 
     def scale_by_hs(self, expr, inplace=True, hs_min=-np.inf, hs_max=np.inf,
@@ -350,7 +350,7 @@ class SpecArray(object):
         tp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return tp
 
     def momf(self, mom=0):
@@ -377,7 +377,7 @@ class SpecArray(object):
         tm01.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return tm01.rename(self._my_name())
 
     def tm02(self):
@@ -390,7 +390,7 @@ class SpecArray(object):
         tm02.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return tm02.rename(self._my_name())
 
     def dm(self):
@@ -402,7 +402,7 @@ class SpecArray(object):
         dm.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return dm.rename(self._my_name())
 
     def dp(self):
@@ -418,7 +418,7 @@ class SpecArray(object):
         dp.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return dp.rename(self._my_name())
 
     def dpm(self, mask=np.nan):
@@ -441,7 +441,7 @@ class SpecArray(object):
         dpm.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return dpm.where(ipeak > 0).fillna(mask).rename(self._my_name())
 
     def dspr(self):
@@ -461,7 +461,7 @@ class SpecArray(object):
         dspr.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return dspr.rename(self._my_name())
 
     def crsd(self, theta=90.):
@@ -472,7 +472,7 @@ class SpecArray(object):
         crsd.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return crsd.rename(self._my_name())
 
     def swe(self):
@@ -487,11 +487,11 @@ class SpecArray(object):
         """
         swe = (1. - self.momf(2).sum(dim=attrs.DIRNAME)**2 /
                (self.momf(0).sum(dim=attrs.DIRNAME)*self.momf(4).sum(dim=attrs.DIRNAME)))**0.5
-        swe.values[swe.values < 0.001] = 1.
+        swe = swe.where(swe >= 0.001, 1.)
         swe.attrs.update(OrderedDict((
             ('standard_name', self._standard_name(self._my_name())),
             ('units', self._units(self._my_name())))
-            ))
+        ))
         return swe.rename(self._my_name())
 
     def sw(self, mask=np.nan):
