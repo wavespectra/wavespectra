@@ -32,10 +32,12 @@ def read_ncswan(filename_or_fileglob, chunks={}, convert_wind_vectors=True, sort
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.density.attrs.get('units', '')
-    dset.rename({'frequency': attrs.FREQNAME, 'direction': attrs.DIRNAME,
+    dset = dset.rename({
+        'frequency': attrs.FREQNAME, 'direction': attrs.DIRNAME,
         'points': attrs.SITENAME, 'density': attrs.SPECNAME,
         'longitude': attrs.LONNAME, 'latitude': attrs.LATNAME,
-        'depth': attrs.DEPNAME}, inplace=True)
+        'depth': attrs.DEPNAME
+    })
     # Ensuring lon,lat are not function of time
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
