@@ -44,8 +44,11 @@ def read_netcdf(filename_or_fileglob,
                  sitename: attrs.SITENAME,
                  specname: attrs.SPECNAME,
                  timename: attrs.TIMENAME}
-    dset.rename({k:v for k,v in coord_map.items() if k in dset}, inplace=True)
-    dset[attrs.SPECNAME].attrs.update({'_units': _units, '_variable_name': _variable_name})
+    dset = dset.rename({k:v for k,v in coord_map.items() if k in dset})
+    dset[attrs.SPECNAME].attrs.update({
+        '_units': _units,
+        '_variable_name': _variable_name
+    })
     if attrs.DIRNAME not in dset or len(dset.dir)==1:
         dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
     set_spec_attributes(dset)

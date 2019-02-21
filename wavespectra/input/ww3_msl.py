@@ -25,7 +25,11 @@ def read_ww3_msl(filename_or_fileglob, chunks={}):
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.specden.attrs.get('units','')
-    dset.rename({'freq': attrs.FREQNAME, 'dir': attrs.DIRNAME, 'wsp': attrs.WSPDNAME}, inplace=True)
+    dset = dset.rename({
+        'freq': attrs.FREQNAME,
+        'dir': attrs.DIRNAME,
+        'wsp': attrs.WSPDNAME
+    })
     dset[attrs.SPECNAME] = (dset['specden'].astype('float32')+127.) * dset['factor']
     dset = dset.drop(['specden', 'factor', 'df'])
     set_spec_attributes(dset)

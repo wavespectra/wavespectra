@@ -31,10 +31,16 @@ def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.AC.attrs.get('units', '')
-    dset.rename({'nfreq': attrs.FREQNAME, 'ndir': attrs.DIRNAME,
-        'nbstation': attrs.SITENAME, 'AC': attrs.SPECNAME,
-        'lon': attrs.LONNAME, 'lat': attrs.LATNAME,
-        'DEP': attrs.DEPNAME, 'ocean_time': attrs.TIMENAME}, inplace=True)
+    dset = dset.rename({
+        'nfreq': attrs.FREQNAME,
+        'ndir': attrs.DIRNAME,
+        'nbstation': attrs.SITENAME,
+        'AC': attrs.SPECNAME,
+        'lon': attrs.LONNAME,
+        'lat': attrs.LATNAME,
+        'DEP': attrs.DEPNAME,
+        'ocean_time': attrs.TIMENAME
+    })
     # Calculating wind speeds and directions
     if convert_wind_vectors and 'Uwind' in dset and 'Vwind' in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(

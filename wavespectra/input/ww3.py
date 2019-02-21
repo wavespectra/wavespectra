@@ -27,10 +27,16 @@ def read_ww3(filename_or_fileglob, chunks={}):
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
     _units = dset.efth.attrs.get('units', '')
-    dset.rename({'frequency': attrs.FREQNAME, 'direction': attrs.DIRNAME,
-        'station': attrs.SITENAME, 'efth': attrs.SPECNAME, 'longitude': attrs.LONNAME,
-        'latitude': attrs.LATNAME, 'wnddir': attrs.WDIRNAME, 'wnd': attrs.WSPDNAME},
-        inplace=True)
+    dset = dset.rename({
+        'frequency': attrs.FREQNAME,
+        'direction': attrs.DIRNAME,
+        'station': attrs.SITENAME,
+        'efth': attrs.SPECNAME,
+        'longitude': attrs.LONNAME,
+        'latitude': attrs.LATNAME,
+        'wnddir': attrs.WDIRNAME,
+        'wnd': attrs.WSPDNAME
+    })
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})

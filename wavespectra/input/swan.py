@@ -299,7 +299,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
 
     # Setting multi-index
     if len(cycles) > 1:
-        dsets.rename({attrs.TIMENAME: 'cycletime'}, inplace=True)
+        dsets = dsets.rename({attrs.TIMENAME: 'cycletime'})
         cycletime = zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
                         dsets.cycletime.values)
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[attrs.CYCLENAME, attrs.TIMENAME])
