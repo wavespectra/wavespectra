@@ -9,6 +9,8 @@ import numpy as np
 from wavespectra.core.attributes import attrs
 from wavespectra.core.misc import to_nautical
 
+E2V = 1025 * 9.81
+
 class SwanSpecFile(object):
     """Read spectra in SWAN ASCII format."""
 
@@ -46,7 +48,8 @@ class SwanSpecFile(object):
                 self.times = []
             self.x = []
             self.y = []
-            for ip in self._read_header('LONLAT', True):
+            locs = self._read_header('LONLAT', True) or self._read_header('LOCATIONS', True)
+            for ip in locs:
                 xy = [float(val) for val in ip.split()]
                 self.x.append(xy[0])
                 self.y.append(xy[1])
@@ -65,7 +68,12 @@ class SwanSpecFile(object):
             else:
                 self.dirs = to_nautical(np.array([float(val) for val in self.cdir]))
             self._read_header('QUANT',True)
-            self.fid.readline()
+            # Figure units out, if Energy density factor needs to be applied
+            units = self.fid.readline().split()[0]
+            if units.upper().startswith('J'):
+                self.units_factor = E2V
+            else:
+                self.units_factor = 1.
             self.excval = int(float(self.fid.readline().split()[0]))
 
         if dirorder:
@@ -125,7 +133,7 @@ class SwanSpecFile(object):
                         Snew = Snew[:,self.dirmap]
                 else: # For files with no timestamp
                     return None
-            Sout.append(Snew)
+            Sout.append(Snew / self.units_factor)
         return Sout
 
     def readall(self):
