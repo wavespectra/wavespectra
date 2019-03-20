@@ -69,7 +69,7 @@ class SwanSpecFile(object):
                 self.dirs = to_nautical(np.array([float(val) for val in self.cdir]))
             self._read_header('QUANT',True)
             # Figure units out, if Energy density factor needs to be applied
-            units = self.fid.readline().split()[0]
+            units = self.fid.readline().strip().split()[0]
             if units.upper().startswith('J'):
                 self.units_factor = E2V
             else:
