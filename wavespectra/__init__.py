@@ -37,6 +37,6 @@ def _import_read_functions(pkgname='input'):
                 func_name
                 )
         except Exception as exc:
-            print('Cannot import reading function {}:\n{}'.format(func_name, exc))
+            print(('Cannot import reading function {}:\n{}'.format(func_name, exc)))
 
 _import_read_functions()

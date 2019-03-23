@@ -89,7 +89,7 @@ class SpecArray(object):
             spec_array = np.expand_dims(darray.values, axis=-1)
             spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
             spec_coords.update({dim: np.array((1,))})
-            return xr.DataArray(spec_array, coords=spec_coords, dims=spec_coords.keys(), attrs=darray.attrs)
+            return xr.DataArray(spec_array, coords=spec_coords, dims=list(spec_coords.keys()), attrs=darray.attrs)
         else:
             return darray
 
@@ -143,7 +143,7 @@ class SpecArray(object):
                                {'site': 1, 'time': 1}
 
         """
-        return (dict(zip(dict_of_ids, x)) for x in product(*dict_of_ids.itervalues()))
+        return (dict(list(zip(dict_of_ids, x))) for x in product(*iter(dict_of_ids.values())))
 
     def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
         """Finds points of inflection in smoothed frequency spectra.
@@ -184,16 +184,16 @@ class SpecArray(object):
         try:
             return attrs.ATTRS[varname]['standard_name']
         except AttributeError:
-            print('Cannot set standard_name for variable {}. '
-                  'Ensure it is defined in attributes.yml'.format(varname))
+            print(('Cannot set standard_name for variable {}. '
+                  'Ensure it is defined in attributes.yml'.format(varname)))
             return ''
 
     def _units(self, varname):
         try:
             return attrs.ATTRS[varname]['units']
         except AttributeError:
-            print('Cannot set units for variable {}. '
-                  'Ensure it is defined in attributes.yml'.format(varname))
+            print(('Cannot set units for variable {}. '
+                  'Ensure it is defined in attributes.yml'.format(varname)))
             return ''
 
     def oned(self, skipna=True):
@@ -606,11 +606,11 @@ class SpecArray(object):
         nfreq = len(freqs)
 
         # Slice each possible 2D, freq-dir array out of the full data array
-        slice_ids = {dim: range(self._obj[dim].size) for dim in self._non_spec_dims}
+        slice_ids = {dim: list(range(self._obj[dim].size)) for dim in self._non_spec_dims}
         for slice_dict in self._product(slice_ids):
             specarr = self._obj[slice_dict]
             if nearest:
-                slice_dict_nearest = {key: self._obj[key][val].values for key, val in slice_dict.items()}
+                slice_dict_nearest = {key: self._obj[key][val].values for key, val in list(slice_dict.items())}
                 wsp = float(wsp_darr.sel(method='nearest', **slice_dict_nearest))
                 wdir = float(wdir_darr.sel(method='nearest', **slice_dict_nearest))
                 dep = float(dep_darr.sel(method='nearest', **slice_dict_nearest))
@@ -662,8 +662,8 @@ class SpecArray(object):
                     part_array == part, spectrum, 0.)
 
         # Concatenate partitions along new axis
-        part_coord = xr.DataArray(data=range(len(all_parts)),
-                                  coords={'part': range(len(all_parts))},
+        part_coord = xr.DataArray(data=list(range(len(all_parts))),
+                                  coords={'part': list(range(len(all_parts)))},
                                   dims=('part',),
                                   name='part',
                                   attrs=OrderedDict((('standard_name', 'spectral_partition_number'), ('units', '')))
@@ -708,12 +708,12 @@ class SpecArray(object):
         else:
             raise ValueError('stats must be either a container or a dictionary')
 
-        names = names or stats_dict.keys()
+        names = names or list(stats_dict.keys())
         if len(names) != len(stats_dict):
             raise ValueError('length of names does not correspond to the number of stats')
 
         params = list()
-        for func, kwargs in stats_dict.items():
+        for func, kwargs in list(stats_dict.items()):
             try:
                 stats_func = getattr(spectra.spec, func)
             except:
@@ -723,7 +723,7 @@ class SpecArray(object):
             else:
                 raise IOError('%s attribute of %s is not callable' % (func, self.__class__.__name__))
 
-        return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
+        return xr.merge(params).rename(dict(list(zip(list(stats_dict.keys()), names))))
 
 
 def wavenuma(ang_freq, water_depth):

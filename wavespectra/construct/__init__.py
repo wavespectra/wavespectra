@@ -1,5 +1,5 @@
-from jonswap import jonswap
-from ochihubble import ochihubble
+from .jonswap import jonswap
+from .ochihubble import ochihubble
 
 
 
