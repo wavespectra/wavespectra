@@ -95,6 +95,6 @@ if __name__ == '__main__':
     s.period.values = 1. / s.period.values
     plt.figure()
     s.efth.plot()
-    print 'Tp from file: {}'.format(ds.isel(nbstation=0, ocean_time=5).TPP.values)
+    print('Tp from file: {}'.format(ds.isel(nbstation=0, ocean_time=5).TPP.values))
 
     plt.show()

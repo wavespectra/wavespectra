@@ -24,14 +24,13 @@ class Plugin(type):
         return type.__new__(cls, name, bases, dct)
 
 @xr.register_dataset_accessor('spec')
-class SpecDataset(object):
+class SpecDataset(object, metaclass=Plugin):
     """Wrapper around the xarray dataset.
     
     Plugin functions defined in wavespectra/output/<module>
     are attached as methods in this accessor class.
 
     """
-    __metaclass__ = Plugin
 
     def __init__(self, xarray_dset):
         self.dset = xarray_dset

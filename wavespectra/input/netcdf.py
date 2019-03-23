@@ -44,7 +44,7 @@ def read_netcdf(filename_or_fileglob,
                  sitename: attrs.SITENAME,
                  specname: attrs.SPECNAME,
                  timename: attrs.TIMENAME}
-    dset = dset.rename({k:v for k,v in coord_map.items() if k in dset})
+    dset = dset.rename({k:v for k,v in list(coord_map.items()) if k in dset})
     dset[attrs.SPECNAME].attrs.update({
         '_units': _units,
         '_variable_name': _variable_name

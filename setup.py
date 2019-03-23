@@ -95,7 +95,7 @@ setup(
     extras_require=extras_require(),
     setup_requires=['pytest-runner'],
     tests_require=reqs('test.txt'),
-    python_requires=">=2.7, <3",
+    python_requires=">=2.7",
     classifiers=CLASSIFIERS,
     project_urls=PROJECT_URLS,
     **kwargs

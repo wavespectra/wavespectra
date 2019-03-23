@@ -24,4 +24,4 @@ class Timer(object):
 
     def __exit__(self, *args):
         self.secs = time.time() - self.start
-        print('%s: %f sec' % (self.msg, self.secs))
+        print(('%s: %f sec' % (self.msg, self.secs)))
