@@ -54,8 +54,8 @@ class TestIO(object):
             self._write()
             self._check()
         else:
-            print(("No output method defined for {}, "
-                  "skipping output tests".format(filename)))
+            print("No output method defined for {}, "
+                  "skipping output tests".format(filename))
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)

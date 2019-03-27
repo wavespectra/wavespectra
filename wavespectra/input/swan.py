@@ -249,7 +249,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
                 raise
         swanfile.close()
 
-    cycles = list(dsets.keys())
+    cycles = dsets.keys()
 
     # Ensuring sites are consistent across cycles
     sites = all_sites[cycle]
