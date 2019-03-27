@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import xarray as xr
+import six
 
 from wavespectra.core.attributes import attrs
 from wavespectra.specarray import SpecArray
@@ -24,6 +25,7 @@ class Plugin(type):
         return type.__new__(cls, name, bases, dct)
 
 @xr.register_dataset_accessor('spec')
+@six.add_metaclass(Plugin)
 class SpecDataset(object):
     """Wrapper around the xarray dataset.
     
@@ -31,7 +33,6 @@ class SpecDataset(object):
     are attached as methods in this accessor class.
 
     """
-    __metaclass__ = Plugin
 
     def __init__(self, xarray_dset):
         self.dset = xarray_dset
