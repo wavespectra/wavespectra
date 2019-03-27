@@ -20,7 +20,7 @@ def read_cf_json(filename):
         spec_dict = json.load(stream)
 
     data = {}
-    for varname, vardata in list(spec_dict['variables'].items()):
+    for varname, vardata in spec_dict['variables'].items():
         dims = vardata.get('shape',[])
         if varname == 'time':
             attrs = {}

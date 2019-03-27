@@ -10,6 +10,7 @@ Functions:
 import os
 import glob
 import datetime
+import warnings
 import pandas as pd
 import xarray as xr
 import numpy as np
@@ -57,11 +58,15 @@ def read_swan(filename, dirorder=True, as_site=None):
                 if 'X-wsp' in tab and 'Y-wsp' in tab:
                     tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
             else:
-                print(("Warning: times in %s and %s not consistent, not appending winds and depth" %
-                    (swanfile.filename, swanfile.tabfile)))
+                warnings.warn(
+                    "Times in {} and {} not consistent, not appending winds and depth"
+                    .format(swanfile.filename, swanfile.tabfile)
+                )
                 tab = None
         except Exception as exc:
-            print(("Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)))
+            warnings.warn(
+                "Cannot parse depth and winds from {}:\n{}".format(swanfile.tabfile, exc)
+                )
 
     if swanfile.is_grid:
         lons = sorted(np.unique(lons))
@@ -186,12 +191,16 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
                     if 'X-wsp' in tab and 'Y-wsp' in tab:
                         tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(tab['X-wsp'], tab['Y-wsp'], coming_from=True)
                 else:
-                    print(("Warning: times in %s and %s not consistent, not appending winds and depth" %
-                        (swanfile.filename, swanfile.tabfile)))
+                    warnings.warn(
+                        "Times in {} and {} not consistent, not appending winds and depth"
+                        .format(swanfile.filename, swanfile.tabfile)
+                    )
                     tab = pd.DataFrame()
                 tab = tab[list(set(tab.columns).intersection((attrs.DEPNAME, attrs.WSPDNAME, attrs.WDIRNAME)))]
             except Exception as exc:
-                print(("Cannot parse depth and winds from %s:\n%s" % (swanfile.tabfile, exc)))
+                warnings.warn(
+                    "Cannot parse depth and winds from {}:\n{}".format(swanfile.tabfile, exc)
+                )
         else:
             tab = pd.DataFrame()
 
@@ -246,7 +255,7 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     sites = all_sites[cycle]
     lons = all_lons[cycle]
     lats = all_lats[cycle]
-    for site, lon, lat in zip(list(all_sites.values()), list(all_lons.values()), list(all_lats.values())):
+    for site, lon, lat in zip(all_sites.values(), all_lons.values(), all_lats.values()):
         if (list(site) != list(sites)) or (list(lon) != list(lons)) or (list(lat) != list(lats)):
             raise IOError('Inconsistent sites across cycles in glob pattern provided')
 
@@ -266,10 +275,10 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
 
     # Concat cycles
     if len(dsets) > 1:
-        dsets = np.concatenate(list(dsets.values()), axis=0)
-        deps = np.concatenate(list(deps.values()), axis=0) if attrs.DEPNAME in tabs[cycle][0] else None
-        wspds = np.concatenate(list(wspds.values()), axis=0) if attrs.WSPDNAME in tabs[cycle][0] else None
-        wdirs = np.concatenate(list(wdirs.values()), axis=0) if attrs.WDIRNAME in tabs[cycle][0] else None
+        dsets = np.concatenate(dsets.values(), axis=0)
+        deps = np.concatenate(deps.values(), axis=0) if attrs.DEPNAME in tabs[cycle][0] else None
+        wspds = np.concatenate(wspds.values(), axis=0) if attrs.WSPDNAME in tabs[cycle][0] else None
+        wdirs = np.concatenate(wdirs.values(), axis=0) if attrs.WDIRNAME in tabs[cycle][0] else None
     else:
         dsets = dsets[cycle]
         deps = deps[cycle] if attrs.DEPNAME in tabs[cycle][0] else None
@@ -300,8 +309,10 @@ def read_swans(fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True
     # Setting multi-index
     if len(cycles) > 1:
         dsets = dsets.rename({attrs.TIMENAME: 'cycletime'})
-        cycletime = list(zip([item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
-                        dsets.cycletime.values))
+        cycletime = zip(
+            [item for sublist in [[c]*t for c,t in zip(cycles, time_sizes)] for item in sublist],
+            dsets.cycletime.values
+        )
         dsets['cycletime'] = pd.MultiIndex.from_tuples(cycletime, names=[attrs.CYCLENAME, attrs.TIMENAME])
         dsets['cycletime'].attrs = attrs.ATTRS[attrs.TIMENAME]
 
