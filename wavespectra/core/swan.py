@@ -229,4 +229,4 @@ def read_tab(filename, toff=0):
     df.index = df.index.shift(toff, freq='1H')
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
-    return df.ix[:, 0:-1]
+    return df.iloc[:, 0:-1]
