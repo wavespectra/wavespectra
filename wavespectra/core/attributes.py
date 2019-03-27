@@ -16,7 +16,7 @@ def set_spec_attributes(dset):
     """
     Standarise CF attributes in specarray variables
     """
-    for varname, varattrs in list(attrs.ATTRS.items()):
+    for varname, varattrs in attrs.ATTRS.items():
         try:
             dset[varname].attrs = varattrs
         except Exception as exc:

@@ -31,7 +31,7 @@ def read_dictionary(spcdict):
                 }
 
     """
-    spcdict = {k: v for k, v in list(spcdict.items()) if len(v['data'])}
+    spcdict = {k: v for k, v in spcdict.items() if len(v['data'])}
     dset = xr.Dataset.from_dict(spcdict)
     set_spec_attributes(dset)
     return dset
