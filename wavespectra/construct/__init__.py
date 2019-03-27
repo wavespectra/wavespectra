@@ -1,6 +1,2 @@
-from .jonswap import jonswap
-from .ochihubble import ochihubble
-
-
-
-
+from wavespectra.construct.jonswap import jonswap
+from wavespectra.construct.ochihubble import ochihubble
