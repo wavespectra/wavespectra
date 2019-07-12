@@ -4,3 +4,7 @@ python:
   - 3.7
 script:
   - pytest
+before_install:
+  - "echo before install"
+  - "pip install -U pip"
+  - "python setup.py install
