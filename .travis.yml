@@ -7,4 +7,7 @@ script:
 before_install:
   - "echo before install"
   - "pip install -U pip"
-  - "python setup.py install
+  - "pip install -r requirements/default.txt"
+  - "pip install -r requirements/extra.txt"
+  - "pip install -r requirements/test.txt"
+  - "python setup.py install"
