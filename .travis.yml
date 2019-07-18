@@ -6,7 +6,9 @@ script:
   - pytest
 before_install:
   - "echo before install"
+  - "sudo apt-get install gcc gfortran"
   - "pip install -U pip"
+install:
   - "pip install -r requirements/default.txt"
   - "pip install -r requirements/extra.txt"
   - "pip install -r requirements/test.txt"
