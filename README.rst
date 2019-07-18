@@ -3,7 +3,9 @@ wavespectra
 Python library for ocean wave spectra.
 
 .. image:: https://travis-ci.org/rafa-guedes/wavespectra.svg?branch=master
-   :target: https://travis-ci.org/rafa-guedes/wavespectra
+    :target: https://travis-ci.org/rafa-guedes/wavespectra
+.. image:: https://badge.fury.io/py/wavespectra.svg
+    :target: https://badge.fury.io/py/wavespectra
 
 Main contents:
 --------------
