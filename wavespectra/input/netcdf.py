@@ -4,15 +4,18 @@ import xarray as xr
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
-def read_netcdf(filename_or_fileglob,
-                chunks={},
-                freqname=attrs.FREQNAME,
-                dirname=attrs.DIRNAME,
-                sitename=attrs.SITENAME,
-                specname=attrs.SPECNAME,
-                lonname=attrs.LONNAME,
-                latname=attrs.LATNAME,
-                timename=attrs.TIMENAME):
+
+def read_netcdf(
+    filename_or_fileglob,
+    chunks={},
+    freqname=attrs.FREQNAME,
+    dirname=attrs.DIRNAME,
+    sitename=attrs.SITENAME,
+    specname=attrs.SPECNAME,
+    lonname=attrs.LONNAME,
+    latname=attrs.LATNAME,
+    timename=attrs.TIMENAME,
+):
     """Read Spectra from generic netCDF format.
 
     Args:
@@ -35,21 +38,22 @@ def read_netcdf(filename_or_fileglob,
 
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
-    _units = dset[specname].attrs.get('units','')
+    _units = dset[specname].attrs.get("units", "")
     _variable_name = specname
-    coord_map = {freqname: attrs.FREQNAME,
-                 dirname: attrs.DIRNAME,
-                 lonname: attrs.LONNAME,
-                 latname: attrs.LATNAME,
-                 sitename: attrs.SITENAME,
-                 specname: attrs.SPECNAME,
-                 timename: attrs.TIMENAME}
-    dset = dset.rename({k:v for k,v in coord_map.items() if k in dset})
-    dset[attrs.SPECNAME].attrs.update({
-        '_units': _units,
-        '_variable_name': _variable_name
-    })
-    if attrs.DIRNAME not in dset or len(dset.dir)==1:
-        dset[attrs.SPECNAME].attrs.update({'units': 'm^{2}.s'})
+    coord_map = {
+        freqname: attrs.FREQNAME,
+        dirname: attrs.DIRNAME,
+        lonname: attrs.LONNAME,
+        latname: attrs.LATNAME,
+        sitename: attrs.SITENAME,
+        specname: attrs.SPECNAME,
+        timename: attrs.TIMENAME,
+    }
+    dset = dset.rename({k: v for k, v in coord_map.items() if k in dset})
+    dset[attrs.SPECNAME].attrs.update(
+        {"_units": _units, "_variable_name": _variable_name}
+    )
+    if attrs.DIRNAME not in dset or len(dset.dir) == 1:
+        dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     set_spec_attributes(dset)
     return dset

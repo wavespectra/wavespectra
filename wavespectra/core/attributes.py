@@ -9,8 +9,9 @@ from attrdict import AttrDict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-with open(os.path.join(HERE, 'attributes.yml')) as stream:
-    attrs =  AttrDict(yaml.load(stream, yaml.SafeLoader))
+with open(os.path.join(HERE, "attributes.yml")) as stream:
+    attrs = AttrDict(yaml.load(stream, yaml.SafeLoader))
+
 
 def set_spec_attributes(dset):
     """

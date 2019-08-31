@@ -15,8 +15,8 @@ from wavespectra import (
     read_triaxys,
 )
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         '../sample_files')
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
+
 
 class TestIO(object):
     """Test reading and writing of different file formats.
@@ -36,14 +36,17 @@ class TestIO(object):
     def teardown_class(self):
         shutil.rmtree(self.tmp_dir)
 
-    @pytest.mark.parametrize('filename, read_func, write_method_name', [
-        ('swanfile.spec', read_swan, 'to_swan'),
-        ('ww3file.nc', read_ww3, None),
-        ('ww3mslfile.nc', read_ww3_msl, None),
-        ('swanfile.nc', read_ncswan, None),
-        ('triaxys.DIRSPEC', read_triaxys, None),
-        ('triaxys.NONDIRSPEC', read_triaxys, None),
-        ])
+    @pytest.mark.parametrize(
+        "filename, read_func, write_method_name",
+        [
+            ("swanfile.spec", read_swan, "to_swan"),
+            ("ww3file.nc", read_ww3, None),
+            ("ww3mslfile.nc", read_ww3_msl, None),
+            ("swanfile.nc", read_ncswan, None),
+            ("triaxys.DIRSPEC", read_triaxys, None),
+            ("triaxys.NONDIRSPEC", read_triaxys, None),
+        ],
+    )
     def test_io(self, filename, read_func, write_method_name):
         self.filename = filename
         self.read_func = read_func
@@ -54,8 +57,10 @@ class TestIO(object):
             self._write()
             self._check()
         else:
-            print("No output method defined for {}, "
-                  "skipping output tests".format(filename))
+            print(
+                "No output method defined for {}, "
+                "skipping output tests".format(filename)
+            )
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)

@@ -5,14 +5,15 @@
 
 """
 
-__version__ = '3.4'
-__author__ = 'Wavespectra Developers'
-__contact__ = 'r.guedes@oceanum.science'
-__url__ = 'http://github.com/wavespectra/wavespectra'
-__description__ = 'Library for ocean wave spectra'
-__keywords__ = 'wave spectra ocean xarray statistics analysis'
+__version__ = "3.4"
+__author__ = "Wavespectra Developers"
+__contact__ = "r.guedes@oceanum.science"
+__url__ = "http://github.com/wavespectra/wavespectra"
+__description__ = "Library for ocean wave spectra"
+__keywords__ = "wave spectra ocean xarray statistics analysis"
 
-def _import_read_functions(pkgname='input'):
+
+def _import_read_functions(pkgname="input"):
     """Make read functions available at module level.
 
     Functions are imported here if:
@@ -26,17 +27,17 @@ def _import_read_functions(pkgname='input'):
     from importlib import import_module
 
     here = os.path.dirname(os.path.abspath(__file__))
-    for filename in glob.glob1(os.path.join(here, pkgname), '*.py'):
+    for filename in glob.glob1(os.path.join(here, pkgname), "*.py"):
         module = os.path.splitext(filename)[0]
-        if module == '__init__':
+        if module == "__init__":
             continue
-        func_name = 'read_{}'.format(module)
+        func_name = "read_{}".format(module)
         try:
             globals()[func_name] = getattr(
-                import_module('wavespectra.{}.{}'.format(pkgname, module)),
-                func_name
-                )
+                import_module("wavespectra.{}.{}".format(pkgname, module)), func_name
+            )
         except Exception as exc:
-            print('Cannot import reading function {}:\n{}'.format(func_name, exc))
+            print("Cannot import reading function {}:\n{}".format(func_name, exc))
+
 
 _import_read_functions()
