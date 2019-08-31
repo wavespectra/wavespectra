@@ -5,8 +5,8 @@ import pytest
 from wavespectra.core.attributes import attrs
 from wavespectra import read_swan
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         '../sample_files')
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
+
 
 class TestDatasetWrapper(object):
     """Test SpecDataset wrapper."""
@@ -15,20 +15,23 @@ class TestDatasetWrapper(object):
     def setup_class(self):
         """Read test spectra from file."""
         here = os.path.dirname(os.path.abspath(__file__))
-        self.swanspec = read_swan(os.path.join(FILES_DIR, 'swanfile.spec'))
+        self.swanspec = read_swan(os.path.join(FILES_DIR, "swanfile.spec"))
 
-    @pytest.mark.parametrize('stat_name', [
-        ('hs'),
-        ('hmax'),
-        ('tp'),
-        ('tm01'),
-        ('tm02'),
-        ('dm'),
-        ('dp'),
-        ('dpm'),
-        ('swe'),
-        ('sw'),
-    ])
+    @pytest.mark.parametrize(
+        "stat_name",
+        [
+            ("hs"),
+            ("hmax"),
+            ("tp"),
+            ("tm01"),
+            ("tm02"),
+            ("dm"),
+            ("dp"),
+            ("dpm"),
+            ("swe"),
+            ("sw"),
+        ],
+    )
     def test_stat(self, stat_name):
         """Compare stat calculated from SpecArray and SpecDataset.
 

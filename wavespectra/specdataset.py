@@ -11,20 +11,30 @@ from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+
 class Plugin(type):
     """Add all the export functions at class creation time."""
 
     def __new__(cls, name, bases, dct):
-        modules = [__import__('wavespectra.output.{}'.format(os.path.splitext(fname)[0]), fromlist=['*'])
-                    for fname in os.listdir(os.path.join(here, 'output')) if fname.endswith('.py')]
+        modules = [
+            __import__(
+                "wavespectra.output.{}".format(os.path.splitext(fname)[0]),
+                fromlist=["*"],
+            )
+            for fname in os.listdir(os.path.join(here, "output"))
+            if fname.endswith(".py")
+        ]
         for module in modules:
             for module_attr in dir(module):
                 function = getattr(module, module_attr)
-                if isinstance(function, types.FunctionType) and module_attr.startswith('to_'):
+                if isinstance(function, types.FunctionType) and module_attr.startswith(
+                    "to_"
+                ):
                     dct[function.__name__] = function
         return type.__new__(cls, name, bases, dct)
 
-@xr.register_dataset_accessor('spec')
+
+@xr.register_dataset_accessor("spec")
 @six.add_metaclass(Plugin)
 class SpecDataset(object):
     """Wrapper around the xarray dataset.
@@ -37,15 +47,20 @@ class SpecDataset(object):
     def __init__(self, xarray_dset):
         self.dset = xarray_dset
         self._wrapper()
-        self.supported_dims = [attrs.TIMENAME, attrs.SITENAME, attrs.LATNAME,
-                               attrs.LONNAME, attrs.FREQNAME, attrs.DIRNAME]
+        self.supported_dims = [
+            attrs.TIMENAME,
+            attrs.SITENAME,
+            attrs.LATNAME,
+            attrs.LONNAME,
+            attrs.FREQNAME,
+            attrs.DIRNAME,
+        ]
 
     def __getattr__(self, attr):
         return getattr(self.dset, attr)
 
     def __repr__(self):
-        return re.sub(r'<.+>', '<{}>'.format(self.__class__.__name__),
-                      str(self.dset))
+        return re.sub(r"<.+>", "<{}>".format(self.__class__.__name__), str(self.dset))
 
     def _wrapper(self):
         """Wraper around SpecArray methods.
@@ -56,7 +71,7 @@ class SpecDataset(object):
 
         """
         for method_name in dir(self.dset[attrs.SPECNAME].spec):
-            if not method_name.startswith('_'):
+            if not method_name.startswith("_"):
                 method = getattr(self.dset[attrs.SPECNAME].spec, method_name)
                 setattr(self, method_name, method)
 
@@ -75,21 +90,26 @@ class SpecDataset(object):
 
         unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(self.supported_dims)
         if unsupported_dims:
-            raise NotImplementedError('Dimensions {} are not supported by {} method'.format(
-                unsupported_dims, sys._getframe().f_back.f_code.co_name))
+            raise NotImplementedError(
+                "Dimensions {} are not supported by {} method".format(
+                    unsupported_dims, sys._getframe().f_back.f_code.co_name
+                )
+            )
 
         # If grid reshape into site, if neither define fake site dimension
-        if set(('lon','lat')).issubset(dset.dims):
-            dset = dset.stack(site=('lat','lon'))
-        elif 'site' not in dset.dims:
-            dset = dset.expand_dims('site')
+        if set(("lon", "lat")).issubset(dset.dims):
+            dset = dset.stack(site=("lat", "lon"))
+        elif "site" not in dset.dims:
+            dset = dset.expand_dims("site")
 
         return dset
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     from wavespectra.input.swan import read_swan
+
     here = os.path.dirname(os.path.abspath(__file__))
-    ds = read_swan(os.path.join(here, '../tests/swanfile.spec'))
+    ds = read_swan(os.path.join(here, "../tests/swanfile.spec"))
     # ds.spec.to_octopus('/tmp/test.oct')
     # ds.spec.to_swan('/tmp/test.swn')
     # ds.spec.to_netcdf('/tmp/test.nc')

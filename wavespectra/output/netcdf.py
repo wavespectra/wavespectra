@@ -1,12 +1,15 @@
 """Generic netCDF output plugin."""
 from wavespectra.core.attributes import attrs
 
-def to_netcdf(self,
-              filename,
-              specname=attrs.SPECNAME,
-              ncformat='NETCDF4_CLASSIC',
-              compress=True,
-              time_encoding={'units': 'days since 1900-01-01'}):
+
+def to_netcdf(
+    self,
+    filename,
+    specname=attrs.SPECNAME,
+    ncformat="NETCDF4_CLASSIC",
+    compress=True,
+    time_encoding={"units": "days since 1900-01-01"},
+):
     """Preset parameters before calling xarray's native to_netcdf method.
 
     Args:
@@ -22,7 +25,7 @@ def to_netcdf(self,
     encoding = {}
     if compress:
         for ncvar in other.data_vars:
-            encoding.update({ncvar: {'zlib': True}})
+            encoding.update({ncvar: {"zlib": True}})
     if attrs.TIMENAME in other:
         other.time.encoding.update(time_encoding)
     other.to_netcdf(filename, format=ncformat, encoding=encoding)
