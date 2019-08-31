@@ -22,7 +22,7 @@ Get the source code from Github_:
 
 .. code:: bash
 
-    git clone git@github.com:metocean/wavespectra.git
+    git clone git@github.com:wavespectra/wavespectra.git
 
 Install requirements. Navigate to the base root of wavespectra and execute:
 
@@ -65,5 +65,5 @@ Running tests
     py.test -v tests/core/test_wave_stats.py
     py.test -v tests/core/test_wave_stats.py::TestSpecArray
 
-.. _Github: https://github.com/metocean/wavespectra
+.. _Github: https://github.com/wavespectra/wavespectra
 .. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs

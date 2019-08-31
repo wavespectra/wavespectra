@@ -23,10 +23,8 @@ CLASSIFIERS = [
 ]
 
 PROJECT_URLS = {
-    "Funding": "http://www.metocean.co.nz",
-    "Say Thanks!": "http://www.metocean.co.nz",
-    "Source": "https://github.com/metocean/wavespectra",
-    "Bug Reports": "https://github.com/metocean/wavespectra/issues",
+    "Source": "https://github.com/wavespectra/wavespectra",
+    "Bug Reports": "https://github.com/wavespectra/wavespectra/issues",
 }
 
 
