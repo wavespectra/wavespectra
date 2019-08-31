@@ -1,4 +1,4 @@
-.. image:: ../_static/Gradient_wide.png
+.. image:: ../_static/wavespectra_logo.png
    :width: 150 px
    :align: right
 
