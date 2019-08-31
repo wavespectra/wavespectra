@@ -129,8 +129,8 @@ The following methods are available in SpecDataset:
    :exclude-members: to_datetime
 
 .. _xarray: https://xarray.pydata.org/en/stable/
-.. _SpecArray: https://github.com/metocean/wavespectra/blob/master/wavespectra/specarray.py
-.. _SpecDataset: https://github.com/metocean/wavespectra/blob/master/wavespectra/specdataset.py
+.. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
+.. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
 .. _`accessor classes`: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor

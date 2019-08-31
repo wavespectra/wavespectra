@@ -42,4 +42,4 @@ attributes in a Dataset object using the information defined in `attributes.yml`
    :noindex:
 
 .. _xarray: https://xarray.pydata.org/en/stable/
-.. _attributes.yml: https://github.com/metocean/wavespectra/blob/master/wavespectra/core/attributes.yml
+.. _attributes.yml: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/core/attributes.yml
