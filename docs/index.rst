@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. image:: _static/Gradient_wide.png
+.. image:: _static/wavespectra_logo.png
    :width: 150 px
    :align: right
 
