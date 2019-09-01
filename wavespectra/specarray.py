@@ -19,6 +19,7 @@ from itertools import product
 import inspect
 import warnings
 
+from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
 from wavespectra.core.misc import GAMMA, D2R, R2D
 
@@ -234,6 +235,22 @@ class SpecArray(object):
                 "Ensure it is defined in attributes.yml".format(varname)
             )
             return ""
+
+    @property
+    def plot(self) -> _PlotMethods:
+        """Access plotting functions.
+
+        >>> d = DataArray([[1, 2], [3, 4]])
+
+        For convenience just call this directly
+        >>> d.plot()
+
+        Or use it as a namespace to use xarray.plot functions as
+        DataArray methods
+        >>> d.plot.imshow()  # equivalent to xarray.plot.imshow(d)
+
+        """
+        return _PlotMethods(self._obj)
 
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
