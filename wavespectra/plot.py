@@ -707,10 +707,11 @@ def _plot2d(plotfunc):
                 warnings.warn("cmocean not installed, cannot set default coormap cmocean.cm.thermal")
                 pass
 
-        import ipdb; ipdb.set_trace()
         # Spectra logarithm value spectra
-        darray.values = np.log10(darray.where(darray.values>0).fillna(0.00001))
-        levels = np.linspace(float(darray.min()), float(darray.max()), 15)
+        if projection == "polar":
+            # Workaround for the case of faceted grids where darray will have already been logarithmed
+            if not (darray.min() == -5 and 0 not in darray.values):
+                darray.values = np.log10(darray.where(darray.values>0).fillna(0.00001))
 
         # Decide on a default for the colorbar before facetgrids
         if add_colorbar is None:
@@ -807,6 +808,10 @@ def _plot2d(plotfunc):
             if isinstance(colors, str):
                 cmap_params["cmap"] = None
                 kwargs["colors"] = colors
+
+        # # Redefine levels if log polar
+        # if projection == "polar":
+        #     kwargs["levels"] = np.linspace(float(darray.min()), float(darray.max()), 15)
 
         if "pcolormesh" == plotfunc.__name__:
             kwargs["infer_intervals"] = infer_intervals
