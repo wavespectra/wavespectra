@@ -5,7 +5,7 @@
 
 """
 
-__version__ = "3.4"
+__version__ = "4.0"
 __author__ = "Wavespectra Developers"
 __contact__ = "r.guedes@oceanum.science"
 __url__ = "http://github.com/wavespectra/wavespectra"
