@@ -11,6 +11,7 @@ Or use the methods on a DataArray or Dataset:
 
 """
 import functools
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -62,17 +63,6 @@ def get_axis(figsize, size, aspect, ax, subplot_kw={}):
     return ax
 
 
-def get_projection(darray, x, y):
-    """polar if directional spectrum, None otherwise."""
-    if (set((x, y)) == set((attrs.get("FREQNAME"), attrs.get("DIRNAME")))
-        and darray[x].size > 1
-        and darray[y].size > 1
-    ):
-        return "polar"
-    else:
-        return None
-
-
 def _transpose_spectral_coordinates(darray):
     """Swap ordem of frequency and direction coordinates in dataarray."""
     dims = list(darray.dims)
@@ -92,6 +82,17 @@ def _wrap_and_sort_directions(darray):
     darray[attrs.DIRNAME].values[-1] = darray[attrs.DIRNAME].values[-2] + dd
     return darray
 
+
+def _freq_or_period_clean_attributes(darray, as_period=False):
+    """Define lean spectral attributes for clean plot."""
+    darray[attrs.DIRNAME].attrs.update({"standard_name": "Wave direction"})
+    if as_period:
+        if darray[attrs.FREQNAME].attrs["standard_name"] != "Wave period":
+            darray[attrs.FREQNAME] = 1. / darray[attrs.FREQNAME]
+        darray[attrs.FREQNAME].attrs.update({"standard_name": "Wave period", "units": "s"})
+    else:
+        darray[attrs.FREQNAME].attrs.update({"standard_name": "Wave frequency"})
+    return darray
 
 
 def _infer_line_data(darray, x, y, hue):
@@ -552,6 +553,18 @@ def _plot2d(plotfunc):
         Coordinate for x axis. If None use darray.dims[1]
     y : string, optional
         Coordinate for y axis. If None use darray.dims[0]
+    projection : string, optional
+        Axis projection.
+    show_radius_label: Bolean, optional
+        Display the radius labels
+    show_direction_label: Bolean, optional
+        Display the direction labels
+    as_period : Boolean, optional
+        Plot spectra as period instead of frequency.
+    rmax : Float, optional
+        Maximum radius if polar axis.
+    as_log10 : Boolean, optional
+        Plot the log10 of the spectrum for better visualisation.
     figsize : tuple, optional
         A tuple (width, height) of the figure in inches.
         Mutually exclusive with ``size`` and ``ax``.
@@ -651,6 +664,12 @@ def _plot2d(plotfunc):
         darray,
         x=None,
         y=None,
+        projection="polar",
+        show_radius_label=True,
+        show_direction_label=False,
+        as_period=False,
+        as_log10=True,
+        rmax=None,
         figsize=None,
         size=None,
         aspect=None,
@@ -686,30 +705,27 @@ def _plot2d(plotfunc):
         # All 2d plots in xarray share this function signature.
         # Method signature below should be consistent.
 
-        # Wavespectra - use polar axis if directional spectra
-        if plotfunc.__name__ in ("pcolormesh", "contour", "contourf"):
-            projection = get_projection(darray, x, y)
-        else:
-            projection = None
-
-        # Prepare dataarray for polar plotting
-        if projection == "polar":
-            darray = _wrap_and_sort_directions(darray)
-            if np.diff(darray.get_axis_num(["freq", "dir"])) < 0:
-                darray = _transpose_spectral_coordinates(darray)
-
         # Default colormap
         if cmap is None:
             try:
                 from cmocean import cm
                 cmap = cm.thermal
             except:
-                warnings.warn("cmocean not installed, cannot set default coormap cmocean.cm.thermal")
+                warnings.warn("cmocean not installed, cannot set default colormap cmocean.cm.thermal")
                 pass
 
-        # Spectra logarithm value spectra
+        # Prepare dataarray for polar plotting
         if projection == "polar":
-            # Workaround for the case of faceted grids where darray will have already been logarithmed
+            darray = _wrap_and_sort_directions(darray)
+            darray = _freq_or_period_clean_attributes(darray, as_period=as_period)
+            if np.diff(darray.get_axis_num([attrs.FREQNAME, attrs.DIRNAME])) < 0:
+                darray = _transpose_spectral_coordinates(darray)
+            if rmax is not None:
+                darray = darray.sel(**{attrs.FREQNAME: slice(None, rmax)})
+
+        # Log values make it easier to view multiple wave systems in spectrum
+        # Try and ensure that log won't be calculated twice if facet grids
+        if as_log10:
             if not (darray.min() == -5 and 0 not in darray.values):
                 darray.values = np.log10(darray.where(darray.values>0).fillna(0.00001))
 
@@ -736,9 +752,13 @@ def _plot2d(plotfunc):
             allargs.update(allargs.pop("kwargs"))
             # Need the decorated plotting function
             allargs["plotfunc"] = globals()[plotfunc.__name__]
+            # subplot_kws to allow polar facet grids
             subplot_kws = allargs.pop("subplot_kws", {}) or {}
             subplot_kws.update({"projection": projection})
             allargs["subplot_kws"] = subplot_kws
+            # Removed local variables to avoid warnings
+            allargs.pop("cm", None)
+            allargs.pop("projection", None)
             return _easy_facetgrid(darray, kind="dataarray", **allargs)
 
         plt = import_matplotlib_pyplot()
@@ -789,7 +809,7 @@ def _plot2d(plotfunc):
 
         # Convert coordinates if polar
         if projection == "polar":
-            xplt, yplt = np.meshgrid(np.deg2rad(xplt), 1./yplt)
+            xplt, yplt = np.meshgrid(np.deg2rad(xplt), yplt)
 
         _ensure_plottable(xplt, yplt)
 
@@ -808,10 +828,6 @@ def _plot2d(plotfunc):
             if isinstance(colors, str):
                 cmap_params["cmap"] = None
                 kwargs["colors"] = colors
-
-        # # Redefine levels if log polar
-        # if projection == "polar":
-        #     kwargs["levels"] = np.linspace(float(darray.min()), float(darray.max()), 15)
 
         if "pcolormesh" == plotfunc.__name__:
             kwargs["infer_intervals"] = infer_intervals
@@ -840,6 +856,16 @@ def _plot2d(plotfunc):
             ax.set_xlabel(label_from_attrs(darray[xlab], xlab_extra))
             ax.set_ylabel(label_from_attrs(darray[ylab], ylab_extra))
             ax.set_title(darray._title_for_slice())
+
+        # Make polar axis Nautical
+        if projection == "polar":
+            ax.set_theta_zero_location("N")
+            ax.set_theta_direction(-1)
+            # ax.set_rticks(np.arange(0, rmax+4, 4))
+            if not show_direction_label:
+                ax.set_xticklabels([])
+            if not show_radius_label:
+                ax.set_yticklabels([])
 
         if add_colorbar:
             if add_labels and "label" not in cbar_kwargs:
@@ -876,6 +902,12 @@ def _plot2d(plotfunc):
         _PlotMethods_obj,
         x=None,
         y=None,
+        projection="polar",
+        show_radius_label=True,
+        show_direction_label=False,
+        as_period=False,
+        as_log10=True,
+        rmax=None,
         figsize=None,
         size=None,
         aspect=None,
@@ -1003,29 +1035,37 @@ def imshow(x, y, z, ax, **kwargs):
 
 
 @_plot2d
-def contour(x, y, z, ax, **kwargs):
+def contour(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
     """
     Contour plot of 2d DataArray
 
     Wraps :func:`matplotlib:matplotlib.pyplot.contour`
     """
     primitive = ax.contour(x, y, z, **kwargs)
+    if clean_radius:
+        ax.set_rticks([])
+    if clean_sector:
+        ax.set_xticks([])
     return primitive
 
 
 @_plot2d
-def contourf(x, y, z, ax, **kwargs):
+def contourf(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
     """
     Filled contour plot of 2d DataArray
 
     Wraps :func:`matplotlib:matplotlib.pyplot.contourf`
     """
     primitive = ax.contourf(x, y, z, **kwargs)
+    if clean_radius:
+        ax.set_rticks([])
+    if clean_sector:
+        ax.set_xticks([])
     return primitive
 
 
 @_plot2d
-def pcolormesh(x, y, z, ax, infer_intervals=None, **kwargs):
+def pcolormesh(x, y, z, ax, infer_intervals=None, clean_radius=False, clean_sector=False, **kwargs):
     """
     Pseudocolor plot of 2d DataArray
 
@@ -1071,8 +1111,15 @@ def pcolormesh(x, y, z, ax, infer_intervals=None, **kwargs):
         ax.set_xlim(x[0], x[-1])
         ax.set_ylim(y[0], y[-1])
 
+    if clean_radius:
+        ax.set_rticks([])
+    if clean_sector:
+        ax.set_xticks([])
+
     return primitive
 
+
+#TODO: Clean up unecessary stuff, import from xarray
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -1080,8 +1127,11 @@ if __name__ == "__main__":
 
     dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
 
-    darr = dset.isel(site=0).efth.sortby("dir")
-    # darr.plot.contourf(x="dir", y="freq", col="time", col_wrap=3)
-    contourf(darr, x="dir", y="freq", col='time', col_wrap=3)
+    darr = dset.isel(site=0).efth.sortby("dir") #.isel(time=0)
+    # fig = plt.figure()
+    # darr.spec.plot.contourf(x="dir", y="freq", col="time", col_wrap=3, levels=15)
+    contourf(darr, x="dir", y="freq", col='time', col_wrap=2, as_log10=True, levels=15, add_colorbar=False,
+             show_direction_label=False, as_period=False, rmax=0.2, clean_radius=True, clean_sector=True)
+    # contourf(darr.isel(time=0), x="dir", y="freq", levels=15)#, cmap='viridis')
 
     plt.show()
