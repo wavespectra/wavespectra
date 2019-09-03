@@ -16,8 +16,9 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import xarray as xr
 from matplotlib.projections import PolarAxes
+
+import xarray as xr
 from xarray.plot.facetgrid import _easy_facetgrid
 from xarray.plot.utils import (
     _add_colorbar,
