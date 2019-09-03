@@ -10,7 +10,6 @@ from wavespectra import (
     read_ww3,
     read_ww3_msl,
     read_octopus,
-    read_cf_json,
     read_ncswan,
     read_triaxys,
 )
