@@ -561,8 +561,6 @@ def _plot2d(plotfunc):
         Display the direction labels
     as_period : Boolean, optional
         Plot spectra as period instead of frequency.
-    rmax : Float, optional
-        Maximum radius if polar axis.
     as_log10 : Boolean, optional
         Plot the log10 of the spectrum for better visualisation.
     figsize : tuple, optional
@@ -669,7 +667,6 @@ def _plot2d(plotfunc):
         show_direction_label=False,
         as_period=False,
         as_log10=True,
-        rmax=None,
         figsize=None,
         size=None,
         aspect=None,
@@ -720,8 +717,6 @@ def _plot2d(plotfunc):
             darray = _freq_or_period_clean_attributes(darray, as_period=as_period)
             if np.diff(darray.get_axis_num([attrs.FREQNAME, attrs.DIRNAME])) < 0:
                 darray = _transpose_spectral_coordinates(darray)
-            if rmax is not None:
-                darray = darray.sel(**{attrs.FREQNAME: slice(None, rmax)})
 
         # Log values make it easier to view multiple wave systems in spectrum
         # Try and ensure that log won't be calculated twice if facet grids
@@ -861,7 +856,6 @@ def _plot2d(plotfunc):
         if projection == "polar":
             ax.set_theta_zero_location("N")
             ax.set_theta_direction(-1)
-            # ax.set_rticks(np.arange(0, rmax+4, 4))
             if not show_direction_label:
                 ax.set_xticklabels([])
             if not show_radius_label:
@@ -907,7 +901,6 @@ def _plot2d(plotfunc):
         show_direction_label=False,
         as_period=False,
         as_log10=True,
-        rmax=None,
         figsize=None,
         size=None,
         aspect=None,
@@ -1040,6 +1033,11 @@ def contour(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
     Contour plot of 2d DataArray
 
     Wraps :func:`matplotlib:matplotlib.pyplot.contour`
+
+    Extra args:
+        clean_radius (bool): Remove radius axis.
+        clean_sector (bool): Remove directional axis.
+
     """
     primitive = ax.contour(x, y, z, **kwargs)
     if clean_radius:
@@ -1055,6 +1053,11 @@ def contourf(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
     Filled contour plot of 2d DataArray
 
     Wraps :func:`matplotlib:matplotlib.pyplot.contourf`
+
+    Extra args:
+        clean_radius (bool): Remove radius axis.
+        clean_sector (bool): Remove directional axis.
+
     """
     primitive = ax.contourf(x, y, z, **kwargs)
     if clean_radius:
@@ -1070,6 +1073,11 @@ def pcolormesh(x, y, z, ax, infer_intervals=None, clean_radius=False, clean_sect
     Pseudocolor plot of 2d DataArray
 
     Wraps :func:`matplotlib:matplotlib.pyplot.pcolormesh`
+
+    Extra args:
+        clean_radius (bool): Remove radius axis.
+        clean_sector (bool): Remove directional axis.
+
     """
 
     # decide on a default for infer_intervals (GH781)
@@ -1131,7 +1139,7 @@ if __name__ == "__main__":
     # fig = plt.figure()
     # darr.spec.plot.contourf(x="dir", y="freq", col="time", col_wrap=3, levels=15)
     contourf(darr, x="dir", y="freq", col='time', col_wrap=2, as_log10=True, levels=15, add_colorbar=False,
-             show_direction_label=False, as_period=False, rmax=0.2, clean_radius=True, clean_sector=True)
+             show_direction_label=False, as_period=False, clean_radius=True, clean_sector=True)
     # contourf(darr.isel(time=0), x="dir", y="freq", levels=15)#, cmap='viridis')
 
     plt.show()
