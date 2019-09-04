@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib.projections import PolarAxes
 
 import xarray as xr
-from xarray.plot.plot import plot
 from xarray.plot.facetgrid import _easy_facetgrid
 from xarray.plot.utils import (
     _add_colorbar,
@@ -94,6 +93,93 @@ def _freq_or_period_clean_attributes(darray, as_period=False):
     else:
         darray[attrs.FREQNAME].attrs.update({"standard_name": "Wave frequency"})
     return darray
+
+
+def plot(
+    darray,
+    row=None,
+    col=None,
+    col_wrap=None,
+    ax=None,
+    hue=None,
+    rtol=0.01,
+    subplot_kws=None,
+    **kwargs
+):
+    """
+    Default plot of DataArray using matplotlib.pyplot.
+
+    Calls xarray plotting function based on the dimensions of
+    darray.squeeze()
+
+    =============== ===========================
+    Dimensions      Plotting function
+    --------------- ---------------------------
+    1               :py:func:`xarray.plot.line`
+    2               :py:func:`xarray.plot.pcolormesh`
+    Anything else   :py:func:`xarray.plot.hist`
+    =============== ===========================
+
+    Parameters
+    ----------
+    darray : DataArray
+    row : string, optional
+        If passed, make row faceted plots on this dimension name
+    col : string, optional
+        If passed, make column faceted plots on this dimension name
+    hue : string, optional
+        If passed, make faceted line plots with hue on this dimension name
+    col_wrap : integer, optional
+        Use together with ``col`` to wrap faceted plots
+    ax : matplotlib axes, optional
+        If None, uses the current axis. Not applicable when using facets.
+    rtol : number, optional
+        Relative tolerance used to determine if the indexes
+        are uniformly spaced. Usually a small positive number.
+    subplot_kws : dict, optional
+        Dictionary of keyword arguments for matplotlib subplots. Only applies
+        to FacetGrid plotting.
+    **kwargs : optional
+        Additional keyword arguments to matplotlib
+
+    """
+    darray = darray.squeeze().compute()
+
+    plot_dims = set(darray.dims)
+    plot_dims.discard(row)
+    plot_dims.discard(col)
+    plot_dims.discard(hue)
+
+    ndims = len(plot_dims)
+
+    error_msg = (
+        "Only 1d and 2d plots are supported for facets in xarray. "
+        "See the package `Seaborn` for more options."
+    )
+
+    if ndims in [1, 2]:
+        if row or col:
+            kwargs["row"] = row
+            kwargs["col"] = col
+            kwargs["col_wrap"] = col_wrap
+            kwargs["subplot_kws"] = subplot_kws
+        if ndims == 1:
+            plotfunc = line
+            kwargs["hue"] = hue
+        elif ndims == 2:
+            if hue:
+                plotfunc = line
+                kwargs["hue"] = hue
+            else:
+                plotfunc = pcolormesh
+    else:
+        if row or col or hue:
+            raise ValueError(error_msg)
+        plotfunc = hist
+
+    kwargs["ax"] = ax
+
+    return plotfunc(darray, **kwargs)
 
 
 # MUST run before any 2d plotting functions are defined since
@@ -632,3 +718,10 @@ def pcolormesh(
         ax.set_xticks([])
 
     return primitive
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from wavespectra import read_swan
+    dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
+    dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
+    plt.show()
