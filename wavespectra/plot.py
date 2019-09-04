@@ -86,8 +86,10 @@ def _freq_or_period_clean_attributes(darray, as_period=False):
     darray[attrs.DIRNAME].attrs.update({"standard_name": "Wave direction"})
     if as_period:
         if darray[attrs.FREQNAME].attrs["standard_name"] != "Wave period":
-            darray[attrs.FREQNAME] = 1. / darray[attrs.FREQNAME]
-        darray[attrs.FREQNAME].attrs.update({"standard_name": "Wave period", "units": "s"})
+            darray[attrs.FREQNAME] = 1.0 / darray[attrs.FREQNAME]
+        darray[attrs.FREQNAME].attrs.update(
+            {"standard_name": "Wave period", "units": "s"}
+        )
     else:
         darray[attrs.FREQNAME].attrs.update({"standard_name": "Wave frequency"})
     return darray
@@ -365,9 +367,12 @@ def _plot2d(plotfunc):
         if cmap is None:
             try:
                 from cmocean import cm
+
                 cmap = cm.thermal
             except:
-                warnings.warn("cmocean not installed, cannot set default colormap cmocean.cm.thermal")
+                warnings.warn(
+                    "cmocean not installed, cannot set default colormap cmocean.cm.thermal"
+                )
                 pass
 
         # Prepare dataarray for polar plotting
@@ -381,7 +386,9 @@ def _plot2d(plotfunc):
         # Try and ensure that log won't be calculated twice if facet grids
         if as_log10:
             if not (darray.min() == -5 and 0 not in darray.values):
-                darray.values = np.log10(darray.where(darray.values>0).fillna(0.00001))
+                darray.values = np.log10(
+                    darray.where(darray.values > 0).fillna(0.00001)
+                )
 
         # Decide on a default for the colorbar before facetgrids
         if add_colorbar is None:
@@ -652,7 +659,9 @@ def contourf(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
 
 
 @_plot2d
-def pcolormesh(x, y, z, ax, infer_intervals=None, clean_radius=False, clean_sector=False, **kwargs):
+def pcolormesh(
+    x, y, z, ax, infer_intervals=None, clean_radius=False, clean_sector=False, **kwargs
+):
     """
     Pseudocolor plot of 2d DataArray
 
