@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def ptnghb(nk, nth):
     """Short description.
 
@@ -21,43 +22,44 @@ def ptnghb(nk, nth):
         ith = n % nth
         ik = n // nth
 
-        if ik > 0: # ... point at the bottom
+        if ik > 0:  # ... point at the bottom
             neigh[n].append(n - nth)
 
-        if ik < nk-1: # ... point at the top
+        if ik < nk - 1:  # ... point at the top
             neigh[n].append(n + nth)
 
-        if ith > 0: # ... point at the left
+        if ith > 0:  # ... point at the left
             neigh[n].append(n - 1)
-        else: # ... with wrap.
+        else:  # ... with wrap.
             neigh[n].append(n - 1 + nth)
 
-        if ith < nth-1: # ... point at the right
+        if ith < nth - 1:  # ... point at the right
             neigh[n].append(n + 1)
-        else: # ... with wrap.
+        else:  # ... with wrap.
             neigh[n].append(n + 1 - nth)
 
-        if ik > 0 and ith > 0: # ... point at the bottom-left
+        if ik > 0 and ith > 0:  # ... point at the bottom-left
             neigh[n].append(n - nth - 1)
-        elif ik > 0 and ith == 0: # ... with wrap.
+        elif ik > 0 and ith == 0:  # ... with wrap.
             neigh[n].append(n - nth - 1 + nth)
 
-        if ik < nk-1 and ith > 0:  # ... point at the top-left
+        if ik < nk - 1 and ith > 0:  # ... point at the top-left
             neigh[n].append(n + nth - 1)
-        elif ik < nk-1 and ith == 0: # ... with wrap
+        elif ik < nk - 1 and ith == 0:  # ... with wrap
             neigh[n].append(n + nth - 1 + nth)
 
-        if ik > 0 and ith < nth-1: # ... point at the bottom-right
+        if ik > 0 and ith < nth - 1:  # ... point at the bottom-right
             neigh[n].append(n - nth + 1)
-        elif ik > 0 and ith == nth-1: # ... with wrap
+        elif ik > 0 and ith == nth - 1:  # ... with wrap
             neigh[n].append(n - nth + 1 - nth)
 
-        if ik < nk-1 and ith < nth-1: # ... point at the top-right
+        if ik < nk - 1 and ith < nth - 1:  # ... point at the top-right
             neigh[n].append(n + nth + 1)
-        elif ik < nk-1 and ith == nth-1: # ... with wrap
+        elif ik < nk - 1 and ith == nth - 1:  # ... with wrap
             neigh[n].append(n + nth + 1 - nth)
 
     return neigh
+
 
 def partition(spec, ihmax=200):
     """Return the array with numbered partitions.
@@ -71,20 +73,20 @@ def partition(spec, ihmax=200):
           the numbered partitions.
 
     """
-    nk, nth = spec.shape # ensure this is the correct order
+    nk, nth = spec.shape  # ensure this is the correct order
     neigh = ptnghb(nk, nth)
 
     nspec = spec.size
     zmin = spec.min()
     zmax = spec.max()
     zp = -spec.flatten() + zmax
-    fact = (ihmax-1) / (zmax - zmin)
-    imi = np.around(zp*fact).astype(int)
+    fact = (ihmax - 1) / (zmax - zmin)
+    imi = np.around(zp * fact).astype(int)
     ind = zp.argsort()
 
     #  0.  initializations
-    imo = -np.ones(nspec, dtype=int) # mask = -2, init = -1, iwshed =  0
-    ic_label =  0
+    imo = -np.ones(nspec, dtype=int)  # mask = -2, init = -1, iwshed =  0
+    ic_label = 0
     imd = np.zeros(nspec, dtype=int)
     ifict_pixel = -100
     iq1 = []
@@ -95,7 +97,8 @@ def partition(spec, ihmax=200):
         # 1.a pixels at level ih
         for m in range(mstart, nspec):
             ip = ind[m]
-            if imi[ip] != ih: break
+            if imi[ip] != ih:
+                break
 
             # flag the point, if it stays flagged, it is a separate minimum.
             imo[ip] = -2
@@ -114,7 +117,8 @@ def partition(spec, ihmax=200):
 
             # check for end of processing
             if ip == ifict_pixel:
-                if not iq1: break
+                if not iq1:
+                    break
 
                 iq1.append(ifict_pixel)
                 ic_dist += 1
@@ -139,12 +143,14 @@ def partition(spec, ihmax=200):
         for ip in ind[mstart:m]:
             imd[ip] = 0
             if imo[ip] == -2:
-                ic_label += 1 # ... new basin
+                ic_label += 1  # ... new basin
                 iq2 = [ip]
                 while iq2:
                     imo[iq2] = ic_label
                     iqset = set([n for i in iq2 for n in neigh[i]])
-                    iq2 = [i for i in iqset if imo[i] == -2] # ... all masked points connected to it
+                    iq2 = [
+                        i for i in iqset if imo[i] == -2
+                    ]  # ... all masked points connected to it
         mstart = m
 
     # 2.  find nearest neighbor of 0 watershed points and replace
@@ -152,7 +158,8 @@ def partition(spec, ihmax=200):
     #     storing changes first in imd to assure symetry in adjustment.
     for _ in range(5):
         watershed0 = np.where(imo == 0)[0]
-        if not any(watershed0): break
+        if not any(watershed0):
+            break
 
         newvals = []
         for jl in watershed0:
