@@ -10,7 +10,7 @@ Development Lead
 Developers
 ----------
 
-* Tom Durrand
+* Tom Durrant
 * David Johnson
 * Jorge Perez
 * Henrique Rapizo
