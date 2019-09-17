@@ -3,7 +3,7 @@ History
 =======
 
 Wavespectra is an open source project initially developed at `MetOcean Solutions`_.
-The code was first open sourced in April 2018. and was moved in July 2019 into the
+The code was first open sourced in April 2018 and was moved in July 2019 into the
 `wavespectra`_ github open source organisation.
 
 ~~~~~~~~
