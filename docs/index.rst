@@ -1,8 +1,3 @@
-.. wavespectra documentation master file, created by
-   sphinx-quickstart on Tue Mar  6 19:40:57 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. image:: _static/wavespectra_logo.png
    :width: 150 px
    :align: right
@@ -22,7 +17,9 @@ Python library for wave spectra
     input
     output
     conventions
-    support
+    contributing
+    authors
+    history
 
 .. toctree::
     :maxdepth: 3

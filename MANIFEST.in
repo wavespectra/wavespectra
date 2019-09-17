@@ -1,5 +1,18 @@
+include AUTHORS.rst
+include CONTRIBUTING.rst
+include HISTORY.rst
 include LICENSE.txt
+include README.rst
+
 include wavespectra/core/attributes.yml
 include wavespectra/specpart/specpart.f90
 include wavespectra/specpart/specpart.pyf
+
 recursive-include requirements *.txt
+recursive-include tests *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+
+
