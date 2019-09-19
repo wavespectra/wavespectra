@@ -1,6 +1,6 @@
 # from setuptools import setup
 import os
-import setuptools
+from setuptools import find_packages
 from codecs import open
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
@@ -13,6 +13,7 @@ CLASSIFIERS = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Topic :: Scientific/Engineering",
@@ -89,28 +90,37 @@ def ext_configuration(parent_package="", top_path=None):
     return config
 
 
+setup_requirements = ["pytest-runner"]
+
+setup_requirements = ["pytest-runner"]
+
+test_requirements = ["pytest"]
+
 kwargs = ext_configuration(top_path="").todict()
 
 setup(
     name=NAME,
     version=wavespectra.__version__,
     description=wavespectra.__description__,
-    long_description=read("README.rst"),
+    long_description=read("README.rst") + "\n\n" + read("HISTORY.rst"),
     keywords=wavespectra.__keywords__,
     author=wavespectra.__author__,
     author_email=wavespectra.__contact__,
     url=wavespectra.__url__,
-    license="MIT",
-    packages=setuptools.find_packages(exclude=["test*"]),
+    license="MIT license",
+    packages=find_packages(include=["wavespectra"]),
     include_package_data=True,
     package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
     install_requires=install_requires(),
     extras_require=extras_require(),
-    setup_requires=["pytest-runner"],
-    tests_require=reqs("test.txt"),
-    python_requires=">=2.7",
+    setup_requires=setup_requirements,
+    tests_require=test_requirements,
+    test_suite="tests",
+    python_requires=">=3.0",
     classifiers=CLASSIFIERS,
     project_urls=PROJECT_URLS,
+    zip_safe=False,
+    entry_points={"console_scripts": ["wavespectra=wavespectra.cli:main"]},
     **kwargs
 )

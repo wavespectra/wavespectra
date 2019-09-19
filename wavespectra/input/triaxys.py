@@ -21,7 +21,7 @@ def read_triaxys(filename_or_fileglob, toff=0):
         - toff (float): time-zone offset from UTC in hours.
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from Triaxys file.
+        - dset (SpecDataset): spectra dataset object read from ww3 file.
 
     Note:
         - frequencies and directions from first file are used as reference
