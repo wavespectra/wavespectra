@@ -9,7 +9,7 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-class TestTriaxys(object):
+class Spotter(object):
     """Test parameters from 1D and 2D spectra from TRIAXYS are consistent."""
 
     @classmethod
