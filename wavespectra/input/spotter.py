@@ -5,20 +5,29 @@ Functions:
     read_spotters: Read multiple spotter files into single Dataset
 
 """
-import os
-import glob
+import copy
 import datetime
+import glob
+import json
+import os
 import warnings
+from collections import OrderedDict
+
+import numpy as np
 import pandas as pd
 import xarray as xr
-import numpy as np
-import json
+from dateutil import parser
+
+from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.misc import interp_spec
+from wavespectra.specdataset import SpecDataset
 
 
 def test(filename):
     with open(filename) as json_file:
         data = json.load(json_file)
     return data
+
 
 def read_spotter(filename, dirorder=True, as_site=None):
     """Read Spectra from spotter JSON file.
@@ -37,6 +46,7 @@ def read_spotter(filename, dirorder=True, as_site=None):
     spot.run()
     return spot.dset
 
+
 class Spotter(object):
     def __init__(self, filename_or_fileglob, toff=0):
         """Read wave spectra file from TRIAXYS buoy.
@@ -53,6 +63,7 @@ class Spotter(object):
         Remark:
             - frequencies and directions from first file are used as reference
               to interpolate spectra from other files in case they differ.
+              This is expected for spotter buoys
 
         """
         self._filename_or_fileglob = filename_or_fileglob
@@ -78,26 +89,37 @@ class Spotter(object):
             self.load()
             if ind == 0:
                 try:
-                    self.spotterId = self.data['data']['spotterId']
+                    self.spotterId = self.data["data"]["spotterId"]
                 except Exception as e:
                     raise IOError("Not a Spotter Spectra file.")
-                self.freqs = self.data['data']['frequencyData'][0]['frequency']
-                self.dirs = self.data['data']['frequencyData'][0]['direction']
                 self.interp_freq = copy.deepcopy(self.freqs)
                 self.interp_dir = copy.deepcopy(self.dirs)
             self.read_data()
         self.construct_dataset()
 
+    def _append_spectrum(self, time):
+        """Append spectra after ensuring same spectral basis."""
+        self.spec_list.append(
+            interp_spec(
+                inspec=self.spec_data,
+                infreq=self.freqs,
+                indir=self.dirs,
+                outfreq=self.interp_freq,
+                outdir=self.interp_dir,
+            )
+        )
+        self.time_list.append(time)
+
     def read_data(self):
         try:
-            self.spec_data = np.zeros((len(self.freqs), len(self.dirs)))
-            for i in range(self.header.get("nf")):
-                row = list(map(float, self.stream.readline().replace(",", " ").split()))
-                if self.header.get("is_dir"):
-                    self.spec_data[i, :] = row
-                else:
-                    self.spec_data[i, :] = row[-1]
-            self._append_spectrum()
+            for ii in range(self.nrecs):
+                self.spec_data = np.zeros((len(self.freqs), len(self.dirs)))
+                # for i in range(self.nrecs):
+                self.spec_data[ii, :] = self.data["data"]["frequencyData"][ii][
+                    "varianceDensity"
+                ]
+                time = parser.parse(self.data["data"]["frequencyData"][ii]["timestamp"])
+                self._append_spectrum(time)
         except ValueError as err:
             raise ValueError("Cannot read {}:\n{}".format(self.filename, err))
 
@@ -138,19 +160,15 @@ class Spotter(object):
 
     @property
     def dirs(self):
-        ddir = self.header.get("ddir")
-        if ddir:
-            return list(np.arange(0.0, 360.0 + ddir, ddir))
-        else:
-            return [0.0]
+        return self.data["data"]["frequencyData"][0]["direction"]
 
     @property
     def freqs(self):
-        try:
-            f0, df, nf = self.header["f0"], self.header["df"], self.header["nf"]
-            return list(np.arange(f0, f0 + df * nf, df))
-        except Exception as exc:
-            raise IOError("Not enough info to parse frequencies:\n{}".format(exc))
+        return self.data["data"]["frequencyData"][0]["frequency"]
+
+    @property
+    def nrecs(self):
+        return len(self.data["data"]["frequencyData"])
 
     @property
     def filenames(self):
@@ -163,4 +181,4 @@ class Spotter(object):
         return filenames
 
 
-data = read_spotter('../../tests/sample_files/spotter_20180214.json')
+d = read_spotter("../../tests/sample_files/spotter_20180214.json")
