@@ -5,7 +5,9 @@ Functions:
     read_spotters: Read multiple spotter files into single Dataset
 
 """
+import os
 import copy
+import glob
 import datetime
 import glob
 import json
@@ -16,38 +18,31 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import xarray as xr
-from dateutil import parser
+import numpy as np
+import json
+from dateutil.parser import parse
 
-from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.misc import interp_spec
 from wavespectra.specdataset import SpecDataset
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-def test(filename):
-    with open(filename) as json_file:
-        data = json.load(json_file)
-    return data
-
-
-def read_spotter(filename, dirorder=True, as_site=None):
+def read_spotter(filename):
     """Read Spectra from spotter JSON file.
 
     Args:
-        - dirorder (bool): If True reorder spectra so that directions are
-          sorted.
-        - as_site (bool): If True locations are defined by 1D site dimension.
+        - filename (list, str): File name or file glob specifying spotter files to read.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from file.
 
     """
-
     spot = Spotter(filename)
-    spot.run()
-    return spot.dset
+    dset = spot.run()
+    return dset
 
 
-class Spotter(object):
+
+class Spotter:
     def __init__(self, filename_or_fileglob, toff=0):
         """Read wave spectra file from TRIAXYS buoy.
 
@@ -63,112 +58,129 @@ class Spotter(object):
         Remark:
             - frequencies and directions from first file are used as reference
               to interpolate spectra from other files in case they differ.
-              This is expected for spotter buoys
+              In fact interpolation is still not implemented here, code will break
+              if spectral coordinates are different.
 
         """
         self._filename_or_fileglob = filename_or_fileglob
         self.toff = toff
-        self.stream = None
-        self.is_dir = None
-        self.time_list = []
-        self.spec_list = []
-        self.header_keys = header_keys = [
-            "is_triaxys",
-            "is_dir",
-            "time",
-            "nf",
-            "f0",
-            "df",
-            "fmin",
-            "fmax",
-            "ddir",
-        ]
 
     def run(self):
-        for ind, self.filename in enumerate(self.filenames):
-            self.load()
-            if ind == 0:
-                try:
-                    self.spotterId = self.data["data"]["spotterId"]
-                except Exception as e:
-                    raise IOError("Not a Spotter Spectra file.")
-                self.interp_freq = copy.deepcopy(self.freqs)
-                self.interp_dir = copy.deepcopy(self.dirs)
-            self.read_data()
-        self.construct_dataset()
-
-    def _append_spectrum(self, time):
-        """Append spectra after ensuring same spectral basis."""
-        self.spec_list.append(
-            interp_spec(
-                inspec=self.spec_data,
-                infreq=self.freqs,
-                indir=self.dirs,
-                outfreq=self.interp_freq,
-                outdir=self.interp_dir,
+        """Returns wave spectra dataset from one or more spotter files."""
+        dsets = []
+        for self.filename in self.filenames:
+            self._load_json()
+            self._set_arrays_from_json()
+            dsets.append(self._construct_dataset())
+        # Ensuring spectral coordinates are the same across files, interpolation needs to be implemented
+        if not self._is_unique([dset.freq.values for dset in dsets]):
+            raise NotImplementedError(
+                "Varying frequency arrays between spotter files not yet supported."
             )
+        if not self._is_unique([dset.dir.values for dset in dsets]):
+            raise NotImplementedError(
+                "Varying direction arrays between spotter files not yet supported."
+            )
+        # Concatenating datasets from multiple files
+        self.dset = xr.concat(dsets, dim="time")
+        return self.dset
+
+    def _is_unique(self, arrays):
+        """Returns True if all iterators in arrays are the same."""
+        if len(set(tuple(array) for array in arrays)) == 1:
+            return True
+        else:
+            return False
+
+    def _set_arrays_from_json(self):
+        """Set spectra attributes from arrays in json blob."""
+        # Spectra
+        keys = self.data["data"]["frequencyData"][0].keys()
+        for key in keys:
+            setattr(
+                self,
+                key,
+                [sample[key] for sample in self.data["data"]["frequencyData"]],
+            )
+        # Keep here only for checking - timestamps seem to differ
+        self.timestamp_spec = self.timestamp
+        self.latitude_spec = self.latitude
+        self.longitude_spec = self.longitude
+        # Parameters
+        if "waves" in self.data["data"]:
+            keys = self.data["data"]["waves"][0].keys()
+            for key in keys:
+                setattr(
+                    self, key, [sample[key] for sample in self.data["data"]["waves"]]
+                )
+        # Keep here only for checking - timestamps seem to differ
+        self.timestamp_param = self.timestamp
+        self.latitude_param = self.latitude
+        self.longitude_param = self.longitude
+
+    def _construct_dataset(self):
+        """Construct wavespectra dataset."""
+        self.dset = xr.DataArray(
+            data=self.efth, coords=self.coords, dims=self.dims, name=attrs.SPECNAME
+        ).to_dataset()
+        self.dset[attrs.LATNAME] = xr.DataArray(
+            data=self.latitude, coords={"time": self.dset.time}, dims=("time")
         )
-        self.time_list.append(time)
+        self.dset[attrs.LONNAME] = xr.DataArray(
+            data=self.longitude, coords={"time": self.dset.time}, dims=("time")
+        )
+        set_spec_attributes(self.dset)
+        return self.dset
 
-    def read_data(self):
-        try:
-            for ii in range(self.nrecs):
-                self.spec_data = np.zeros((len(self.freqs), len(self.dirs)))
-                # for i in range(self.nrecs):
-                self.spec_data[ii, :] = self.data["data"]["frequencyData"][ii][
-                    "varianceDensity"
-                ]
-                time = parser.parse(self.data["data"]["frequencyData"][ii]["timestamp"])
-                self._append_spectrum(time)
-        except ValueError as err:
-            raise ValueError("Cannot read {}:\n{}".format(self.filename, err))
-
-    def load(self):
+    def _load_json(self):
+        """Load data from json blob."""
         with open(self.filename) as json_file:
             self.data = json.load(json_file)
+        try:
+            self.data["data"]["spotterId"]
+        except KeyError:
+            raise IOError("Not a Spotter Spectra file: {}".format(self.filename))
 
-    def construct_dataset(self):
-        self.dset = xr.DataArray(
-            data=self.spec_list, coords=self.coords, dims=self.dims, name=attrs.SPECNAME
-        ).to_dataset()
-        set_spec_attributes(self.dset)
-        if not self.is_dir:
-            self.dset = self.dset.isel(drop=True, **{attrs.DIRNAME: 0})
-            self.dset[attrs.SPECNAME].attrs.update(units="m^{2}.s")
+    @property
+    def time(self):
+        """The time coordinate values."""
+        return [
+            parse(time).replace(tzinfo=None) - datetime.timedelta(hours=self.toff)
+            for time in self.timestamp
+        ]
 
-    def open(self):
-        self.stream = open(self.filename, "r")
+    @property
+    def efth(self):
+        """The Variance density data values."""
+        return [np.expand_dims(varden, axis=1) for varden in self.varianceDensity]
 
-    def close(self):
-        if self.stream and not self.stream.closed:
-            self.stream.close()
+    @property
+    def freq(self):
+        """The frequency coordinate values."""
+        if not self._is_unique(self.frequency):
+            raise NotImplementedError(
+                "Varying frequency arrays in single file not yet supported."
+            )
+        return self.frequency[0]
+
+    @property
+    def dir(self):
+        """The direction coordinate values, currently set to [0.] for 1D spectra."""
+        return [0.0]
 
     @property
     def dims(self):
+        """The dataset dimensions."""
         return (attrs.TIMENAME, attrs.FREQNAME, attrs.DIRNAME)
 
     @property
     def coords(self):
-        _coords = OrderedDict(
-            (
-                (attrs.TIMENAME, self.time_list),
-                (attrs.FREQNAME, self.interp_freq),
-                (attrs.DIRNAME, self.interp_dir),
-            )
-        )
-        return _coords
-
-    @property
-    def dirs(self):
-        return self.data["data"]["frequencyData"][0]["direction"]
-
-    @property
-    def freqs(self):
-        return self.data["data"]["frequencyData"][0]["frequency"]
-
-    @property
-    def nrecs(self):
-        return len(self.data["data"]["frequencyData"])
+        """The dataset coordinates."""
+        return {
+            attrs.TIMENAME: self.time,
+            attrs.FREQNAME: self.freq,
+            attrs.DIRNAME: self.dir,
+        }
 
     @property
     def filenames(self):
@@ -181,4 +193,6 @@ class Spotter(object):
         return filenames
 
 
-d = read_spotter("../../tests/sample_files/spotter_20180214.json")
+if __name__ == "__main__":
+    filename = "../../tests/sample_files/spotter_20180214.json"
+    dset = read_spotter(filename)
