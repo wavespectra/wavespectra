@@ -1,6 +1,7 @@
 """Read Native WW3 spectra files."""
 import xarray as xr
 import numpy as np
+from fsspec import get_mapper
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
@@ -8,7 +9,7 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 D2R = np.pi / 180
 
 
-def read_ww3(filename_or_fileglob, chunks={}):
+def read_ww3(filename_or_fileglob, chunks={}, file_format="netcdf"):
     """Read Spectra from WAVEWATCHIII native netCDF format.
 
     Args:
@@ -17,6 +18,7 @@ def read_ww3(filename_or_fileglob, chunks={}):
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
+        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -26,7 +28,24 @@ def read_ww3(filename_or_fileglob, chunks={}):
           'time' and/or 'station' dims.
 
     """
-    dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
+    if file_format == "netcdf":
+        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
+    elif file_format == "zarr":
+        fsmap = get_mapper(filename_or_fileglob)
+        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
+    return from_ww3(dset)
+
+
+def from_ww3(dset):
+    """Format WW3 dataset to receive wavespectra accessor.
+
+    Args:
+        dset (xr.Dataset): Dataset created from a WW3 file.
+
+    Returns:
+        Formated dataset with the SpecDataset accessor in the `spec` namespace.
+
+"""
     _units = dset.efth.attrs.get("units", "")
     dset = dset.rename(
         {
