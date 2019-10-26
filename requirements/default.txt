@@ -1,10 +1,12 @@
+attrdict
+dask>=0.17.1
+gcsfs
+fsspec
 numpy
 pandas
-xarray>=0.10.0
 python-dateutil
-dask>=0.17.1
-toolz
+pyyaml
 sortedcontainers
 scipy
-attrdict
-pyaml
+toolz
+xarray>=0.12
