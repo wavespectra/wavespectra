@@ -281,8 +281,8 @@ class SpecArray(object):
             - spectra are interpolated at `fmin` / `fmax` if they are not present in self.freq
 
         """
-        assert fmax > fmin if fmax else True, "fmax needs to be greater than fmin"
-        assert dmax > dmin if dmax else True, "fmax needs to be greater than fmin"
+        assert fmax > fmin if (fmax and fmin) else True, "fmax needs to be greater than fmin"
+        assert dmax > dmin if (dmax and dmin) else True, "fmax needs to be greater than fmin"
 
         # Slice frequencies
         other = self._obj.sel(freq=slice(fmin, fmax))
