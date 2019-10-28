@@ -281,8 +281,10 @@ class SpecArray(object):
             - spectra are interpolated at `fmin` / `fmax` if they are not present in self.freq
 
         """
-        assert fmax > fmin if (fmax and fmin) else True, "fmax needs to be greater than fmin"
-        assert dmax > dmin if (dmax and dmin) else True, "fmax needs to be greater than fmin"
+        if fmax is not None and fmin is not None and fmax <= fmin:
+            raise ValueError("fmax needs to be greater than fmin")
+        if dmax is not None and dmin is not None and dmax <= dmin:
+            raise ValueError("dmax needs to be greater than dmin")
 
         # Slice frequencies
         other = self._obj.sel(freq=slice(fmin, fmax))
@@ -292,11 +294,11 @@ class SpecArray(object):
             other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
         # Interpolate at fmin
-        if (other.freq.min() > fmin) and (self.freq.min() <= fmin):
+        if fmin is not None and (other.freq.min() > fmin) and (self.freq.min() <= fmin):
             other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
-        if (other.freq.max() < fmax) and (self.freq.max() >= fmax):
+        if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
             other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
         return other
