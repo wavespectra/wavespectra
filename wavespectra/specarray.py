@@ -841,7 +841,8 @@ class SpecArray(object):
                 all_parts.append(0 * self._obj)
 
             for ind, part in enumerate(parts):
-                all_parts[ind][slice_dict] = np.where(part_array == part, spectrum, 0.0)
+                # TODO: Revisite this when dask starts supporting item assignment
+                all_parts[ind][slice_dict].values = np.where(part_array == part, spectrum, 0.0)
 
         # Concatenate partitions along new axis
         part_coord = xr.DataArray(
