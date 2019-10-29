@@ -10,7 +10,7 @@ from wavespectra.core.misc import uv_to_spddir
 R2D = 180 / np.pi
 
 
-def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
+def read_wwm(filename_or_fileglob, chunks={}, file_format="netcdf"):
     """Read Spectra from SWAN native netCDF format.
 
     Args:
@@ -19,8 +19,7 @@ def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
-        - convert_wind_vectors (bool): choose it to convert wind vectors into
-          speed / direction data arrays.
+        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -30,7 +29,26 @@ def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
           'time' and/or 'station' dims.
 
     """
-    dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
+    if file_format == "netcdf":
+        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
+    elif file_format == "zarr":
+        fsmap = get_mapper(filename_or_fileglob)
+        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
+    else:
+        raise ValueError("file_format must be one of ('netcdf', 'zarr')")
+    return from_wwm(dset)
+
+
+def from_wwm(dset):
+    """Format WWM netcdf dataset to receive wavespectra accessor.
+
+    Args:
+        dset (xr.Dataset): Dataset created from a SWAN netcdf file.
+
+    Returns:
+        Formated dataset with the SpecDataset accessor in the `spec` namespace.
+
+    """
     _units = dset.AC.attrs.get("units", "")
     dset = dset.rename(
         {
@@ -45,7 +63,7 @@ def read_wwm(filename_or_fileglob, chunks={}, convert_wind_vectors=True):
         }
     )
     # Calculating wind speeds and directions
-    if convert_wind_vectors and "Uwind" in dset and "Vwind" in dset:
+    if "Uwind" in dset and "Vwind" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
             dset["Uwind"], dset["Vwind"], coming_from=True
         )

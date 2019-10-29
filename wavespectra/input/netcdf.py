@@ -37,7 +37,7 @@ def read_netcdf(
           'time' and/or 'station' dims.
 
     """
-    dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks)
+    dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
     _units = dset[specname].attrs.get("units", "")
     _variable_name = specname
     coord_map = {
