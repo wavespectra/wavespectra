@@ -2,6 +2,7 @@ import os
 import shutil
 import pytest
 from tempfile import mkdtemp
+import xarray as xr
 
 from wavespectra.core.attributes import attrs
 from wavespectra import (
@@ -12,6 +13,8 @@ from wavespectra import (
     read_octopus,
     read_ncswan,
     read_triaxys,
+    read_wwm,
+    read_dataset,
 )
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -60,6 +63,22 @@ class TestIO(object):
                 "No output method defined for {}, "
                 "skipping output tests".format(filename)
             )
+
+    @pytest.mark.parametrize(
+        "read_func, filename",
+        [
+            (read_ww3, "ww3file.nc"),
+            (read_wwm, "wwmfile.nc"),
+            (read_ncswan, "swanfile.nc"),
+        ],
+    )
+    def test_read_dataset(self, read_func, filename):
+        readers = {read_ww3: "ww3file.nc", read_wwm: "wwmfile.nc", read_ncswan: "swanfile.nc"}
+        for reader, filename in readers.items():
+            filepath = os.path.join(FILES_DIR, filename)
+            dset1 = reader(filepath)
+            dset2 = read_dataset(xr.open_dataset(filepath))
+            assert dset1.equals(dset2)
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)
