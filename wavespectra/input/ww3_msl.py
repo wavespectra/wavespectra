@@ -4,18 +4,31 @@ import numpy as np
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.input import open_netcdf_or_zarr, to_keep
+
+MAPPING = {
+    "time": attrs.TIMENAME,
+    "freq": attrs.FREQNAME,
+    "dir": attrs.DIRNAME,
+    "site": attrs.SITENAME,
+    "specden": attrs.SPECNAME,
+    "longitude": attrs.LONNAME,
+    "latitude": attrs.LATNAME,
+    "depth": attrs.DEPNAME,
+}
 
 
-def read_ww3_msl(filename_or_fileglob, chunks={}, file_format="netcdf"):
+def read_ww3_msl(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}):
     """Read Spectra from WAVEWATCHIII MetOcean Solutions netCDF format.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying multiple
           files to read.
+        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
+        - mapping (dict): coordinates mapping from original dataset to wavespectra.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
-        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -25,13 +38,12 @@ def read_ww3_msl(filename_or_fileglob, chunks={}, file_format="netcdf"):
           'time' and/or 'site' dims
 
     """
-    if file_format == "netcdf":
-        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
-    elif file_format == "zarr":
-        fsmap = get_mapper(filename_or_fileglob)
-        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
-    else:
-        raise ValueError("file_format must be one of ('netcdf', 'zarr')")
+    dset = open_netcdf_or_zarr(
+        filename_or_fileglob=filename_or_fileglob,
+        file_format=file_format,
+        mapping=mapping,
+        chunks=chunks
+    )
     return from_ww3_msl(dset)
 
 
@@ -58,17 +70,5 @@ def from_ww3_msl(dset):
     if attrs.DIRNAME not in dset or len(dset.dir) == 1:
         dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     # Only selected variables to be returned
-    to_drop = [
-        dvar
-        for dvar in dset.data_vars
-        if dvar
-        not in [
-            attrs.SPECNAME,
-            attrs.WSPDNAME,
-            attrs.WDIRNAME,
-            attrs.DEPNAME,
-            attrs.LONNAME,
-            attrs.LATNAME,
-        ]
-    ]
+    to_drop = list(set(dset.data_vars.keys()) - to_keep)
     return dset.drop(to_drop)

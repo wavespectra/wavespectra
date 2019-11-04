@@ -6,20 +6,33 @@ import dask.array as da
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.misc import uv_to_spddir
+from wavespectra.input import open_netcdf_or_zarr, to_keep
 
 R2D = 180 / np.pi
 
+MAPPING = {
+    "nfreq": attrs.FREQNAME,
+    "ndir": attrs.DIRNAME,
+    "nbstation": attrs.SITENAME,
+    "AC": attrs.SPECNAME,
+    "lon": attrs.LONNAME,
+    "lat": attrs.LATNAME,
+    "DEP": attrs.DEPNAME,
+    "ocean_time": attrs.TIMENAME,
+}
 
-def read_wwm(filename_or_fileglob, chunks={}, file_format="netcdf"):
+
+def read_wwm(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}):
     """Read Spectra from SWAN native netCDF format.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying multiple
           files to read.
+        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
+        - mapping (dict): coordinates mapping from original dataset to wavespectra.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
-        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -29,13 +42,12 @@ def read_wwm(filename_or_fileglob, chunks={}, file_format="netcdf"):
           'time' and/or 'station' dims.
 
     """
-    if file_format == "netcdf":
-        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
-    elif file_format == "zarr":
-        fsmap = get_mapper(filename_or_fileglob)
-        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
-    else:
-        raise ValueError("file_format must be one of ('netcdf', 'zarr')")
+    dset = open_netcdf_or_zarr(
+        filename_or_fileglob=filename_or_fileglob,
+        file_format=file_format,
+        mapping=mapping,
+        chunks=chunks
+    )
     return from_wwm(dset)
 
 
@@ -50,18 +62,7 @@ def from_wwm(dset):
 
     """
     _units = dset.AC.attrs.get("units", "")
-    dset = dset.rename(
-        {
-            "nfreq": attrs.FREQNAME,
-            "ndir": attrs.DIRNAME,
-            "nbstation": attrs.SITENAME,
-            "AC": attrs.SPECNAME,
-            "lon": attrs.LONNAME,
-            "lat": attrs.LATNAME,
-            "DEP": attrs.DEPNAME,
-            "ocean_time": attrs.TIMENAME,
-        }
-    )
+    dset = dset.rename(MAPPING)
     # Calculating wind speeds and directions
     if "Uwind" in dset and "Vwind" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
@@ -81,19 +82,7 @@ def from_wwm(dset):
     dset[attrs.DIRNAME] *= R2D
     dset[attrs.SPECNAME] /= R2D
     # Returns only selected variables, transposed
-    to_drop = [
-        dvar
-        for dvar in dset.data_vars
-        if dvar
-        not in [
-            attrs.SPECNAME,
-            attrs.WSPDNAME,
-            attrs.WDIRNAME,
-            attrs.DEPNAME,
-            attrs.LONNAME,
-            attrs.LATNAME,
-        ]
-    ]
+    to_drop = list(set(dset.data_vars.keys()) - to_keep)
     dims = [d for d in ["time", "site", "freq", "dir"] if d in dset.efth.dims]
     return dset.drop(to_drop).transpose(*dims)
 

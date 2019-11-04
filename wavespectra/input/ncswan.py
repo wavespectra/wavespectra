@@ -6,20 +6,33 @@ import dask.array as da
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.misc import uv_to_spddir
+from wavespectra.input import open_netcdf_or_zarr, to_keep
 
 R2D = 180 / np.pi
 
+MAPPING = {
+    "time": attrs.TIMENAME,
+    "frequency": attrs.FREQNAME,
+    "direction": attrs.DIRNAME,
+    "points": attrs.SITENAME,
+    "density": attrs.SPECNAME,
+    "longitude": attrs.LONNAME,
+    "latitude": attrs.LATNAME,
+    "depth": attrs.DEPNAME,
+}
 
-def read_ncswan(filename_or_fileglob, chunks={}, file_format="netcdf"):
+
+def read_ncswan(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}):
     """Read Spectra from SWAN native netCDF format.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying multiple
           files to read.
+        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
+        - mapping (dict): coordinates mapping from original dataset to wavespectra.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
-        - file_format (str): format of file to open, one of `netcdf` or `zarr`.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from ww3 file.
@@ -29,13 +42,12 @@ def read_ncswan(filename_or_fileglob, chunks={}, file_format="netcdf"):
           'time' and/or 'station' dims.
 
     """
-    if file_format == "netcdf":
-        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
-    elif file_format == "zarr":
-        fsmap = get_mapper(filename_or_fileglob)
-        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
-    else:
-        raise ValueError("file_format must be one of ('netcdf', 'zarr')")
+    dset = open_netcdf_or_zarr(
+        filename_or_fileglob=filename_or_fileglob,
+        file_format=file_format,
+        mapping=mapping,
+        chunks=chunks
+    )
     return from_ncswan(dset)
 
 
@@ -50,17 +62,7 @@ def from_ncswan(dset):
 
     """
     _units = dset.density.attrs.get("units", "")
-    dset = dset.rename(
-        {
-            "frequency": attrs.FREQNAME,
-            "direction": attrs.DIRNAME,
-            "points": attrs.SITENAME,
-            "density": attrs.SPECNAME,
-            "longitude": attrs.LONNAME,
-            "latitude": attrs.LATNAME,
-            "depth": attrs.DEPNAME,
-        }
-    )
+    dset = dset.rename(MAPPING)
     # Ensuring lon,lat are not function of time
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
@@ -71,19 +73,7 @@ def from_ncswan(dset):
             dset["xwnd"], dset["ywnd"], coming_from=True
         )
     # Only selected variables to be returned
-    to_drop = [
-        dvar
-        for dvar in dset.data_vars
-        if dvar
-        not in [
-            attrs.SPECNAME,
-            attrs.WSPDNAME,
-            attrs.WDIRNAME,
-            attrs.DEPNAME,
-            attrs.LONNAME,
-            attrs.LATNAME,
-        ]
-    ]
+    to_drop = list(set(dset.data_vars.keys()) - to_keep)
     # Setting standard names and storing original file attributes
     set_spec_attributes(dset)
     dset[attrs.SPECNAME].attrs.update(
