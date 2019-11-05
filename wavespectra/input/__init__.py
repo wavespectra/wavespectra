@@ -62,10 +62,10 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping, chunks={}):
     # Allow chunking using wavespctra names
     _chunks = chunks_dict(chunks, mapping)
     if file_format == "netcdf":
-        dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
+        dset = xr.open_mfdataset(filename_or_fileglob, chunks=_chunks, combine="by_coords")
     elif file_format == "zarr":
         fsmap = get_mapper(filename_or_fileglob)
-        dset = xr.open_zarr(fsmap, consolidated=True, chunks=chunks)
+        dset = xr.open_zarr(fsmap, consolidated=True, chunks=_chunks)
     else:
         raise ValueError("file_format must be one of ('netcdf', 'zarr')")
     return dset
