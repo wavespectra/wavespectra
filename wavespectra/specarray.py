@@ -9,7 +9,6 @@ Reference:
 
 """
 import re
-from collections import OrderedDict
 from datetime import datetime
 import numpy as np
 import xarray as xr
@@ -107,7 +106,7 @@ class SpecArray(object):
         """Ensure dir,freq dims are present so moment calculations won't break."""
         if dim not in darray.dims:
             spec_array = np.expand_dims(darray.values, axis=-1)
-            spec_coords = OrderedDict((dim, darray[dim].values) for dim in darray.dims)
+            spec_coords = {dim: darray[dim].values for dim in darray.dims}
             spec_coords.update({dim: np.array((1,))})
             return xr.DataArray(
                 spec_array,
@@ -306,9 +305,7 @@ class SpecArray(object):
     def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
         """Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)."""
         E = self._obj * self.dfarr * self.dd
-        E.attrs.update(
-            OrderedDict((("standard_name", standard_name), ("units", "m^{2}")))
-        )
+        E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
         return E.rename("energy")
 
     def hs(self, tail=True):
@@ -328,12 +325,10 @@ class SpecArray(object):
             )
         hs = 4 * np.sqrt(E)
         hs.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return hs.rename(self._my_name())
 
@@ -358,12 +353,10 @@ class SpecArray(object):
             k = 1.86  # assumes N = 3*3600 / 10.8
         hmax = k * self.hs()
         hmax.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return hmax.rename(self._my_name())
 
@@ -442,12 +435,10 @@ class SpecArray(object):
             fp.values[ind] = fpsmothed
         tp = (1 / fp).where(ipeak > 0).fillna(mask).rename("tp")
         tp.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return tp
 
@@ -475,12 +466,10 @@ class SpecArray(object):
         """
         tm01 = self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)
         tm01.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return tm01.rename(self._my_name())
 
@@ -494,12 +483,10 @@ class SpecArray(object):
             self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(2).sum(dim=attrs.DIRNAME)
         )
         tm02.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return tm02.rename(self._my_name())
 
@@ -512,12 +499,10 @@ class SpecArray(object):
         )
         dm = (270 - R2D * dm) % 360.0
         dm.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return dm.rename(self._my_name())
 
@@ -534,12 +519,10 @@ class SpecArray(object):
         )
         dp = self.dir.values[ipeak.values] * (0 * template + 1)
         dp.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return dp.rename(self._my_name())
 
@@ -567,12 +550,10 @@ class SpecArray(object):
         )  # Cheap way to turn dp into appropriate DataArray
         dpm = (270 - R2D * dpm) % 360.0
         dpm.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return dpm.where(ipeak > 0).fillna(mask).rename(self._my_name())
 
@@ -597,12 +578,10 @@ class SpecArray(object):
             dim=attrs.DIRNAME, skipna=False
         )
         dspr.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return dspr.rename(self._my_name())
 
@@ -612,12 +591,12 @@ class SpecArray(object):
         sp = np.sin(D2R * (180 + theta - self.dir))
         crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
         crsd.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name",
+                self._standard_name(self._my_name()),
+                "units",
+                self._units(self._my_name()),
+            }
         )
         return crsd.rename(self._my_name())
 
@@ -641,12 +620,10 @@ class SpecArray(object):
         ) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
         swe.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return swe.rename(self._my_name())
 
@@ -670,12 +647,10 @@ class SpecArray(object):
             - 1.0
         ) ** 0.5
         sw.attrs.update(
-            OrderedDict(
-                (
-                    ("standard_name", self._standard_name(self._my_name())),
-                    ("units", self._units(self._my_name())),
-                )
-            )
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
         )
         return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
 
@@ -844,7 +819,9 @@ class SpecArray(object):
 
             for ind, part in enumerate(parts):
                 # TODO: Revisite this when dask starts supporting item assignment
-                all_parts[ind][slice_dict].values = np.where(part_array == part, spectrum, 0.0)
+                all_parts[ind][slice_dict].values = np.where(
+                    part_array == part, spectrum, 0.0
+                )
 
         # Concatenate partitions along new axis
         part_coord = xr.DataArray(
@@ -852,9 +829,7 @@ class SpecArray(object):
             coords={"part": range(len(all_parts))},
             dims=("part",),
             name="part",
-            attrs=OrderedDict(
-                (("standard_name", "spectral_partition_number"), ("units", ""))
-            ),
+            attrs={"standard_name": "spectral_partition_number", "units": ""},
         )
         return xr.concat(all_parts, dim=part_coord)
 
@@ -883,7 +858,6 @@ class SpecArray(object):
         Note:
             - All stats names must correspond to methods implemented in this class.
             - If names is provided, its length must correspond to the length of stats.
-            - If names is provided and stats is a dict, stats must be OrderedDict.
 
         """
         if any((fmin, fmax, dmin, dmax)):
@@ -892,7 +866,7 @@ class SpecArray(object):
             spectra = self._obj
 
         if isinstance(stats, (list, tuple)):
-            stats_dict = OrderedDict((s, {}) for s in stats)
+            stats_dict = {s: {} for s in stats}
         elif isinstance(stats, dict):
             stats_dict = stats
         else:
