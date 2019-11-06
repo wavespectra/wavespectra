@@ -719,9 +719,11 @@ def pcolormesh(
 
     return primitive
 
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from wavespectra import read_swan
+
     dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
     dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
     plt.show()
