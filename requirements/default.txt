@@ -2,6 +2,7 @@ attrdict
 dask>=0.17.1
 gcsfs
 fsspec
+matplotlib
 numpy
 pandas
 python-dateutil
