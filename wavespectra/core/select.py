@@ -203,7 +203,7 @@ def sel_idw(
             weighted = fac * dset.isel(site=ind).efth
             for ind, fac in zip(indices, factors):
                 weighted += fac * dset.isel(site=ind).efth
-            if len(indices) > 1:
+            if len(indices) > 0:
                 weighted *= sumfac
             dsout.append(weighted)
 
