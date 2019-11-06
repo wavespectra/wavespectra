@@ -6,6 +6,7 @@ import sys
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
+from wavespectra.core.select import sel_idw, sel_nearest
 from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -102,12 +103,61 @@ class SpecDataset(metaclass=Plugin):
 
         return dset
 
+    def sel(self, lons, lats, method="idw", tolerance=2.0, **kwargs):
+        """Select stations near or at locations defined by (lons, lats) vector.
+
+        Args:
+            lons (list): Longitude values of locations to select.
+            lats (list): Latitude values of locations to select.
+            method (str): Method to use for inexact matches:
+                idw: Inverse distance weighting selection.
+                nearest: Nearest site selection.
+                None: Only exact matches.
+            tolerance (float): Maximum distance between locations and original stations
+                for inexact matches.
+            kwargs: Extra keywargs to pass to the respective sel function
+                (i.e., `sel_nearest`, `sel_idw`).
+
+        Return:
+            Stations Dataset selected at locations defined by zip(lons, lats).
+
+        Note:
+            `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'
+                sites with no neighbours within `tolerance` are masked whereas in
+                'nearest' an exception is raised.
+
+        """
+        funcs = {"idw": sel_idw, "nearest": sel_nearest, None: sel_nearest}
+        try:
+            func = funcs[method]
+        except KeyError:
+            raise ValueError(
+                "Method '{}' not supported, valid options are {}".format(
+                    method, list(funcs.keys())
+                )
+            )
+        if method is None:
+            kwargs.update({"exact": True})
+        dsout = func(
+            dset=self.dset,
+            lons=lons,
+            lats=lats,
+            tolerance=tolerance,
+            dset_lons=self.dset[attrs.LONNAME].values,
+            dset_lats=self.dset[attrs.LATNAME].values,
+            **kwargs
+        )
+        return dsout
+
 
 if __name__ == "__main__":
-    from wavespectra.input.swan import read_swan
+    from wavespectra import read_swan, read_ww3
 
     here = os.path.dirname(os.path.abspath(__file__))
-    ds = read_swan(os.path.join(here, "../tests/swanfile.spec"))
-    # ds.spec.to_octopus('/tmp/test.oct')
-    # ds.spec.to_swan('/tmp/test.swn')
-    # ds.spec.to_netcdf('/tmp/test.nc')
+    # filename = os.path.join(here, "../tests/sample_files/swanfile.spec")
+    filename = os.path.join(here, "../tests/sample_files/spec20170101T00_spec.nc")
+    dset = read_ww3(filename)
+
+    lons = [283.5, 284, 284.4974365234375]
+    lats = [-53.500091552734375, -53.500091552734375, -53.500091552734375]
+    ds = dset.spec.sel(lons, lats, method="nearest", tolerance=2.0)
