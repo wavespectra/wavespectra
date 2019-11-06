@@ -4,7 +4,6 @@ import os
 import re
 import sys
 import xarray as xr
-import six
 
 from wavespectra.core.attributes import attrs
 from wavespectra.specarray import SpecArray
@@ -35,8 +34,7 @@ class Plugin(type):
 
 
 @xr.register_dataset_accessor("spec")
-@six.add_metaclass(Plugin)
-class SpecDataset(object):
+class SpecDataset(metaclass=Plugin):
     """Wrapper around the xarray dataset.
     
     Plugin functions defined in wavespectra/output/<module>
