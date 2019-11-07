@@ -171,7 +171,7 @@ def sel_idw(
     if dset_lats is None:
         dset_lats = dset[attrs.LATNAME].values
 
-    mask = dset.isel(site=0).efth * np.nan
+    mask = dset.isel(site=0) * np.nan
     dsout = []
     for lon, lat in zip(lons, lats):
         closest_ids, closest_dist = nearer(
@@ -197,18 +197,20 @@ def sel_idw(
             dsout.append(mask)
         else:
             # Inverse distance weighting
-            sumfac = 1.0 / sum(factors)
+            sumfac = float(1.0 / sum(factors))
             ind = indices.pop(0)
             fac = factors.pop(0)
-            weighted = fac * dset.isel(site=ind).efth
+            weighted = float(fac) * dset.isel(site=ind, drop=True)
             for ind, fac in zip(indices, factors):
-                weighted += fac * dset.isel(site=ind).efth
+                weighted += float(fac) * dset.isel(site=ind, drop=True)
             if len(indices) > 0:
                 weighted *= sumfac
             dsout.append(weighted)
 
-    # Output dataset
-    dsout = xr.concat(dsout, dim=attrs.SITENAME).to_dataset()
+    # Concat sites into dataset
+    dsout = xr.concat(dsout, dim=attrs.SITENAME).transpose(*dset[attrs.SPECNAME].dims)
+
+    # Redefining coordinates and variables
     dsout[attrs.SITENAME].values = np.arange(len(lons))
     dsout[attrs.LONNAME] = ((attrs.SITENAME), lons)
     dsout[attrs.LATNAME] = ((attrs.SITENAME), lats)
