@@ -163,7 +163,7 @@ def sel_idw(
         or attrs.LATNAME in dset.dims
         or attrs.SITENAME not in dset.dims
     ):
-        raise NotImplementedError("sel_nearest only implemented for stations dataset.")
+        raise NotImplementedError("sel_idw only implemented for stations dataset.")
 
     # Providing station coordinates could be a lot more efficient for chunked datasets
     if dset_lons is None:
