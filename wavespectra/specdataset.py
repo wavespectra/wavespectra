@@ -103,7 +103,7 @@ class SpecDataset(metaclass=Plugin):
 
         return dset
 
-    def sel(self, lons, lats, method="idw", tolerance=2.0, **kwargs):
+    def sel(self, lons, lats, method="idw", tolerance=2.0, dset_lons=None, dset_lats=None, **kwargs):
         """Select stations near or at locations defined by (lons, lats) vector.
 
         Args:
@@ -115,6 +115,10 @@ class SpecDataset(metaclass=Plugin):
                 None: Only exact matches.
             tolerance (float): Maximum distance between locations and original stations
                 for inexact matches.
+            dset_lons (array): Longitude of stations in dset, not required but could
+                help improove speed.
+            dset_lats (array): Latitude of stations in dset, not required but could
+                help improove speed.
             kwargs: Extra keywargs to pass to the respective sel function
                 (i.e., `sel_nearest`, `sel_idw`).
 
@@ -125,6 +129,9 @@ class SpecDataset(metaclass=Plugin):
             `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'
                 sites with no neighbours within `tolerance` are masked whereas in
                 'nearest' an exception is raised.
+            `dset_lons`, `dset_lats` are not required but can improve performance when
+                `dset` is chunked with site=1 (expensive to access station coordinates) and
+                improve precision if projected coordinates are provided at high latitudes.
 
         """
         funcs = {"idw": sel_idw, "nearest": sel_nearest, None: sel_nearest}

@@ -1,10 +1,13 @@
 """Interpolate stations."""
-import warnings
 import numpy as np
 import xarray as xr
+import logging
 
 from wavespectra.core.misc import unique_times
 from wavespectra.core.attributes import attrs, set_spec_attributes
+
+
+logger = logging.getLogger(__name__)
 
 
 def distance(lons, lats, lon, lat):
@@ -93,7 +96,7 @@ def sel_nearest(
     Note:
         Args `dset_lons`, `dset_lats` are not required but can improve performance when
             `dset` is chunked with site=1 (expensive to access station coordinates) and
-            iprove precision if projected coordinates are provided at high latitudes.
+            improve precision if projected coordinates are provided at high latitudes.
 
     """
     assert len(lons) == len(lats), "`lons` and `lats` must be the same size."
@@ -154,7 +157,7 @@ def sel_idw(
     Note:
         Args `dset_lons`, `dset_lats` are not required but can improve performance when
             `dset` is chunked with site=1 (expensive to access station coordinates) and
-            iprove precision if projected coordinates are provided at high latitudes.
+            improve precision if projected coordinates are provided at high latitudes.
 
     """
     assert len(lons) == len(lats), "`lons` and `lats` must be the same size."
@@ -171,14 +174,14 @@ def sel_idw(
     if dset_lats is None:
         dset_lats = dset[attrs.LATNAME].values
 
-    mask = dset.isel(site=0) * np.nan
+    mask = dset.isel(site=0, drop=True) * np.nan
     dsout = []
     for lon, lat in zip(lons, lats):
         closest_ids, closest_dist = nearer(
             dset_lons, dset_lats, lon, lat, tolerance, max_sites
         )
         if len(closest_ids) == 0:
-            warnings.warn(
+            logger.debug(
                 "No stations within {} deg of site (lat={}, lon={}), this site will be masked.".format(
                     tolerance, lat, lon
                 )
@@ -231,13 +234,14 @@ if __name__ == "__main__":
     dset_lats = dset.lat.values
     dset = read_ww3(filename, chunks={"site": 1})
 
-    lons = [283.5, 284, 284.4974365234375, 285, 285.49993896484375]
+    lons = [283.5, 284, 284.4974365234375, 285, 285.49993896484375, 100]
     lats = [
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
+        30,
     ]
     print("IDW")
     ds1 = sel_idw(
