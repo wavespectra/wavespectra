@@ -214,7 +214,7 @@ def sel_idw(
     dsout = xr.concat(dsout, dim=attrs.SITENAME).transpose(*dset[attrs.SPECNAME].dims)
 
     # Redefining coordinates and variables
-    dsout[attrs.SITENAME].values = np.arange(len(lons))
+    dsout[attrs.SITENAME] = np.arange(len(lons))
     dsout[attrs.LONNAME] = ((attrs.SITENAME), lons)
     dsout[attrs.LATNAME] = ((attrs.SITENAME), lats)
     dsout.attrs = dset.attrs
