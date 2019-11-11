@@ -61,7 +61,7 @@ def from_ww3(dset):
     Returns:
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
-"""
+    """
     _units = dset.efth.attrs.get("units", "")
     dset = dset.rename(MAPPING)
     # Ensuring lon,lat are not function of time
