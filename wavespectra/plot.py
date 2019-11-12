@@ -11,12 +11,10 @@ Or use the methods on a DataArray or Dataset:
 
 """
 import functools
-import warnings
 import numpy as np
-import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from matplotlib.projections import PolarAxes
+from cmocean import cm
 
 import xarray as xr
 from xarray.plot.facetgrid import _easy_facetgrid
@@ -152,11 +150,6 @@ def plot(
 
     ndims = len(plot_dims)
 
-    error_msg = (
-        "Only 1d and 2d plots are supported for facets in xarray. "
-        "See the package `Seaborn` for more options."
-    )
-
     if ndims in [1, 2]:
         if row or col:
             kwargs["row"] = row
@@ -164,18 +157,18 @@ def plot(
             kwargs["col_wrap"] = col_wrap
             kwargs["subplot_kws"] = subplot_kws
         if ndims == 1:
-            plotfunc = line
-            kwargs["hue"] = hue
+            raise NotImplementedError("Plotting not implemented for 1D-spectra.")
+            # plotfunc = line
+            # kwargs["hue"] = hue
         elif ndims == 2:
             if hue:
-                plotfunc = line
-                kwargs["hue"] = hue
+                raise NotImplementedError("Plotting not implemented for 'hue' option.")
+                # plotfunc = line
+                # kwargs["hue"] = hue
             else:
                 plotfunc = pcolormesh
     else:
-        if row or col or hue:
-            raise ValueError(error_msg)
-        plotfunc = hist
+        raise NotImplementedError("Plotting only implemented for 2D-spectra.")
 
     kwargs["ax"] = ax
 
@@ -341,7 +334,7 @@ def _plot2d(plotfunc):
         add_labels=True,
         vmin=None,
         vmax=None,
-        cmap=None,
+        cmap=cm.thermal,
         center=None,
         robust=False,
         extend=None,
@@ -362,18 +355,6 @@ def _plot2d(plotfunc):
     ):
         # All 2d plots in xarray share this function signature.
         # Method signature below should be consistent.
-
-        # Default colormap
-        if cmap is None:
-            try:
-                from cmocean import cm
-
-                cmap = cm.thermal
-            except:
-                warnings.warn(
-                    "cmocean not installed, cannot set default colormap cmocean.cm.thermal"
-                )
-                pass
 
         # Prepare dataarray for polar plotting
         if projection == "polar":
@@ -721,7 +702,6 @@ def pcolormesh(
 
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
     from wavespectra import read_swan
 
     dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)

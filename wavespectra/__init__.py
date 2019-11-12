@@ -22,7 +22,6 @@ def _import_read_functions(pkgname="input"):
 
     """
     import os
-    import sys
     import glob
     from importlib import import_module
 

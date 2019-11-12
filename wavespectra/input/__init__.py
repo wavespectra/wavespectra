@@ -10,6 +10,7 @@ imported at the module level
 
 """
 import xarray as xr
+from fsspec import get_mapper
 
 from wavespectra.core.attributes import attrs
 
@@ -38,7 +39,9 @@ def chunks_dict(chunks, mapping):
         elif key in mapping.values():
             dim = list(mapping.keys())[list(mapping.values()).index(key)]
         else:
-            raise KeyError("Dim '{}' not in chunks, supported dims are {}".format(key, list(mapping.keys()) + list(mapping.values())))
+            raise KeyError("Dim '{}' not in chunks, supported dims are {}".format(
+                key, list(mapping.keys()) + list(mapping.values()))
+            )
         _chunks.update({dim: val})
     return _chunks
 
@@ -62,7 +65,9 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping, chunks={}):
     # Allow chunking using wavespctra names
     _chunks = chunks_dict(chunks, mapping)
     if file_format == "netcdf":
-        dset = xr.open_mfdataset(filename_or_fileglob, chunks=_chunks, combine="by_coords")
+        dset = xr.open_mfdataset(
+            filename_or_fileglob, chunks=_chunks, combine="by_coords"
+        )
     elif file_format == "zarr":
         fsmap = get_mapper(filename_or_fileglob)
         dset = xr.open_zarr(fsmap, consolidated=True, chunks=_chunks)

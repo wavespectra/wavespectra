@@ -14,11 +14,17 @@ GAMMA = (
 D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
-dnum_to_datetime = lambda d: datetime.datetime.fromordinal(
-    int(d) - 366
-) + datetime.timedelta(days=d % 1)
 
-to_nautical = lambda a: np.mod(270 - a, 360)
+def dnum_to_datetime(dnum):
+    """Convert from numeric date to datetime."""
+    return datetime.datetime.fromordinal(int(dnum) - 366) + datetime.timedelta(
+        days=dnum % 1
+    )
+
+
+def to_nautical(ang):
+    """Convert from cartesian to nautical angle."""
+    return np.mod(270 - ang, 360)
 
 
 def unique_times(ds):
@@ -45,13 +51,14 @@ def spddir_to_uv(spd, direc, coming_from=False):
     """Converts (spd, dir) to (u, v).
 
     Args:
-        spd (array): magnitudes to convert
-        direc (array): directions to convert (degree)
-        coming_from (bool): True if directions in coming-from convention, False if in going-to
+        spd (array): magnitudes to convert.
+        direc (array): directions to convert (degree).
+        coming_from (bool): True if directions in coming-from convention,
+            False if in going-to.
 
     Returns:
-        u (array): eastward wind component
-        v (array): northward wind component
+        u (array): eastward wind component.
+        v (array): northward wind component.
 
     """
     ang_rot = 180 if coming_from else 0
@@ -65,13 +72,15 @@ def uv_to_spddir(u, v, coming_from=False):
     """Converts (u, v) to (spd, dir).
 
     Args:
-        u (array): eastward wind component
-        v (array): northward wind component
-        coming_from (bool): True for output directions in coming-from convention, False for going-to
+        u (array): eastward wind component.
+        v (array): northward wind component.
+        coming_from (bool): True for output directions in coming-from convention,
+            False for going-to.
 
     Returns:
-        mag (array): magnitudes
-        direc (array): directions (degree)
+        mag (array): magnitudes.
+        direc (array): directions (degree).
+
     """
     ang_rot = 180 if coming_from else 0
     vetor = u + v * 1j
@@ -85,19 +94,22 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
     """Interpolate onto new spectral basis.
 
     Args:
-        inspec (2D ndarray): input spectrum E(infreq,indir) to be interpolated
-        infreq (1D ndarray): frequencies of input spectrum
-        indir (1D ndarray): directions of input spectrum
-        outfreq (1D ndarray): frequencies of output interpolated spectrum, same as infreq by default
-        outdir (1D ndarray): directions of output interpolated spectrum, same as infreq by default
-        method: {'linear', 'nearest', 'cubic'}, method of interpolation to use with griddata
+        inspec (2D ndarray): input spectrum E(infreq,indir) to be interpolated.
+        infreq (1D ndarray): frequencies of input spectrum.
+        indir (1D ndarray): directions of input spectrum.
+        outfreq (1D ndarray): frequencies of output interpolated spectrum, same as
+            infreq by default.
+        outdir (1D ndarray): directions of output interpolated spectrum, same as
+            infreq by default.
+        method: {'linear', 'nearest', 'cubic'}, method of interpolation to use with
+            griddata.
 
     Returns:
-        outspec (2D ndarray): interpolated ouput spectrum E(outfreq,outdir)
+        outspec (2D ndarray): interpolated ouput spectrum E(outfreq,outdir).
 
     Note:
         If either outfreq or outdir is None or False this coordinate is not interpolated
-        Choose indir=None if spectrum is 1D
+        Choose indir=None if spectrum is 1D.
 
     """
     outfreq = infreq if outfreq is None or outfreq is False else outfreq

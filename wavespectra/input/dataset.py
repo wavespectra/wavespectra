@@ -1,4 +1,4 @@
-"""Construct the SpecArray accessor from existing dataset originated from known format."""
+"""Construct the SpecArray accessor from existing dataset from known format."""
 import logging
 
 from wavespectra.input.ww3 import from_ww3
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_dataset(dset):
-    """Format and attach SpecArray accessor to an existing xarray dataset. 
+    """Format and attach SpecArray accessor to an existing xarray dataset.
 
     Convenience function to define the SpecArray accessor for a dataset rather than a
         file. The function guesses the original file format based on variable names.

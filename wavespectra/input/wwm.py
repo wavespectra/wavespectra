@@ -1,7 +1,6 @@
 """Read Native WWM netCDF spectra files."""
 import xarray as xr
 import numpy as np
-import dask.array as da
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
@@ -90,7 +89,6 @@ def from_wwm(dset):
 if __name__ == "__main__":
     import os
     import matplotlib.pyplot as plt
-    import xarray as xr
 
     FILES_DIR = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "../../tests/sample_files"

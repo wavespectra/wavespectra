@@ -1,7 +1,6 @@
 """Read Native SWAN netCDF spectra files."""
 import xarray as xr
 import numpy as np
-import dask.array as da
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
@@ -46,7 +45,7 @@ def read_ncswan(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chu
         filename_or_fileglob=filename_or_fileglob,
         file_format=file_format,
         mapping=mapping,
-        chunks=chunks
+        chunks=chunks,
     )
     return from_ncswan(dset)
 

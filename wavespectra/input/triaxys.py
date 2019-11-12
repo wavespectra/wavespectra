@@ -1,4 +1,3 @@
-import os
 import glob
 import copy
 import datetime
@@ -57,7 +56,7 @@ class Triaxys(object):
         self.is_dir = None
         self.time_list = []
         self.spec_list = []
-        self.header_keys = header_keys = [
+        self.header_keys = [
             "is_triaxys",
             "is_dir",
             "time",

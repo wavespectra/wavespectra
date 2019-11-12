@@ -20,5 +20,5 @@ def set_spec_attributes(dset):
     for varname, varattrs in attrs.ATTRS.items():
         try:
             dset[varname].attrs = varattrs
-        except Exception as exc:
+        except Exception:
             pass

@@ -1,5 +1,4 @@
 """Read customised MetOcean Solutions WW3 spectra files."""
-import xarray as xr
 import numpy as np
 
 from wavespectra.specdataset import SpecDataset
@@ -18,7 +17,9 @@ MAPPING = {
 }
 
 
-def read_ww3_msl(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}):
+def read_ww3_msl(
+    filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}
+):
     """Read Spectra from WAVEWATCHIII MetOcean Solutions netCDF format.
 
     Args:
@@ -42,7 +43,7 @@ def read_ww3_msl(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, ch
         filename_or_fileglob=filename_or_fileglob,
         file_format=file_format,
         mapping=mapping,
-        chunks=chunks
+        chunks=chunks,
     )
     return from_ww3_msl(dset)
 

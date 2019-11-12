@@ -1,5 +1,5 @@
 """MetOcean Solutions WAVEWATCH3 output plugin."""
-from wavespectra.core.attributes import attrs
+# from wavespectra.core.attributes import attrs
 
 
 def to_ww3_msl(self, filename):

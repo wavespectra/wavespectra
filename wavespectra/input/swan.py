@@ -1,10 +1,11 @@
 """Read SWAN spectra files.
 
 Functions:
-    read_swan: Read Spectra from SWAN ASCII file
-    read_swans: Read multiple swan files into single Dataset
-    read_hotswan: Read multiple swan hotfiles into single gridded Dataset
-    read_swanow: Read SWAN nowcast from fileglob, keep overlapping dates from most recent files
+    read_swan: Read Spectra from SWAN ASCII file.
+    read_swans: Read multiple swan files into single Dataset.
+    read_hotswan: Read multiple swan hotfiles into single gridded Dataset.
+    read_swanow: Read SWAN nowcast from fileglob, keep overlapping dates
+        from most recent files.
 
 """
 import os
@@ -30,7 +31,7 @@ def read_swan(filename, dirorder=True, as_site=None):
         - dirorder (bool): If True reorder spectra so that directions are
           sorted.
         - as_site (bool): If True locations are defined by 1D site dimension.
-        
+
     Returns:
         - dset (SpecDataset): spectra dataset object read from file.
 
@@ -66,7 +67,8 @@ def read_swan(filename, dirorder=True, as_site=None):
                     )
             else:
                 warnings.warn(
-                    "Times in {} and {} not consistent, not appending winds and depth".format(
+                    "Times in {} and {} not consistent, not appending "
+                    "winds and depth".format(
                         swanfile.filename, swanfile.tabfile
                     )
                 )
@@ -191,7 +193,7 @@ def read_swans(
         - dirorder (bool): if True ensures directions are sorted.
         - ntimes (int): use it to read only specific number of times, useful
           for checking headers only.
-        
+
     Returns:
         - dset (SpecDataset): spectra dataset object read from file with
           different sites and cycles concatenated along the 'site' and 'time'
@@ -213,13 +215,13 @@ def read_swans(
     assert swans, "No SWAN file identified with fileglob %s" % (fileglob)
 
     # Default spectral basis for interpolating
-    if int_freq == True:
+    if int_freq is True:
         int_freq = [0.04118 * 1.1 ** n for n in range(31)]
-    elif int_freq == False:
+    elif int_freq is False:
         int_freq = None
-    if int_dir == True:
+    if int_dir is True:
         int_dir = np.arange(0, 360, 10)
-    elif int_dir == False:
+    elif int_dir is False:
         int_dir = None
 
     cycles = list()
@@ -262,7 +264,8 @@ def read_swans(
                         )
                 else:
                     warnings.warn(
-                        "Times in {} and {} not consistent, not appending winds and depth".format(
+                        "Times in {} and {} not consistent, not appending "
+                        "winds and depth".format(
                             swanfile.filename, swanfile.tabfile
                         )
                     )
@@ -326,10 +329,11 @@ def read_swans(
                 all_lons[cycle].extend(lons)
                 all_lats[cycle].extend(lats)
                 nsites += 1
-        except:
+        except Exception:
             if len(spec_list) != arr.shape[0]:
                 raise IOError(
-                    "Time length in %s (%i) does not match previous files (%i), cannot concatenate",
+                    "Time length in %s (%i) does not match previous files (%i), "
+                    "cannot concatenate",
                     (filename, len(spec_list), arr.shape[0]),
                 )
             else:
@@ -360,7 +364,8 @@ def read_swans(
     )
     if len(cols) > 1:
         raise IOError(
-            "Inconsistent tab files, ensure either all or none of the spectra have associated tabfiles and columns are consistent"
+            "Inconsistent tab files, ensure either all or none of the spectra have "
+            "associated tabfiles and columns are consistent"
         )
 
     # Concat sites

@@ -1,26 +1,24 @@
 """Spectra object based on DataArray to calculate spectral statistics.
 
 Reference:
-    - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima of a Random Function,
-      Proceedings of the Royal Society of London. Series A, Mathematical and Physical Sciences, 237, 212-232.
+    - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima
+      of a Random Function, Proceedings of the Royal Society of London. Series A,
+      Mathematical and Physical Sciences, 237, 212-232.
     - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
-    - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes of sea waves,
-      Journal of Geophysical Research, 80, 2688-2694, doi: 10.1029/JC080i018p02688.
+    - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes
+      of sea waves, Journal of Geophysical Research, 80, 2688-2694.
 
 """
 import re
-from datetime import datetime
 import numpy as np
 import xarray as xr
-import types
-import copy
 from itertools import product
 import inspect
 import warnings
 
 from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
-from wavespectra.core.misc import GAMMA, D2R, R2D
+from wavespectra.core.misc import D2R, R2D
 
 try:
     from sympy import Symbol
@@ -31,8 +29,9 @@ except ImportError:
         'Cannot import sympy, install "extra" dependencies for full functionality'
     )
 
-# TODO: dimension renaming and sorting in __init__ are not producing intended effect. They correctly modify xarray_obj
-#       as defined in xarray.spec._obj but the actual xarray is not modified - and they loose their direct association
+# TODO: dimension renaming and sorting in __init__ are not producing intended effect.
+#       They correctly modify xarray_obj as defined in xarray.spec._obj but the actual
+#       xarray is not modified - and they loose their direct association
 
 _ = np.newaxis
 
@@ -47,7 +46,8 @@ class SpecArray(object):
 
         # # Ensure frequencies and directions are sorted
         # for dim in [attrs.FREQNAME, attrs.DIRNAME]:
-        #     if dim in xarray_obj.dims and not self._strictly_increasing(xarray_obj[dim].values):
+        #     if (dim in xarray_obj.dims
+        #         and not self._strictly_increasing(xarray_obj[dim].values)):
         #         xarray_obj = self._obj.sortby([dim])
 
         self._obj = xarray_obj
@@ -273,11 +273,11 @@ class SpecArray(object):
         Args:
             - fmin (float): lowest frequency to split spectra, by default the lowest.
             - fmax (float): highest frequency to split spectra, by default the highest.
-            - dmin (float): lowest direction to split spectra over, by default min(dir).
-            - dmax (float): highest direction to split spectra over, by default max(dir).
+            - dmin (float): lowest direction to split spectra at, by default min(dir).
+            - dmax (float): highest direction to split spectra at, by default max(dir).
 
         Note:
-            - spectra are interpolated at `fmin` / `fmax` if they are not present in self.freq
+            - spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -375,7 +375,7 @@ class SpecArray(object):
 
         Args:
             - expr (str): expression to apply, e.g. '0.13*hs + 0.02'.
-            - inplace (bool): use True to apply transformation in place, False otherwise.
+            - inplace (bool): True to apply transformation in place, False otherwise.
             - hs_min, hs_max (float): Hs range over which expr is applied.
             - tp_min, tp_max (float): Tp range over which expr is applied.
             - dpm_min, dpm_max (float) Dpm range over which expr is applied.
@@ -412,9 +412,9 @@ class SpecArray(object):
         """Peak wave period Tp.
 
         Args:
-            - smooth (bool): True for the smooth wave period, False for simply the discrete
+            - smooth (bool): True for the smooth wave period, False for the discrete
               period corresponding to the maxima in the direction-integrated spectra.
-            - mask (float): value for missing data in output, if there is no peak in the spectra).
+            - mask (float): value for missing data if there is no peak in spectra.
 
         """
         if len(self.freq) < 3:
@@ -712,7 +712,7 @@ class SpecArray(object):
             - agefac (float): Age factor.
             - wscut (float): Wind speed cutoff.
             - hs_min (float): minimum Hs for assigning swell partition.
-            - nearest (bool): if True, wsp, wdir and dep are allowed to be taken from the.
+            - nearest (bool): if True, wsp, wdir and dep are allowed to be taken from
               nearest point if not matching positions in SpecArray (slower).
             - max_swells: maximum number of swells to extract
 
@@ -724,21 +724,23 @@ class SpecArray(object):
             - All input DataArray objects must have same non-spectral
               dimensions as SpecArray.
         References:
-            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three numerical 
-              wave models." Journal of Atmospheric and Oceanic Technology 26.8 (2009): 1614-1633.
-        
+            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
+              numerical wave models." JTECH 26.8 (2009): 1614-1633.
+
         TODO:
             - We currently loop through each spectrum to calculate the partitions which
               is slow. Ideally we should handle the problem in a multi-dimensional way.
 
         """
-        # Assert spectral dims are present in spectra and non-spectral dims are present in winds and depths
+        # Assert spectral dims are present in spectra and non-spectral dims are present
+        # in winds and depths
         assert attrs.FREQNAME in self._obj.dims and attrs.DIRNAME in self._obj.dims, (
             "partition requires E(freq,dir) but freq|dir "
             "dimensions not in SpecArray dimensions (%s)" % (self._obj.dims)
         )
         for darr in (wsp_darr, wdir_darr, dep_darr):
-            # Conditional below aims at allowing wsp, wdir, dep to be DataArrays within the SpecArray. not working yet
+            # Conditional below aims at allowing wsp, wdir, dep to be DataArrays
+            # within the SpecArray. not working yet.
             if isinstance(darr, str):
                 darr = getattr(self, darr)
             assert set(darr.dims) == self._non_spec_dims, (
@@ -844,13 +846,17 @@ class SpecArray(object):
 
         Args:
             - stats (list): strings specifying stats to be calculated.
-              (dict): keys are stats names, vals are dicts with kwargs to use with corresponding method.
+              (dict): keys are stats names, vals are dicts with kwargs to use with
+              corresponding method.
             - fmin (float): lower frequencies for splitting spectra before
               calculating stats.
-            - fmax (float): upper frequencies for splitting spectra before calculating stats.
-            - dmin (float): lower directions for splitting spectra before calculating stats.
-            - dmax (float): upper directions for splitting spectra before calculating stats.
-            - names (list): strings to rename each stat in output Dataset (not working as expected though).
+            - fmax (float): upper frequencies for splitting spectra before
+              calculating stats.
+            - dmin (float): lower directions for splitting spectra before
+              calculating stats.
+            - dmax (float): upper directions for splitting spectra before
+              calculating stats.
+            - names (list): strings to rename each stat in output Dataset.
 
         Returns:
             - Dataset with all spectral statistics specified.
@@ -882,15 +888,15 @@ class SpecArray(object):
         for func, kwargs in stats_dict.items():
             try:
                 stats_func = getattr(spectra.spec, func)
-            except:
-                raise IOError(
+            except AttributeError as err:
+                raise ValueError(
                     "%s is not implemented as a method in %s"
                     % (func, self.__class__.__name__)
-                )
+                ) from err
             if callable(stats_func):
                 params.append(stats_func(**kwargs))
             else:
-                raise IOError(
+                raise ValueError(
                     "%s attribute of %s is not callable"
                     % (func, self.__class__.__name__)
                 )

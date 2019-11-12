@@ -140,8 +140,8 @@ class SpecDataset(metaclass=Plugin):
                 sites with no neighbours within `tolerance` are masked whereas in
                 'nearest' an exception is raised.
             `dset_lons`, `dset_lats` are not required but can improve performance when
-                `dset` is chunked with site=1 (expensive to access station coordinates) and
-                improve precision if projected coordinates are provided at high latitudes.
+                `dset` is chunked with site=1 (expensive to access site coords) and
+                improve precision if projected coors are provided at high latitudes.
 
         """
         funcs = {
@@ -173,7 +173,7 @@ class SpecDataset(metaclass=Plugin):
 
 
 if __name__ == "__main__":
-    from wavespectra import read_swan, read_ww3
+    from wavespectra import read_ww3
 
     here = os.path.dirname(os.path.abspath(__file__))
     # filename = os.path.join(here, "../tests/sample_files/swanfile.spec")

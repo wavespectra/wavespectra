@@ -1,13 +1,12 @@
 import numpy as np
 import xarray as xr
-from collections import OrderedDict
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
 def spread(dp_matrix, dspr_matrix, dirs):
     """Generic spreading function.
-    
+
     Args:
         dp_matrix:
         dspr_matrix:
@@ -17,8 +16,8 @@ def spread(dp_matrix, dspr_matrix, dirs):
         G1:
 
     Note:
-        Function defined such that \int{G1 d\theta}=1*
-    
+        Function defined such that \\int{G1 d\\theta}=1*
+
     """
     adirs = np.array(dirs).reshape((1, -1))
     pidirs = np.deg2rad(270.0 - np.array(adirs))
@@ -46,7 +45,7 @@ def arrange_inputs(*args):
 
 def make_dataset(spec, freqs, dirs, coordinates=[]):
     """Package spectral matrix to xarray.
-    
+
     Args:
         spec:
         freqs:
@@ -68,11 +67,11 @@ def make_dataset(spec, freqs, dirs, coordinates=[]):
 
 def check_coordinates(param, coordinates):
     """Check coordinates are consistent with parameter.
-    
+
     Args:
         param:
         coordinates:
-    
+
     """
     pshape = np.array(param).shape
     if len(pshape) != len(coordinates):

@@ -53,7 +53,7 @@ class SwanSpecFile(object):
             self.fmt = len(self.dirs) * "{:5.0f}"
         else:
             self.fid = fopen(filename, "r+" if append else "r")
-            header = self._read_header("SWAN")
+            self._read_header("SWAN")
             while True:
                 if not self._read_header("$"):
                     break
@@ -142,7 +142,9 @@ class SwanSpecFile(object):
                         lsplit = line.split()
                         try:
                             Snew[i, :] = [float(val) for val in lsplit]
-                        except:
+                        except Exception:
+                            import warnings
+                            warnings.warn("Check what this is supposed to be doing.")
                             pass
                     Snew *= fac
                     if self.dirmap:
@@ -233,18 +235,17 @@ def read_tab(filename, toff=0):
     Args:
         filename (str): name of SWAN tab file to read
         toff (float): timezone offset in hours
-    
+
     Returns:
         Pandas DataFrame object
 
     """
-    dateparse = lambda x: datetime.datetime.strptime(x, "%Y%m%d.%H%M%S")
     df = pd.read_csv(
         filename,
         delim_whitespace=True,
         skiprows=[0, 1, 2, 3, 5, 6],
         parse_dates=[0],
-        date_parser=dateparse,
+        date_parser=_dateparse,
         index_col=0,
     )
     df.index.name = attrs.TIMENAME
@@ -252,3 +253,7 @@ def read_tab(filename, toff=0):
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.iloc[:, 0:-1]
+
+
+def _dateparse(x):
+    return datetime.datetime.strptime(x, "%Y%m%d.%H%M%S")

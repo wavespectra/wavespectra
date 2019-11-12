@@ -12,7 +12,7 @@ def read_dictionary(spcdict):
         - spcdict (dict): information for defining SpecDataset. Keys define
           spectral coordinates and variables, and should be named using the
           attributes from :py:mod:`wavespectra.core.attributes.attrs`.
-    
+
     Example:
         .. code:: python
 
@@ -23,7 +23,10 @@ def read_dictionary(spcdict):
                 attrs.FREQNAME: {'dims': (attrs.FREQNAME), 'data': freq},
                 attrs.DIRNAME: {'dims': (attrs.DIRNAME), 'data': dirs},
                 attrs.SITENAME: {'dims': (attrs.SITENAME), 'data': site},
-                attrs.SPECNAME: {'dims': (attrs.TIMENAME, attrs.DIRNAME, attrs.FREQNAME), 'data': efth},
+                attrs.SPECNAME: {
+                    'dims': (attrs.TIMENAME, attrs.DIRNAME, attrs.FREQNAME),
+                    'data': efth
+                },
                 attrs.LONNAME: {'dims': (attrs.SITENAME), 'data': lon},
                 attrs.LATNAME: {'dims': (attrs.SITENAME), 'data': lat},
                 attrs.DEPNAME: {'dims': (attrs.SITENAME, attrs.TIMENAME), 'data': dpt},

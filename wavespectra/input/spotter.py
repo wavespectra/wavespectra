@@ -5,21 +5,11 @@ Functions:
     read_spotters: Read multiple spotter files into single Dataset
 
 """
-import os
-import copy
 import glob
 import datetime
-import glob
 import json
-import os
-import warnings
-from collections import OrderedDict
-
 import numpy as np
-import pandas as pd
 import xarray as xr
-import numpy as np
-import json
 from dateutil.parser import parse
 
 from wavespectra.specdataset import SpecDataset
@@ -39,7 +29,6 @@ def read_spotter(filename):
     spot = Spotter(filename)
     dset = spot.run()
     return dset
-
 
 
 class Spotter:
@@ -72,7 +61,7 @@ class Spotter:
             self._load_json()
             self._set_arrays_from_json()
             dsets.append(self._construct_dataset())
-        # Ensuring spectral coordinates are the same across files, interpolation needs to be implemented
+        # Ensure same spectral coords across files, interp needs to be implemented
         if not self._is_unique([dset.freq.values for dset in dsets]):
             raise NotImplementedError(
                 "Varying frequency arrays between spotter files not yet supported."

@@ -1,7 +1,5 @@
 """Read Native WW3 spectra files."""
-import xarray as xr
 import numpy as np
-from fsspec import get_mapper
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes

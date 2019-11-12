@@ -3,7 +3,6 @@ import numpy as np
 import xarray as xr
 import logging
 
-from wavespectra.core.misc import unique_times
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
@@ -118,13 +117,15 @@ def sel_nearest(
         closest_id, closest_dist = nearest(dset_lons, dset_lats, lon, lat)
         if closest_dist > tolerance:
             raise AssertionError(
-                "Nearest site from (lat={}, lon={}) is {:g} deg away but tolerance is {:g} deg.".format(
+                "Nearest site from (lat={}, lon={}) is {:g} deg away "
+                "but tolerance is {:g} deg.".format(
                     lat, lon, closest_dist, tolerance
                 )
             )
         if exact and closest_dist > 0:
             raise AssertionError(
-                "Exact match required but no site at (lat={}, lon={}), nearest site is {} deg away.".format(
+                "Exact match required but no site at (lat={}, lon={}), "
+                "nearest site is {} deg away.".format(
                     lat, lon, closest_dist
                 )
             )
@@ -182,7 +183,8 @@ def sel_idw(
         )
         if len(closest_ids) == 0:
             logger.debug(
-                "No stations within {} deg of site (lat={}, lon={}), this site will be masked.".format(
+                "No stations within {} deg of site (lat={}, lon={}), "
+                "this site will be masked.".format(
                     tolerance, lat, lon
                 )
             )
@@ -302,41 +304,41 @@ if __name__ == "__main__":
         -53.500091552734375,
     ]
 
-    # print("IDW")
-    # ds1 = sel_idw(
-    #     dset,
-    #     lons,
-    #     lats,
-    #     tolerance=2.0,
-    #     max_sites=4,
-    #     dset_lons=dset_lons,
-    #     dset_lats=dset_lats,
-    # ).load()
+    print("IDW")
+    ds1 = sel_idw(
+        dset,
+        lons,
+        lats,
+        tolerance=2.0,
+        max_sites=4,
+        dset_lons=dset_lons,
+        dset_lats=dset_lats,
+    ).load()
 
-    # print("Nearest")
-    # ds2 = sel_nearest(
-    #     dset,
-    #     lons,
-    #     lats,
-    #     tolerance=2.0,
-    #     unique=False,
-    #     exact=False,
-    #     dset_lons=dset_lons,
-    #     dset_lats=dset_lats,
-    # ).load()
+    print("Nearest")
+    ds2 = sel_nearest(
+        dset,
+        lons,
+        lats,
+        tolerance=2.0,
+        unique=False,
+        exact=False,
+        dset_lons=dset_lons,
+        dset_lats=dset_lats,
+    ).load()
 
     print("Bbox")
     ds3 = sel_bbox(
         dset, lons, lats, tolerance=2.0, dset_lons=dset_lons, dset_lats=dset_lats
     ).load()
 
-    # for ds in [ds1, ds2]:
-    #     ds = ds.isel(time=0)
-    #     ds.spec.plot.contourf(
-    #         col="site", vmin=-5.6, vmax=-0.8, levels=np.arange(-5.6, 0, 0.8)
-    #     )
-    #     print("hs", ds.spec.hs().values)
-    #     print("tp", ds.spec.tp().values)
-    #     print("dpm", ds.spec.dpm().values)
-    #     print("dspr", ds.spec.dspr().values)
-    #     plt.show()
+    for ds in [ds1, ds2]:
+        ds = ds.isel(time=0)
+        ds.spec.plot.contourf(
+            col="site", vmin=-5.6, vmax=-0.8, levels=np.arange(-5.6, 0, 0.8)
+        )
+        print("hs", ds.spec.hs().values)
+        print("tp", ds.spec.tp().values)
+        print("dpm", ds.spec.dpm().values)
+        print("dspr", ds.spec.dspr().values)
+        plt.show()

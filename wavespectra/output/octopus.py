@@ -105,12 +105,15 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
                 # Timestamp header
                 lp = "{}_{:%Y%m%d_%Hz}".format(site_id, to_datetime(t))
                 f.write(
-                    "CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n"
+                    "CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,"
+                    "TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n"
                 )
 
                 # Header and parameters
                 f.write(
-                    "{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},{:d},{:d}\n".format(
+                    "{:%Y%m,'%d%H%M},{},{:d},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},"
+                    "{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:d},"
+                    "{:d},{:d}\n".format(
                         to_datetime(t),
                         lp,
                         int(ds[attrs.WDIRNAME]),
