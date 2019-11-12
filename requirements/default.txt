@@ -1,4 +1,5 @@
 attrdict
+click
 dask>=0.17.1
 gcsfs
 fsspec
