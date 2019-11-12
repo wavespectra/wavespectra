@@ -1,5 +1,6 @@
 attrdict
 click
+cmocean
 dask>=0.17.1
 gcsfs
 fsspec
