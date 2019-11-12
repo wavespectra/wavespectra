@@ -73,7 +73,11 @@ class TestIO(object):
         ],
     )
     def test_read_dataset(self, read_func, filename):
-        readers = {read_ww3: "ww3file.nc", read_wwm: "wwmfile.nc", read_ncswan: "swanfile.nc"}
+        readers = {
+            read_ww3: "ww3file.nc",
+            read_wwm: "wwmfile.nc",
+            read_ncswan: "swanfile.nc",
+        }
         for reader, filename in readers.items():
             filepath = os.path.join(FILES_DIR, filename)
             dset1 = reader(filepath)

@@ -6,7 +6,7 @@ from wavespectra import read_swan
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def load_specdataset():
     """Load SpecDset but skip test if matplotlib is not installed."""
     pytest.importorskip("matplotlib")
@@ -63,31 +63,19 @@ def test_single_sliced(load_specdataset):
 def test_single_set_properties_xarr_mpl(load_specdataset):
     dset = load_specdataset.isel(time=0, site=0)
     dset.efth.spec.plot.contourf(
-        cmap="viridis",
-        vmin=-5,
-        vmax=-2,
-        levels=15,
-        add_colorbar=False,
+        cmap="viridis", vmin=-5, vmax=-2, levels=15, add_colorbar=False
     )
 
 
 def test_multi(load_specdataset):
     dset = load_specdataset.isel(site=0)
     dset.efth.spec.plot.contourf(
-        col="time",
-        col_wrap=3,
-        levels=15,
-        figsize=(15,8),
-        vmax=-1
+        col="time", col_wrap=3, levels=15, figsize=(15, 8), vmax=-1
     )
 
 
 def test_multi_clean_axis(load_specdataset):
     dset = load_specdataset.isel(site=0)
     dset.efth.spec.plot.contourf(
-        col="time",
-        col_wrap=3,
-        clean_radius=True,
-        clean_sector=True
+        col="time", col_wrap=3, clean_radius=True, clean_sector=True
     )
-

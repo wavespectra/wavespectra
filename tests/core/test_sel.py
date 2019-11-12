@@ -26,50 +26,82 @@ class TestDatasetWrapper(object):
 
     def test_dset_sel_idw(self):
         """Assert that sel/idw method runs."""
-        dset = self.dset.spec.sel(lons=self.lons, lats=self.lats, method="idw", tolerance=1.0)
+        dset = self.dset.spec.sel(
+            lons=self.lons, lats=self.lats, method="idw", tolerance=1.0
+        )
         assert dset[attrs.SITENAME].size == len(self.lons)
+
+    def test_dset_sel_bbox(self):
+        """Assert that sel/bbox method runs."""
+        dset = self.dset.spec.sel(
+            lons=self.dset.lon.values,
+            lats=self.dset.lat.values,
+            method="bbox",
+            tolerance=0.0,
+        )
+        dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
 
     def test_dset_sel_nearest(self):
         """Assert that sel/nearest method runs."""
-        dset = self.dset.spec.sel(lons=self.lons, lats=self.lats, method="nearest", tolerance=1.0)
+        dset = self.dset.spec.sel(
+            lons=self.lons, lats=self.lats, method="nearest", tolerance=1.0
+        )
         assert dset[attrs.SITENAME].size == len(self.lons)
 
     def test_dset_sel_nearest_unique(self):
         """Assert duplicated sites with same neighbours are removed."""
-        dset = self.dset.spec.sel(lons=self.lons, lats=self.lats, method="nearest", unique=True)
+        dset = self.dset.spec.sel(
+            lons=self.lons, lats=self.lats, method="nearest", unique=True
+        )
         assert dset[attrs.SITENAME].size == len(self.lons_exact)
 
     def test_dset_sel_none(self):
         """Assert that sel/none method runs."""
-        dset = self.dset.spec.sel(lons=self.lons_exact, lats=self.lats_exact, method=None)
+        dset = self.dset.spec.sel(
+            lons=self.lons_exact, lats=self.lats_exact, method=None
+        )
         with pytest.raises(AssertionError):
             dset = self.dset.spec.sel(lons=self.lons, lats=self.lats, method=None)
 
     def test_tolerance(self):
         """Test tolerance is working as expected."""
         # With idw no sites within tolerance should result in masked output
-        dset = self.dset.spec.sel(lons=self.lons_inexact, lats=self.lats_inexact, method="idw", tolerance = 1.0)
+        dset = self.dset.spec.sel(
+            lons=self.lons_inexact, lats=self.lats_inexact, method="idw", tolerance=1.0
+        )
         assert dset.spec.hs().values.all()
-        dset = self.dset.spec.sel(lons=self.lons_inexact, lats=self.lats_inexact, method="idw", tolerance = 0.01)
+        dset = self.dset.spec.sel(
+            lons=self.lons_inexact, lats=self.lats_inexact, method="idw", tolerance=0.01
+        )
         assert np.isnan(dset.spec.hs().values).any()
         # With nearest no sites within tolerance should raise an exception
         with pytest.raises(AssertionError):
-            dset = self.dset.spec.sel(lons=self.lons_inexact, lats=self.lats_inexact, method="nearest", tolerance = 0.01)
+            dset = self.dset.spec.sel(
+                lons=self.lons_inexact,
+                lats=self.lats_inexact,
+                method="nearest",
+                tolerance=0.01,
+            )
 
     def test_exact_matches(self):
         """Test that exact matches are the same regardless of method."""
-        idw = self.dset.spec.sel(lons=self.lons_exact, lats=self.lats_exact, method="idw")
-        nearest = self.dset.spec.sel(lons=self.lons_exact, lats=self.lats_exact, method="nearest")
+        idw = self.dset.spec.sel(
+            lons=self.lons_exact, lats=self.lats_exact, method="idw"
+        )
+        nearest = self.dset.spec.sel(
+            lons=self.lons_exact, lats=self.lats_exact, method="nearest"
+        )
         assert abs(idw.efth - nearest.efth).max() == 0
 
     def test_weighting(self):
         """Assert that stats in interpolated site are constrained within neighbours."""
-        dset = self.dset.spec.sel(lons=self.lons_inexact, lats=self.lats_inexact, method="idw")
+        dset = self.dset.spec.sel(
+            lons=self.lons_inexact, lats=self.lats_inexact, method="idw"
+        )
         for stat in ["hs", "tp"]:
             idw = dset.spec.stats([stat])[stat].values
             site0 = self.dset.isel(site=[0]).spec.stats([stat])[stat].values
             site1 = self.dset.isel(site=[1]).spec.stats([stat])[stat].values
-            lower = np.array([min(s1,s2) for s1, s2 in zip(site0, site1)])
-            upper = np.array([max(s1,s2) for s1, s2 in zip(site0, site1)])
+            lower = np.array([min(s1, s2) for s1, s2 in zip(site0, site1)])
+            upper = np.array([max(s1, s2) for s1, s2 in zip(site0, site1)])
             assert (upper - idw > 0).all() and (idw - lower > 0).all()
-
