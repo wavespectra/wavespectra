@@ -118,16 +118,12 @@ def sel_nearest(
         if closest_dist > tolerance:
             raise AssertionError(
                 "Nearest site from (lat={}, lon={}) is {:g} deg away "
-                "but tolerance is {:g} deg.".format(
-                    lat, lon, closest_dist, tolerance
-                )
+                "but tolerance is {:g} deg.".format(lat, lon, closest_dist, tolerance)
             )
         if exact and closest_dist > 0:
             raise AssertionError(
                 "Exact match required but no site at (lat={}, lon={}), "
-                "nearest site is {} deg away.".format(
-                    lat, lon, closest_dist
-                )
+                "nearest site is {} deg away.".format(lat, lon, closest_dist)
             )
         station_ids.append(closest_id)
     if unique:
@@ -184,9 +180,7 @@ def sel_idw(
         if len(closest_ids) == 0:
             logger.debug(
                 "No stations within {} deg of site (lat={}, lon={}), "
-                "this site will be masked.".format(
-                    tolerance, lat, lon
-                )
+                "this site will be masked.".format(tolerance, lat, lon)
             )
         # Collect ids and factors of neighbours
         indices = []

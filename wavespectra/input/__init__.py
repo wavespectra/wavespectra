@@ -21,7 +21,7 @@ to_keep = {
     attrs.WDIRNAME,
     attrs.DEPNAME,
     attrs.LONNAME,
-    attrs.LATNAME
+    attrs.LATNAME,
 }
 
 
@@ -39,8 +39,10 @@ def chunks_dict(chunks, mapping):
         elif key in mapping.values():
             dim = list(mapping.keys())[list(mapping.values()).index(key)]
         else:
-            raise KeyError("Dim '{}' not in chunks, supported dims are {}".format(
-                key, list(mapping.keys()) + list(mapping.values()))
+            raise KeyError(
+                "Dim '{}' not in chunks, supported dims are {}".format(
+                    key, list(mapping.keys()) + list(mapping.values())
+                )
             )
         _chunks.update({dim: val})
     return _chunks

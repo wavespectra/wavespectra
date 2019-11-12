@@ -144,6 +144,7 @@ class SwanSpecFile(object):
                             Snew[i, :] = [float(val) for val in lsplit]
                         except Exception:
                             import warnings
+
                             warnings.warn("Check what this is supposed to be doing.")
                             pass
                     Snew *= fac

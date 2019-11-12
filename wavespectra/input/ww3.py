@@ -45,7 +45,7 @@ def read_ww3(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks
         filename_or_fileglob=filename_or_fileglob,
         file_format=file_format,
         mapping=mapping,
-        chunks=chunks
+        chunks=chunks,
     )
     return from_ww3(dset)
 

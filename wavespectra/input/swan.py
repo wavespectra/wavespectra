@@ -68,9 +68,7 @@ def read_swan(filename, dirorder=True, as_site=None):
             else:
                 warnings.warn(
                     "Times in {} and {} not consistent, not appending "
-                    "winds and depth".format(
-                        swanfile.filename, swanfile.tabfile
-                    )
+                    "winds and depth".format(swanfile.filename, swanfile.tabfile)
                 )
                 tab = None
         except Exception as exc:
@@ -265,9 +263,7 @@ def read_swans(
                 else:
                     warnings.warn(
                         "Times in {} and {} not consistent, not appending "
-                        "winds and depth".format(
-                            swanfile.filename, swanfile.tabfile
-                        )
+                        "winds and depth".format(swanfile.filename, swanfile.tabfile)
                     )
                     tab = pd.DataFrame()
                 tab = tab[
