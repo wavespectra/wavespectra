@@ -160,13 +160,18 @@ class SpecDataset(metaclass=Plugin):
             )
         if method is None:
             kwargs.update({"exact": True})
+        # Providing station coordinates could be a lot more efficient for chunked datasets
+        if dset_lons is None:
+            dset_lons = self.dset[attrs.LONNAME].values
+        if dset_lats is None:
+            dset_lats = self.dset[attrs.LATNAME].values
         dsout = func(
             dset=self.dset,
             lons=lons,
             lats=lats,
             tolerance=tolerance,
-            dset_lons=self.dset[attrs.LONNAME].values,
-            dset_lats=self.dset[attrs.LATNAME].values,
+            dset_lons=dset_lons,
+            dset_lats=dset_lats,
             **kwargs
         )
         return dsout
