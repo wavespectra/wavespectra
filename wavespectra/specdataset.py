@@ -6,7 +6,7 @@ import sys
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.select import sel_idw, sel_nearest
+from wavespectra.core.select import sel_idw, sel_nearest, sel_bbox
 from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -112,6 +112,7 @@ class SpecDataset(metaclass=Plugin):
             method (str): Method to use for inexact matches:
                 idw: Inverse distance weighting selection.
                 nearest: Nearest site selection.
+                bbox: Sites inside bbox [min(lons), min(lats)], [max(lons), max(lats)].
                 None: Only exact matches.
             tolerance (float): Maximum distance between locations and original stations
                 for inexact matches.
@@ -134,7 +135,7 @@ class SpecDataset(metaclass=Plugin):
                 improve precision if projected coordinates are provided at high latitudes.
 
         """
-        funcs = {"idw": sel_idw, "nearest": sel_nearest, None: sel_nearest}
+        funcs = {"idw": sel_idw, "bbox": sel_bbox, "nearest": sel_nearest, None: sel_nearest}
         try:
             func = funcs[method]
         except KeyError:

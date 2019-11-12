@@ -223,56 +223,120 @@ def sel_idw(
     return dsout
 
 
+def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
+    """Select sites within bbox.
+
+    Args:
+        dset (Dataset): Stations SpecDataset to select from.
+        lons (array): Longitude of sites to interpolate spectra at.
+        lats (array): Latitude of sites to interpolate spectra at.
+        tolerance (float): Extend bbox extents by.
+        dset_lons (array): Longitude of stations in dset.
+        dset_lats (array): Latitude of stations in dset.
+
+    Returns:
+        Selected SpecDataset within bbox defined by:
+            lower-left=[min(lons), min(lats)], upper-right=[max(lons), max(lats)].
+
+    Note:
+        Args `dset_lons`, `dset_lats` are not required but can improve performance when
+            `dset` is chunked with site=1 (expensive to access station coordinates) and
+            improve precision if projected coordinates are provided at high latitudes.
+
+    """
+    assert (
+        len(lons) > 1 and len(lats) > 1
+    ), "`lons` and `lats` must have at least 2 values."
+    if (
+        attrs.LONNAME in dset.dims
+        or attrs.LATNAME in dset.dims
+        or attrs.SITENAME not in dset.dims
+    ):
+        raise NotImplementedError("sel_bbox only implemented for stations dataset.")
+
+    # Providing station coordinates could be a lot more efficient for chunked datasets
+    if dset_lons is None:
+        dset_lons = dset[attrs.LONNAME].values
+    if dset_lats is None:
+        dset_lats = dset[attrs.LATNAME].values
+
+    minlon = min(lons) - tolerance
+    minlat = min(lats) - tolerance
+    maxlon = max(lons) + tolerance
+    maxlat = max(lats) + tolerance
+    station_ids = np.where(
+        (dset_lons >= minlon)
+        & (dset_lats >= minlat)
+        & (dset_lons <= maxlon)
+        & (dset_lats <= maxlat)
+    )[0]
+    if station_ids.size == 0:
+        raise ValueError(
+            "No site found within bbox defined by ([{}, {}], [{}, {}])".format(
+                minlon, minlat, maxlon, maxlat
+            )
+        )
+
+    dsout = dset.isel(**{attrs.SITENAME: station_ids})
+    dsout[attrs.SITENAME].values = np.arange(len(station_ids))
+    return dsout
+
+
 if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3
 
-    filename = "../../tests/sample_files/spec20170101T00_spec.nc"
+    filename = "/wave/socean/spec20170101T00_spec.nc"
     dset = read_ww3(filename, chunks={"site": None})
     dset_lons = dset.lon.values
     dset_lats = dset.lat.values
     dset = read_ww3(filename, chunks={"site": 1})
 
-    lons = [283.5, 284, 284.4974365234375, 285, 285.49993896484375, 100]
+    lons = [283.5, 284, 284.4974365234375, 285, 285.49993896484375]
     lats = [
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
         -53.500091552734375,
-        30,
     ]
-    print("IDW")
-    ds1 = sel_idw(
-        dset,
-        lons,
-        lats,
-        tolerance=2.0,
-        max_sites=4,
-        dset_lons=dset_lons,
-        dset_lats=dset_lats,
+
+    # print("IDW")
+    # ds1 = sel_idw(
+    #     dset,
+    #     lons,
+    #     lats,
+    #     tolerance=2.0,
+    #     max_sites=4,
+    #     dset_lons=dset_lons,
+    #     dset_lats=dset_lats,
+    # ).load()
+
+    # print("Nearest")
+    # ds2 = sel_nearest(
+    #     dset,
+    #     lons,
+    #     lats,
+    #     tolerance=2.0,
+    #     unique=False,
+    #     exact=False,
+    #     dset_lons=dset_lons,
+    #     dset_lats=dset_lats,
+    # ).load()
+
+    print("Bbox")
+    ds3 = sel_bbox(
+        dset, lons, lats, tolerance=2.0, dset_lons=dset_lons, dset_lats=dset_lats
     ).load()
 
-    print("Nearest")
-    ds2 = sel_nearest(
-        dset,
-        lons,
-        lats,
-        tolerance=2.0,
-        unique=False,
-        exact=False,
-        dset_lons=dset_lons,
-        dset_lats=dset_lats,
-    ).load()
-
-    for ds in [ds1, ds2]:
-        ds = ds.isel(time=0)
-        ds.spec.plot.contourf(
-            col="site", vmin=-5.6, vmax=-0.8, levels=np.arange(-5.6, 0, 0.8)
-        )
-        print("hs", ds.spec.hs().values)
-        print("tp", ds.spec.tp().values)
-        print("dpm", ds.spec.dpm().values)
-        print("dspr", ds.spec.dspr().values)
-        plt.show()
+    # for ds in [ds1, ds2]:
+    #     ds = ds.isel(time=0)
+    #     ds.spec.plot.contourf(
+    #         col="site", vmin=-5.6, vmax=-0.8, levels=np.arange(-5.6, 0, 0.8)
+    #     )
+    #     print("hs", ds.spec.hs().values)
+    #     print("tp", ds.spec.tp().values)
+    #     print("dpm", ds.spec.dpm().values)
+    #     print("dspr", ds.spec.dspr().values)
+    #     plt.show()
