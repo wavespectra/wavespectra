@@ -103,7 +103,16 @@ class SpecDataset(metaclass=Plugin):
 
         return dset
 
-    def sel(self, lons, lats, method="idw", tolerance=2.0, dset_lons=None, dset_lats=None, **kwargs):
+    def sel(
+        self,
+        lons,
+        lats,
+        method="idw",
+        tolerance=2.0,
+        dset_lons=None,
+        dset_lats=None,
+        **kwargs
+    ):
         """Select stations near or at locations defined by (lons, lats) vector.
 
         Args:
@@ -135,7 +144,12 @@ class SpecDataset(metaclass=Plugin):
                 improve precision if projected coordinates are provided at high latitudes.
 
         """
-        funcs = {"idw": sel_idw, "bbox": sel_bbox, "nearest": sel_nearest, None: sel_nearest}
+        funcs = {
+            "idw": sel_idw,
+            "bbox": sel_bbox,
+            "nearest": sel_nearest,
+            None: sel_nearest,
+        }
         try:
             func = funcs[method]
         except KeyError:
