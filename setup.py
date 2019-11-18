@@ -64,11 +64,6 @@ def reqs(*f):
     return [req for subreq in _reqs(*f) for req in subreq]
 
 
-def install_requires():
-    """Get list of requirements required for installation."""
-    return reqs("default.txt")
-
-
 def extras_require():
     """Get map of all extra requirements."""
     return {"extra": reqs("extra.txt")}
@@ -90,6 +85,24 @@ def ext_configuration(parent_package="", top_path=None):
     config.add_data_files("LICENSE.txt", "wavespectra/core/attributes.yml")
     return config
 
+
+install_requires = [
+    "attrdict",
+    "click",
+    "cmocean",
+    "dask>=0.17.1",
+    "gcsfs",
+    "fsspec",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "python-dateutil",
+    "pyyaml",
+    "sortedcontainers",
+    "scipy",
+    "toolz",
+    "xarray>=0.13",
+]
 
 setup_requirements = ["pytest-runner"]
 
@@ -113,7 +126,7 @@ setup(
     include_package_data=True,
     package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
-    install_requires=install_requires(),
+    install_requires=install_requires,
     extras_require=extras_require(),
     setup_requires=setup_requirements,
     tests_require=test_requirements,
