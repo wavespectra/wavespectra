@@ -4,7 +4,8 @@ History
 
 Wavespectra is an open source project initially developed while the lead developers
 worked at `MetOcean Solutions`_. The code was open sourced in April 2018 and was moved
-in July 2019 into the `wavespectra`_ github open source organisation.
+in July 2019 into the `wavespectra`_ github open source organisation. This changelog
+covers the release history since `v3.0` when `wavespectra`_ was open-sourced.
 
 
 ********
@@ -14,7 +15,7 @@ Releases
 
 3.5.0 (YYYY-MM-DD)
 ~~~~~~~~~~~~~~~~~~
-The first PyPI release from new `wavespectra`_ github organisation.
+**The first PyPI release from new** `wavespectra`_ **github organisation.**
 
 Breaking Changes
 ----------------
@@ -28,6 +29,7 @@ New Features
 * Support for `zarr`_ wave spectra datasets from either local or remote sources.
 * New `read_spotter` function to read spectra from Spotter file format, currently only reading as 1D.
 * Add `read_dataset` function to convert existing dataset from unknown file into SpecDataset.
+* Python Notebooks split into a new `notebooks`_ repository within the `wavespectra`_ organisation.
 
 Bug Fixes
 ---------
@@ -44,7 +46,7 @@ Internal Changes
 
 3.4.0 (2019-03-28)
 ~~~~~~~~~~~~~~~~~~
-The last PyPI release from old metocean github organisation.
+**The last PyPI release from old metocean github organisation.**
 
 New Features
 ------------
@@ -63,13 +65,13 @@ New Features
 3.3.0 (2019-02-21)
 ~~~~~~~~~~~~~~~~~~
 
-Bug Fixes
----------
-* Ensure lazy computations in `swe` method.
-
 New Features
 ------------
 * Add `dircap_270` option in `read_swan`.
+
+Bug Fixes
+---------
+* Ensure lazy computations in `swe` method.
 
 Internal Changes
 ----------------
@@ -95,13 +97,13 @@ Bug Fixes
 3.2.3 (2019-01-08)
 ~~~~~~~~~~~~~~~~~~
 
-Bug Fixes
----------
-* Fix bug with frequency and energy units in `read_wwm`.
-
 New Features
 ------------
 * Function `read_triaxys` to read spectra from TRIAXYS file format.
+
+Bug Fixes
+---------
+* Fix bug with frequency and energy units in `read_wwm`.
 
 
 3.2.2 (2018-12-04)
@@ -115,25 +117,29 @@ Bug Fixes
 3.2.1 (2018-11-14)
 ~~~~~~~~~~~~~~~~~~
 
-Bug Fixes
----------
-* Convert direction to degree in `read_ncswan`.
-
 New Features
 ------------
 * Function `read_wwm` to read spectra from WWM model format.
+
+Bug Fixes
+---------
+* Convert direction to degree in `read_ncswan`.
 
 
 3.2.0 (2018-11-04)
 ~~~~~~~~~~~~~~~~~~
 
-Bug Fixes
----------
-* Ensure lazy computation in `uuv_to_spddir`.
-
 New Features
 ------------
 * Function `read_ncswan` to read spectra from SWAN netcdf model format.
+
+Bug Fixes
+---------
+* Ensure lazy computation in `uv_to_spddir`.
+
+Internal changes
+----------------
+* Unify library PyPI release versions. 
 
 
 3.1.4 (2018-08-29)
@@ -144,11 +150,106 @@ Bug Fixes
 * Fix bug in `read_swans` when handling swan bnd files with `ntimes` argument.
 
 
+3.1.3 (2018-07-27)
+~~~~~~~~~~~~~~~~~~
+
+Changes
+-------
+* Use 10m convention in default wind standard names.
+
+
+3.1.2 (2018-07-05)
+~~~~~~~~~~~~~~~~~~
+
+Changes
+-------
+* Adjust default standard name for `dm`.
+
+Bug Fixes
+---------
+* Fix renaming option in `stats` method.
+
+
+3.1.1 (2018-05-17)
+~~~~~~~~~~~~~~~~~~
+
+Bug Fixes
+---------
+
+New Features
+------------
+* Allow choosing maximum number of partitions in `partition` method.
+
+
+3.1.0 (2018-05-09)
+~~~~~~~~~~~~~~~~~~
+
+New Features
+------------
+* Function to read spectra in cf-json formatting.
+
+Bug Fixes
+---------
+* Fix but in `read_swan` when files have no timestamp.
+
+
+3.0.2 (2018-05-03)
+~~~~~~~~~~~~~~~~~~
+
+Bug Fixes
+---------
+* Ensure data is not loaded into memory in `read_ww3`.
+
+
+3.0.1 (2018-04-28)
+~~~~~~~~~~~~~~~~~~
+
+New Features
+------------
+* Sphinx autodoc.
+* Method `read_dictionary` to define SpecDataset from python dictionary.
+* Set pytest as the testing framework and add several new testings.
+* Add notebooks.
+
+Bug Fixes
+---------
+* Get rid of left over `freq` coordinate in `hs` method.
+* Fix calculation in `_peak` method.
+* Stop misleading warning in `tp` method.
+* Fix to `hs` method.
+
+Internal Changes
+----------------
+* Replace obsolete sort method by `xarray`_'s sortby.
+* Falster calculation in `tp`.
+* Improvements to SpecDataset wrapper.
+
+
+3.0 (2018-03-05)
+~~~~~~~~~~~~~~~~~~
+**This major release marks the migration from the predecessor** `pyspectra` **library,
+as well as the open-sourcing of wavespectra and first PyPI release.**
+
+New Features
+------------
+* Library restructured with plugins input / output modules .
+* New `_peak` method to return the true peak instead of the maxima.
+* Making reading functions available at module level.
+
+Bug Fixes
+---------
+* Ensure slicing won't break due to precision (xarray bug).
+
+Internal Changes
+----------------
+* Rename package.
+
 
 
 .. _`MetOcean Solutions`: https://www.metocean.co.nz/
 .. _`metocean`: https://github.com/metocean/wavespectra
 .. _`wavespectra`: https://github.com/wavespectra
+.. _`notebooks`: https://github.com/wavespectra/notebooks
 .. _`xarray`: https://xarray.pydata.org/en/latest/
 .. _`black`: https://black.readthedocs.io/en/stable/
 .. _`zarr`: https://zarr.readthedocs.io/en/stable/
