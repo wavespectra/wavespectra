@@ -173,4 +173,3 @@ def partition(spec, ihmax=200):
 
     part_array = imo.reshape(spec.shape)
     return part_array
-
