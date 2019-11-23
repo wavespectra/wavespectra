@@ -122,7 +122,7 @@ setup(
     author_email=wavespectra.__contact__,
     url=wavespectra.__url__,
     license="MIT license",
-    packages=find_packages(include=["wavespectra"]),
+    packages=find_packages(),
     include_package_data=True,
     package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
