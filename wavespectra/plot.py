@@ -190,6 +190,8 @@ class _PlotMethods:
     __slots__ = ("_da",)
 
     def __init__(self, darray):
+        # Workaround to allow checking if log10 needs to to applied
+        globals()["applied_log"] = False
         self._da = darray
 
     def __call__(self, **kwargs):
@@ -370,10 +372,11 @@ def _plot2d(plotfunc):
         # Log values make it easier to view multiple wave systems in spectrum
         # Try and ensure that log won't be calculated twice if facet grids
         if as_log10:
-            if not (darray.min() == -5 and 0 not in darray.values):
+            if not globals().get("applied_log", False):
                 darray.values = np.log10(
                     darray.where(darray.values > 0).fillna(0.00001)
                 )
+                globals().update({"applied_log": True})
 
         # Decide on a default for the colorbar before facetgrids
         if add_colorbar is None:
@@ -712,14 +715,16 @@ if __name__ == "__main__":
     # dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
     # plt.show()
 
+    import datetime
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3, read_swan
     ds0 = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")
     swan = read_swan("/source/wavespectra/tests/sample_files/swanfile.spec", as_site=True)
     good = swan.isel(site=0)
-    bad = ds0.isel(site=0).load()
+    bad = ds0.isel(site=0).load().sortby("dir")
 
-    # plt.figure(); good.spec.plot()
-    plt.figure(); good.isel(time=0).spec.plot(vmin=-5, vmax=-2)
-    good.spec.plot(col="time", col_wrap=3, vmin=-5, vmax=-2)
+    bad.efth.spec.plot.contourf(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
+    # good.efth.spec.plot(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
+    # np.log10(bad.efth).plot(col="time", col_wrap=3, vmin=-5, vmax=0)
+    # bad.efth.plot(col="time", col_wrap=3)
     plt.show()

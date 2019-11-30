@@ -249,7 +249,9 @@ class SpecArray(object):
         >>> d.plot.imshow()  # equivalent to xarray.plot.imshow(d)
 
         """
-        return _PlotMethods(self._obj)
+        import copy
+        obj = copy.deepcopy(self._obj)
+        return _PlotMethods(obj)
 
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
