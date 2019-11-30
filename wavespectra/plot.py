@@ -169,7 +169,10 @@ def plot(
             else:
                 plotfunc = pcolormesh
     else:
-        raise NotImplementedError("Plotting only implemented for 2D-spectra.")
+        raise NotImplementedError(
+            "Too many dimensions, either slice spectra before plotting or ensure "
+            "`col` argument is used to step through non-spectral dimension."
+        )
 
     kwargs["ax"] = ax
 
@@ -717,6 +720,6 @@ if __name__ == "__main__":
     bad = ds0.isel(site=0).load()
 
     # plt.figure(); good.spec.plot()
-    # plt.figure(); bad.spec.plot()
-    good.spec.plot.contourf(col="time", col_wrap=3)
+    plt.figure(); good.isel(time=0).spec.plot(vmin=-5, vmax=-2)
+    good.spec.plot(col="time", col_wrap=3, vmin=-5, vmax=-2)
     plt.show()
