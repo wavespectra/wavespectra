@@ -74,8 +74,9 @@ def _wrap_and_sort_directions(darray):
         return darray.sortby(attrs.DIRNAME)
     darray = darray.sortby(attrs.DIRNAME)
     dd = np.diff(darray[attrs.DIRNAME]).mean()
-    darray = xr.concat((darray, darray.isel(**{attrs.DIRNAME: 0})), dim=attrs.DIRNAME)
-    darray[attrs.DIRNAME].values[-1] = darray[attrs.DIRNAME].values[-2] + dd
+    closure = darray.isel(**{attrs.DIRNAME: 0})
+    closure[attrs.DIRNAME].values = darray[attrs.DIRNAME].values[-1] + dd
+    darray = xr.concat((darray, closure), dim=attrs.DIRNAME)
     return darray
 
 
@@ -702,8 +703,20 @@ def pcolormesh(
 
 
 if __name__ == "__main__":
-    from wavespectra import read_swan
+    # from wavespectra import read_swan
 
-    dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
-    dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
+    # dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
+    # dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
+    # plt.show()
+
+    import matplotlib.pyplot as plt
+    from wavespectra import read_ww3, read_swan
+    ds0 = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")
+    swan = read_swan("/source/wavespectra/tests/sample_files/swanfile.spec", as_site=True)
+    good = swan.isel(site=0)
+    bad = ds0.isel(site=0).load()
+
+    # plt.figure(); good.spec.plot()
+    # plt.figure(); bad.spec.plot()
+    good.spec.plot.contourf(col="time", col_wrap=3)
     plt.show()
