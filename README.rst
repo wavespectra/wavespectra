@@ -136,11 +136,13 @@ SpecDataset provides a wrapper around the methods in SpecArray. For instance, th
 
 Data requirements:
 ------------------
+
 SpecArray_ methods require DataArray_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- wave frequency coordinate in :math:`Hz` named as `freq` (required).
-- wave direction coordinate in :math:`degree` (coming from) named as `dir` (optional for 1D, required for 2D spectra).
-- wave energy density data in :math:`m2/Hz/degree` (2D) or :math:`m2/Hz` (1D) named as `efth`
+- wave frequency coordinate in `Hz` named as `freq` (required).
+- wave frequency coordinate in `Hz` named as `freq` (required).
+- wave direction coordinate in `degree` (coming from) named as `dir` (optional for 1D, required for 2D spectra).
+- wave energy density data in `m2/Hz/degree` (2D) or `m2/Hz` (1D) named as `efth`
 
 SpecDataset_ methods require xarray's Dataset_ to have the following attributes:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

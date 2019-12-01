@@ -2,11 +2,10 @@
 History
 =======
 
-Wavespectra is an open source project that was started at MetOcean Solutions Ltd that
-was open sourced in April 2018. In July 2019 it was moved into the wavespectra github
-open source organisation and transitioned into a fully community developed open source
-project. This changelog covers the release history since v3.0 when wavespectra was
-open-sourced.
+Wavespectra is an open source project that was started at MetOcean Solutions and open
+sourced in April 2018. In July 2019 it was moved into the wavespectra github open
+source organisation and transitioned into a fully community developed project. This
+changelog covers the release history since v3.0 when wavespectra was open-sourced.
 
 
 ********
