@@ -13,12 +13,14 @@ Python library for wave spectra
     :caption: Contents:
 
     How to install <install>
-    Library <library>
+    Quick start <quickstart>
     input
     output
+    Library <library>
     conventions
     contributing
     authors
+    support
     history
 
 .. toctree::
