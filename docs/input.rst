@@ -39,25 +39,28 @@ their full module path, for instance:
 
     dset = read_hotswan('my_swan_hotfiles')
 
-The following input functions are currently available from the main module
-level:
 
-NETCDF
-~~~~~~
+Module level reader functions
+-----------------------------
 
-.. autofunction:: wavespectra.read_netcdf
-   :noindex:
-
-SWAN
-~~~~
-
-.. autofunction:: wavespectra.read_swan
-   :noindex:
+The following input functions are currently available from main module level (e.g., `from wavespectra import read_ww3`):
 
 WW3
 ~~~
 
 .. autofunction:: wavespectra.read_ww3
+   :noindex:
+
+NCSWAN
+~~~~~~
+
+.. autofunction:: wavespectra.read_ncswan
+   :noindex:
+
+WWM
+~~~~~~
+
+.. autofunction:: wavespectra.read_wwm
    :noindex:
 
 WW3-MSL
@@ -66,16 +69,40 @@ WW3-MSL
 .. autofunction:: wavespectra.read_ww3_msl
    :noindex:
 
+NETCDF
+~~~~~~
+
+.. autofunction:: wavespectra.read_netcdf
+   :noindex:
+
+DATASET
+~~~~~~~
+
+.. autofunction:: wavespectra.read_dataset
+   :noindex:
+
+SWAN
+~~~~
+
+.. autofunction:: wavespectra.read_swan
+   :noindex:
+
+TRIAXYS
+~~~~~~~
+
+.. autofunction:: wavespectra.read_triaxys
+   :noindex:
+
+SPOTTER
+~~~~~~~
+
+.. autofunction:: wavespectra.read_spotter
+   :noindex:
+
 OCTOPUS
 ~~~~~~~
 
 .. autofunction:: wavespectra.read_octopus
-   :noindex:
-
-JSON
-~~~~
-
-.. autofunction:: wavespectra.read_json
    :noindex:
 
 Other functions

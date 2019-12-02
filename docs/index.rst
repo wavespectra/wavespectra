@@ -12,7 +12,7 @@ Python library for wave spectra
     :maxdepth: 3
     :caption: Contents:
 
-    How to install <install>
+    install
     Quick start <quickstart>
     input
     output
