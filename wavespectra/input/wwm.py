@@ -22,7 +22,7 @@ MAPPING = {
 
 
 def read_wwm(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks={}):
-    """Read Spectra from SWAN native netCDF format.
+    """Read Spectra from WWMII native netCDF format.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying multiple
