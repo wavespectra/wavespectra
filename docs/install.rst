@@ -6,64 +6,66 @@
 Installation
 ============
 
-Install from pypi
------------------
-.. code:: bash
+Stable release
+--------------
 
-   # Default install, miss some dependencies and functionality
-   pip install wavespectra
+To install wavespectra, run this command in your terminal:
 
-   # Complete install
-   pip install wavespectra[extra]
+.. code-block:: console
 
-Install from sources
---------------------
-Get the source code from Github_:
+   $ pip install wavespectra
 
-.. code:: bash
+For the full install which includes `netcdf4`_ and some other
+base libraries run this command:
 
-    git clone git@github.com:wavespectra/wavespectra.git
+.. code-block:: console
 
-Install requirements. Navigate to the base root of wavespectra and execute:
+   $ pip install wavespectra[extra]
 
-.. code:: bash
+These are the preferred method to install wavespectra, as they will always install the most
+recent stable release.
 
-   # Default install, miss some dependencies and functionality
-   pip install -r requirements/default.txt
+If you don't have `pip`_ installed, this `Python installation guide`_ can guide
+you through the process.
 
-   # Also, for complete install
-   pip install -r requirements/extra.txt
+From sources
+------------
 
-   # Also, for testing requirements
-   pip install -r requirements/test.txt
+The sources for wavespectra can be downloaded from the `Github repo`_.
 
-Then install wavespectra:
+You can either clone the public repository:
 
-.. code:: bash
+.. code-block:: console
 
-   python setup.py install
+    $ git clone git://github.com/wavespectra/wavespectra
 
-Alternatively, to install in `development mode`_:
+Or download the `tarball`_:
 
-.. code:: bash
+.. code-block:: console
 
-   pip install -e .
+    $ curl -OL https://github.com/wavespectra/wavespectra/tarball/master
 
-Running tests
---------------------
+Once you have a copy of the source, you can install it with:
 
-.. code:: bash
+.. code-block:: console
 
-    # Running all tests
-    py.test -v
+    $ python setup.py install
 
-    # Or, alternatively
-    python setup.py test
+or alternatively in `development mode`_ with:
 
-    # Running specific tests
-    py.test -v tests/core
-    py.test -v tests/core/test_wave_stats.py
-    py.test -v tests/core/test_wave_stats.py::TestSpecArray
+.. code-block:: console
 
-.. _Github: https://github.com/wavespectra/wavespectra
+   $ pip install -e .
+
+For the full installation also install the extra requirements:
+
+.. code-block:: console
+
+   $ pip install -r requirements/extra.txt
+
+.. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
+.. _pip: https://pip.pypa.io
+.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+.. _Github repo: https://github.com/wavespectra/wavespectra
+.. _tarball: https://github.com/wavespectra/wavespectra/tarball/master
 .. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
