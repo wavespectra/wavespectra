@@ -250,6 +250,7 @@ class SpecArray(object):
 
         """
         import copy
+
         obj = copy.deepcopy(self._obj)
         return _PlotMethods(obj)
 
@@ -754,18 +755,21 @@ class SpecArray(object):
         from wavespectra.core.specpart import partition
 
         # Initialise output - one SpecArray for each partition
-        all_parts = [0 * self._obj]
+        all_parts = [0 * self._obj.load() for i in range(1 + max_swells)]
 
         # Predefine these for speed
         dirs = self.dir.values
         freqs = self.freq.values
         ndir = len(dirs)
         nfreq = len(freqs)
+        wsp_darr.load()
+        wdir_darr.load()
+        dep_darr.load()
 
         # Slice each possible 2D, freq-dir array out of the full data array
         slice_ids = {dim: range(self._obj[dim].size) for dim in self._non_spec_dims}
         for slice_dict in self._product(slice_ids):
-            specarr = self._obj[slice_dict]
+            spectrum = self._obj[slice_dict].values
             if nearest:
                 slice_dict_nearest = {
                     key: self._obj[key][val].values for key, val in slice_dict.items()
@@ -783,49 +787,42 @@ class SpecArray(object):
                 self.celerity(dep, freqs)[:, _], (1, ndir)
             )
 
-            spectrum = specarr.values
-            part_array = partition(spectrum)
+            part_array = specpart.partition(spectrum)
+
+            ipeak = 1  # values from specpart.partition start at 1
             part_array_max = part_array.max()
+            partitions_hs_swell = np.zeros(part_array_max + 1)  # zero is used for sea
+            while ipeak <= part_array_max:
+                part_spec = np.where(part_array == ipeak, spectrum, 0.0)
 
-            # TODO: join the two loops in a while loop
-            # Assign new partition if multiple valleys and satisfying some conditions
-            for part in range(1, part_array_max + 1):
-                part_spec = np.where(
-                    part_array == part, spectrum, 0.0
-                )  # Current partition
-
+                # Assign new partition if multiple valleys and satisfying some conditions
                 imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    part_spec[imin[0].squeeze() :, :] = 0
-                    newpart = part_spec > 0
+                    # TODO: swap part_spec and part_spec_new and deal with more than one imin value ?
+                    part_spec_new = part_spec.copy()
+                    part_spec_new[imin[0].squeeze() :, :] = 0
+                    newpart = part_spec_new > 0
                     if newpart.sum() > 20:
+                        part_spec[newpart] = 0
                         part_array_max += 1
                         part_array[newpart] = part_array_max
+                        partitions_hs_swell = np.append(partitions_hs_swell, 0)
 
-            # Group sea partitions and sort swells by hs
-            swell_hs_parts = np.zeros(part_array_max + 1)  # +1 because of sea
-            for part in range(1, part_array_max + 1):
-                part_spec = np.where(
-                    part_array == part, spectrum, 0.0
-                )  # Current partition
+                # Group sea partitions and sort swells by hs
                 W = part_spec[windbool].sum() / part_spec.sum()
                 if W > wscut:
-                    part_array[part_array == part] = 0
-                    swell_hs_parts[part] = 0  # not really needed
+                    part_array[part_array == ipeak] = 0  # mark as windsea
                 else:
-                    swell_hs_parts[part] = hs(part_spec, freqs, dirs)
-            sortedparts = np.flipud(swell_hs_parts[1:].argsort() + 1)
-            num_swells = min(max_swells, sum(swell_hs_parts[1:] > hs_min))
-            parts = np.concatenate(([0], sortedparts[:num_swells]))
-            # Extend partitions list if any extra one has been detected
-            for dummy in range(1 + num_swells - len(all_parts)):
-                all_parts.append(0 * self._obj)
+                    partitions_hs_swell[ipeak] = hs(part_spec, freqs, dirs)
 
+                ipeak += 1
+
+            num_swells = min(max_swells, sum(partitions_hs_swell > hs_min))
+
+            sorted_swells = np.flipud(partitions_hs_swell[1:].argsort() + 1)
+            parts = np.concatenate(([0], sorted_swells[:num_swells]))
             for ind, part in enumerate(parts):
-                # TODO: Revisite this when dask starts supporting item assignment
-                all_parts[ind][slice_dict].values = np.where(
-                    part_array == part, spectrum, 0.0
-                )
+                all_parts[ind][slice_dict] = np.where(part_array == part, spectrum, 0.0)
 
         # Concatenate partitions along new axis
         part_coord = xr.DataArray(
@@ -938,3 +935,12 @@ def hs(spec, freqs, dirs, tail=True):
     if tail and freqs[-1] > 0.333:
         Etot += 0.25 * E[-1] * freqs[-1]
     return 4.0 * np.sqrt(Etot)
+
+
+if __name__ == "__main__":
+    from wavespectra import read_ww3
+
+    dset = read_ww3("/wave/socean/spec20120101T00_spec.nc", chunks={"station": 1})
+    ds = dset.isel(site=2000)
+    part = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt)
+    print(part.isel(time=0).spec.hs().values)
