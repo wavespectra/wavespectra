@@ -1,9 +1,7 @@
 # from setuptools import setup
 import os
-from setuptools import find_packages
+from setuptools import setup, find_packages
 from codecs import open
-from numpy.distutils.core import setup
-from numpy.distutils.misc_util import Configuration
 
 import wavespectra
 
@@ -73,19 +71,6 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-def ext_configuration(parent_package="", top_path=None):
-    config = Configuration("", "", "")
-    config.add_extension(
-        "wavespectra.specpart",
-        sources=[
-            "wavespectra/specpart/specpart.pyf",
-            "wavespectra/specpart/specpart.f90",
-        ],
-    )
-    config.add_data_files("LICENSE.txt", "wavespectra/core/attributes.yml")
-    return config
-
-
 install_requires = [
     "attrdict",
     "click",
@@ -110,7 +95,6 @@ setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest"]
 
-kwargs = ext_configuration(top_path="").todict()
 
 setup(
     name=NAME,
@@ -125,7 +109,7 @@ setup(
     license="MIT license",
     packages=find_packages(),
     include_package_data=True,
-    package_data={"attributes": ["wavespectra/core/attributes.yml"]},
+    # package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
     install_requires=install_requires,
     extras_require=extras_require(),
@@ -137,5 +121,4 @@ setup(
     project_urls=PROJECT_URLS,
     zip_safe=False,
     entry_points={"console_scripts": ["wavespectra=wavespectra.cli:main"]},
-    **kwargs
 )

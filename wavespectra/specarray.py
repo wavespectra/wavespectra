@@ -751,7 +751,7 @@ class SpecArray(object):
                 % (darr.name, set(darr.dims), self._non_spec_dims)
             )
 
-        from wavespectra.specpart import specpart
+        from wavespectra.core.specpart import partition
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj]
@@ -784,7 +784,7 @@ class SpecArray(object):
             )
 
             spectrum = specarr.values
-            part_array = specpart.partition(spectrum)
+            part_array = partition(spectrum)
             part_array_max = part_array.max()
 
             # TODO: join the two loops in a while loop
