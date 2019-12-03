@@ -748,7 +748,7 @@ class SpecArray(object):
                 % (darr.name, set(darr.dims), self._non_spec_dims)
             )
 
-        from wavespectra.core.specpart import partition
+        from wavespectra.core import specpart
 
         # Initialise output - one SpecArray for each partition
         all_parts = [0 * self._obj.load() for i in range(1 + max_swells)]
