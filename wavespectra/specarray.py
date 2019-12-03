@@ -654,43 +654,33 @@ class SpecArray(object):
         )
         return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
 
-    def celerity(self, depth=False, freq=None):
-        """Wave celerity C.
+    def celerity(self, depth=None):
+        """Wave celerity C from frequency coords.
 
         Args:
-            - depth (float): depths for calculating C, if not provided
-              the deep water approximation is returned.
-            - freq (ndarray): frequencies for calculating C, by default
-              calculate from self.freq.
+            - depth (float): Water depth, use deep water approximation by default.
 
         Returns;
             - C: ndarray of same shape as freq with wave celerity for each frequency.
 
         """
-        if freq is None:
-            freq = self.freq
-        if depth:
-            ang_freq = 2 * np.pi * freq
-            return ang_freq / wavenuma(ang_freq, depth)
-        else:
-            return 1.56 / freq
+        C = celerity(freq=self.freq, depth=depth)
+        C.name = "celerity"
+        return C
 
-    def wavelen(self, depth=False):
-        """Wavelength L.
+    def wavelen(self, depth=None):
+        """Wavelength L from frequency coords.
 
         Args:
-            - depth (float): depths for calculating L, if not provided
-              the deep water approximation is returned.
+            - depth (float): Water depth, use deep water approximation by default.
 
         Returns;
             - L: ndarray of same shape as freq with wavelength for each frequency.
 
         """
-        if depth:
-            ang_freq = 2 * np.pi * self.freq
-            return 2 * np.pi / wavenuma(ang_freq, depth)
-        else:
-            return 1.56 / self.freq ** 2
+        L = wavelen(freq=self.freq, depth=depth)
+        L.name = "wavelength"
+        return L
 
     def partition(
         self,
@@ -780,7 +770,7 @@ class SpecArray(object):
 
             Up = agefac * wsp * np.cos(D2R * (dirs - wdir))
             windbool = np.tile(Up, (nfreq, 1)) > np.tile(
-                self.celerity(dep, freqs)[:, _], (1, ndir)
+                celerity(freqs, dep)[:, _], (1, ndir)
             )
 
             part_array = specpart.partition(spectrum)
@@ -907,6 +897,42 @@ def wavenuma(ang_freq, water_depth):
     for i in range(1, 6):
         a += D[i] * k0h ** i
     return (k0h * (1 + 1.0 / (k0h * a)) ** 0.5) / water_depth
+
+
+def wavelen(freq, depth=None):
+    """Wavelength L.
+
+    Args:
+        - freq (ndarray): Frequencies (Hz) for calculating L.
+        - depth (float): Water depth, use deep water approximation by default.
+
+    Returns;
+        - L: ndarray of same shape as freq with wavelength for each frequency.
+
+    """
+    if depth is not None:
+        ang_freq = 2 * np.pi * freq
+        return 2 * np.pi / wavenuma(ang_freq, depth)
+    else:
+        return 1.56 / freq ** 2
+
+
+def celerity(freq, depth=None):
+    """Wave celerity C.
+
+    Args:
+        - freq (ndarray): Frequencies (Hz) for calculating C.
+        - depth (float): Water depth, use deep water approximation by default.
+
+    Returns;
+        - C: ndarray of same shape as freq with wave celerity for each frequency.
+
+    """
+    if depth is not None:
+        ang_freq = 2 * np.pi * freq
+        return ang_freq / wavenuma(ang_freq, depth)
+    else:
+        return 1.56 / freq
 
 
 def hs(spec, freqs, dirs, tail=True):
