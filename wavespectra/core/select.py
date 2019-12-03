@@ -22,7 +22,10 @@ def distance(lons, lats, lon, lat):
         List of distances between each station and site.
 
     """
-    return np.sqrt((lons - (lon % 360.0)) ** 2 + (lats - lat) ** 2)
+    dist = np.sqrt((lons - (lon % 360.0)) ** 2 + (lats - lat) ** 2)
+    if isinstance(dist, xr.DataArray):
+        dist = dist.values
+    return dist
 
 
 def nearer(lons, lats, lon, lat, tolerance=np.inf, max_sites=None):
