@@ -718,8 +718,11 @@ if __name__ == "__main__":
     import datetime
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3, read_swan
+
     ds0 = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")
-    swan = read_swan("/source/wavespectra/tests/sample_files/swanfile.spec", as_site=True)
+    swan = read_swan(
+        "/source/wavespectra/tests/sample_files/swanfile.spec", as_site=True
+    )
     good = swan.isel(site=0)
     bad = ds0.isel(site=0).load().sortby("dir")
 
