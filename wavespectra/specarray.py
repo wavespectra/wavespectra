@@ -249,10 +249,7 @@ class SpecArray(object):
         >>> d.plot.imshow()  # equivalent to xarray.plot.imshow(d)
 
         """
-        import copy
-
-        obj = copy.deepcopy(self._obj)
-        return _PlotMethods(obj)
+        return _PlotMethods(self._obj)
 
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
@@ -708,6 +705,8 @@ class SpecArray(object):
     ):
         """Partition wave spectra using WW3 watershed algorithm.
 
+        This method is not lazy, make sure array will fit into memory.
+
         Args:
             - wsp_darr (DataArray): wind speed (m/s).
             - wdir_darr (DataArray): Wind direction (degree).
@@ -726,13 +725,10 @@ class SpecArray(object):
         Note:
             - All input DataArray objects must have same non-spectral
               dimensions as SpecArray.
+
         References:
             - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
               numerical wave models." JTECH 26.8 (2009): 1614-1633.
-
-        TODO:
-            - We currently loop through each spectrum to calculate the partitions which
-              is slow. Ideally we should handle the problem in a multi-dimensional way.
 
         """
         # Assert spectral dims are present in spectra and non-spectral dims are present
