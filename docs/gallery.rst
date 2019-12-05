@@ -2,10 +2,8 @@
     :width: 150 px
     :align: right
 
-wavespectra
-===========
+=======
+Gallery
+=======
 
-.. toctree::
-   :maxdepth: 4
-
-   wavespectra
+.. include:: auto_gallery/index.rst

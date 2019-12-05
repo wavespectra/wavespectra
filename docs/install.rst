@@ -1,6 +1,6 @@
 .. image:: _static/wavespectra_logo.png
-   :width: 150 px
-   :align: right
+    :width: 150 px
+    :align: right
 
 ============
 Installation
@@ -16,7 +16,7 @@ To install wavespectra, run this command in your terminal:
    $ pip install wavespectra
 
 For the full install which includes `netcdf4`_ and some other
-base libraries run this command:
+extra libraries run this command:
 
 .. code-block:: console
 

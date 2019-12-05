@@ -35,6 +35,15 @@ wavespectra.specdataset module
     :show-inheritance:
 
 
+wavespectra.core.plot module
+----------------------------------
+
+.. automodule:: wavespectra.core.plot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Module contents
 ---------------
 
