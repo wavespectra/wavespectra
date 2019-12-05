@@ -24,7 +24,7 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.misc import uv_to_spddir, interp_spec, flatten_list
 
 
-def read_swan(filename, dirorder=True, as_site=None):
+def read_swan(filename, dirorder=True, as_site=False):
     """Read Spectra from SWAN ASCII file.
 
     Args:
