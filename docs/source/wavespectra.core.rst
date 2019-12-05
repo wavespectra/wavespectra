@@ -16,6 +16,14 @@ wavespectra.core.attributes module
     :undoc-members:
     :show-inheritance:
 
+wavespectra.core.select module
+------------------------------
+
+.. automodule:: wavespectra.core.select
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 wavespectra.core.misc module
 ----------------------------
 
