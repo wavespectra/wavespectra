@@ -18,6 +18,7 @@ Python library for wave spectra
     Quick start <quickstart>
     IO <input>
     conventions
+    plotting
     contributing
     authors
     support

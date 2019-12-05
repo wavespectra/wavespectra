@@ -191,8 +191,6 @@ class _PlotMethods:
     __slots__ = ("_da",)
 
     def __init__(self, darray):
-        # Workaround to allow checking if log10 needs to to applied
-        globals()["applied_log"] = False
         self._da = darray
 
     def __call__(self, **kwargs):
@@ -594,6 +592,8 @@ def _plot2d(plotfunc):
         This just makes the method work on Plotmethods objects,
         and passes all the other arguments straight through.
         """
+        # Workaround to allow checking if log10 needs to to applied
+        globals()["applied_log"] = False
         allargs = locals()
         allargs["darray"] = _PlotMethods_obj._da
         allargs.update(kwargs)
@@ -724,11 +724,8 @@ if __name__ == "__main__":
     swan = read_swan(
         "/source/wavespectra/tests/sample_files/swanfile.spec", as_site=True
     )
-    good = swan.isel(site=0)
     bad = ds0.isel(site=0).load().sortby("dir")
 
-    bad.efth.spec.plot.contourf(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
-    # good.efth.spec.plot(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
-    # np.log10(bad.efth).plot(col="time", col_wrap=3, vmin=-5, vmax=0)
-    # bad.efth.plot(col="time", col_wrap=3)
+    bad.spec.plot.contourf(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
+    bad.spec.plot.contourf(col="time", col_wrap=3, as_log10=True, vmin=-5, vmax=-2)
     plt.show()
