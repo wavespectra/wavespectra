@@ -375,6 +375,7 @@ def _plot2d(plotfunc):
                 darray.values = np.log10(
                     darray.where(darray.values > 0).fillna(0.00001)
                 )
+                darray.attrs.update({"standard_name": "$log_{10}$(Energy density)"})
                 globals().update({"applied_log": True})
 
         # Decide on a default for the colorbar before facetgrids
