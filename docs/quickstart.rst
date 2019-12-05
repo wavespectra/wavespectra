@@ -194,13 +194,12 @@ Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only 
     @suppress
     plt.figure(figsize=(8, 4.5))
 
-    from cmocean import cm
     ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"}).load()
     ds.period.values = 1 / ds.period.values
     ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
 
     @savefig hovmoller_plot.png
-    ds.plot.contourf(x="time", y="period", cmap=cm.thermal, vmax=1.25);
+    ds.plot.contourf(x="time", y="period", vmax=1.25);
 
 Selecting
 ---------

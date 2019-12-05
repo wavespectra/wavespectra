@@ -40,11 +40,10 @@ def read_swan(filename, dirorder=True, as_site=False):
     times = swanfile.times
     lons = swanfile.x
     lats = swanfile.y
-    sites = (
-        [os.path.splitext(os.path.basename(filename))[0]]
-        if len(lons) == 1
-        else np.arange(len(lons)) + 1
-    )
+    if len(lons) == 1:
+        sites = [os.path.splitext(os.path.basename(filename))[0]]
+    else:
+        sites = np.arange(len(lons)) + 1
     freqs = swanfile.freqs
     dirs = swanfile.dirs
     tab = None
