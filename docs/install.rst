@@ -16,7 +16,7 @@ To install wavespectra, run this command in your terminal:
    $ pip install wavespectra
 
 For the full install which includes `netcdf4`_ and some other
-base libraries run this command:
+extra libraries run this command:
 
 .. code-block:: console
 
