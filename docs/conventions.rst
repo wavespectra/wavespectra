@@ -44,7 +44,7 @@ Wind direction array named as ``wdir``, defined in :math:`degree` (required for 
 
 Water depth
 ~~~~~~~~~~~
-Water depth array named as ``dpt``, defined in :math:`m` (required for watershed partitioning).
+Water depth array named as ``dpt``, defined in :math:`m` (required for watershed partitioning and wavenumber-based methods).
 
 Attributes
 ----------
