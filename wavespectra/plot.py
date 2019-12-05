@@ -567,7 +567,7 @@ def _plot2d(plotfunc):
         add_labels=True,
         vmin=None,
         vmax=None,
-        cmap=None,
+        cmap=cm.thermal,
         colors=None,
         center=None,
         robust=False,
