@@ -1,26 +1,20 @@
-=====
+==
+IO
+==
+
 Input
-=====
+-----
 
 .. py:module:: wavespectra.input
 
-Functions to read wave spectra from file into
-:py:class:`~wavespectra.specdataset.SpecDataset`.
+Wavespectra provides several functions for reading datasets from different file formats
+into :py:class:`~wavespectra.specdataset.SpecDataset` objects. The functions are defined
+in submodules within :py:mod:`wavespectra.input`. They can be imported from the main
+module level for convenience, for instance:
 
-The input functions allow abstracting away the format the wave spectra data are
-stored on disk and loading them into a standard SpecDataset object. The methods
-for calculating integrated spectral parameters and writing spectra as different
-file formats become available from the ``spec`` namespece.
-
-Reading functions are defined in modules within
-:py:mod:`wavespectra.input` subpackage. The functions are imported at the main
-module level and can be accessed for instance as:
-
-.. code:: python
+.. ipython:: python
 
     from wavespectra import read_swan
-
-    dset = read_swan('my_swan_file')
 
 The following convention is expected for defining reading functions:
 
@@ -31,90 +25,86 @@ The following convention is expected for defining reading functions:
 
 Input functions can also be defined without following this convention. However
 they are not accessible from the main module level and need to be imported from
-their full module path, for instance:
+their full module path, e.g.
 
-.. code:: python
+.. ipython:: python
 
     from wavespectra.input.swan import read_hotswan
 
-    dset = read_hotswan('my_swan_hotfiles')
+These input functions are currently available from the main module level:
 
-
-Module level reader functions
------------------------------
-
-The following input functions are currently available from main module level (e.g., `from wavespectra import read_ww3`):
-
-WW3
-~~~
+WW3 NetCDF file
+~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_ww3
    :noindex:
 
-NCSWAN
-~~~~~~
+NCSWAN NetCDF file
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_ncswan
    :noindex:
 
-WWM
-~~~~~~
+WWM NetCDF file
+~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_wwm
    :noindex:
 
-WW3-MSL
-~~~~~~~
-
-.. autofunction:: wavespectra.read_ww3_msl
-   :noindex:
-
-NETCDF
-~~~~~~
+Generic NetCDF file
+~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_netcdf
    :noindex:
 
-DATASET
-~~~~~~~
+xarray DATASET
+~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_dataset
    :noindex:
 
-SWAN
-~~~~
+SWAN ASCII
+~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_swan
    :noindex:
 
-TRIAXYS
-~~~~~~~
+TRIAXYS ASCII
+~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_triaxys
    :noindex:
 
-SPOTTER
-~~~~~~~
+SPOTTER ASCII
+~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_spotter
    :noindex:
 
-OCTOPUS
-~~~~~~~
+OCTOPUS ASCII
+~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_octopus
    :noindex:
 
-Other functions
-~~~~~~~~~~~~~~~
 These functions are not accessible from the main module level and need to be
 imported from their full module path:
+
+SWAN hotfiles
+~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.input.swan.read_hotswan
    :noindex:
 
+SWAN ASCII glob
+~~~~~~~~~~~~~~~
 .. autofunction:: wavespectra.input.swan.read_swans
    :noindex:
 
+SWAN ASCII nowcast
+~~~~~~~~~~~~~~~~~~
 .. autofunction:: wavespectra.input.swan.read_swanow
    :noindex:
+
+
+.. include:: output.rst

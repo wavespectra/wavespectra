@@ -2,6 +2,8 @@
    :width: 150 px
    :align: right
 
+.. include:: gallery/index.rst
+
 wavespectra
 ===========
 
@@ -14,14 +16,13 @@ Python library for wave spectra
 
     install
     Quick start <quickstart>
-    input
-    output
-    Library <library>
+    IO <input>
     conventions
     contributing
     authors
     support
     history
+    gallery
 
 .. toctree::
     :maxdepth: 3
