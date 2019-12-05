@@ -17,6 +17,20 @@ The following convention is expected for defining output functions:
 
 These output functions are currently available as methods of :py:class:`~wavespectra.specdataset.SpecDataset`:
 
-WW3 NetCDF file
+Generic NetCDF file
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: wavespectra.output.netcdf.to_netcdf
+   :noindex:
+
+SWAN ASCII file
 ~~~~~~~~~~~~~~~
 
+.. autofunction:: wavespectra.output.swan.to_swan
+   :noindex:
+
+OCTOPUS ASCII file
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: wavespectra.output.octopus.to_octopus
+   :noindex:

@@ -63,26 +63,26 @@ xarray DATASET
 .. autofunction:: wavespectra.read_dataset
    :noindex:
 
-SWAN ASCII
-~~~~~~~~~~
+SWAN ASCII file
+~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_swan
    :noindex:
 
-TRIAXYS ASCII
-~~~~~~~~~~~~~
+TRIAXYS ASCII file
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_triaxys
    :noindex:
 
-SPOTTER ASCII
-~~~~~~~~~~~~~
+SPOTTER ASCII file
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_spotter
    :noindex:
 
-OCTOPUS ASCII
-~~~~~~~~~~~~~
+OCTOPUS ASCII file
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.read_octopus
    :noindex:
@@ -90,14 +90,14 @@ OCTOPUS ASCII
 These functions are not accessible from the main module level and need to be
 imported from their full module path:
 
-SWAN hotfiles
-~~~~~~~~~~~~~
+SWAN hot files
+~~~~~~~~~~~~~~
 
 .. autofunction:: wavespectra.input.swan.read_hotswan
    :noindex:
 
-SWAN ASCII glob
-~~~~~~~~~~~~~~~
+SWAN ASCII glob files
+~~~~~~~~~~~~~~~~~~~~~~
 .. autofunction:: wavespectra.input.swan.read_swans
    :noindex:
 
