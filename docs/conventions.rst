@@ -2,34 +2,65 @@
 Conventions
 ================
 Wavespectra takes advantage of `xarray`_'s labelled coordinates to abstract
-N-dimensional wave spectra and calculate integrated spectral parameters. This
-requires some conventions around special coordinates and variables:
+n-dimensional wave spectra datasets and calculate integrated spectral parameters.
+This requires some conventions around special coordinates and variables.
+This naming convention is based on netcdf files from WAVEWATCH III wave model.
 
-- Wave frequency coordinate named as ``freq``, defined in :math:`Hz`.
-- Wave direction coordinate named as ``dir``, defined in :math:`degree`,
-  (coming_from).
-- Wave energy density array named as ``efth``, defined in:
-    - 2D spectra :math:`E(\sigma,\theta)`: :math:`m^{2}{degree^{-1}}{s}`.
-    - 1D spectra :math:`E(\sigma)`: :math:`m^{2}{s}`.
-- Time coordinate named as ``time``.
+Coordinates
+-----------
+
+Wave frequency
+~~~~~~~~~~~~~~
+
+Wave frequency coordinate named as ``freq``, defined in :math:`Hz` (required).
+
+Wave direction
+~~~~~~~~~~~~~~
+
+Wave direction coordinate in coming-from convention, named as ``dir``,
+defined in :math:`degree` (required for 2D spectra and directional methods).
+
+Time
+~~~~
+Time coordinate named as ``time`` (required by some methods).
+
+Data variables
+--------------
+
+Wave energy density
+~~~~~~~~~~~~~~~~~~~
+Wave energy density array named as ``efth``, defined in:
+
+* 2D spectra :math:`E(\sigma,\theta)`: :math:`m^{2}{degree^{-1}}{s}`.
+* 1D spectra :math:`E(\sigma)`: :math:`m^{2}{s}`.
+
+Wind speed
+~~~~~~~~~~
+Wind speed array named as ``wspd``, defined in :math:`ms^{-1}` (required for watershed partitioning).
+
+Wind direction
+~~~~~~~~~~~~~~
+Wind direction array named as ``wdir``, defined in :math:`degree` (required for watershed partitioning).
+
+Water depth
+~~~~~~~~~~~
+Water depth array named as ``dpt``, defined in :math:`m` (required for watershed partitioning).
 
 Attributes
 ----------
 
 Pre-defined names and units for these and other coordintes and variables are
-available from :py:mod:`wavespectra.core.attributes`. This module defines
+available from module :py:mod:`wavespectra.core.attributes`. This module defines
 variable names and some CF attributes by loading information from
 `attributes.yml`_ file. The attributes can be accessed for example as:
 
-.. code:: python
+.. ipython:: python
 
     from wavespectra.core.attributes import attrs
 
-    In [1]: attrs.SPECNAME
-    Out[1]: 'efth'
+    attrs.SPECNAME
 
-    In [2]: attrs.ATTRS.hs
-    Out[2]: AttrDict({'units': 'm', 'standard_name': 'sea_surface_wave_significant_height'})
+    attrs.ATTRS.hs
 
 The module also provides a function to standarise coordinate and variable
 attributes in a Dataset object using the information defined in `attributes.yml`_:
