@@ -13,9 +13,9 @@ Developers
 * Tom Durrant
 * David Johnson
 * Jorge Perez
-* Henrique Rapizo
 
 Contributors
 ------------
 
+* Henrique Rapizo
 * Spicer Bak

@@ -30,6 +30,11 @@ New Features
 * New `read_spotter` function to read spectra from Spotter file format, currently only reading as 1D.
 * Add `read_dataset` function to convert existing dataset from unknown file into SpecDataset.
 * Python Notebooks split into a new `notebooks`_ repository within the `wavespectra`_ organisation.
+* New branch `pure-python`_ with fortran watershed algorithm replaced by python. This code is ~3x slower
+  than the fortran one but it is easier to install particularly if the system does not have fortran
+  compiler. We will make an effort to keep this branch in sync with Master.
+
+.. _`pure-python`: https://github.com/wavespectra/wavespectra/tree/pure-python
 
 Bug Fixes
 ---------
