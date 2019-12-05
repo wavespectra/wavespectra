@@ -83,7 +83,7 @@ def _wrap_and_sort_directions(darray):
 def _freq_or_period_clean_attributes(darray, as_period=False):
     """Define lean spectral attributes for clean plot."""
     darray.attrs.update({"standard_name": "Energy density", "units": "$m^2s/deg$"})
-    darray[attrs.DIRNAME].attrs.update({"standard_name": "Wave direction"})
+    darray[attrs.DIRNAME].attrs.update({"standard_name": "Wave direction", "units": "deg"})
     if as_period:
         if darray[attrs.FREQNAME].attrs["standard_name"] != "Wave period":
             darray[attrs.FREQNAME] = 1.0 / darray[attrs.FREQNAME]
