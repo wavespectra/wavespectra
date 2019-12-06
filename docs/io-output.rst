@@ -22,20 +22,12 @@ They are attached as methods in the SpecDataset accessor.
 
 These output functions are currently available as methods of :py:class:`~wavespectra.specdataset.SpecDataset`:
 
-Generic NetCDF file
-~~~~~~~~~~~~~~~~~~~
+.. currentmodule:: wavespectra
 
-.. autofunction:: wavespectra.output.netcdf.to_netcdf
-   :noindex:
+.. autosummary::
+    :nosignatures:
+    :toctree: generated/
 
-SWAN ASCII file
-~~~~~~~~~~~~~~~
-
-.. autofunction:: wavespectra.output.swan.to_swan
-   :noindex:
-
-OCTOPUS ASCII file
-~~~~~~~~~~~~~~~~~~~
-
-.. autofunction:: wavespectra.output.octopus.to_octopus
-   :noindex:
+    SpecDataset.to_netcdf
+    SpecDataset.to_swan
+    SpecDataset.to_octopus

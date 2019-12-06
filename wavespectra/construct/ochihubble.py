@@ -23,7 +23,7 @@ def ochihubble(
     coordinates=[("part", [0, 1])],
     sumpart=True,
 ):
-    """OchiHubble construct function."""
+    """Construct OCHIHUBBLE spectra."""
     check_coordinates(hs, coordinates)
 
     # Arrange inputs

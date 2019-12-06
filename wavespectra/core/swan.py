@@ -257,4 +257,5 @@ def read_tab(filename, toff=0):
 
 
 def _dateparse(x):
+    """Date parsing to read SWAN tab files."""
     return datetime.datetime.strptime(x, "%Y%m%d.%H%M%S")

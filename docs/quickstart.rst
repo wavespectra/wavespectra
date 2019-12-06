@@ -15,8 +15,8 @@ for large numbers of spectra.
 Reading spectra from files
 --------------------------
 
-Several methods are provided to read various file formats including spectral models
-like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
+Several methods are provided to read various file formats including spectral wave
+models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
 
 .. ipython:: python
 

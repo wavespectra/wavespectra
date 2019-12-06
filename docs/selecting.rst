@@ -56,12 +56,12 @@ Select all sites withing bounding box.
 
 .. note::
 
-    When working with large datasets with thousand of spectra sites, it is
-    recommended using `chunks={"site": 1}` option to optimally opening the
-    dataset lazily. This however makes accessing time-dependent variables
-    slow, notably ``lon`` and ``lat`` variables, affecting the performance
-    of selecting functions. This can be circumvented by loading these variables
-    without the chunks options, and using them as arguments in ``sel``, e.g.
+    When working with large datasets with thousands of spectra sites, it is
+    recommended using `chunks={"site": 1}` option to open dataset lazily in an efficient
+    way for selecting sites. The downside is that accessing entire site-dependent variables
+    (notably ``lon`` and ``lat``) becomes slower, affecting the performance of selecting
+    functions. This can be circumvented by loading these variables without the
+    `chunks` options, and using them as arguments in ``sel``, e.g.
 
 .. ipython:: python
 

@@ -172,7 +172,7 @@ def read_swan(filename, dirorder=True, as_site=False):
 def read_swans(
     fileglob, ndays=None, int_freq=True, int_dir=False, dirorder=True, ntimes=None
 ):
-    """Read multiple swan files into single Dataset.
+    """Read multiple SWAN ASCII files into single Dataset.
 
     Args:
         - fileglob (str, list): glob pattern specifying files to read.
@@ -479,7 +479,7 @@ def read_swans(
 
 
 def read_hotswan(fileglob, dirorder=True):
-    """Read multiple swan hotfiles into single gridded Dataset.
+    """Read partial SWAN hotfiles into single gridded hotfile Dataset.
 
     Args:
         - fileglob (str, list): glob pattern specifying hotfiles to read and
@@ -534,8 +534,7 @@ def read_hotswan(fileglob, dirorder=True):
 
 
 def read_swanow(fileglob):
-    """Read SWAN nowcast from fileglob, keep overlapping dates from most recent
-    files.
+    """Read SWAN nowcast from fileglob, keep overlapping dates from most recent files.
 
     Inefficient workaround. This should ideally be handled within read_swans by
     manipulating multi-indexes

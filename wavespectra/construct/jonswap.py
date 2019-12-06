@@ -18,7 +18,7 @@ def jonswap(
     coordinates=[],
     sumpart=True,
 ):
-    """Constructs JONSWAP spectra from peak period and peak direction."""
+    """Constructs JONSWAP spectra."""
     check_coordinates(tp, coordinates)
 
     # Arrange inputs

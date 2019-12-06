@@ -36,7 +36,7 @@ class Plugin(type):
 
 @xr.register_dataset_accessor("spec")
 class SpecDataset(metaclass=Plugin):
-    """Wrapper around the xarray dataset.
+    """Extends xarray's Dataset to deal with wave spectra datasets.
 
     Plugin functions defined in wavespectra/output/<module>
     are attached as methods in this accessor class.

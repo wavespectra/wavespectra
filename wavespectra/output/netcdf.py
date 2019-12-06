@@ -10,7 +10,7 @@ def to_netcdf(
     compress=True,
     time_encoding={"units": "days since 1900-01-01"},
 ):
-    """Preset parameters before calling xarray's native to_netcdf method.
+    """Write spectra in netCDF format using wavespectra conventions.
 
     Args:
         - specname (str): name of spectra variable in dataset.

@@ -40,3 +40,6 @@ def _import_read_functions(pkgname="input"):
 
 
 _import_read_functions()
+
+from wavespectra.specdataset import SpecDataset
+from wavespectra.specarray import SpecArray

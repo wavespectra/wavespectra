@@ -7,10 +7,11 @@ import time
 
 
 class Timer(object):
-    """
-    Wrap blocks of code to be timed:
+    """Wrap blocks of code to be timed.
+
     with Timer(msg='Elapsed time to do stuff') as t:
         do stuff
+
     """
 
     def __init__(self, msg="elapsed time", verbose=True):
