@@ -8,7 +8,7 @@ Conventions
 Wavespectra takes advantage of `xarray`_'s labelled coordinates to abstract
 n-dimensional wave spectra datasets and calculate integrated spectral parameters.
 This requires some conventions around special coordinates and variables.
-This naming convention is based on netcdf files from WAVEWATCH III wave model.
+This naming convention is inspired on netcdf files from WAVEWATCH III wave model.
 
 Coordinates
 -----------

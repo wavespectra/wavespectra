@@ -38,6 +38,8 @@ _ = np.newaxis
 
 @xr.register_dataarray_accessor("spec")
 class SpecArray(object):
+    """Extends xarray's DataArray to deal with wave spectra arrays."""
+
     def __init__(self, xarray_obj, dim_map=None):
         """Define spectral attributes."""
         # # Rename spectra coordinates if not 'freq' and/or 'dir'
@@ -239,14 +241,17 @@ class SpecArray(object):
     def plot(self) -> _PlotMethods:
         """Access plotting functions.
 
-        >>> d = DataArray([[1, 2], [3, 4]])
+        For convenience just call this directly:
 
-        For convenience just call this directly
-        >>> d.plot()
+            * dset.efth.spec.plot()
+            * dset.spec.plot()
 
-        Or use it as a namespace to use xarray.plot functions as
-        DataArray methods
-        >>> d.plot.imshow()  # equivalent to xarray.plot.imshow(d)
+        Or use it as a namespace to use wavespectra.plot functions as:
+
+            * dset.efth.spec.plot.contourf()
+            * dset.spec.plot.contourf()
+
+        Which is equivalent to wavespectra.plot.imshow(dset.efth)
 
         """
         return _PlotMethods(self._obj)
@@ -693,7 +698,7 @@ class SpecArray(object):
         nearest=False,
         max_swells=5,
     ):
-        """Partition wave spectra using WW3 watershed algorithm.
+        """Partition wave spectra using Hanson's watershed algorithm.
 
         This method is not lazy, make sure array will fit into memory.
 

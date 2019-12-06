@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.abspath("../wavespectra"))
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
@@ -52,6 +53,8 @@ sphinx_gallery_conf = {
     # 'backreferences_dir': False,
     # 'expected_failing_examples': []
 }
+
+autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

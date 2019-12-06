@@ -23,7 +23,7 @@ Documentation
 
 * :doc:`install`
 * :doc:`quickstart`
-* :doc:`input`
+* :doc:`io-input`
 * :doc:`conventions`
 * :doc:`plotting`
 * :doc:`selecting`
@@ -35,14 +35,14 @@ Documentation
 
     install
     quickstart
-    input
+    io-input
     conventions
     plotting
     selecting
 
 **Help & Reference**
 
-* :doc:`API documentation <source/modules>`
+* :doc:`api`
 * :doc:`authors`
 * :doc:`support`
 * :doc:`contributing`
@@ -54,7 +54,7 @@ Documentation
     :hidden:
     :caption: Help & Reference:
 
-    API documentation <source/modules>
+    api
     authors
     support
     contributing

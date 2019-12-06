@@ -42,7 +42,7 @@ Frequency-direction spectra can be easily plotted in the period space.
     @savefig single_polar_plot_period.png
     ds.spec.plot.contourf(as_period=True);
 
-By default the :math:`log10(efth)` is plotted but actual values can be shown istead.
+By default the :math:`log10(efth)` is plotted but actual values can be shown instead.
 
 .. ipython:: python
 

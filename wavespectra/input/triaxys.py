@@ -12,7 +12,7 @@ from wavespectra.core.misc import interp_spec
 
 
 def read_triaxys(filename_or_fileglob, toff=0):
-    """Read spectra from Triaxys wave buoy ASCII files.
+    """Read spectra from TRIAXYS wave buoy ASCII files.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying one or
