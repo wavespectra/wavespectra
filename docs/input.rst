@@ -20,14 +20,17 @@ module level for convenience, for instance:
 
     from wavespectra import read_swan
 
-The following convention is expected for defining reading functions:
+.. note::
 
-- Funcions for different file types are defined in different modules within
-  :py:mod:`wavespectra.input` subpackage.
-- Modules are named as `filetype`.py, e.g., ``swan.py``.
-- Functions are named as read_`filetype`, e.g., ``read_swan``.
+    The following conventions are expected for defining reading functions:
 
-Input functions can also be defined without following this convention. However
+    - Funcions for different file types are defined in different modules within :py:mod:`wavespectra.input` subpackage.
+
+    - Modules are named as `filetype`.py, e.g., ``swan.py``.
+
+    - Functions are named as read_`filetype`, e.g., ``read_swan``.
+
+Input functions can also be defined without following these conventions. However
 they are not accessible from the main module level and need to be imported from
 their full module path, e.g.
 

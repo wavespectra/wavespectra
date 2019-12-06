@@ -5,13 +5,10 @@ Plot Hs
 Plots Hs calculated from spectra dataset
 
 """
-import os
 import matplotlib.pyplot as plt
-
 from wavespectra import read_ww3
 
-WAVESPECTRA_DIR = "/source/wavespectra"
-dset = read_ww3(os.path.join(WAVESPECTRA_DIR, "tests/sample_files/ww3file.nc"))
+dset = read_ww3("../_static/ww3file.nc")
 
 fig, ax = plt.subplots(1, 1, figsize=(8,6))
 

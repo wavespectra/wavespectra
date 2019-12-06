@@ -18,7 +18,7 @@ Select from nearest sites.
 .. ipython:: python
 
     from wavespectra import read_ww3
-    dset = read_ww3("docs/_static/ww3file.nc")
+    dset = read_ww3("_static/ww3file.nc")
     ds = dset.spec.sel(
         lons=[92.01, 92.05, 92.09],
         lats=[19.812, 19.875, 19.935],
@@ -42,7 +42,7 @@ Interpolate at exact locations via inverse distance weighting algorithm.
 
 Bounding box
 ------------
-Select all sites withing bounding box
+Select all sites withing bounding box.
 
 .. ipython:: python
 
@@ -65,8 +65,8 @@ Select all sites withing bounding box
 
 .. ipython:: python
 
-    coords = read_ww3("docs/_static/ww3file.nc")[["lon", "lat"]]
-    dset = read_ww3("docs/_static/ww3file.nc", chunks={"site": 1})
+    coords = read_ww3("_static/ww3file.nc")[["lon", "lat"]]
+    dset = read_ww3("_static/ww3file.nc", chunks={"site": 1})
     ds = dset.spec.sel(
         lons=[92.01, 92.05, 92.09],
         lats=[19.812, 19.875, 19.935],
