@@ -52,7 +52,7 @@ By default the :math:`log10(efth)` is plotted but actual values can be shown ist
     @savefig single_polar_plot_period_realvalues.png
     ds.spec.plot.contourf(as_period=True, as_log10=False, show_direction_label=True);
 
-Plotting parameters from xarray are fully supported.
+Plotting parameters from xarray can be prescribed.
 
 .. ipython:: python
 
