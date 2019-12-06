@@ -23,7 +23,7 @@ like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3
 
-    dset = read_ww3("docs/_static/ww3file.nc")
+    dset = read_ww3("_static/ww3file.nc")
     dset
 
 The `spec` namespace

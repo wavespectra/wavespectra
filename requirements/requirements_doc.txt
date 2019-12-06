@@ -1,0 +1,15 @@
+click
+netcdf4
+numpy
+ipython
+
+sphinx
+sphinx_gallery
+sphinx-autobuild
+sphinx_rtd_theme
+
+# if using typehints
+sphinx-autodoc-typehints
+
+mock
+autodoc

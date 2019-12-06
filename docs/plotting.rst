@@ -20,7 +20,7 @@ frequency-direction spectral plots in polar coordinates.
     @suppress
     figsize = (6, 4)
 
-    dset = read_swan("docs/_static/swanfile.spec", as_site=True)
+    dset = read_swan("_static/swanfile.spec", as_site=True)
     ds = dset.isel(site=0, time=0)
 
     @suppress
@@ -68,19 +68,23 @@ Plotting parameters from xarray are fully supported.
         add_colorbar=False,
     );
 
-Wavespectra parameter options
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Exclusive plotting parameters from wavespectra
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* as_log10 (True): Plot the log10 of the spectrum for better visualisation.
-* as_period (False): Plot spectra as period instead of frequency.
-* show_radius_label (True): Display the radius labels.
-* show_direction_label (False): Display the direction labels.
+.. note::
+
+    * **as_log10** (True): Plot the log10 of the spectrum for better visualisation.
+    * **as_period** (False): Plot spectra as period instead of frequency.
+    * **show_radius_label** (True): Display the radius labels.
+    * **show_direction_label** (False): Display the direction labels.
 
 Default xarray parameters set by wavespectra
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* projection: "polar"
-* cmap: `cmocean`_.cm.thermal
+.. note::
+
+    * **projection**: "polar"
+    * **cmap**: `cmocean`_.cm.thermal
 
 Radius extents
 --------------
