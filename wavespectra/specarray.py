@@ -782,10 +782,10 @@ class SpecArray(object):
             while ipeak <= part_array_max:
                 part_spec = np.where(part_array == ipeak, spectrum, 0.0)
 
-                # Assign new partition if multiple valleys and satisfying some conditions
+                # Assign new partition if multiple valleys and satisfying conditions
                 imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    # TODO: swap part_spec and part_spec_new and deal with more than one imin value ?
+                    # TODO: Deal with more than one imin value ?
                     part_spec_new = part_spec.copy()
                     part_spec_new[imin[0].squeeze() :, :] = 0
                     newpart = part_spec_new > 0
