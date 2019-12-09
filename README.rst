@@ -4,13 +4,17 @@ Python library for ocean wave spectra.
 
 .. image:: https://travis-ci.org/wavespectra/wavespectra.svg?branch=master
     :target: https://travis-ci.org/wavespectra/wavespectra
+.. image:: https://readthedocs.org/projects/wavespectra/badge/?version=latest
+    :target: https://wavespectra.readthedocs.io/en/latest/
 .. image:: https://img.shields.io/pypi/v/wavespectra.svg
     :target: https://pypi.org/project/wavespectra/
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/python/black
 
 Main contents:
 --------------
-- SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
-- SpecDataset_: wrapper around `SpecArray`_ with methods for saving spectra in different formats.
+* SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
+* SpecDataset_: wrapper around `SpecArray`_ with methods for selecting and saving spectra in different formats.
 
 Documentation:
 --------------
@@ -45,9 +49,6 @@ Install requirements. Navigate to the base root of wavespectra_ and execute:
 
    # Also, for complete install
    pip install -r requirements/extra.txt
-
-   # Also, for testing requirements
-   pip install -r requirements/test.txt
 
 Then install wavespectra:
 
