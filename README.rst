@@ -71,7 +71,7 @@ The two main classes SpecArray_ and SpecDataset_ are defined as `xarray accessor
 
 To use methods in the accessor classes simply import the classes into your code and they will be available to your xarray.Dataset or xarray.DataArray instances through the `spec` attribute, e.g.
 
-.. code:: ipython
+.. code:: python
 
    import datetime
    import numpy as np
@@ -126,7 +126,7 @@ To use methods in the accessor classes simply import the classes into your code 
 
 SpecDataset provides a wrapper around the methods in SpecArray. For instance, these produce same result:
 
-.. code:: ipython
+.. code:: python
 
    In [4]: dset = efth.to_dataset(name='efth')
 
