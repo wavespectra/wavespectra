@@ -18,7 +18,7 @@ Main contents:
 
 Documentation:
 --------------
-The documentation is hosted on ReadTheDocs at https://wavespectra.readthedocs.io/en/docs/.
+The documentation is hosted on ReadTheDocs at https://wavespectra.readthedocs.io/en/latest/.
 
 Install:
 --------
