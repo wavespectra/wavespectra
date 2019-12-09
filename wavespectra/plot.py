@@ -83,7 +83,9 @@ def _wrap_and_sort_directions(darray):
 def _freq_or_period_clean_attributes(darray, as_period=False):
     """Define lean spectral attributes for clean plot."""
     darray.attrs.update({"standard_name": "Energy density", "units": "$m^2s/deg$"})
-    darray[attrs.DIRNAME].attrs.update({"standard_name": "Wave direction", "units": "deg"})
+    darray[attrs.DIRNAME].attrs.update(
+        {"standard_name": "Wave direction", "units": "deg"}
+    )
     if as_period:
         if darray[attrs.FREQNAME].attrs["standard_name"] != "Wave period":
             darray[attrs.FREQNAME] = 1.0 / darray[attrs.FREQNAME]
@@ -711,14 +713,6 @@ def pcolormesh(
 
 
 if __name__ == "__main__":
-    # from wavespectra import read_swan
-
-    # dset = read_swan("../tests/sample_files/swanfile.spec", as_site=True)
-    # dset.isel(site=0).efth.spec.plot(col="time", col_wrap=3)
-    # plt.show()
-
-    import datetime
-    import matplotlib.pyplot as plt
     from wavespectra import read_ww3, read_swan
 
     ds0 = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")

@@ -79,4 +79,4 @@ def from_ww3(dset):
     if attrs.DIRNAME not in dset or len(dset.dir) == 1:
         dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     dset[attrs.DIRNAME] = (dset[attrs.DIRNAME] + 180) % 360
-    return dset.drop(to_drop).drop_dims("string16", errors="ignore")
+    return dset.drop_vars(to_drop).drop_dims("string16", errors="ignore")

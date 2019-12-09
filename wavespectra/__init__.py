@@ -4,6 +4,9 @@
 - Making reading functions available at module level
 
 """
+from wavespectra.specdataset import SpecDataset
+from wavespectra.specarray import SpecArray
+
 
 __version__ = "3.5.0"
 __author__ = "Wavespectra Developers"
@@ -40,6 +43,3 @@ def _import_read_functions(pkgname="input"):
 
 
 _import_read_functions()
-
-from wavespectra.specdataset import SpecDataset
-from wavespectra.specarray import SpecArray

@@ -317,7 +317,7 @@ class SpecArray(object):
         if tail and Sf.freq[-1] > 0.333:
             E += (
                 0.25
-                * Sf[{attrs.FREQNAME: -1}].drop(attrs.FREQNAME)
+                * Sf[{attrs.FREQNAME: -1}].drop_vars(attrs.FREQNAME)
                 * Sf.freq[-1].values
             )
         hs = 4 * np.sqrt(E)
@@ -420,7 +420,7 @@ class SpecArray(object):
             return None
         Sf = self.oned()
         ipeak = self._peak(Sf).load()
-        fp = self.freq.astype("float64")[ipeak].drop("freq")
+        fp = self.freq.astype("float64")[ipeak].drop_vars("freq")
         if smooth:
             f1, f2, f3 = [self.freq[ipeak + i].values for i in [-1, 0, 1]]
             e1, e2, e3 = [Sf.isel(freq=ipeak + i).values for i in [-1, 0, 1]]
@@ -782,10 +782,10 @@ class SpecArray(object):
             while ipeak <= part_array_max:
                 part_spec = np.where(part_array == ipeak, spectrum, 0.0)
 
-                # Assign new partition if multiple valleys and satisfying some conditions
+                # Assign new partition if multiple valleys and satisfying conditions
                 imax, imin = self._inflection(part_spec, dfres=0.01, fmin=0.05)
                 if len(imin) > 0:
-                    # TODO: swap part_spec and part_spec_new and deal with more than one imin value ?
+                    # TODO: Deal with more than one imin value ?
                     part_spec_new = part_spec.copy()
                     part_spec_new[imin[0].squeeze() :, :] = 0
                     newpart = part_spec_new > 0

@@ -63,7 +63,7 @@ def from_ww3_msl(dset):
         {"freq": attrs.FREQNAME, "dir": attrs.DIRNAME, "wsp": attrs.WSPDNAME}
     )
     dset[attrs.SPECNAME] = (dset["specden"].astype("float32") + 127.0) * dset["factor"]
-    dset = dset.drop(["specden", "factor", "df"])
+    dset = dset.drop_vars(["specden", "factor", "df"])
     # Assign site coordinate so they will look like those read from native ww3 files
     dset[attrs.SITENAME] = np.arange(1.0, dset.site.size + 1)
     set_spec_attributes(dset)
@@ -72,4 +72,4 @@ def from_ww3_msl(dset):
         dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     # Only selected variables to be returned
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
-    return dset.drop(to_drop)
+    return dset.drop_vars(to_drop)

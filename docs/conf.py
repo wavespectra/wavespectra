@@ -44,12 +44,12 @@ extensions = [
     "sphinx_gallery.gen_gallery",
     "IPython.sphinxext.ipython_console_highlighting",
     "IPython.sphinxext.ipython_directive",
-    "matplotlib.sphinxext.plot_directive"
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 sphinx_gallery_conf = {
-    'examples_dirs': 'gallery',
-    'gallery_dirs': 'auto_gallery',
+    "examples_dirs": "gallery",
+    "gallery_dirs": "auto_gallery",
     # 'backreferences_dir': False,
     # 'expected_failing_examples': []
 }
@@ -115,8 +115,8 @@ html_theme = "sphinx_rtd_theme"
 # documentation.
 #
 # html_theme_options = {
-    # "style_nav_header_background": "#d3d3d3",
-    # "logo_only": True,
+# "style_nav_header_background": "#d3d3d3",
+# "logo_only": True,
 # }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -169,13 +169,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (
-        master_doc,
-        "wavespectra.tex",
-        "wavespectra Documentation",
-        author,
-        "manual",
-    )
+    (master_doc, "wavespectra.tex", "wavespectra Documentation", author, "manual")
 ]
 
 latex_logo = "_static/wavespectra_logo.png"

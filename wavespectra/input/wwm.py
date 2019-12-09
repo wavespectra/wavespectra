@@ -83,7 +83,7 @@ def from_wwm(dset):
     # Returns only selected variables, transposed
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     dims = [d for d in ["time", "site", "freq", "dir"] if d in dset.efth.dims]
-    return dset.drop(to_drop).transpose(*dims)
+    return dset.drop_vars(to_drop).transpose(*dims)
 
 
 if __name__ == "__main__":
