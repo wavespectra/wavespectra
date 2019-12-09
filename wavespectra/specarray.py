@@ -107,15 +107,7 @@ class SpecArray(object):
     def _twod(self, darray, dim=attrs.DIRNAME):
         """Ensure dir,freq dims are present so moment calculations won't break."""
         if dim not in darray.dims:
-            spec_array = np.expand_dims(darray.values, axis=-1)
-            spec_coords = {dim: darray[dim].values for dim in darray.dims}
-            spec_coords.update({dim: np.array((1,))})
-            return xr.DataArray(
-                spec_array,
-                coords=spec_coords,
-                dims=spec_coords.keys(),
-                attrs=darray.attrs,
-            )
+            return darray.expand_dims(dim={dim: [1]}, axis=-1)
         else:
             return darray
 
@@ -421,6 +413,8 @@ class SpecArray(object):
               period corresponding to the maxima in the direction-integrated spectra.
             - mask (float): value for missing data if there is no peak in spectra.
 
+        Warning: This method cannot be computed lazily.
+
         """
         if len(self.freq) < 3:
             return None
@@ -540,6 +534,8 @@ class SpecArray(object):
 
         Args:
             - mask (float): value for missing data in output.
+
+        Warning: This method cannot be computed lazily.
 
         """
         ipeak = self._peak(self.oned())
@@ -969,5 +965,6 @@ if __name__ == "__main__":
 
     dset = read_ww3("/wave/socean/spec20120101T00_spec.nc", chunks={"station": 1})
     ds = dset.isel(site=2000)
-    part = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt)
-    print(part.isel(time=0).spec.hs().values)
+    ret = dset.spec.dspr()
+    # part = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt)
+    # print(part.isel(time=0).spec.hs().values)
