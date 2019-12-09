@@ -13,7 +13,7 @@ Releases
 ********
 
 
-3.5.0 (YYYY-MM-DD)
+3.5.0 (2019-12-09)
 ~~~~~~~~~~~~~~~~~~
 **The first PyPI release from new** `wavespectra`_ **github organisation.**
 
@@ -33,20 +33,25 @@ New Features
 * New branch `pure-python`_ with fortran watershed algorithm replaced by python. This code is ~3x slower
   than the fortran one but it is easier to install particularly if the system does not have fortran
   compiler. We will make an effort to keep this branch in sync with Master.
+* Redefined autodocs.
 
 .. _`pure-python`: https://github.com/wavespectra/wavespectra/tree/pure-python
 
 Bug Fixes
 ---------
 * Consolidate history to link to github commits from all contributors.
-* Fix error in `partition` with dask array not supportting item assignment
+* Fix error in `partition` with dask array not supportting item assignment.
+* Fix docs building, currently working from `pure-python` branch due to gfortran dependency.
 
 Internal Changes
 ----------------
 * Decouple file reading from accessor definition in input functions so existing datasets can be converted.
+* Compute method `_twod` lazily.
+* Replace drop calls to fix deprecation warnings.
+* Consolidate changelog in history file.
 * Building with travis and tox.
 * Adopt `black`_ code formatting.
-* Consolidate changelog in history file.
+* Set up flake8.
 
 
 3.4.0 (2019-03-28)
