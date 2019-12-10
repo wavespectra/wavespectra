@@ -47,7 +47,7 @@ class TestIO(object):
             ("swanfile.nc", read_ncswan, None),
             ("triaxys.DIRSPEC", read_triaxys, None),
             ("triaxys.NONDIRSPEC", read_triaxys, None),
-            ("wavespectra.nc", read_netcdf, None),
+            ("wavespectra.nc", read_netcdf, "to_netcdf"),
         ],
     )
     def test_io(self, filename, read_func, write_method_name):
@@ -57,6 +57,8 @@ class TestIO(object):
         # Execute io tests in order
         self._read()
         if self.write_method_name is not None:
+            # if self.write_method_name == "to_netcdf":
+            #     import ipdb; ipdb.set_trace()
             self._write()
             self._check()
         else:
@@ -96,4 +98,4 @@ class TestIO(object):
 
     def _check(self):
         self.ds2 = self.read_func(self.outfile)
-        assert self.ds2.equals(self.ds[attrs.SPECNAME].to_dataset())
+        assert self.ds2.efth.equals(self.ds.efth)
