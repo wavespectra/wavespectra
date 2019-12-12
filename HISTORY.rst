@@ -13,6 +13,19 @@ Releases
 ********
 
 
+3.5.1 (2019-12-12)
+~~~~~~~~~~~~~~~~~~
+
+Bug Fixes
+---------
+* Import accessors within try block in __init__.py so install won't break.
+
+Internal Changes
+----------------
+* Implemented coveralls.
+* Added some more tests.
+
+
 3.5.0 (2019-12-09)
 ~~~~~~~~~~~~~~~~~~
 **The first PyPI release from new** `wavespectra`_ **github organisation.**
