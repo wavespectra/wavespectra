@@ -4,8 +4,13 @@
 - Making reading functions available at module level
 
 """
-from wavespectra.specdataset import SpecDataset
-from wavespectra.specarray import SpecArray
+import warnings
+
+try:
+    from wavespectra.specdataset import SpecDataset
+    from wavespectra.specarray import SpecArray
+except ImportError:
+    warnings.warn("Cannot import accessors at the main module level")
 
 
 __version__ = "3.5.0"
