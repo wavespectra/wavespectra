@@ -42,7 +42,7 @@ class TestIO(object):
         "filename, read_func, write_method_name",
         [
             ("swanfile.spec", read_swan, "to_swan"),
-            ("ww3file.nc", read_ww3, None),
+            ("ww3file.nc", read_ww3, "to_ww3"),
             ("ww3mslfile.nc", read_ww3_msl, None),
             ("swanfile.nc", read_ncswan, None),
             ("triaxys.DIRSPEC", read_triaxys, None),
@@ -57,10 +57,14 @@ class TestIO(object):
         # Execute io tests in order
         self._read()
         if self.write_method_name is not None:
-            # if self.write_method_name == "to_netcdf":
-            #     import ipdb; ipdb.set_trace()
-            self._write()
-            self._check()
+            try:
+                self._write()
+                self._check()
+            except NotImplementedError:
+                pytest.skip("Writing function {} not implemented yet".format(
+                    write_method_name
+                    )
+                )
         else:
             print(
                 "No output method defined for {}, "
@@ -76,6 +80,7 @@ class TestIO(object):
         ],
     )
     def test_read_dataset(self, read_func, filename):
+        """Check that read_dataset returns same object as read_{function}."""
         readers = {
             read_ww3: "ww3file.nc",
             read_wwm: "wwmfile.nc",
@@ -86,6 +91,15 @@ class TestIO(object):
             dset1 = reader(filepath)
             dset2 = read_dataset(xr.open_dataset(filepath))
             assert dset1.equals(dset2)
+
+    def test_zarr(self):
+        """Check reading of zarr dataset in ww3 format."""
+        filename = os.path.join(FILES_DIR, "ww3file.zarr")
+        dset = read_ww3(filename, file_format="zarr")
+        outfile = os.path.join(self.tmp_dir, "tmp.nc")
+        dset.spec.to_netcdf(outfile)
+        dset2 = read_netcdf(outfile)
+        dset.equals(dset2)
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)
