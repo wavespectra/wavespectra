@@ -1,0 +1,14 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "direction"
+    ],
+    "add_offset": 0.0,
+    "axis": "Z",
+    "globwave_name": "direction",
+    "long_name": "sea surface wave to direction",
+    "scale_factor": 1.0,
+    "standard_name": "sea_surface_wave_to_direction",
+    "units": "degree",
+    "valid_max": 360.0,
+    "valid_min": 0.0
+}

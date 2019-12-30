@@ -1,0 +1,7 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station"
+    ],
+    "axis": "X",
+    "long_name": "station id"
+}

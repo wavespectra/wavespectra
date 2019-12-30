@@ -1,0 +1,15 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "time"
+    ],
+    "associates": "time station",
+    "content": "TX",
+    "globwave_name": "latitude",
+    "long_name": "latitude",
+    "scale_factor": 1e-05,
+    "standard_name": "latitude",
+    "units": "degree_north",
+    "valid_max": 180.0,
+    "valid_min": -90.0
+}

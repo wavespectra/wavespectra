@@ -1,0 +1,15 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "time"
+    ],
+    "associates": "time station",
+    "content": "TX",
+    "globwave_name": "direction_of_sea_water_velocity",
+    "long_name": "direction from of sea water velocity",
+    "scale_factor": 1e-05,
+    "standard_name": "direction_of_sea_water_velocity",
+    "units": "degree",
+    "valid_max": 360.0,
+    "valid_min": 0.0
+}

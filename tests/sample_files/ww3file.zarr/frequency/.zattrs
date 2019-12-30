@@ -1,0 +1,14 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "frequency"
+    ],
+    "add_offset": 0.0,
+    "axis": "Y",
+    "globwave_name": "frequency",
+    "long_name": "frequency of center band",
+    "scale_factor": 1.0,
+    "standard_name": "sea_surface_wave_frequency",
+    "units": "s-1",
+    "valid_max": 10.0,
+    "valid_min": 0.0
+}
