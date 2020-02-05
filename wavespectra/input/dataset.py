@@ -1,6 +1,7 @@
 """Construct the SpecArray accessor from existing dataset from known format."""
 import logging
 
+from wavespectra.input.ww3 import from_ww3
 from wavespectra.input.wwm import from_wwm
 from wavespectra.input.ncswan import from_ncswan
 from wavespectra.specdataset import SpecDataset
