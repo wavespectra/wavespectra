@@ -31,30 +31,10 @@ def read_wavespectra(
           'time' and/or 'station' dims.
 
     """
-    mapping = {
-        timename: attrs.TIMENAME,
-        freqname: attrs.FREQNAME,
-        dirname: attrs.DIRNAME,
-        sitename: attrs.SITENAME,
-        specname: attrs.SPECNAME,
-        lonname: attrs.LONNAME,
-        latname: attrs.LATNAME,
-        depname: attrs.DEPNAME,
-        wspdname: attrs.WSPDNAME,
-        wdirname: attrs.WDIRNAME
-    }
     dset = open_netcdf_or_zarr(
         filename_or_fileglob=filename_or_fileglob,
         file_format=file_format,
         chunks=chunks,
-        mapping=mapping,
-    )
-    # dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
-    _units = dset[attrs.SPECNAME].attrs.get("units", "")
-    _variable_name = attrs.SPECNAME
-    dset = dset.rename({k: v for k, v in mapping.items() if k in dset})
-    dset[attrs.SPECNAME].attrs.update(
-        {"_units": _units, "_variable_name": _variable_name}
     )
     if attrs.DIRNAME not in dset or len(dset.dir) == 1:
         dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})

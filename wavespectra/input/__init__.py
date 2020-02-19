@@ -32,6 +32,8 @@ def chunks_dict(chunks, mapping):
         dataset or from wavespectra.
 
     """
+    if not mapping:
+        mapping = {key: key for key in chunks.keys()}
     _chunks = {}
     for key, val in chunks.items():
         if key in mapping.keys():
@@ -48,7 +50,7 @@ def chunks_dict(chunks, mapping):
     return _chunks
 
 
-def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping, chunks={}):
+def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping={}, chunks={}):
     """Read spectra dataset in either netcdf or zarr format.
 
     Args:
