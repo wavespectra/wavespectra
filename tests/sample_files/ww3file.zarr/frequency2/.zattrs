@@ -1,0 +1,15 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "frequency"
+    ],
+    "associates": "frequency",
+    "content": "Y",
+    "globwave_name": "frequency_upper_band",
+    "long_name": "frequency of upper band",
+    "scale_factor": 1e-05,
+    "standard_name": "frequency_of_upper_band",
+    "units": "s-1",
+    "valid_max": 10.0,
+    "valid_min": 0.0
+}

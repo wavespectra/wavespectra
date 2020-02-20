@@ -13,3 +13,4 @@ sortedcontainers
 scipy
 toolz
 xarray>=0.13
+zarr

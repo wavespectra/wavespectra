@@ -1,0 +1,11 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "time"
+    ],
+    "axis": "T",
+    "calendar": "proleptic_gregorian",
+    "conventions": "Relative julian days with decimal part (as parts of the day)",
+    "long_name": "julian day (UT)",
+    "standard_name": "time",
+    "units": "days since 1990-01-01"
+}

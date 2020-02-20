@@ -1,0 +1,15 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "time"
+    ],
+    "associates": "time station",
+    "content": "TX",
+    "globwave_name": "sea_water_speed",
+    "long_name": "sea water speed",
+    "scale_factor": 1e-05,
+    "standard_name": "sea_water_speed",
+    "units": "m s-1",
+    "valid_max": 100.0,
+    "valid_min": 0.0
+}

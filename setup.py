@@ -87,6 +87,7 @@ install_requires = [
     "scipy",
     "toolz",
     "xarray>=0.13",
+    "zarr",
 ]
 
 setup_requirements = ["pytest-runner"]

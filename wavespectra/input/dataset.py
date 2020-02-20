@@ -20,6 +20,7 @@ def read_dataset(dset):
             consistent any supported file format (currently WW3, SWAN and WWM).
 
     """
+    vars_wavespectra = {"freq", "dir", "site", "efth", "lon", "lat"}
     vars_ww3 = {"frequency", "direction", "station", "efth", "longitude", "latitude"}
     vars_wwm = {"nfreq", "ndir", "nbstation", "AC", "lon", "lat"}
     vars_ncswan = {
@@ -32,6 +33,9 @@ def read_dataset(dset):
     }
 
     vars_dset = set(dset.variables.keys()).union(dset.dims)
+    if not vars_wavespectra - vars_dset:
+        logger.debug("Dataset already in wavespectra convention")
+        return dset
     if not vars_ww3 - vars_dset:
         logger.debug("Dataset identified as ww3")
         func = from_ww3

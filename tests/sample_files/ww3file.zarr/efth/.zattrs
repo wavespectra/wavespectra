@@ -1,0 +1,17 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "time",
+        "frequency",
+        "direction"
+    ],
+    "associates": "time station frequency direction",
+    "content": "TXYZ",
+    "globwave_name": "directional_variance_spectral_density",
+    "long_name": "sea surface wave directional variance spectral density",
+    "scale_factor": 1e-05,
+    "standard_name": "sea_surface_wave_directional_variance_spectral_density",
+    "units": "m2 s rad-1",
+    "valid_max": 1.0000000200408773e+20,
+    "valid_min": 0.0
+}

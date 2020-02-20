@@ -1,0 +1,511 @@
+{
+    "metadata": {
+        ".zattrs": {},
+        ".zgroup": {
+            "zarr_format": 2
+        },
+        "cur/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "cur/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "sea_water_speed",
+            "long_name": "sea water speed",
+            "scale_factor": 1e-05,
+            "standard_name": "sea_water_speed",
+            "units": "m s-1",
+            "valid_max": 100.0,
+            "valid_min": 0.0
+        },
+        "curdir/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "curdir/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "direction_of_sea_water_velocity",
+            "long_name": "direction from of sea water velocity",
+            "scale_factor": 1e-05,
+            "standard_name": "direction_of_sea_water_velocity",
+            "units": "degree",
+            "valid_max": 360.0,
+            "valid_min": 0.0
+        },
+        "direction/.zarray": {
+            "chunks": [
+                24
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": 9.969209968386869e+36,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                24
+            ],
+            "zarr_format": 2
+        },
+        "direction/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "direction"
+            ],
+            "add_offset": 0.0,
+            "axis": "Z",
+            "globwave_name": "direction",
+            "long_name": "sea surface wave to direction",
+            "scale_factor": 1.0,
+            "standard_name": "sea_surface_wave_to_direction",
+            "units": "degree",
+            "valid_max": 360.0,
+            "valid_min": 0.0
+        },
+        "dpt/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "dpt/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "depth",
+            "long_name": "depth",
+            "scale_factor": 1e-05,
+            "standard_name": "depth",
+            "units": "m",
+            "valid_max": 10000.0,
+            "valid_min": -100.0
+        },
+        "efth/.zarray": {
+            "chunks": [
+                2,
+                100,
+                25,
+                24
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100,
+                25,
+                24
+            ],
+            "zarr_format": 2
+        },
+        "efth/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time",
+                "frequency",
+                "direction"
+            ],
+            "associates": "time station frequency direction",
+            "content": "TXYZ",
+            "globwave_name": "directional_variance_spectral_density",
+            "long_name": "sea surface wave directional variance spectral density",
+            "scale_factor": 1e-05,
+            "standard_name": "sea_surface_wave_directional_variance_spectral_density",
+            "units": "m2 s rad-1",
+            "valid_max": 1.0000000200408773e+20,
+            "valid_min": 0.0
+        },
+        "frequency/.zarray": {
+            "chunks": [
+                25
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f4",
+            "fill_value": 9.969209968386869e+36,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                25
+            ],
+            "zarr_format": 2
+        },
+        "frequency/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "frequency"
+            ],
+            "add_offset": 0.0,
+            "axis": "Y",
+            "globwave_name": "frequency",
+            "long_name": "frequency of center band",
+            "scale_factor": 1.0,
+            "standard_name": "sea_surface_wave_frequency",
+            "units": "s-1",
+            "valid_max": 10.0,
+            "valid_min": 0.0
+        },
+        "frequency1/.zarray": {
+            "chunks": [
+                2,
+                25
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                25
+            ],
+            "zarr_format": 2
+        },
+        "frequency1/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "frequency"
+            ],
+            "associates": "frequency",
+            "content": "Y",
+            "globwave_name": "frequency_lower_band",
+            "long_name": "frequency of lower band",
+            "scale_factor": 1e-05,
+            "standard_name": "frequency_of_lower_band",
+            "units": "s-1",
+            "valid_max": 10.0,
+            "valid_min": 0.0
+        },
+        "frequency2/.zarray": {
+            "chunks": [
+                2,
+                25
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                25
+            ],
+            "zarr_format": 2
+        },
+        "frequency2/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "frequency"
+            ],
+            "associates": "frequency",
+            "content": "Y",
+            "globwave_name": "frequency_upper_band",
+            "long_name": "frequency of upper band",
+            "scale_factor": 1e-05,
+            "standard_name": "frequency_of_upper_band",
+            "units": "s-1",
+            "valid_max": 10.0,
+            "valid_min": 0.0
+        },
+        "latitude/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "latitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "latitude",
+            "long_name": "latitude",
+            "scale_factor": 1e-05,
+            "standard_name": "latitude",
+            "units": "degree_north",
+            "valid_max": 180.0,
+            "valid_min": -90.0
+        },
+        "longitude/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "longitude/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "longitude",
+            "long_name": "longitude",
+            "scale_factor": 1e-05,
+            "standard_name": "longitude",
+            "units": "degree_east",
+            "valid_max": 360.0,
+            "valid_min": -180.0
+        },
+        "station/.zarray": {
+            "chunks": [
+                2
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<i4",
+            "fill_value": -2147483647,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2
+            ],
+            "zarr_format": 2
+        },
+        "station/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station"
+            ],
+            "axis": "X",
+            "long_name": "station id"
+        },
+        "time/.zarray": {
+            "chunks": [
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 5,
+                "cname": "lz4",
+                "id": "blosc",
+                "shuffle": 1
+            },
+            "dtype": "<f8",
+            "fill_value": "NaN",
+            "filters": null,
+            "order": "C",
+            "shape": [
+                100
+            ],
+            "zarr_format": 2
+        },
+        "time/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "time"
+            ],
+            "axis": "T",
+            "calendar": "proleptic_gregorian",
+            "conventions": "Relative julian days with decimal part (as parts of the day)",
+            "long_name": "julian day (UT)",
+            "standard_name": "time",
+            "units": "days since 1990-01-01"
+        },
+        "wnd/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "wnd/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "wind_speed",
+            "long_name": "wind speed at 10m",
+            "scale_factor": 1e-05,
+            "standard_name": "wind_speed",
+            "units": "m s-1",
+            "valid_max": 100.0,
+            "valid_min": 0.0
+        },
+        "wnddir/.zarray": {
+            "chunks": [
+                2,
+                100
+            ],
+            "compressor": {
+                "blocksize": 0,
+                "clevel": 3,
+                "cname": "zstd",
+                "id": "blosc",
+                "shuffle": 2
+            },
+            "dtype": "<i4",
+            "fill_value": -32767,
+            "filters": null,
+            "order": "C",
+            "shape": [
+                2,
+                100
+            ],
+            "zarr_format": 2
+        },
+        "wnddir/.zattrs": {
+            "_ARRAY_DIMENSIONS": [
+                "station",
+                "time"
+            ],
+            "associates": "time station",
+            "content": "TX",
+            "globwave_name": "wind_from_direction",
+            "long_name": "wind direction",
+            "scale_factor": 1e-05,
+            "standard_name": "wind_from_direction",
+            "units": "degree",
+            "valid_max": 360.0,
+            "valid_min": 0.0
+        }
+    },
+    "zarr_consolidated_format": 1
+}

@@ -1,0 +1,15 @@
+{
+    "_ARRAY_DIMENSIONS": [
+        "station",
+        "time"
+    ],
+    "associates": "time station",
+    "content": "TX",
+    "globwave_name": "depth",
+    "long_name": "depth",
+    "scale_factor": 1e-05,
+    "standard_name": "depth",
+    "units": "m",
+    "valid_max": 10000.0,
+    "valid_min": -100.0
+}

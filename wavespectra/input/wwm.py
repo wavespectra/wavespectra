@@ -84,39 +84,3 @@ def from_wwm(dset):
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     dims = [d for d in ["time", "site", "freq", "dir"] if d in dset.efth.dims]
     return dset.drop_vars(to_drop).transpose(*dims)
-
-
-if __name__ == "__main__":
-    import os
-    import matplotlib.pyplot as plt
-
-    FILES_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../tests/sample_files"
-    )
-    dset = read_wwm(os.path.join(FILES_DIR, "wwmfile.nc"))
-
-    ds = xr.open_dataset("/source/wavespectra/tests/sample_files/wwmfile.nc")
-    hs_wwm = ds.HS
-    tp_wwm = ds.TPP
-    hs_wavespectra = dset.spec.spec.hs()
-    tp_wavespectra = dset.spec.spec.tp()
-
-    plt.figure()
-    hs_wavespectra.isel(site=0).plot(label="wavespectra")
-    hs_wwm.isel(nbstation=0).plot(label="wwm")
-    plt.title("Hs")
-    plt.legend()
-
-    plt.figure()
-    tp_wavespectra.isel(site=0).plot(label="wavespectra")
-    tp_wwm.isel(nbstation=0).plot(label="wwm")
-    plt.title("Tp")
-    plt.legend()
-
-    s = dset.isel(site=0, time=5).rename({"freq": "period"})
-    s.period.values = 1.0 / s.period.values
-    plt.figure()
-    s.efth.plot()
-    print("Tp from file: {}".format(ds.isel(nbstation=0, ocean_time=5).TPP.values))
-
-    plt.show()
