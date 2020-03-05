@@ -15,6 +15,7 @@ from wavespectra import (
     read_triaxys,
     read_wwm,
     read_dataset,
+    read_era5
 )
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
