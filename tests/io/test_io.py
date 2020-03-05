@@ -48,6 +48,7 @@ class TestIO(object):
             ("triaxys.DIRSPEC", read_triaxys, None),
             ("triaxys.NONDIRSPEC", read_triaxys, None),
             ("wavespectra.nc", read_netcdf, "to_netcdf"),
+            ("era5file.nc", read_era5, None)
         ],
     )
     def test_io(self, filename, read_func, write_method_name):
