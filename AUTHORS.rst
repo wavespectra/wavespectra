@@ -19,3 +19,4 @@ Contributors
 
 * Henrique Rapizo
 * Spicer Bak
+* JohnCHarrington

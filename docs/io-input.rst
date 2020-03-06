@@ -67,6 +67,7 @@ These input functions are currently available from the main module level:
     read_ncswan
     read_wwm
     read_netcdf
+    read_era5
     read_swan
     read_triaxys
     read_spotter

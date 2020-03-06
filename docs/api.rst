@@ -98,6 +98,7 @@ Input functions
    read_ncswan
    read_wwm
    read_netcdf
+   read_era5
 
 \* These functions also support Zarr files
 
