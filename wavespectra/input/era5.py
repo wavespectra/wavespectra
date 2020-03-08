@@ -1,4 +1,6 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
+import numpy as np
+
 from wavespectra.input.netcdf import read_netcdf
 
 
