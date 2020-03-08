@@ -6,11 +6,7 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.input import open_netcdf_or_zarr
 
 
-def read_wavespectra(
-    filename_or_fileglob,
-    file_format="netcdf",
-    chunks={},
-):
+def read_wavespectra(filename_or_fileglob, file_format="netcdf", chunks={}):
     """Read Spectra from from netCDF or ZARR format in Wavespectra convention.
 
     Args:
