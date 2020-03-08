@@ -12,12 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.5.2 (2020-03-XX)
+3.5.2 (2020-03-09)
+~~~~~~~~~~~~~~~~~~
 
 New Features
 ------------
-* New `read_era5` function to read wave spectra from ERA5 by JohnCHarrington.
-* New `read_wavespectra` function to read spectra already in wavespectra convention.
+* New method `read_era5`_ to read spectra in ERA5 format by `John Harrington`_.
+* New method `read_wavespectra`_ to read files already in wavespectra convention.
+
+.. _`read_era5`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/era5.py
+.. _`read_wavespectra`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/wavespectra.py
+.. _`John Harrington`: https://github.com/JohnCHarrington
 
 
 3.5.1 (2019-12-12)
