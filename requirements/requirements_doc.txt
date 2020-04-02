@@ -22,4 +22,4 @@ sphinx-autobuild
 sphinx_rtd_theme
 sphinx-autodoc-typehints
 toolz
-xarray>=0.13
+xarray<0.15.1
