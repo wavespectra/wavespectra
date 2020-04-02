@@ -86,7 +86,7 @@ install_requires = [
     "sortedcontainers",
     "scipy",
     "toolz",
-    "xarray>=0.13",
+    "xarray<0.15.1",
     "zarr",
 ]
 
