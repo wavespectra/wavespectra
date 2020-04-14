@@ -12,6 +12,18 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.5.3 (YYYY-MM-DD)
+~~~~~~~~~~~~~~~~~~
+
+Bug Fixes
+~~~~~~~~~
+* Avoid index duplication when merging datasets in to_octopus function.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Fix xarray at 0.15.0 for now as 0.15.1 introduces many breaking changes.
+
+
 3.5.2 (2020-03-09)
 ~~~~~~~~~~~~~~~~~~
 
