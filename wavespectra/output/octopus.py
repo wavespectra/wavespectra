@@ -70,7 +70,8 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
                         (dsite.efth.spec.dfarr * dsite.spec.momd(mom=0)[0]).rename(
                             "fSpec"
                         ),
-                    ]
+                    ],
+                    join="left"
                 )
                 .sortby("dir")
                 .fillna(missing_val)
