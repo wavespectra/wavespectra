@@ -79,7 +79,7 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
         other.attrs.update(
             {
                 "start_date": f"{min(times):%Y-%m-%d %H:%M:%S}",
-                "stop_date": f"{min(times):%Y-%m-%d %H:%M:%S}",
+                "stop_date": f"{max(times):%Y-%m-%d %H:%M:%S}",
             }
         )
         if len(times) > 1:
