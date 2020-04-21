@@ -6,13 +6,14 @@ def to_netcdf(
     self,
     filename,
     specname=attrs.SPECNAME,
-    ncformat="NETCDF4_CLASSIC",
+    ncformat="NETCDF4",
     compress=True,
     time_encoding={"units": "days since 1900-01-01"},
 ):
     """Write spectra in netCDF format using wavespectra conventions.
 
     Args:
+        - filename (str): name of output netcdf file.
         - specname (str): name of spectra variable in dataset.
         - ncformat (str): netcdf format for output, see options in native
           to_netcdf method.

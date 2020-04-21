@@ -4,6 +4,7 @@ include HISTORY.rst
 include LICENSE.txt
 include README.rst
 
+include wavespectra/output/ww3.yml
 include wavespectra/core/attributes.yml
 include wavespectra/specpart/specpart.f90
 include wavespectra/specpart/specpart.pyf
@@ -14,5 +15,3 @@ recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
-
-
