@@ -519,7 +519,7 @@ def read_hotswan(fileglob, dirorder=True):
             else:
                 dsets[-1].efth.loc[slc] = dset.efth.loc[slc]
         dsets.append(dset)
-    dset = xr.auto_combine(dsets)
+    dset = xr.combine_by_coords(dsets)
     set_spec_attributes(dset)
     if attrs.DIRNAME in dset and len(dset.dir) > 1:
         dset[attrs.SPECNAME].attrs.update(
