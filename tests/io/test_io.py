@@ -114,4 +114,4 @@ class TestIO(object):
 
     def _check(self):
         self.ds2 = self.read_func(self.outfile)
-        assert self.ds2.efth.equals(self.ds.efth)
+        assert self.ds2.efth.values == pytest.approx(self.ds.efth.values, rel=1e-6)

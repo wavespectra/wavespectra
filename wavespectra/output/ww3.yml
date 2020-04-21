@@ -1,0 +1,158 @@
+global:
+  Conventions: WAVEWATCHIII
+  data_type: OCO spectra 2D
+  format_version: wavespectra
+  southernmost_latitude: "n/a"
+  northernmost_latitude: "n/a"
+  latitude_resolution: "n/a"
+  westernmost_longitude: "n/a"
+  easternmost_longitude: "n/a"
+  longitude_resolution: "n/a"
+  minimum_altitude: "n/a"
+  maximum_altitude: "n/a"
+  altitude_resolution: "n/a"
+  start_date: "n/a"
+  stop_date: "n/a"
+  field_type: "n/a"
+
+cur:
+  long_name: sea water speed
+  standard_name: sea_water_speed
+  globwave_name: sea_water_speed
+  units: m s-1
+  valid_min: 0.0
+  valid_max: 100.0
+  content: TX
+  associates: time station
+
+curdir:
+  long_name: direction from of sea water velocity
+  standard_name: direction_of_sea_water_velocity
+  globwave_name: direction_of_sea_water_velocity
+  units: degree
+  valid_min: 0.0
+  valid_max: 360.0
+  content: TX
+  associates: time station
+
+direction:
+  long_name: sea surface wave to direction
+  standard_name: sea_surface_wave_to_direction
+  globwave_name: direction
+  units: degree
+  valid_min: 0.0
+  valid_max: 360.0
+  axis: Z
+
+dpt:
+  long_name: depth
+  standard_name: depth
+  globwave_name: depth
+  units: m
+  valid_min: -100.0
+  valid_max: 10000.0
+  content: TX
+  associates: time station
+
+efth:
+  long_name: sea surface wave directional variance spectral density
+  standard_name: sea_surface_wave_directional_variance_spectral_density
+  globwave_name: directional_variance_spectral_density
+  units: m2 s rad-1
+  valid_min: 0.0
+  valid_max: 1e+20
+  content: TXYZ
+  associates: time station frequency direction
+
+frequency:
+  long_name: frequency of center band
+  standard_name: sea_surface_wave_frequency
+  globwave_name: frequency
+  units: s-1
+  valid_min: 0.0
+  valid_max: 10.0
+  axis: Y
+
+frequency1:
+  long_name: frequency of lower band
+  standard_name: frequency_of_lower_band
+  globwave_name: frequency_lower_band
+  units: s-1
+  valid_min: 0.0
+  valid_max: 10.0
+  content: Y
+  associates: frequency
+
+frequency2:
+  long_name: frequency of upper band
+  standard_name: frequency_of_upper_band
+  globwave_name: frequency_upper_band
+  units: s-1
+  valid_min: 0.0
+  valid_max: 10.0
+  content: Y
+  associates: frequency
+
+latitude:
+  long_name: latitude
+  standard_name: latitude
+  globwave_name: latitude
+  units: degree_north
+  valid_min: -90.0
+  valid_max: 180.0
+  content: TX
+  associates: time station
+
+longitude:
+  long_name: longitude
+  standard_name: longitude
+  globwave_name: longitude
+  units: degree_east
+  valid_min: -180.0
+  valid_max: 360.0
+  content: TX
+  associates: time station
+
+station:
+  long_name: station id
+  axis: X
+
+station_name:
+  long_name: station name
+  content: XW
+  associates: station string16
+
+string16:
+  long_name: station_name number of characters
+  axis: W
+
+time:
+  long_name: julian day (UT)
+  standard_name: time
+  units: days since 1990-01-01 00:00:00
+  conventions: Relative julian days with decimal part (as parts of the day)
+  axis: T
+
+wnd:
+  long_name: wind speed at 10m
+  standard_name: wind_speed
+  globwave_name: wind_speed
+  units: m s-1
+  valid_min: 0.0
+  valid_max: 100.0
+  content: TX
+  associates: time station
+
+wnddir:
+  long_name: wind direction
+  standard_name: wind_from_direction
+  globwave_name: wind_from_direction
+  units: degree
+  valid_min: 0.0
+  valid_max: 360.0
+  content: TX
+  associates: time station
+
+
+
+
