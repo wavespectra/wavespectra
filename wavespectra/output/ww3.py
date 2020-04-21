@@ -4,7 +4,7 @@ import yaml
 import numpy as np
 import xarray as xr
 
-from wavespectra import __version__
+# from wavespectra import __version__
 from wavespectra.core.attributes import attrs
 from wavespectra.core.misc import R2D
 
@@ -99,7 +99,7 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
     other.attrs.update(
         {
             "product_name": os.path.basename(filename),
-            "format_version": f"wavespectra-{__version__}"
+            # "format_version": f"wavespectra-{__version__}"
         }
     )
     # Dumping
