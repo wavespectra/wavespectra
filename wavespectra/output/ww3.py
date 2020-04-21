@@ -23,7 +23,7 @@ MAPPING = {
 
 VAR_ATTRIBUTES = yaml.load(
     open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ww3.yml")),
-    Loader=yaml.Loader
+    Loader=yaml.Loader,
 )
 TIME_UNITS = VAR_ATTRIBUTES["time"].pop("units")
 
@@ -93,7 +93,9 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
                 "latitude_resolution": (other.latitude[1] - other.latitude[0]).values,
                 "westernmost_longitude": other.longitude.values.min(),
                 "easternmost_longitude": other.longitude.values.max(),
-                "longitude_resolution": (other.longitude[1] - other.longitude[0]).values,
+                "longitude_resolution": (
+                    other.longitude[1] - other.longitude[0]
+                ).values,
             }
         )
     other.attrs.update(
