@@ -12,6 +12,14 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.5.4 (YYYY-MM-DD)
+~~~~~~~~~~~~~~~~~~
+
+New Features
+------------
+* New method to output spectra in native WW3 format.
+
+
 3.5.3 (2020-04-14)
 ~~~~~~~~~~~~~~~~~~
 Fix xarray version until breaking changes with 0.15.1 are taken care of.
