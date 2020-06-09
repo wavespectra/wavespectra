@@ -12,6 +12,9 @@ import xarray as xr
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
+IPI=1./np.pi
+D2R=np.pi/180.
+
 def read_file(filename):
     basename_parts=os.path.basename(filename).split('.')
     compressed='gzip' if basename_parts[-1]=='gz' else None
@@ -37,9 +40,7 @@ def read_file(filename):
             raise IOError("NDBC file has varying frequencies in same file")
         freqs=freqcols.iloc[0].apply(lambda x: float(x.lstrip('(').rstrip(')'))) #convert to numeric values
         df.drop(columns=freqcols.columns,inplace=True)
-        df.rename(columns={c:freqs.get(c+1,c) for c in df.columns},inplace=True)
-        if 5 in df.columns:
-            df.drop(columns=5,inplace=True) #Drop the separation frequency column for the 1D spectra files
+        df.rename(columns={c:freqs.get(c+1,'Sep_Freq') for c in df.columns},inplace=True)
     else:
         f.seek(0,0)
         df=pd.read_csv(f,
@@ -56,7 +57,8 @@ def read_file(filename):
 
 def construct_spectra(spden,swdir1,swdir2,swr1,swr2,dirs):
     dirmat=dirs.reshape((1,1,-1))
-    S = (1./np.pi())*spden*(0.5+swr1*np.cos(dirmat-swdir1)+swr2*np.cos(2*(dirmat-swdir2)))
+    D_fd = IPI*(0.5+swr1*np.cos(D2R*(dirmat-swdir1))+swr2*np.cos(2*D2R*(dirmat-swdir2)))*D2R
+    S = spden*D_fd
     return S
 
 def read_ndbc(filename, dirs=np.arange(0,360,10)):
@@ -84,9 +86,17 @@ def read_ndbc(filename, dirs=np.arange(0,360,10)):
 
     #Get the spectra density
     df_spden=read_file(filename[0])
+
+    if 'Sep_Freq' in df_spden.columns:
+        sep_freq=df_spden['Sep_Freq'].values
+        df_spden.drop(columns=['Sep_Freq'],inplace=True)
+    else:
+        sep_freq=None
+
     times=df_spden.index
-    freqs=df_spden.columns
-    specdens=df_spden.values.reshape((len(times),len(freqs),1))
+    freqs=df_spden.columns.astype('f')
+    spshape=(len(times),len(freqs),1,)
+    specdens=df_spden.values.reshape(spshape)
 
     if len(filename)==1:
         dirs=[0.0]
@@ -95,15 +105,13 @@ def read_ndbc(filename, dirs=np.arange(0,360,10)):
         df_swdir2=read_file(filename[2])
         df_swr1=read_file(filename[3])
         df_swr2=read_file(filename[4])
-        times=df_swdir.index
-        freqs=df_spden.columns
         dirs=np.array(dirs)
         specdens=construct_spectra(
             specdens,
-            df_swdir.values,
-            df_swdir2.values,
-            0.01*df_swr1.values, #these values are stored with a factor of 100
-            0.01*df_swr2.values,
+            df_swdir.values.reshape(spshape),
+            df_swdir2.values.reshape(spshape),
+            0.01*df_swr1.values.reshape(spshape), #these values are stored with a factor of 100
+            0.01*df_swr2.values.reshape(spshape),
             dirs
         )
     coords=OrderedDict(
@@ -117,7 +125,12 @@ def read_ndbc(filename, dirs=np.arange(0,360,10)):
     dset = xr.DataArray(
             data=specdens, coords=coords, dims=dims, name=attrs.SPECNAME
         ).to_dataset()
-    dset.attrs=attrs
+    if sep_freq is not None:
+        sfreq = xr.DataArray(
+                data=sep_freq, coords={attrs.TIMENAME:times}, dims=(attrs.TIMENAME), name=attrs.SPECNAME
+            )
+        dset['Sep_Freq']=sfreq #Add the NDBC defined separation frequency for realtime diagnostics
+    dset = dset.sortby('time', ascending=True) #Realtime data is in reversed time order
     return dset
 
 
