@@ -4,7 +4,7 @@ import numpy as np
 from wavespectra.input.netcdf import read_netcdf
 
 
-def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
+def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None, convention='coming-from'):
     """Read Spectra from ECMWF ERA5 netCDF format.
 
     Args:
@@ -15,6 +15,7 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
           xr.open_mfdataset documentation).
         - freqs (list): list of frequencies. By default use all 30 ERA5 frequencies.
         - dirs (list): list of directions. By default use all 24 ERA5 directions.
+        - convention (string): direction convention, either 'coming-from' (standard in wavespectra library) or 'going-to' (standard in ERA5 data)
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from netcdf file.
@@ -25,7 +26,13 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
 
     """
     default_freqs = np.full(30, 0.03453) * (1.1 ** np.arange(0, 30))
-    default_dirs = direction = np.arange(7.5, 352.5 + 15, 15)
+    
+    if convention == 'coming-from':
+        default_dirs = direction = (np.arange(7.5, 352.5 + 15, 15) + 180) % 360
+    elif convention == 'going-to':
+        default_dirs = direction = np.arange(7.5, 352.5 + 15, 15)
+    else:
+        raise ValueError("Set convention to 'coming-from' or 'going-to'.")
 
     dset = read_netcdf(
         filename_or_fileglob,
