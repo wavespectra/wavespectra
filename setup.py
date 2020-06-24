@@ -90,7 +90,7 @@ install_requires = [
     "attrdict",
     "click",
     "cmocean",
-    "dask>=0.17.1",
+    "dask",
     "gcsfs",
     "fsspec",
     "matplotlib",
