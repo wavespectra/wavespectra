@@ -197,20 +197,3 @@ class Triaxys(object):
         if not filenames:
             raise ValueError("No file located in {}".format(self._filename_or_fileglob))
         return filenames
-
-
-if __name__ == "__main__":
-
-    # 1D files
-    dset_1d = read_triaxys("NONDIRSPEC/2018??????0000.NONDIRSPEC")
-
-    # 2D files
-    dset_2d = read_triaxys("DIRSPEC/2018??????0000.DIRSPEC")
-
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    dset_1d.spec.hs().plot(label="1D")
-    dset_2d.spec.hs().plot(label="2D")
-    plt.legend()
