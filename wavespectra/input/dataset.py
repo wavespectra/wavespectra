@@ -46,7 +46,7 @@ def read_dataset(dset):
         logger.debug("Dataset identified as wwm")
         func = from_wwm
     else:
-        raise IOError(
+        raise ValueError(
             f"Cannot identify appropriate reader from dataset variables: {vars_dset}"
         )
     return func(dset)

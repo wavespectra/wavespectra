@@ -281,7 +281,7 @@ def read_swans(
         if ndays is not None:
             tend = times[0] + datetime.timedelta(days=ndays)
             if tend > times[-1]:
-                raise IOError(
+                raise OSError(
                     "Times in %s does not extend for %0.2f days" % (filename, ndays)
                 )
             iend = times.index(min(times, key=lambda d: abs(d - tend)))
@@ -322,7 +322,7 @@ def read_swans(
                 nsites += 1
         except Exception:
             if len(spec_list) != arr.shape[0]:
-                raise IOError(
+                raise OSError(
                     "Time length in %s (%i) does not match previous files (%i), "
                     "cannot concatenate",
                     (filename, len(spec_list), arr.shape[0]),
@@ -343,7 +343,7 @@ def read_swans(
             or (list(lon) != list(lons))
             or (list(lat) != list(lats))
         ):
-            raise IOError("Inconsistent sites across cycles in glob pattern provided")
+            raise OSError("Inconsistent sites across cycles in glob pattern provided")
 
     # Ensuring consistent tabs
     cols = set(
@@ -354,7 +354,7 @@ def read_swans(
         ]
     )
     if len(cols) > 1:
-        raise IOError(
+        raise OSError(
             "Inconsistent tab files, ensure either all or none of the spectra have "
             "associated tabfiles and columns are consistent"
         )

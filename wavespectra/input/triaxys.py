@@ -115,11 +115,11 @@ class Triaxys(object):
             if "ROWS" in line or "COLUMN 2" in line or not line:
                 break
         if not self.header.get("is_triaxys"):
-            raise IOError("Not a TRIAXYS Spectra file.")
+            raise OSError("Not a TRIAXYS Spectra file.")
         if not self.header.get("time"):
-            raise IOError("Cannot parse time")
+            raise OSError("Cannot parse time")
         if self.is_dir is not None and self.is_dir != self.header.get("is_dir"):
-            raise IOError("Cannot merge spectra 2D and spectra 1D")
+            raise OSError("Cannot merge spectra 2D and spectra 1D")
         self.is_dir = self.header.get("is_dir")
 
     def _append_spectrum(self):
@@ -186,7 +186,7 @@ class Triaxys(object):
             f0, df, nf = self.header["f0"], self.header["df"], self.header["nf"]
             return list(np.arange(f0, f0 + df * nf, df))
         except Exception as exc:
-            raise IOError(f"Not enough info to parse frequencies:\n{exc}")
+            raise OSError(f"Not enough info to parse frequencies:\n{exc}")
 
     @property
     def filenames(self):
