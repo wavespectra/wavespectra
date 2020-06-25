@@ -12,7 +12,7 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.5.4 (Unreleased)
+3.6.0 (Unreleased)
 ~~~~~~~~~~~~~~~~~~
 
 New Features
