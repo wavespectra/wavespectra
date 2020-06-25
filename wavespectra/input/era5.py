@@ -1,6 +1,7 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
 import numpy as np
 
+from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.input.netcdf import read_netcdf
 
 
@@ -44,5 +45,8 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
 
     dset["freq"] = freqs if freqs else default_freqs
     dset["dir"] = dirs if dirs else default_dirs
+
+    # Setting standard attributes
+    set_spec_attributes(dset)
 
     return dset
