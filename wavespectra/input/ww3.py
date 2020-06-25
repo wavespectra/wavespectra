@@ -69,10 +69,8 @@ def from_ww3(dset):
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     # Converting from radians
     dset[attrs.SPECNAME] *= D2R
+    # Convert to coming-from
+    dset = dset.assign_coords({attrs.DIRNAME: (dset[attrs.DIRNAME] + 180) % 360})
     # Setting standard attributes
     set_spec_attributes(dset)
-    # Convert to coming-from
-    dir_attrs = dset[attrs.DIRNAME].attrs
-    dset = dset.assign_coords({attrs.DIRNAME: (dset[attrs.DIRNAME] + 180) % 360})
-    dset[attrs.DIRNAME].attrs = dir_attrs
     return dset.drop_vars(to_drop).drop_dims("string16", errors="ignore")
