@@ -26,7 +26,7 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
 
     """
     default_freqs = np.full(30, 0.03453) * (1.1 ** np.arange(0, 30))
-    default_dirs = direction = np.arange(7.5, 352.5 + 15, 15)
+    default_dirs = direction = (np.arange(7.5, 352.5 + 15, 15) + 180) % 360
 
     dset = read_netcdf(
         filename_or_fileglob,
