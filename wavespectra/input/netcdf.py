@@ -38,8 +38,6 @@ def read_netcdf(
 
     """
     dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
-    _units = dset[specname].attrs.get("units", "")
-    _variable_name = specname
     coord_map = {
         freqname: attrs.FREQNAME,
         dirname: attrs.DIRNAME,
@@ -50,10 +48,5 @@ def read_netcdf(
         timename: attrs.TIMENAME,
     }
     dset = dset.rename({k: v for k, v in coord_map.items() if k in dset})
-    dset[attrs.SPECNAME].attrs.update(
-        {"_units": _units, "_variable_name": _variable_name}
-    )
-    if attrs.DIRNAME not in dset or len(dset.dir) == 1:
-        dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     set_spec_attributes(dset)
     return dset
