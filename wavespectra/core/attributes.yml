@@ -1,5 +1,4 @@
 SPECNAME: &SPECNAME efth
-SPEC1DNAME: &SPEC1DNAME efth1d
 TIMENAME: &TIMENAME time
 SITENAME: &SITENAME site
 LATNAME: &LATNAME lat
@@ -15,9 +14,6 @@ ATTRS:
     *SPECNAME:
         standard_name: sea_surface_wave_directional_variance_spectral_density
         units: m2 s degree-1
-    *SPEC1DNAME:
-        standard_name: sea_surface_wave_variance_spectral_density
-        units: m2 s
     *TIMENAME:
         standard_name: time
     *LATNAME:
