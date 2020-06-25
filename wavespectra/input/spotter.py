@@ -180,8 +180,3 @@ class Spotter:
         if not filenames:
             raise ValueError("No file located in {}".format(self._filename_or_fileglob))
         return filenames
-
-
-if __name__ == "__main__":
-    filename = "../../tests/sample_files/spotter_20180214.json"
-    dset = read_spotter(filename)
