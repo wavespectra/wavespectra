@@ -13,7 +13,7 @@ DEPNAME: &DEPNAME dpt
 ATTRS:
     *SPECNAME:
         standard_name: sea_surface_wave_directional_variance_spectral_density
-        units: m^{2}.s.degree^{-1}
+        units: m2 s degree-1
     *TIMENAME:
         standard_name: time
     *LATNAME:
@@ -24,7 +24,7 @@ ATTRS:
         units: degrees_east
     *SITENAME:
         standard_name: site
-        units: ''
+        units: ""
     *FREQNAME:
         standard_name: sea_surface_wave_frequency
         units: Hz
@@ -33,12 +33,12 @@ ATTRS:
         units: degree
     *PARTNAME:
         standard_name: spectral_partition_number
-        units: ''
+        units: ""
     *CYCLENAME:
         standard_name: forecast_reference_time
     *WSPDNAME:
         standard_name: wind_speed_at_10m_above_ground_level
-        units: m.s^{-1}
+        units: m s-1
     *WDIRNAME:
         standard_name: wind_from_direction_at_10m_above_ground_level
         units: degree
