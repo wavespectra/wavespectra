@@ -114,7 +114,6 @@ Input functions
    read_spotter
    read_octopus
    read_dataset
-   read_dictionary
 
 **Convenience SWAN ASCII input functions**
 

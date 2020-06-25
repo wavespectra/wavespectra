@@ -73,7 +73,6 @@ These input functions are currently available from the main module level:
     read_spotter
     read_octopus
     read_dataset
-    read_dictionary
 
 
 These functions are not accessible from the main module level and need to be
