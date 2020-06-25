@@ -12,12 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.5.4 (YYYY-MM-DD)
+3.5.4 (Unreleased)
 ~~~~~~~~~~~~~~~~~~
 
 New Features
 ------------
+* New method to construct spectra from NDBC buoy data.
 * New method to output spectra in native WW3 format.
+
+Bug Fixes
+~~~~~~~~~
+* Ensure directions in coming-from convention in read_era5.
 
 
 3.5.3 (2020-04-14)
