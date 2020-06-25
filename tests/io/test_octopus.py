@@ -4,7 +4,7 @@ import shutil
 import pytest
 from tempfile import mkdtemp
 
-from wavespectra import read_ncswan
+from wavespectra import read_ncswan, read_octopus
 from wavespectra.core.attributes import attrs
 from wavespectra.core.timer import Timer
 
@@ -27,8 +27,11 @@ class TestOctopus(object):
     def teardown_class(self):
         shutil.rmtree(self.tmp_dir)
 
-    def test_octopus(self):
+    def test_write_octopus(self):
         with Timer("Testing Octopus writer"):
             ds = read_ncswan(self.filename)
             ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
+    def test_read_octopus(self):
+        with pytest.raises(NotImplementedError):
+            dset = read_octopus(os.path.join(FILES_DIR, "octopusfile.oct"))
