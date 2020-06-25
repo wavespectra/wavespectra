@@ -84,13 +84,3 @@ def from_ncswan(dset):
     # Setting standard attributes
     set_spec_attributes(dset)
     return dset.drop_vars(to_drop)
-
-
-if __name__ == "__main__":
-    import os
-
-    FILES_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../tests/sample_files"
-    )
-    ds_spec = read_ncswan(os.path.join(FILES_DIR, "swanfile.nc"))
-    ds_swan = xr.open_dataset(os.path.join(FILES_DIR, "swanfile.nc"))
