@@ -28,6 +28,11 @@ Bug Fixes
 deprecation
 ~~~~~~~~~~~
 * Deprecated legacy `read_ww3_msl` reader.
+* Deprecated `read_dictionary` in favour of using xarray's `to_dict`_ and `from_dict`_ methods.
+
+.. _`to_dict`: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.to_dict.html
+.. _`from_dict`: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.from_dict.html
+
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
