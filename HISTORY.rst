@@ -23,6 +23,13 @@ New Features
 Bug Fixes
 ~~~~~~~~~
 * Ensure directions in coming-from convention in read_era5.
+* Fix coordinate values assignment errors with xarray>=0.15.1.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Remove curly brackets from units.
+* Remove original variable attributes from files hidden with underscores.
+* Remove xarray version limitation to <0.15.0.
 
 
 3.5.3 (2020-04-14)
