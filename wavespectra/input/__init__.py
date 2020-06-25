@@ -42,9 +42,8 @@ def chunks_dict(chunks, mapping):
             dim = list(mapping.keys())[list(mapping.values()).index(key)]
         else:
             raise KeyError(
-                "Dim '{}' not in chunks, supported dims are {}".format(
-                    key, list(mapping.keys()) + list(mapping.values())
-                )
+                f"Dim '{key}' not in chunks, supported dims are: "
+                f" {list(mapping.keys()) + list(mapping.values())}"
             )
         _chunks.update({dim: val})
     return _chunks

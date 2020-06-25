@@ -214,8 +214,8 @@ class SpecArray(object):
             return attrs.ATTRS[varname]["standard_name"]
         except AttributeError:
             warnings.warn(
-                "Cannot set standard_name for variable {}. "
-                "Ensure it is defined in attributes.yml".format(varname)
+                f"Cannot set standard_name for variable {varname}. "
+                "Ensure it is defined in attributes.yml"
             )
             return ""
 
@@ -224,8 +224,8 @@ class SpecArray(object):
             return attrs.ATTRS[varname]["units"]
         except AttributeError:
             warnings.warn(
-                "Cannot set units for variable {}. "
-                "Ensure it is defined in attributes.yml".format(varname)
+                f"Cannot set units for variable {varname}. "
+                "Ensure it is defined in attributes.yml"
             )
             return ""
 
@@ -446,7 +446,7 @@ class SpecArray(object):
         fp = self.freq ** mom
         mf = self.dfarr * fp * self._obj
         return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename(
-            "mom{:d}".format(mom)
+            f"mom{mom:0.0f}"
         )
 
     def momd(self, mom=0, theta=90.0):
