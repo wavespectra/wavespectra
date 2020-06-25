@@ -29,4 +29,4 @@ class Timer(object):
 
     def __exit__(self, *args):
         self.secs = time.time() - self.start
-        print("{}: {:f} sec".format(self.msg, self.secs))
+        print(f"{self.msg}: {self.secs:f} sec")

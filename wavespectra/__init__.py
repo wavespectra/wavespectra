@@ -38,13 +38,13 @@ def _import_read_functions(pkgname="input"):
         module = os.path.splitext(filename)[0]
         if module == "__init__":
             continue
-        func_name = "read_{}".format(module)
+        func_name = f"read_{module}"
         try:
             globals()[func_name] = getattr(
-                import_module("wavespectra.{}.{}".format(pkgname, module)), func_name
+                import_module(f"wavespectra.{pkgname}.{module}"), func_name
             )
         except Exception as exc:
-            print("Cannot import reading function {}:\n{}".format(func_name, exc))
+            print(f"Cannot import reading function {func_name}:\n{exc}")
 
 
 _import_read_functions()

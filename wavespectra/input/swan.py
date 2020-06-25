@@ -66,15 +66,13 @@ def read_swan(filename, dirorder=True, as_site=False):
                     )
             else:
                 warnings.warn(
-                    "Times in {} and {} not consistent, not appending "
-                    "winds and depth".format(swanfile.filename, swanfile.tabfile)
+                    f"Times in {swanfile.filename} and {swanfile.tabfile} "
+                    f"not consistent, not appending winds and depth"
                 )
                 tab = None
         except Exception as exc:
             warnings.warn(
-                "Cannot parse depth and winds from {}:\n{}".format(
-                    swanfile.tabfile, exc
-                )
+                f"Cannot parse depth and winds from {swanfile.tabfile}:\n{exc}"
             )
 
     if swanfile.is_grid:
@@ -261,8 +259,8 @@ def read_swans(
                         )
                 else:
                     warnings.warn(
-                        "Times in {} and {} not consistent, not appending "
-                        "winds and depth".format(swanfile.filename, swanfile.tabfile)
+                        f"Times in {swanfile.filename} and {swanfile.tabfile} "
+                        f"not consistent, not appending winds and depth"
                     )
                     tab = pd.DataFrame()
                 tab = tab[
@@ -274,9 +272,7 @@ def read_swans(
                 ]
             except Exception as exc:
                 warnings.warn(
-                    "Cannot parse depth and winds from {}:\n{}".format(
-                        swanfile.tabfile, exc
-                    )
+                    f"Cannot parse depth and winds from {swanfile.tabfile}:\n{exc}"
                 )
         else:
             tab = pd.DataFrame()

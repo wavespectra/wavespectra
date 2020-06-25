@@ -47,8 +47,6 @@ def read_dataset(dset):
         func = from_wwm
     else:
         raise IOError(
-            "I cannot parse SpecArray from this dataset with variables {}".format(
-                vars_dset
-            )
+            f"Cannot identify appropriate reader from dataset variables: {vars_dset}"
         )
     return func(dset)

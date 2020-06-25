@@ -146,7 +146,7 @@ class Triaxys(object):
                     self.spec_data[i, :] = row[-1]
             self._append_spectrum()
         except ValueError as err:
-            raise ValueError("Cannot read {}:\n{}".format(self.filename, err))
+            raise ValueError(f"Cannot read {self.filename}:\n{err}")
 
     def construct_dataset(self):
         self.dset = xr.DataArray(
@@ -155,7 +155,7 @@ class Triaxys(object):
         set_spec_attributes(self.dset)
         if not self.is_dir:
             self.dset = self.dset.isel(drop=True, **{attrs.DIRNAME: 0})
-            self.dset[attrs.SPECNAME].attrs.update(units="m^{2}.s")
+            self.dset[attrs.SPECNAME].attrs.update(units="m2 s")
 
     @property
     def dims(self):
@@ -186,7 +186,7 @@ class Triaxys(object):
             f0, df, nf = self.header["f0"], self.header["df"], self.header["nf"]
             return list(np.arange(f0, f0 + df * nf, df))
         except Exception as exc:
-            raise IOError("Not enough info to parse frequencies:\n{}".format(exc))
+            raise IOError(f"Not enough info to parse frequencies:\n{exc}")
 
     @property
     def filenames(self):
@@ -195,5 +195,5 @@ class Triaxys(object):
         elif isinstance(self._filename_or_fileglob, str):
             filenames = sorted(glob.glob(self._filename_or_fileglob))
         if not filenames:
-            raise ValueError("No file located in {}".format(self._filename_or_fileglob))
+            raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames

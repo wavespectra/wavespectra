@@ -86,25 +86,21 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
 
             # General header
             f.write(
-                "Forecast valid for {:%d-%b-%Y %H:%M:%S}\n".format(
-                    to_datetime(dsite.time[0])
-                )
+                f"Forecast valid for {to_datetime(dsite.time[0]):%d-%b-%Y %H:%M:%S}\n"
             )
-            f.write("nfreqs,{:d}\n".format(len(dsite.freq)))
-            f.write("ndir,{:d}\n".format(len(dsite.dir)))
-            f.write("nrecs,{:d}\n".format(len(dsite.time)))
-            f.write("Latitude,{:0.6f}\n".format(lat))
-            f.write("Longitude,{:0.6f}\n".format(lon))
-            f.write(
-                "Depth,{:0.2f}\n\n".format(float(dsite[attrs.DEPNAME].isel(time=0)))
-            )
+            f.write(f"nfreqs,{len(dsite.freq):d}\n")
+            f.write(f"ndir,{len(dsite.dir):d}\n")
+            f.write(f"nrecs,{len(dsite.time):d}\n")
+            f.write(f"Latitude,{lat:0.6f}\n")
+            f.write(f"Longitude,{lon:0.6f}\n")
+            f.write(f"Depth,{float(dsite[attrs.DEPNAME].isel(time=0)):0.2f}\n\n")
 
             # Dump each timestep
             for i, t in enumerate(dsite.time):
                 ds = dsite.isel(time=i)
 
                 # Timestamp header
-                lp = "{}_{:%Y%m%d_%Hz}".format(site_id, to_datetime(t))
+                lp = f"{site_id}_{to_datetime(t):%Y%m%d_%Hz}"
                 f.write(
                     "CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,"
                     "TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n"
@@ -142,9 +138,9 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
                 specdump = ""
                 for idir, direc in enumerate(self.dir):
                     row = energy[idir]
-                    specdump += "{:d},".format(int(direc))
+                    specdump += f"{int(direc):d},"
                     specdump += fmt.format(*row)
-                    specdump += "{:6.5f},\n".format(row.sum())
+                    specdump += f"{row.sum():6.5f},\n"
                 f.write(("freq," + fmt + "anspec\n").format(*ds.freq.values))
                 f.write(specdump)
                 f.write(("fSpec," + fmt + "\n").format(*ds["fSpec"].squeeze().values))
