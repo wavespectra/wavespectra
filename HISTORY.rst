@@ -25,6 +25,10 @@ Bug Fixes
 * Ensure directions in coming-from convention in read_era5.
 * Fix coordinate values assignment errors with xarray>=0.15.1.
 
+deprecation
+~~~~~~~~~~~
+* Deprecated legacy `read_ww3_msl` reader.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * Remove curly brackets from units.

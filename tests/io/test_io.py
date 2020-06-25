@@ -9,7 +9,6 @@ from wavespectra import (
     read_swan,
     read_netcdf,
     read_ww3,
-    read_ww3_msl,
     read_octopus,
     read_ncswan,
     read_triaxys,
@@ -44,7 +43,6 @@ class TestIO(object):
         [
             ("swanfile.spec", read_swan, "to_swan"),
             ("ww3file.nc", read_ww3, "to_ww3"),
-            ("ww3mslfile.nc", read_ww3_msl, None),
             ("swanfile.nc", read_ncswan, None),
             ("triaxys.DIRSPEC", read_triaxys, None),
             ("triaxys.NONDIRSPEC", read_triaxys, None),
