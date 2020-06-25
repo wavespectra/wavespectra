@@ -42,13 +42,12 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
             dsite = dset.isel(site=[isite])
 
             # Site coordinates
-            try:
-                lat = float(dsite.lat)
-                lon = float(dsite.lon)
-            except NotImplementedError(
-                "lon/lat not found in dset, cannot dump OCTOPUS file without locations"
-            ):
-                raise
+            if attrs.LONNAME not in dsite or attrs.LATNAME not in dsite:
+                raise NotImplementedError(
+                    "lon/lat not in dset, cannot dump OCTOPUS file without locations"
+                )
+            lat = float(dsite.lat)
+            lon = float(dsite.lon)
 
             # Update dataset with parameters
             stats = ["hs", "tm01", "dm"]
