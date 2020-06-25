@@ -43,8 +43,8 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
     dset = 10 ** dset
     dset = dset.fillna(0)
 
-    dset["freq"] = freqs if freqs else default_freqs
-    dset["dir"] = dirs if dirs else default_dirs
+    dset[attrs.FREQNAME] = freqs if freqs else default_freqs
+    dset[attrs.DIRNAME] = dirs if dirs else default_dirs
 
     # Setting standard attributes
     set_spec_attributes(dset)
