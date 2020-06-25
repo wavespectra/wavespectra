@@ -60,26 +60,19 @@ def from_wwm(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    _units = dset.AC.attrs.get("units", "")
     dset = dset.rename(MAPPING)
     # Calculating wind speeds and directions
     if "Uwind" in dset and "Vwind" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
             dset["Uwind"], dset["Vwind"], coming_from=True
         )
-    # Setting standard names and storing original file attributes
-    set_spec_attributes(dset)
-    dset[attrs.SPECNAME].attrs.update(
-        {"_units": _units, "_variable_name": attrs.SPECNAME}
-    )
     # Assigning spectral coordinates
-    dset[attrs.FREQNAME] = dset.SPSIG / (2 * np.pi)  # convert rad to Hz
-    dset[attrs.DIRNAME] = dset.SPDIR
+    dset = dset.assign_coords({attrs.FREQNAME: dset.SPSIG / (2 * np.pi)})
+    dset = dset.assign_coords({attrs.DIRNAME: dset.SPDIR * R2D})
+    # Setting standard attributes
+    set_spec_attributes(dset)
     # converting Action to Energy density and adjust density to Hz
-    dset[attrs.SPECNAME] = dset[attrs.SPECNAME] * dset.SPSIG * (2 * np.pi)
-    # Converting from radians
-    dset[attrs.DIRNAME] *= R2D
-    dset[attrs.SPECNAME] /= R2D
+    dset[attrs.SPECNAME] = dset[attrs.SPECNAME] * dset.SPSIG * (2 * np.pi) / R2D
     # Returns only selected variables, transposed
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     dims = [d for d in ["time", "site", "freq", "dir"] if d in dset.efth.dims]
