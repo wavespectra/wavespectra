@@ -133,7 +133,7 @@ def sel_nearest(
         station_ids = list(set(station_ids))
 
     dsout = dset.isel(**{attrs.SITENAME: station_ids})
-    dsout[attrs.SITENAME].values = np.arange(len(station_ids))
+    dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
     return dsout
 
 
@@ -277,5 +277,5 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
         )
 
     dsout = dset.isel(**{attrs.SITENAME: station_ids})
-    dsout[attrs.SITENAME].values = np.arange(len(station_ids))
+    dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
     return dsout
