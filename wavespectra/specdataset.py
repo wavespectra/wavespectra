@@ -18,7 +18,7 @@ class Plugin(type):
     def __new__(cls, name, bases, dct):
         modules = [
             __import__(
-                "wavespectra.output.{}".format(os.path.splitext(fname)[0]),
+                f"wavespectra.output.{os.path.splitext(fname)[0]}",
                 fromlist=["*"],
             )
             for fname in os.listdir(os.path.join(here, "output"))
@@ -59,7 +59,7 @@ class SpecDataset(metaclass=Plugin):
         return getattr(self.dset, attr)
 
     def __repr__(self):
-        return re.sub(r"<.+>", "<{}>".format(self.__class__.__name__), str(self.dset))
+        return re.sub(r"<.+>", f"<{self.__class__.__name__}>", str(self.dset))
 
     def _wrapper(self):
         """Wraper around SpecArray methods.
@@ -90,9 +90,8 @@ class SpecDataset(metaclass=Plugin):
         unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(self.supported_dims)
         if unsupported_dims:
             raise NotImplementedError(
-                "Dimensions {} are not supported by {} method".format(
-                    unsupported_dims, sys._getframe().f_back.f_code.co_name
-                )
+                f"Dimensions {unsupported_dims} are not supported by "
+                f"{sys._getframe().f_back.f_code.co_name} method"
             )
 
         # If grid reshape into site, if neither define fake site dimension
@@ -154,9 +153,7 @@ class SpecDataset(metaclass=Plugin):
             func = funcs[method]
         except KeyError:
             raise ValueError(
-                "Method '{}' not supported, valid options are {}".format(
-                    method, list(funcs.keys())
-                )
+                f"Method '{method}' not supported, valid ones are {list(funcs.keys())}"
             )
         if method is None:
             kwargs.update({"exact": True})

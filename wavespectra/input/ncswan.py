@@ -60,12 +60,13 @@ def from_ncswan(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    _units = dset.density.attrs.get("units", "")
     dset = dset.rename(MAPPING)
     # Ensuring lon,lat are not function of time
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
-        dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
-        dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+        dset = dset.assign({
+            attrs.LONNAME: dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0}),
+            attrs.LATNAME: dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+        })
     # Calculating wind speeds and directions
     if "xwnd" in dset and "ywnd" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
@@ -73,31 +74,13 @@ def from_ncswan(dset):
         )
     # Only selected variables to be returned
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
-    # Setting standard names and storing original file attributes
-    set_spec_attributes(dset)
-    dset[attrs.SPECNAME].attrs.update(
-        {"_units": _units, "_variable_name": attrs.SPECNAME}
-    )
     # Converting from radians
     dset[attrs.SPECNAME] /= R2D
     if attrs.DIRNAME in dset:
-        dset[attrs.DIRNAME] *= R2D
-        dset[attrs.DIRNAME] %= 360
-        # dset = dset.sortby(attrs.DIRNAME)
-    # Adjustting attributes if 1D
-    if attrs.DIRNAME not in dset or len(dset.dir) == 1:
-        dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
+        dset = dset.assign_coords({attrs.DIRNAME: (dset[attrs.DIRNAME] * R2D) % 360})
     # Ensure site is a coordinate
     if attrs.SITENAME in dset.dims and attrs.SITENAME not in dset.coords:
         dset[attrs.SITENAME] = np.arange(1, len(dset[attrs.SITENAME]) + 1)
+    # Setting standard attributes
+    set_spec_attributes(dset)
     return dset.drop_vars(to_drop)
-
-
-if __name__ == "__main__":
-    import os
-
-    FILES_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../../tests/sample_files"
-    )
-    ds_spec = read_ncswan(os.path.join(FILES_DIR, "swanfile.nc"))
-    ds_swan = xr.open_dataset(os.path.join(FILES_DIR, "swanfile.nc"))

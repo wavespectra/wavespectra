@@ -128,7 +128,7 @@ class Spotter:
         try:
             self.data["data"]["spotterId"]
         except KeyError:
-            raise IOError("Not a Spotter Spectra file: {}".format(self.filename))
+            raise OSError(f"Not a Spotter Spectra file: {self.filename}")
 
     @property
     def time(self):
@@ -178,10 +178,5 @@ class Spotter:
         elif isinstance(self._filename_or_fileglob, str):
             filenames = sorted(glob.glob(self._filename_or_fileglob))
         if not filenames:
-            raise ValueError("No file located in {}".format(self._filename_or_fileglob))
+            raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames
-
-
-if __name__ == "__main__":
-    filename = "../../tests/sample_files/spotter_20180214.json"
-    dset = read_spotter(filename)

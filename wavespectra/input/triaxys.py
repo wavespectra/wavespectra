@@ -115,11 +115,11 @@ class Triaxys(object):
             if "ROWS" in line or "COLUMN 2" in line or not line:
                 break
         if not self.header.get("is_triaxys"):
-            raise IOError("Not a TRIAXYS Spectra file.")
+            raise OSError("Not a TRIAXYS Spectra file.")
         if not self.header.get("time"):
-            raise IOError("Cannot parse time")
+            raise OSError("Cannot parse time")
         if self.is_dir is not None and self.is_dir != self.header.get("is_dir"):
-            raise IOError("Cannot merge spectra 2D and spectra 1D")
+            raise OSError("Cannot merge spectra 2D and spectra 1D")
         self.is_dir = self.header.get("is_dir")
 
     def _append_spectrum(self):
@@ -146,7 +146,7 @@ class Triaxys(object):
                     self.spec_data[i, :] = row[-1]
             self._append_spectrum()
         except ValueError as err:
-            raise ValueError("Cannot read {}:\n{}".format(self.filename, err))
+            raise ValueError(f"Cannot read {self.filename}:\n{err}")
 
     def construct_dataset(self):
         self.dset = xr.DataArray(
@@ -155,7 +155,7 @@ class Triaxys(object):
         set_spec_attributes(self.dset)
         if not self.is_dir:
             self.dset = self.dset.isel(drop=True, **{attrs.DIRNAME: 0})
-            self.dset[attrs.SPECNAME].attrs.update(units="m^{2}.s")
+            self.dset[attrs.SPECNAME].attrs.update(units="m2 s")
 
     @property
     def dims(self):
@@ -186,7 +186,7 @@ class Triaxys(object):
             f0, df, nf = self.header["f0"], self.header["df"], self.header["nf"]
             return list(np.arange(f0, f0 + df * nf, df))
         except Exception as exc:
-            raise IOError("Not enough info to parse frequencies:\n{}".format(exc))
+            raise OSError(f"Not enough info to parse frequencies:\n{exc}")
 
     @property
     def filenames(self):
@@ -195,22 +195,5 @@ class Triaxys(object):
         elif isinstance(self._filename_or_fileglob, str):
             filenames = sorted(glob.glob(self._filename_or_fileglob))
         if not filenames:
-            raise ValueError("No file located in {}".format(self._filename_or_fileglob))
+            raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames
-
-
-if __name__ == "__main__":
-
-    # 1D files
-    dset_1d = read_triaxys("NONDIRSPEC/2018??????0000.NONDIRSPEC")
-
-    # 2D files
-    dset_2d = read_triaxys("DIRSPEC/2018??????0000.DIRSPEC")
-
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    dset_1d.spec.hs().plot(label="1D")
-    dset_2d.spec.hs().plot(label="2D")
-    plt.legend()

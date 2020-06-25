@@ -9,13 +9,13 @@ from wavespectra import (
     read_swan,
     read_netcdf,
     read_ww3,
-    read_ww3_msl,
     read_octopus,
     read_ncswan,
     read_triaxys,
     read_wwm,
     read_dataset,
-    read_era5
+    read_era5,
+    read_wavespectra
 )
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -44,7 +44,6 @@ class TestIO(object):
         [
             ("swanfile.spec", read_swan, "to_swan"),
             ("ww3file.nc", read_ww3, "to_ww3"),
-            ("ww3mslfile.nc", read_ww3_msl, None),
             ("swanfile.nc", read_ncswan, None),
             ("triaxys.DIRSPEC", read_triaxys, None),
             ("triaxys.NONDIRSPEC", read_triaxys, None),
@@ -74,25 +73,26 @@ class TestIO(object):
             )
 
     @pytest.mark.parametrize(
-        "read_func, filename",
+        "reader, filename",
         [
             (read_ww3, "ww3file.nc"),
             (read_wwm, "wwmfile.nc"),
             (read_ncswan, "swanfile.nc"),
+            (read_wavespectra, "wavespectra.nc"),
         ],
     )
-    def test_read_dataset(self, read_func, filename):
+    def test_read_dataset(self, reader, filename):
         """Check that read_dataset returns same object as read_{function}."""
-        readers = {
-            read_ww3: "ww3file.nc",
-            read_wwm: "wwmfile.nc",
-            read_ncswan: "swanfile.nc",
-        }
-        for reader, filename in readers.items():
-            filepath = os.path.join(FILES_DIR, filename)
-            dset1 = reader(filepath)
-            dset2 = read_dataset(xr.open_dataset(filepath))
-            assert dset1.equals(dset2)
+        filepath = os.path.join(FILES_DIR, filename)
+        dset1 = reader(filepath)
+        dset2 = read_dataset(xr.open_dataset(filepath))
+        assert dset1.equals(dset2)
+
+    def test_do_not_read_unknown_dataset(self):
+        dset = xr.open_dataset(os.path.join(FILES_DIR, "ww3file.nc"))
+        dset = dset.rename({"efth": "DUMMY"})
+        with pytest.raises(ValueError):
+            read_dataset(dset)
 
     def test_zarr(self):
         """Check reading of zarr dataset in ww3 format."""

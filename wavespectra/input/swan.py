@@ -66,15 +66,13 @@ def read_swan(filename, dirorder=True, as_site=False):
                     )
             else:
                 warnings.warn(
-                    "Times in {} and {} not consistent, not appending "
-                    "winds and depth".format(swanfile.filename, swanfile.tabfile)
+                    f"Times in {swanfile.filename} and {swanfile.tabfile} "
+                    f"not consistent, not appending winds and depth"
                 )
                 tab = None
         except Exception as exc:
             warnings.warn(
-                "Cannot parse depth and winds from {}:\n{}".format(
-                    swanfile.tabfile, exc
-                )
+                f"Cannot parse depth and winds from {swanfile.tabfile}:\n{exc}"
             )
 
     if swanfile.is_grid:
@@ -261,8 +259,8 @@ def read_swans(
                         )
                 else:
                     warnings.warn(
-                        "Times in {} and {} not consistent, not appending "
-                        "winds and depth".format(swanfile.filename, swanfile.tabfile)
+                        f"Times in {swanfile.filename} and {swanfile.tabfile} "
+                        f"not consistent, not appending winds and depth"
                     )
                     tab = pd.DataFrame()
                 tab = tab[
@@ -274,9 +272,7 @@ def read_swans(
                 ]
             except Exception as exc:
                 warnings.warn(
-                    "Cannot parse depth and winds from {}:\n{}".format(
-                        swanfile.tabfile, exc
-                    )
+                    f"Cannot parse depth and winds from {swanfile.tabfile}:\n{exc}"
                 )
         else:
             tab = pd.DataFrame()
@@ -285,7 +281,7 @@ def read_swans(
         if ndays is not None:
             tend = times[0] + datetime.timedelta(days=ndays)
             if tend > times[-1]:
-                raise IOError(
+                raise OSError(
                     "Times in %s does not extend for %0.2f days" % (filename, ndays)
                 )
             iend = times.index(min(times, key=lambda d: abs(d - tend)))
@@ -326,7 +322,7 @@ def read_swans(
                 nsites += 1
         except Exception:
             if len(spec_list) != arr.shape[0]:
-                raise IOError(
+                raise OSError(
                     "Time length in %s (%i) does not match previous files (%i), "
                     "cannot concatenate",
                     (filename, len(spec_list), arr.shape[0]),
@@ -347,7 +343,7 @@ def read_swans(
             or (list(lon) != list(lons))
             or (list(lat) != list(lats))
         ):
-            raise IOError("Inconsistent sites across cycles in glob pattern provided")
+            raise OSError("Inconsistent sites across cycles in glob pattern provided")
 
     # Ensuring consistent tabs
     cols = set(
@@ -358,7 +354,7 @@ def read_swans(
         ]
     )
     if len(cols) > 1:
-        raise IOError(
+        raise OSError(
             "Inconsistent tab files, ensure either all or none of the spectra have "
             "associated tabfiles and columns are consistent"
         )

@@ -2,7 +2,7 @@ autodoc
 attrdict
 click
 cmocean
-dask>=0.17.1
+dask
 gcsfs
 fsspec
 ipython
@@ -22,4 +22,4 @@ sphinx-autobuild
 sphinx_rtd_theme
 sphinx-autodoc-typehints
 toolz
-xarray<0.15.1
+xarray>=0.15

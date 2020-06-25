@@ -60,7 +60,6 @@ def from_ww3(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    _units = dset.efth.attrs.get("units", "")
     dset = dset.rename(MAPPING)
     # Ensuring lon,lat are not function of time
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
@@ -70,13 +69,8 @@ def from_ww3(dset):
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     # Converting from radians
     dset[attrs.SPECNAME] *= D2R
-    # Setting standard names and storing original file attributes
+    # Convert to coming-from
+    dset = dset.assign_coords({attrs.DIRNAME: (dset[attrs.DIRNAME] + 180) % 360})
+    # Setting standard attributes
     set_spec_attributes(dset)
-    dset[attrs.SPECNAME].attrs.update(
-        {"_units": _units, "_variable_name": attrs.SPECNAME}
-    )
-    # Adjustting attributes if 1D
-    if attrs.DIRNAME not in dset or len(dset.dir) == 1:
-        dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
-    dset[attrs.DIRNAME] = (dset[attrs.DIRNAME] + 180) % 360
     return dset.drop_vars(to_drop).drop_dims("string16", errors="ignore")

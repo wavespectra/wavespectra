@@ -12,12 +12,33 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.5.4 (YYYY-MM-DD)
+3.6.0 (Unreleased)
 ~~~~~~~~~~~~~~~~~~
 
 New Features
 ------------
+* New method to construct spectra from NDBC buoy data.
 * New method to output spectra in native WW3 format.
+
+Bug Fixes
+~~~~~~~~~
+* Ensure directions in coming-from convention in read_era5.
+* Fix coordinate values assignment errors with xarray>=0.15.1.
+
+deprecation
+~~~~~~~~~~~
+* Deprecated legacy `read_ww3_msl` reader.
+* Deprecated `read_dictionary` in favour of using xarray's `to_dict`_ and `from_dict`_ methods.
+
+.. _`to_dict`: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.to_dict.html
+.. _`from_dict`: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.from_dict.html
+
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Remove curly brackets from units.
+* Remove original variable attributes from files hidden with underscores.
+* Remove xarray version limitation to <0.15.0.
 
 
 3.5.3 (2020-04-14)

@@ -32,7 +32,5 @@ def read_wavespectra(filename_or_fileglob, file_format="netcdf", chunks={}):
         file_format=file_format,
         chunks=chunks,
     )
-    if attrs.DIRNAME not in dset or len(dset.dir) == 1:
-        dset[attrs.SPECNAME].attrs.update({"units": "m^{2}.s"})
     set_spec_attributes(dset)
     return dset

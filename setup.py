@@ -15,6 +15,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Scientific/Engineering :: Visualization",
@@ -75,7 +76,7 @@ install_requires = [
     "attrdict",
     "click",
     "cmocean",
-    "dask>=0.17.1",
+    "dask",
     "gcsfs",
     "fsspec",
     "matplotlib",
@@ -86,7 +87,7 @@ install_requires = [
     "sortedcontainers",
     "scipy",
     "toolz",
-    "xarray<0.15.1",
+    "xarray>=0.15",
     "zarr",
 ]
 
