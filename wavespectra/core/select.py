@@ -9,20 +9,89 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 logger = logging.getLogger(__name__)
 
 
+class Coordinates:
+    """Slicing of circular coordinates."""
+
+    def __init__(self, dset, lons, lats, dset_lons=None, dset_lats=None):
+        self.dset = dset
+        self._lons = np.array(lons)
+        self.lats = np.array(lats)
+
+        if dset_lons is None:
+            self.dset_lons = dset[attrs.LONNAME].values
+        else:
+            self.dset_lons = dset_lons
+        if dset_lats is None:
+            self.dset_lats = dset[attrs.LATNAME].values
+        else:
+            self.dset_lats = dset_lats
+
+        self._validate()
+        self.consistent = None
+
+    def _validate(self):
+        """Few input checks."""
+        assert len(self._lons) == len(self.lats), "lons and lats must have same size."
+        if (
+            attrs.LONNAME in dset.dims
+            or attrs.LATNAME in dset.dims
+            or attrs.SITENAME not in dset.dims
+        ):
+            raise NotImplementedError("sel only supports stations not gridded data.")
+
+    def _is_180(self, array):
+        """True if longitudes are in -180 -- 180 convention."""
+        if array.min() < 0 and array.max() <= 180:
+            return True
+        return False
+
+    def _is_360(self, array):
+        """True if longitudes are in 0 -- 360 convention."""
+        if array.min() >= 0 and array.max() <= 360:
+            return True
+        return False
+
+    def _swap_longitude_convention(self, longitudes):
+        """Swap longitudes between [0 <--> 360] and [-180 <--> 180] conventions."""
+        if self._is_180(longitudes):
+            return longitudes % 360
+        elif self._is_360(longitudes):
+            longitudes[longitudes > 180] = longitudes[longitudes > 180] - 360
+        return longitudes
+
+    @property
+    def lons(self):
+        """Longitudes to query, always in same convention as dataset."""
+        if self._is_360(self._lons) == self._is_360(self.dset_lons):
+            self.consistent = True
+            return self._lons
+        else:
+            self.consistent = False
+            return self._swap_longitude_convention(self._lons)
+
+
 def distance(lons, lats, lon, lat):
     """Distances between each station in (lons, lats) and site (lon, lat).
 
     Args:
-        lons (array): Longitudes of stations to search.
-        lats (array): Latitudes of stations to search.
-        lon (float): Longitude of of station to locate from lons.
-        lat (float): Latitude of of station to locate from lats.
+        lons (array): Longitudes of stations to search from.
+        lats (array): Latitudes of stations to search from.
+        lon (float): Longitude to locate from lons.
+        lat (float): Latitude to locate from lats.
 
     Returns:
         List of distances between each station and site.
 
+    err0 = np.abs(y % 360 - x % 360)
+    errmin = np.minimum(err0, 360 - err0)
+    errneg = np.logical_xor(y > x, err0 < 180)
+    signchanger = 1 - 2 * errneg
+    err = signchanger * errmin
+
     """
-    dist = np.sqrt((lons - (lon % 360.0)) ** 2 + (lats - lat) ** 2)
+    dist = np.sqrt((lons % 360 - lon % 360) ** 2 + (lats - lat) ** 2)
+    dist = np.minimum(dist, 360 - dist)
+    # import ipdb; ipdb.set_trace()
     if isinstance(dist, xr.DataArray):
         dist = dist.values
     return dist
@@ -55,15 +124,15 @@ def nearest(lons, lats, lon, lat):
     """Nearest station in (lons, lats) to site (lon, lat).
 
         Args:
-            lons (array): Longitudes of stations to search.
-            lats (array): Latitudes of stations to search.
-            lon (float): Longitude of of station to locate from lons.
-            lat (float): Latitude of of station to locate from lats.
+            lons (array): Longitudes of stations to search from.
+            lats (array): Latitudes of stations to search from.
+            lon (float): Longitude to locate from lons.
+            lat (float): Latitude to locate from lats.
 
         Returns:
             Index and distance of closest station.
 
-        """
+    """
     dist = distance(lons, lats, lon, lat)
     closest_id = dist.argmin()
     closest_dist = dist[closest_id]
@@ -101,19 +170,11 @@ def sel_nearest(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    assert len(lons) == len(lats), "`lons` and `lats` must be the same size."
-    if (
-        attrs.LONNAME in dset.dims
-        or attrs.LATNAME in dset.dims
-        or attrs.SITENAME not in dset.dims
-    ):
-        raise NotImplementedError("sel_nearest only implemented for stations dataset.")
-
-    # Providing station coordinates could be a lot more efficient for chunked datasets
-    if dset_lons is None:
-        dset_lons = dset[attrs.LONNAME].values
-    if dset_lats is None:
-        dset_lats = dset[attrs.LATNAME].values
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    lons = coords.lons
+    lats = coords.lats
+    dset_lons = coords.dset_lons
+    dset_lats = coords.dset_lats
 
     station_ids = []
     for lon, lat in zip(lons, lats):
@@ -133,7 +194,13 @@ def sel_nearest(
         station_ids = list(set(station_ids))
 
     dsout = dset.isel(**{attrs.SITENAME: station_ids})
+
+    # Return longitudes in the convention provided
+    if coords.consistent is False:
+        dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
+
     return dsout
 
 
@@ -160,19 +227,11 @@ def sel_idw(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    assert len(lons) == len(lats), "`lons` and `lats` must be the same size."
-    if (
-        attrs.LONNAME in dset.dims
-        or attrs.LATNAME in dset.dims
-        or attrs.SITENAME not in dset.dims
-    ):
-        raise NotImplementedError("sel_idw only implemented for stations dataset.")
-
-    # Providing station coordinates could be a lot more efficient for chunked datasets
-    if dset_lons is None:
-        dset_lons = dset[attrs.LONNAME].values
-    if dset_lats is None:
-        dset_lats = dset[attrs.LATNAME].values
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    lons = coords.lons
+    lats = coords.lats
+    dset_lons = coords.dset_lons
+    dset_lats = coords.dset_lats
 
     mask = dset.isel(site=0, drop=True) * np.nan
     dsout = []
@@ -216,6 +275,11 @@ def sel_idw(
     dsout[attrs.SITENAME] = np.arange(len(lons))
     dsout[attrs.LONNAME] = ((attrs.SITENAME), lons)
     dsout[attrs.LATNAME] = ((attrs.SITENAME), lats)
+
+    # Return longitudes in the convention provided
+    if coords.consistent is False:
+        dsout = dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+
     dsout.attrs = dset.attrs
     set_spec_attributes(dsout)
 
@@ -243,38 +307,196 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    assert (
-        len(lons) > 1 and len(lats) > 1
-    ), "`lons` and `lats` must have at least 2 values."
-    if (
-        attrs.LONNAME in dset.dims
-        or attrs.LATNAME in dset.dims
-        or attrs.SITENAME not in dset.dims
-    ):
-        raise NotImplementedError("sel_bbox only implemented for stations dataset.")
-
-    # Providing station coordinates could be a lot more efficient for chunked datasets
-    if dset_lons is None:
-        dset_lons = dset[attrs.LONNAME].values
-    if dset_lats is None:
-        dset_lats = dset[attrs.LATNAME].values
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    lons = coords.lons
+    lats = coords.lats
+    dset_lons = coords.dset_lons
+    dset_lats = coords.dset_lats
 
     minlon = min(lons) - tolerance
     minlat = min(lats) - tolerance
     maxlon = max(lons) + tolerance
     maxlat = max(lats) + tolerance
-    station_ids = np.where(
-        (dset_lons >= minlon)
-        & (dset_lats >= minlat)
-        & (dset_lons <= maxlon)
-        & (dset_lats <= maxlat)
-    )[0]
+    if not (coords._is_360(dset_lons) and not coords.consistent):
+        station_ids = np.where(
+            (dset_lons >= minlon)
+            & (dset_lats >= minlat)
+            & (dset_lons <= maxlon)
+            & (dset_lats <= maxlat)
+        )[0]
+    else:
+        station_ids = np.where(
+            (dset_lons >= maxlon)
+            & (dset_lats >= minlat)
+            & (dset_lons <= 360)
+            & (dset_lats <= maxlat)
+        )[0]
+        station_ids = np.append(
+            station_ids,
+            np.where(
+                (dset_lons >= 0)
+                & (dset_lats >= minlat)
+                & (dset_lons <= minlon)
+                & (dset_lats <= maxlat)
+            )[0]
+        )
+
     if station_ids.size == 0:
         raise ValueError(
             "No site found within bbox defined by "
-            f"([{minlon}, {minlat}], [{maxlon}, {maxlat}])"
+            f"([{min(coords._lons) - tolerance}, {minlat}], "
+            f"[{max(coords._lons) + tolerance}, {maxlat}])"
         )
 
     dsout = dset.isel(**{attrs.SITENAME: station_ids})
+
+    # Return longitudes in the convention provided
+    if coords.consistent is False:
+        dsout = dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
+
     return dsout
+
+
+if __name__ == "__main__":
+    # from ontake.ontake import Ontake
+    # from wavespectra import read_dataset
+    # ot = Ontake(master_url="gs://oceanum-catalog/oceanum.yml", namespace="api_spectra")
+    # dset = ot.dataset("oceanum_wave_weuro_era5_v1.0_spec")
+
+    from wavespectra import read_ww3
+    dset = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc").load()
+
+    #==========
+    # Nearest
+    #==========
+    # Both dataset and slice in [-180 <--> 180]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+
+    ds = sel_nearest(
+        dset=dset,
+        lons=[-9],
+        lats=[31],
+        tolerance=5.0
+    )
+    assert ds.lon == -10
+
+    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
+    dset["lon"].values = [0, 350]
+    dset["lat"].values = [30, 30]
+
+    ds = sel_nearest(
+        dset=dset,
+        lons=[-1],
+        lats=[31],
+        tolerance=5.0
+    )
+    assert ds.lon == 0
+
+    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+
+    ds = sel_nearest(
+        dset=dset,
+        lons=[351],
+        lats=[31],
+        tolerance=5.0,
+        dset_lons=dset.lon.values,
+        dset_lats=dset.lat.values
+    )
+    assert ds.lon == -10
+
+    #======
+    # IDW
+    #======
+
+    # Both dataset and slice in [-180 <--> 180]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+    lon = -9
+
+    ds = sel_idw(
+        dset=dset,
+        lons=[lon],
+        lats=[30],
+        tolerance=10.0,
+        max_sites=4,
+    )
+    assert ds.lon == lon
+
+    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
+    dset["lon"].values = [0, 350]
+    dset["lat"].values = [30, 30]
+    lon = -1
+
+    ds = sel_idw(
+        dset=dset,
+        lons=[lon],
+        lats=[30],
+        tolerance=10.0,
+        max_sites=4,
+    )
+    assert ds.lon == lon
+
+    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+    lon = 351
+
+    ds = sel_idw(
+        dset=dset,
+        lons=[lon],
+        lats=[30],
+        tolerance=10.0,
+        max_sites=4,
+    )
+    assert ds.lon == lon
+
+    #======
+    # bbox
+    #======
+    # Both dataset and slice in [-180 <--> 180]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+    lon = -9
+
+    ds = sel_bbox(
+        dset=dset,
+        lons=[-10, 10],
+        lats=[-35, 35],
+        tolerance=0.0,
+        dset_lons=dset.lon.values,
+        dset_lats=dset.lat.values
+    )
+    assert np.array_equal(ds.lon.values, dset.lon.values)
+
+    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
+    dset["lon"].values = [0, 350]
+    dset["lat"].values = [30, 30]
+
+    ds = sel_bbox(
+        dset=dset,
+        lons=[-11, 11],
+        lats=[-35, 35],
+        tolerance=0.0,
+        dset_lons=dset.lon.values,
+        dset_lats=dset.lat.values
+    )
+    assert np.array_equal(sorted(ds.lon.values % 360), sorted(dset.lon.values % 360))
+
+    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
+    dset["lon"].values = [-10, 10]
+    dset["lat"].values = [30, 30]
+
+    ds = sel_bbox(
+        dset=dset,
+        lons=[345, 355],
+        lats=[-35, 35],
+        tolerance=0.0,
+        dset_lons=dset.lon.values,
+        dset_lats=dset.lat.values
+    )
+    assert int(ds.lon) == 350
