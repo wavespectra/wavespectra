@@ -27,7 +27,11 @@ class Coordinates:
             self.dset_lats = dset_lats
 
         self._validate()
-        self.consistent = None
+
+        if self._is_360(self._lons) == self._is_360(self.dset_lons):
+            self.consistent = True
+        else:
+            self.consistent = False
 
     def _validate(self):
         """Few input checks."""
@@ -63,80 +67,63 @@ class Coordinates:
     def lons(self):
         """Longitudes to query, always in same convention as dataset."""
         if self._is_360(self._lons) == self._is_360(self.dset_lons):
-            self.consistent = True
             return self._lons
         else:
-            self.consistent = False
             return self._swap_longitude_convention(self._lons)
 
-
-def distance(lons, lats, lon, lat):
-    """Distances between each station in (lons, lats) and site (lon, lat).
-
-    Args:
-        lons (array): Longitudes of stations to search from.
-        lats (array): Latitudes of stations to search from.
-        lon (float): Longitude to locate from lons.
-        lat (float): Latitude to locate from lats.
-
-    Returns:
-        List of distances between each station and site.
-
-    err0 = np.abs(y % 360 - x % 360)
-    errmin = np.minimum(err0, 360 - err0)
-    errneg = np.logical_xor(y > x, err0 < 180)
-    signchanger = 1 - 2 * errneg
-    err = signchanger * errmin
-
-    """
-    dist = np.sqrt((lons % 360 - lon % 360) ** 2 + (lats - lat) ** 2)
-    dist = np.minimum(dist, 360 - dist)
-    # import ipdb; ipdb.set_trace()
-    if isinstance(dist, xr.DataArray):
-        dist = dist.values
-    return dist
-
-
-def nearer(lons, lats, lon, lat, tolerance=np.inf, max_sites=None):
-    """Nearer stations in (lons, lats) to site (lon, lat).
-
-    Args:
-        lons (array): Longitudes of stations to search.
-        lats (array): Latitudes of stations to search.
-        lon (float): Longitude of of station to locate from lons.
-        lat (float): Latitude of of station to locate from lats.
-        tolerance (float): Maximum distance for scanning neighbours.
-        max_sites (int): Maximum number of neighbours.
-
-    Returns:
-        Indices and distances of up to `max_sites` neighbour stations not farther from
-            `tolerance`, ordered from closer to farthest station.
-
-    """
-    dist = distance(lons, lats, lon, lat)
-    closest_ids = np.argsort(dist)
-    closest_dist = dist[closest_ids]
-    keep_ids = closest_ids[closest_dist <= tolerance][:max_sites]
-    return keep_ids, dist[keep_ids]
-
-
-def nearest(lons, lats, lon, lat):
-    """Nearest station in (lons, lats) to site (lon, lat).
+    def distance(self, lon, lat):
+        """Distance between each station in (dset_lons, dset_lats) and site (lon, lat).
 
         Args:
-            lons (array): Longitudes of stations to search from.
-            lats (array): Latitudes of stations to search from.
             lon (float): Longitude to locate from lons.
             lat (float): Latitude to locate from lats.
 
         Returns:
-            Index and distance of closest station.
+            List of distances between each station and site.
 
-    """
-    dist = distance(lons, lats, lon, lat)
-    closest_id = dist.argmin()
-    closest_dist = dist[closest_id]
-    return closest_id, closest_dist
+        """
+        dist = np.sqrt((self.dset_lons % 360 - lon % 360) ** 2 + (self.dset_lats - lat) ** 2)
+        dist = np.minimum(dist, 360 - dist)
+        # import ipdb; ipdb.set_trace()
+        if isinstance(dist, xr.DataArray):
+            dist = dist.values
+        return dist
+
+    def nearer(self, lon, lat, tolerance=np.inf, max_sites=None):
+        """Nearer stations in (dset_lons, dset_lats) to site (lon, lat).
+
+        Args:
+            lon (float): Longitude of of station to locate from lons.
+            lat (float): Latitude of of station to locate from lats.
+            tolerance (float): Maximum distance for scanning neighbours.
+            max_sites (int): Maximum number of neighbours.
+
+        Returns:
+            Indices and distances of up to `max_sites` neighbour stations not farther from
+                `tolerance`, ordered from closer to farthest station.
+
+        """
+        dist = self.distance(lon, lat)
+        closest_ids = np.argsort(dist)
+        closest_dist = dist[closest_ids]
+        keep_ids = closest_ids[closest_dist <= tolerance][:max_sites]
+        return keep_ids, dist[keep_ids]
+
+    def nearest(self, lon, lat):
+        """Nearest station in (dset_lons, dset_lats) to site (lon, lat).
+
+            Args:
+                lon (float): Longitude to locate from lons.
+                lat (float): Latitude to locate from lats.
+
+            Returns:
+                Index and distance of closest station.
+
+        """
+        dist = self.distance(lon, lat)
+        closest_id = dist.argmin()
+        closest_dist = dist[closest_id]
+        return closest_id, closest_dist
 
 
 def sel_nearest(
@@ -171,14 +158,10 @@ def sel_nearest(
 
     """
     coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
-    lons = coords.lons
-    lats = coords.lats
-    dset_lons = coords.dset_lons
-    dset_lats = coords.dset_lats
 
     station_ids = []
-    for lon, lat in zip(lons, lats):
-        closest_id, closest_dist = nearest(dset_lons, dset_lats, lon, lat)
+    for lon, lat in zip(coords.lons, coords.lats):
+        closest_id, closest_dist = coords.nearest(lon, lat)
         if closest_dist > tolerance:
             raise AssertionError(
                 f"Nearest site from (lat={lat}, lon={lon}) is {closest_dist:g} "
@@ -228,17 +211,11 @@ def sel_idw(
 
     """
     coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
-    lons = coords.lons
-    lats = coords.lats
-    dset_lons = coords.dset_lons
-    dset_lats = coords.dset_lats
 
     mask = dset.isel(site=0, drop=True) * np.nan
     dsout = []
-    for lon, lat in zip(lons, lats):
-        closest_ids, closest_dist = nearer(
-            dset_lons, dset_lats, lon, lat, tolerance, max_sites
-        )
+    for lon, lat in zip(coords.lons, coords.lats):
+        closest_ids, closest_dist = coords.nearer(lon, lat, tolerance, max_sites)
         if len(closest_ids) == 0:
             logger.debug(
                 f"No stations within {tolerance} deg of site (lat={lat}, lon={lon}), "
@@ -272,9 +249,9 @@ def sel_idw(
     dsout = xr.concat(dsout, dim=attrs.SITENAME).transpose(*dset[attrs.SPECNAME].dims)
 
     # Redefining coordinates and variables
-    dsout[attrs.SITENAME] = np.arange(len(lons))
-    dsout[attrs.LONNAME] = ((attrs.SITENAME), lons)
-    dsout[attrs.LATNAME] = ((attrs.SITENAME), lats)
+    dsout[attrs.SITENAME] = np.arange(len(coords.lons))
+    dsout[attrs.LONNAME] = ((attrs.SITENAME), coords.lons)
+    dsout[attrs.LATNAME] = ((attrs.SITENAME), coords.lats)
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
@@ -308,36 +285,32 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
 
     """
     coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
-    lons = coords.lons
-    lats = coords.lats
-    dset_lons = coords.dset_lons
-    dset_lats = coords.dset_lats
 
-    minlon = min(lons) - tolerance
-    minlat = min(lats) - tolerance
-    maxlon = max(lons) + tolerance
-    maxlat = max(lats) + tolerance
-    if not (coords._is_360(dset_lons) and not coords.consistent):
+    minlon = min(coords.lons) - tolerance
+    minlat = min(coords.lats) - tolerance
+    maxlon = max(coords.lons) + tolerance
+    maxlat = max(coords.lats) + tolerance
+    if not (coords._is_360(coords.dset_lons) and not coords.consistent):
         station_ids = np.where(
-            (dset_lons >= minlon)
-            & (dset_lats >= minlat)
-            & (dset_lons <= maxlon)
-            & (dset_lats <= maxlat)
+            (coords.dset_lons >= minlon)
+            & (coords.dset_lats >= minlat)
+            & (coords.dset_lons <= maxlon)
+            & (coords.dset_lats <= maxlat)
         )[0]
     else:
         station_ids = np.where(
-            (dset_lons >= maxlon)
-            & (dset_lats >= minlat)
-            & (dset_lons <= 360)
-            & (dset_lats <= maxlat)
+            (coords.dset_lons >= maxlon)
+            & (coords.dset_lats >= minlat)
+            & (coords.dset_lons <= 360)
+            & (coords.dset_lats <= maxlat)
         )[0]
         station_ids = np.append(
             station_ids,
             np.where(
-                (dset_lons >= 0)
-                & (dset_lats >= minlat)
-                & (dset_lons <= minlon)
-                & (dset_lats <= maxlat)
+                (coords.dset_lons >= 0)
+                & (coords.dset_lats >= minlat)
+                & (coords.dset_lons <= minlon)
+                & (coords.dset_lats <= maxlat)
             )[0]
         )
 
