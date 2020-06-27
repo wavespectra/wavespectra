@@ -40,7 +40,7 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
     )
 
     # Convert ERA5 format to wavespectra format
-    dset = 10 ** dset
+    dset = 10 ** dset * np.pi / 180
     dset = dset.fillna(0)
 
     dset[attrs.FREQNAME] = freqs if freqs else default_freqs
