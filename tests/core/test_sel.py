@@ -4,13 +4,14 @@ import pytest
 import numpy as np
 
 from wavespectra.core.attributes import attrs
-from wavespectra import read_ww3
+from wavespectra import read_ww3, read_era5
+from wavespectra.core.select import Coordinates
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-class TestDatasetWrapper(object):
-    """Test SpecDataset wrapper."""
+class TestSel:
+    """Test Selecting methods."""
 
     @classmethod
     def setup_class(self):
@@ -23,6 +24,12 @@ class TestDatasetWrapper(object):
         self.lats_exact = self.lats[:2]
         self.lons_inexact = self.lons[-1:]
         self.lats_inexact = self.lats[-1:]
+
+    def test_sel_gridded(self):
+        """Test sel exception for gridded data."""
+        dset = read_era5(os.path.join(FILES_DIR, "era5file.nc"))
+        with pytest.raises(NotImplementedError):
+            dset.spec.sel(lons=self.lons, lats=self.lats, method="idw")
 
     def test_dset_sel_idw(self):
         """Assert that sel/idw method runs."""
@@ -40,6 +47,16 @@ class TestDatasetWrapper(object):
             tolerance=0.0,
         )
         dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
+
+    def test_dset_sel_bbox_outside(self):
+        """Assert that sel/bbox method raises for bbox outside dataset."""
+        with pytest.raises(ValueError):
+            dset = self.dset.spec.sel(
+                lons=[10, 20],
+                lats=[-90, -85],
+                method="bbox",
+                tolerance=0.0,
+            )
 
     def test_dset_sel_nearest(self):
         """Assert that sel/nearest method runs."""
@@ -105,3 +122,161 @@ class TestDatasetWrapper(object):
             lower = np.array([min(s1, s2) for s1, s2 in zip(site0, site1)])
             upper = np.array([max(s1, s2) for s1, s2 in zip(site0, site1)])
             assert (upper - idw > 0).all() and (idw - lower > 0).all()
+
+class TestSelCoordinatesConventions:
+    """Test Sel methods with different coordinates conventions."""
+
+    @classmethod
+    def setup_class(self):
+        """Read test spectra from file."""
+        self.dset = read_ww3(os.path.join(FILES_DIR, "ww3file.nc"))
+
+    def test_coordinates(self):
+        """Test initiation of Coordinates object."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lons = [0, 50]
+        lats = [30, 30]
+        coords = Coordinates(dset, lons=lons, lats=lats)
+        dset.equals(coords.dset)
+        np.array_equal(lons, coords.lons)
+        np.array_equal(lats, coords.lats)
+        np.array_equal(coords.dset_lons, dset.lon.values)
+        np.array_equal(coords.dset_lats, dset.lat.values)
+        coords.consistent is False
+        coords.distance(dset.lon[0], dset.lat[0])
+
+    def test_nearest_both_180(self):
+        """Test nearest with both dataset and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        ds = dset.spec.sel(
+            method="nearest",
+            lons=[-9],
+            lats=[31],
+            tolerance=5.0
+        )
+        assert ds.lon == -10
+
+    def test_nearest_dset_360_slice_180(self):
+        """Test nearest with Dataset in [0 <--> 360] and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [0, 350]
+        dset["lat"].values = [30, 30]
+        ds = dset.spec.sel(
+            method="nearest",
+            lons=[-1],
+            lats=[31],
+            tolerance=5.0
+        )
+        assert ds.lon == 0
+
+    def test_nearest_dset_180_slice_360(self):
+        """Test nearest with Dataset in [-180 <--> 180] and slice in [0 <--> 360]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+
+        ds = dset.spec.sel(
+            method="nearest",
+            lons=[351],
+            lats=[31],
+            tolerance=5.0,
+            dset_lons=dset.lon.values,
+            dset_lats=dset.lat.values
+        )
+        assert ds.lon == -10
+
+    def test_idw_both_180(self):
+        """Test IDW with both dataset and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lon = -9
+        ds = dset.spec.sel(
+            method="idw",
+            lons=[lon],
+            lats=[30],
+            tolerance=10.0,
+            max_sites=4,
+        )
+        assert ds.lon == lon
+
+    def test_idw_dset_360_slice_180(self):
+        """Test IDW with Dataset in [0 <--> 360] and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [0, 350]
+        dset["lat"].values = [30, 30]
+        lon = -1
+        ds = dset.spec.sel(
+            method="idw",
+            lons=[lon],
+            lats=[30],
+            tolerance=10.0,
+            max_sites=4,
+        )
+        assert ds.lon == lon
+
+    def test_idw_dset_180_slice_360(self):
+        """Test IDW with Dataset in [-180 <--> 180] and slice in [0 <--> 360]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lon = 351
+        ds = dset.spec.sel(
+            method="idw",
+            lons=[lon],
+            lats=[30],
+            tolerance=10.0,
+            max_sites=4,
+        )
+        assert ds.lon == lon
+
+    def test_bbox_both_180(self):
+        """Test bbox with both dataset and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lon = -9
+
+        ds = dset.spec.sel(
+            method="bbox",
+            lons=[-10, 10],
+            lats=[-35, 35],
+            tolerance=0.0,
+            dset_lons=dset.lon.values,
+            dset_lats=dset.lat.values
+        )
+        assert np.array_equal(ds.lon.values, dset.lon.values)
+
+    def test_bbox_dset_360_slice_180(self):
+        """Test bbox with Dataset in [0 <--> 360] and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [0, 350]
+        dset["lat"].values = [30, 30]
+        ds = dset.spec.sel(
+            method="bbox",
+            lons=[-11, 11],
+            lats=[-35, 35],
+            tolerance=0.0,
+            dset_lons=dset.lon.values,
+            dset_lats=dset.lat.values
+        )
+        assert np.array_equal(sorted(ds.lon.values % 360), sorted(dset.lon.values % 360))
+
+    def test_bbox_dset_180_slice_360(self):
+        """Test bbox with Dataset in [-180 <--> 180] and slice in [0 <--> 360]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        ds = dset.spec.sel(
+            method="bbox",
+            lons=[345, 355],
+            lats=[-35, 35],
+            tolerance=0.0,
+            dset_lons=dset.lon.values,
+            dset_lats=dset.lat.values
+        )
+        assert int(ds.lon) == 350

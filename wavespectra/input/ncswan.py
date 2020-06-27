@@ -53,7 +53,7 @@ def read_ncswan(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chu
 def from_ncswan(dset):
     """Format SWAN netcdf dataset to receive wavespectra accessor.
 
-    Args:
+    Args:o
         dset (xr.Dataset): Dataset created from a SWAN netcdf file.
 
     Returns:
