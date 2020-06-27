@@ -18,6 +18,6 @@ ds = (
     .rename({"freq": "period"})
     .load()
 )
-ds.period.values = 1 / ds.period.values
+ds = ds.assign_coords({"period": 1 / ds.period})
 ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
 p = ds.plot.contourf(x="time", y="period", vmax=1.25)
