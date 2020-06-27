@@ -70,6 +70,7 @@ These input functions are currently available from the main module level:
     read_era5
     read_swan
     read_triaxys
+    read_ndbc
     read_spotter
     read_octopus
     read_dataset
