@@ -22,7 +22,9 @@ New Features
 
 Bug Fixes
 ~~~~~~~~~
+* Fix bug with selecting circular longitudes in different conventions. 
 * Ensure directions in coming-from convention in read_era5.
+* Fix radian convertions in read_era5.
 * Fix coordinate values assignment errors with xarray>=0.15.1.
 
 deprecation
