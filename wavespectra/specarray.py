@@ -297,6 +297,9 @@ class SpecArray(object):
         if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
             other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
+        other.freq.attrs = self._obj.freq.attrs
+        other.dir.attrs = self._obj.dir.attrs
+
         return other
 
     def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
