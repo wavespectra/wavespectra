@@ -10,7 +10,16 @@ logger = logging.getLogger(__name__)
 
 
 class Coordinates:
-    """Slicing of circular coordinates."""
+    """Slicing of circular coordinates.
+
+    Args:
+        dset (xr.Dataset): Dataset object to slice from.
+        lons (array): Longitudes to slice.
+        lats (array): Latitudes to slice.
+        dset_lons (array): Dataset longitudes for optimising.
+        dset_lats (array): Dataset latitudes for optimising.
+
+    """
 
     def __init__(self, dset, lons, lats, dset_lons=None, dset_lats=None):
         self.dset = dset
@@ -330,146 +339,3 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
 
     return dsout
-
-
-if __name__ == "__main__":
-    # from ontake.ontake import Ontake
-    # from wavespectra import read_dataset
-    # ot = Ontake(master_url="gs://oceanum-catalog/oceanum.yml", namespace="api_spectra")
-    # dset = ot.dataset("oceanum_wave_weuro_era5_v1.0_spec")
-
-    from wavespectra import read_ww3
-    dset = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc").load()
-
-    #==========
-    # Nearest
-    #==========
-    # Both dataset and slice in [-180 <--> 180]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-
-    ds = sel_nearest(
-        dset=dset,
-        lons=[-9],
-        lats=[31],
-        tolerance=5.0
-    )
-    assert ds.lon == -10
-
-    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
-    dset["lon"].values = [0, 350]
-    dset["lat"].values = [30, 30]
-
-    ds = sel_nearest(
-        dset=dset,
-        lons=[-1],
-        lats=[31],
-        tolerance=5.0
-    )
-    assert ds.lon == 0
-
-    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-
-    ds = sel_nearest(
-        dset=dset,
-        lons=[351],
-        lats=[31],
-        tolerance=5.0,
-        dset_lons=dset.lon.values,
-        dset_lats=dset.lat.values
-    )
-    assert ds.lon == -10
-
-    #======
-    # IDW
-    #======
-
-    # Both dataset and slice in [-180 <--> 180]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-    lon = -9
-
-    ds = sel_idw(
-        dset=dset,
-        lons=[lon],
-        lats=[30],
-        tolerance=10.0,
-        max_sites=4,
-    )
-    assert ds.lon == lon
-
-    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
-    dset["lon"].values = [0, 350]
-    dset["lat"].values = [30, 30]
-    lon = -1
-
-    ds = sel_idw(
-        dset=dset,
-        lons=[lon],
-        lats=[30],
-        tolerance=10.0,
-        max_sites=4,
-    )
-    assert ds.lon == lon
-
-    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-    lon = 351
-
-    ds = sel_idw(
-        dset=dset,
-        lons=[lon],
-        lats=[30],
-        tolerance=10.0,
-        max_sites=4,
-    )
-    assert ds.lon == lon
-
-    #======
-    # bbox
-    #======
-    # Both dataset and slice in [-180 <--> 180]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-    lon = -9
-
-    ds = sel_bbox(
-        dset=dset,
-        lons=[-10, 10],
-        lats=[-35, 35],
-        tolerance=0.0,
-        dset_lons=dset.lon.values,
-        dset_lats=dset.lat.values
-    )
-    assert np.array_equal(ds.lon.values, dset.lon.values)
-
-    # Dataset in [0 <--> 360] and slice in [-180 <--> 180]
-    dset["lon"].values = [0, 350]
-    dset["lat"].values = [30, 30]
-
-    ds = sel_bbox(
-        dset=dset,
-        lons=[-11, 11],
-        lats=[-35, 35],
-        tolerance=0.0,
-        dset_lons=dset.lon.values,
-        dset_lats=dset.lat.values
-    )
-    assert np.array_equal(sorted(ds.lon.values % 360), sorted(dset.lon.values % 360))
-
-    # Dataset in [-180 <--> 180] and slice in [0 <--> 360]
-    dset["lon"].values = [-10, 10]
-    dset["lat"].values = [30, 30]
-
-    ds = sel_bbox(
-        dset=dset,
-        lons=[345, 355],
-        lats=[-35, 35],
-        tolerance=0.0,
-        dset_lons=dset.lon.values,
-        dset_lats=dset.lat.values
-    )
-    assert int(ds.lon) == 350
