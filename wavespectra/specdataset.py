@@ -118,10 +118,10 @@ class SpecDataset(metaclass=Plugin):
             lons (list): Longitude values of locations to select.
             lats (list): Latitude values of locations to select.
             method (str): Method to use for inexact matches:
-                idw: Inverse distance weighting selection.
-                nearest: Nearest site selection.
-                bbox: Sites inside bbox [min(lons), min(lats)], [max(lons), max(lats)].
-                None: Only exact matches.
+            * idw: Inverse distance weighting selection.
+            * nearest: Nearest site selection.
+            * bbox: Sites inside bbox [min(lons), min(lats)], [max(lons), max(lats)].
+            * None: Only exact matches.
             tolerance (float): Maximum distance between locations and original stations
                 for inexact matches.
             dset_lons (array): Longitude of stations in dset, not required but could

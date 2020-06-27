@@ -114,6 +114,7 @@ Input functions
    read_spotter
    read_octopus
    read_dataset
+   read_ndbc
 
 **Convenience SWAN ASCII input functions**
 
@@ -181,9 +182,9 @@ Internal core functions and objects
    core.select.sel_nearest
    core.select.sel_bbox
    core.select.sel_idw
-   core.select.distance
-   core.select.nearer
-   core.select.nearest
+   core.select.Coordinates.distance
+   core.select.Coordinates.nearer
+   core.select.Coordinates.nearest
 
 **misc module**
 
