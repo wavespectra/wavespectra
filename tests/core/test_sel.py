@@ -4,7 +4,8 @@ import pytest
 import numpy as np
 
 from wavespectra.core.attributes import attrs
-from wavespectra import read_ww3
+from wavespectra import read_ww3, read_era5
+from wavespectra.core.select import Coordinates
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
@@ -24,6 +25,12 @@ class TestSel:
         self.lons_inexact = self.lons[-1:]
         self.lats_inexact = self.lats[-1:]
 
+    def test_sel_gridded(self):
+        """Test sel exception for gridded data."""
+        dset = read_era5(os.path.join(FILES_DIR, "era5file.nc"))
+        with pytest.raises(NotImplementedError):
+            dset.spec.sel(lons=self.lons, lats=self.lats, method="idw")
+
     def test_dset_sel_idw(self):
         """Assert that sel/idw method runs."""
         dset = self.dset.spec.sel(
@@ -40,6 +47,16 @@ class TestSel:
             tolerance=0.0,
         )
         dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
+
+    def test_dset_sel_bbox_outside(self):
+        """Assert that sel/bbox method raises for bbox outside dataset."""
+        with pytest.raises(ValueError):
+            dset = self.dset.spec.sel(
+                lons=[10, 20],
+                lats=[-90, -85],
+                method="bbox",
+                tolerance=0.0,
+            )
 
     def test_dset_sel_nearest(self):
         """Assert that sel/nearest method runs."""
@@ -113,6 +130,22 @@ class TestSelCoordinatesConventions:
     def setup_class(self):
         """Read test spectra from file."""
         self.dset = read_ww3(os.path.join(FILES_DIR, "ww3file.nc"))
+
+    def test_coordinates(self):
+        """Test initiation of Coordinates object."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lons = [0, 50]
+        lats = [30, 30]
+        coords = Coordinates(dset, lons=lons, lats=lats)
+        dset.equals(coords.dset)
+        np.array_equal(lons, coords.lons)
+        np.array_equal(lats, coords.lats)
+        np.array_equal(coords.dset_lons, dset.lon.values)
+        np.array_equal(coords.dset_lats, dset.lat.values)
+        coords.consistent is False
+        coords.distance(dset.lon[0], dset.lat[0])
 
     def test_nearest_both_180(self):
         """Test nearest with both dataset and slice in [-180 <--> 180]."""
