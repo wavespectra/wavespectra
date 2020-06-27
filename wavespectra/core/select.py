@@ -37,9 +37,9 @@ class Coordinates:
         """Few input checks."""
         assert len(self._lons) == len(self.lats), "lons and lats must have same size."
         if (
-            attrs.LONNAME in dset.dims
-            or attrs.LATNAME in dset.dims
-            or attrs.SITENAME not in dset.dims
+            attrs.LONNAME in self.dset.dims
+            or attrs.LATNAME in self.dset.dims
+            or attrs.SITENAME not in self.dset.dims
         ):
             raise NotImplementedError("sel only supports stations not gridded data.")
 
