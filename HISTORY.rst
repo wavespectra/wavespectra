@@ -12,20 +12,21 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.6.0 (Unreleased)
+3.6.0 (2020-06-27)
 ~~~~~~~~~~~~~~~~~~
 
 New Features
 ------------
-* New method to construct spectra from NDBC buoy data.
+* New method to construct spectra from NDBC buoy data (`PR17 <https://github.com/wavespectra/wavespectra/pull/17>`_).
 * New method to output spectra in native WW3 format.
 
 Bug Fixes
 ~~~~~~~~~
-* Fix bug with selecting circular longitudes in different conventions. 
-* Ensure directions in coming-from convention in read_era5.
-* Fix radian convertions in read_era5.
-* Fix coordinate values assignment errors with xarray>=0.15.1.
+* Fix bug with selecting circular longitudes in different conventions (`GH20 <https://github.com/wavespectra/wavespectra/issues/20>`_).
+* Ensure directions in coming-from convention in read_era5 (`PR18 <https://github.com/wavespectra/wavespectra/pull/18>`_).
+* Fix radian convertions in read_era5 (`PR19 <https://github.com/wavespectra/wavespectra/pull/19>`_).
+* Fix coordinate values assignment errors with xarray>=0.15.1 (`GH16 <https://github.com/wavespectra/wavespectra/issues/16>`_).
+* Ensure coordinates attributes are kept with certain readers.
 
 deprecation
 ~~~~~~~~~~~
@@ -39,7 +40,7 @@ deprecation
 Internal Changes
 ~~~~~~~~~~~~~~~~
 * Remove curly brackets from units.
-* Remove original variable attributes from files hidden with underscores.
+* Remove original variable attributes from files hidden with underscores (`_units` and `_variable_name`).
 * Remove xarray version limitation to <0.15.0.
 
 
