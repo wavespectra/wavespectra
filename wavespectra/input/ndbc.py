@@ -82,14 +82,15 @@ def read_ndbc(filename, dirs=np.arange(0, 360, 10)):
     """Read spectra from NDBC wave buoy ASCII files.
 
     Both the history and realtime formats are supported. Realtime formats are decribed
-        at https://www.ndbc.noaa.gov/measdes.shtml.
+    at https://www.ndbc.noaa.gov/measdes.shtml.
 
     Args:
         - filename (str) or filenames (list): filename of 1D spectral density file or
-            list of the five component files for directional spectra as
-            [spec, swdir, swdir2, swr1, swr2].  There is no way to verify the component
-            files for the historical directional spectra, so the order entered in the
-            list is what is used. The history and realtime formats are automatically detected.
+          list of the five component files for directional spectra as
+          [`spec`, `swdir`, `swdir2`, `swr1`, `swr2`].  There is no way to verify the
+          component files for the historical directional spectra, so the order entered
+          in the list is what is used. The history and realtime formats are
+          automatically detected.
         - dirs (array): vector of directional bins for spectral reconstruction.
         - attrs (dict): additional global attributes.
 
