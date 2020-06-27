@@ -93,6 +93,8 @@ class Coordinates:
         """
         dist = np.sqrt((self.dset_lons % 360 - np.array(lon) % 360) ** 2 + (self.dset_lats - np.array(lat)) ** 2)
         dist = np.minimum(dist, 360 - dist)
+        if isinstance(dist, xr.DataArray):
+            dist = dist.values
         return dist
 
     def nearer(self, lon, lat, tolerance=np.inf, max_sites=None):
