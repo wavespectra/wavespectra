@@ -9,7 +9,7 @@ def to_netcdf(
     ncformat="NETCDF4",
     compress=True,
     packed=True,
-    time_encoding={"units": "days since 1900-01-01"},
+    time_encoding={"units": "seconds since 1970-01-01"},
 ):
     """Write spectra in netCDF format using wavespectra conventions.
 
