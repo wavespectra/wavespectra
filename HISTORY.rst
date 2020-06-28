@@ -13,6 +13,14 @@ Releases
 ********
 
 
+3.6.3 (2020-06-28)
+~~~~~~~~~~~~~~~~~~
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Increase time resolution in netcdf outptu from to_netcdf.
+
+
 3.6.2 (2020-06-28)
 ~~~~~~~~~~~~~~~~~~
 
