@@ -12,6 +12,14 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.6.1 (2020-06-28)
+~~~~~~~~~~~~~~~~~~
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Packing output netcdf files as int32 dtype by default.
+
+
 3.6.0 (2020-06-27)
 ~~~~~~~~~~~~~~~~~~
 
