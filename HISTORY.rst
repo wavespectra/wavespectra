@@ -12,6 +12,15 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+
+3.6.2 (2020-06-28)
+~~~~~~~~~~~~~~~~~~
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Make netcdf packing work for datasets in zarr format.
+
+
 3.6.1 (2020-06-28)
 ~~~~~~~~~~~~~~~~~~
 
