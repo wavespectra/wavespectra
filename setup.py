@@ -83,7 +83,11 @@ def ext_configuration(parent_package="", top_path=None):
             "wavespectra/specpart/specpart.f90",
         ],
     )
-    config.add_data_files("LICENSE.txt", "wavespectra/core/attributes.yml")
+    config.add_data_files(
+        "LICENSE.txt",
+        "wavespectra/core/attributes.yml",
+        "wavespectra/output/ww3.yml"
+    )
     return config
 
 
@@ -127,7 +131,6 @@ setup(
     license="MIT license",
     packages=find_packages(),
     include_package_data=True,
-    package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
     install_requires=install_requires,
     extras_require=extras_require(),
