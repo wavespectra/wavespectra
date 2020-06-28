@@ -114,4 +114,8 @@ class TestIO(object):
 
     def _check(self):
         self.ds2 = self.read_func(self.outfile)
-        assert self.ds2.efth.values == pytest.approx(self.ds.efth.values, rel=1e-6)
+        stats = ["hs", "tp", "dpm"]
+        ds = self.ds.spec.stats(stats)
+        ds2 = self.ds2.spec.stats(stats)
+        for stat in stats:
+            assert ds[stat].values == pytest.approx(ds2[stat].values, rel=1e-3)
