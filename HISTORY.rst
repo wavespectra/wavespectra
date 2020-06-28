@@ -13,6 +13,14 @@ Releases
 ********
 
 
+3.6.4 (2020-06-29)
+~~~~~~~~~~~~~~~~~~
+
+Bug Fixes
+~~~~~~~~~
+* Ensure yml config is shipped with distribution.
+
+
 3.6.3 (2020-06-28)
 ~~~~~~~~~~~~~~~~~~
 
