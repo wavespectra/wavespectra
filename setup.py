@@ -111,7 +111,6 @@ setup(
     license="MIT license",
     packages=find_packages(),
     include_package_data=True,
-    # package_data={"attributes": ["wavespectra/core/attributes.yml"]},
     platforms=["any"],
     install_requires=install_requires,
     extras_require=extras_require(),

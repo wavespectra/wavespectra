@@ -961,13 +961,3 @@ def hs(spec, freqs, dirs, tail=True):
     if tail and freqs[-1] > 0.333:
         Etot += 0.25 * E[-1] * freqs[-1]
     return 4.0 * np.sqrt(Etot)
-
-
-if __name__ == "__main__":
-    from wavespectra import read_ww3
-
-    dset = read_ww3("/wave/socean/spec20120101T00_spec.nc", chunks={"station": 1})
-    ds = dset.isel(site=2000)
-    ret = dset.spec.dspr()
-    # part = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt)
-    # print(part.isel(time=0).spec.hs().values)
