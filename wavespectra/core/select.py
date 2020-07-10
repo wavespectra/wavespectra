@@ -95,7 +95,7 @@ class Coordinates:
         dist = np.minimum(dist, 360 - dist)
         if isinstance(dist, xr.DataArray):
             dist = dist.values
-        return dist
+        return np.abs(dist)
 
     def nearer(self, lon, lat, tolerance=np.inf, max_sites=None):
         """Nearer stations in (dset_lons, dset_lats) to site (lon, lat).
@@ -188,7 +188,7 @@ def sel_nearest(
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
-        dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+        dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
 
@@ -254,7 +254,10 @@ def sel_idw(
             dsout.append(weighted)
 
     # Concat sites into dataset
-    dsout = xr.concat(dsout, dim=attrs.SITENAME).transpose(*dset[attrs.SPECNAME].dims)
+    dsout = xr.concat(dsout, dim=attrs.SITENAME)
+    for dvar in dsout.data_vars:
+        if set(dsout[dvar].dims) == set(dset[dvar].dims):
+            dsout[dvar] = dsout[dvar].transpose(*dset[dvar].dims)
 
     # Redefining coordinates and variables
     dsout[attrs.SITENAME] = np.arange(len(coords.lons))
@@ -263,7 +266,7 @@ def sel_idw(
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
-        dsout = dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+        dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
     dsout.attrs = dset.attrs
     set_spec_attributes(dsout)
@@ -333,7 +336,7 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
-        dsout = dsout.assign({"lon": coords._swap_longitude_convention(dsout.lon)})
+        dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
 
