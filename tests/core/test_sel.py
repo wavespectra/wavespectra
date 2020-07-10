@@ -187,7 +187,7 @@ class TestSelCoordinatesConventions:
             dset_lons=dset.lon.values,
             dset_lats=dset.lat.values
         )
-        assert ds.lon == -10
+        assert ds.lon == 350
 
     def test_idw_both_180(self):
         """Test IDW with both dataset and slice in [-180 <--> 180]."""
