@@ -17,11 +17,7 @@ def read_json(filename, date_format="%Y-%m-%dT%H:%M:%SZ"):
         - date_format(str): strftime format for de-serializing datetimes.
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from netcdf file.
-
-    Note:
-        - Any json dumped from xarray datasets in formats recognised by
-          `wavespectra.read_dataset` (e.g., ww3, ncswan) can be read with `read_json`.
+        - dset (SpecDataset): spectra dataset object read from json file.
 
     """
     with open(filename) as fp:
