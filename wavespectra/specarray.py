@@ -453,6 +453,8 @@ class SpecArray(object):
         )
 
     def momd(self, mom=0, theta=90.0):
+        if self.dir is None:
+            raise ValueError("Cannot calculate momd from 1d, frequency spectra.")
         """Calculate given directional moment."""
         cp = np.cos(np.radians(180 + theta - self.dir)) ** mom
         sp = np.sin(np.radians(180 + theta - self.dir)) ** mom
@@ -494,6 +496,8 @@ class SpecArray(object):
 
     def dm(self):
         """Mean wave direction from the 1st spectral moment Dm."""
+        if self.dir is None:
+            raise ValueError("Cannot calculate dm from 1d, frequency spectra.")
         moms, momc = self.momd(1)
         dm = np.arctan2(
             moms.sum(dim=attrs.FREQNAME, skipna=False),
@@ -515,6 +519,8 @@ class SpecArray(object):
         frequency-integrated spectrum is maximum.
 
         """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dp from 1d, frequency spectra.")
         ipeak = self._obj.sum(dim=attrs.FREQNAME).argmax(dim=attrs.DIRNAME)
         template = self._obj.sum(dim=attrs.FREQNAME, skipna=False).sum(
             dim=attrs.DIRNAME, skipna=False
@@ -541,6 +547,8 @@ class SpecArray(object):
         Warning: This method cannot be computed lazily.
 
         """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dpm from 1d, frequency spectra.")
         ipeak = self._peak(self.oned())
         moms, momc = self.momd(1)
         moms_peak = self._collapse_array(
@@ -567,6 +575,8 @@ class SpecArray(object):
         The one-sided directional width of the spectrum.
 
         """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dspr from 1d, frequency spectra.")
         moms, momc = self.momd(1)
         # Manipulate dimensions so calculations work
         moms = self._twod(moms, dim=attrs.DIRNAME)
