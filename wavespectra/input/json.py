@@ -3,7 +3,6 @@ import json
 import datetime
 import xarray as xr
 
-from wavespectra import read_dataset
 from wavespectra.core.attributes import set_spec_attributes
 
 
