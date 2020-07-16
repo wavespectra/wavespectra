@@ -172,16 +172,3 @@ class SpecDataset(metaclass=Plugin):
             **kwargs
         )
         return dsout
-
-
-if __name__ == "__main__":
-    from wavespectra import read_ww3
-
-    here = os.path.dirname(os.path.abspath(__file__))
-    # filename = os.path.join(here, "../tests/sample_files/swanfile.spec")
-    filename = os.path.join(here, "../tests/sample_files/spec20170101T00_spec.nc")
-    dset = read_ww3(filename)
-
-    lons = [283.5, 284, 284.4974365234375]
-    lats = [-53.500091552734375, -53.500091552734375, -53.500091552734375]
-    ds = dset.spec.sel(lons, lats, method="nearest", tolerance=2.0)
