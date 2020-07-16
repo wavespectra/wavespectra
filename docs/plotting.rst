@@ -13,6 +13,7 @@ Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defi
 frequency-direction spectral plots in polar coordinates.
 
 .. ipython:: python
+    :okwarning:
 
     import matplotlib.pyplot as plt
     from wavespectra import read_swan
@@ -35,6 +36,7 @@ Parameters
 Frequency-direction spectra can be easily plotted in the period space.
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -45,6 +47,7 @@ Frequency-direction spectra can be easily plotted in the period space.
 By default the :math:`log10(efth)` is plotted but actual values can be shown instead.
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -55,6 +58,7 @@ By default the :math:`log10(efth)` is plotted but actual values can be shown ins
 Plotting parameters from xarray can be prescribed.
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -95,6 +99,7 @@ Xarray's `selecting`_ methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -106,6 +111,7 @@ Wavespectra's :py:meth:`~wavespectra.specarray.SpecArray.split` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -117,6 +123,7 @@ Matplotlib's axis properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -135,6 +142,7 @@ Faceting
 Xarray's faceting capability is fully supported.
 
 .. ipython:: python
+    :okwarning:
 
     @savefig faceted_polar_plot2.png
     dset.isel(site=0).spec.plot.contourf(
@@ -149,6 +157,7 @@ Xarray's faceting capability is fully supported.
 Setting clean axis is useful if plotting up many small axes for overview.
 
 .. ipython:: python
+    :okwarning:
 
     @savefig faceted_polar_plot3.png
     dset.isel(site=0).sel(freq=slice(0, 0.2)).spec.plot.contourf(
@@ -170,25 +179,20 @@ Wavespectra supports xarray's `contour`_, `contourf`_ and `pcolormesh`_ plotting
 Contour
 ~~~~~~~
 .. ipython:: python
+    :okwarning:
 
     ds = dset.isel(site=0, time=range(2))
     @savefig contour_type_plot.png
     ds.spec.plot.contour(col="time");
 
-
 Contourf
 ~~~~~~~~
 .. ipython:: python
+    :okwarning:
 
     @savefig contourf_type_plot.png
     ds.spec.plot.contourf(col="time");
 
-Pcolormesh
-~~~~~~~~~~
-.. ipython:: python
-
-    @savefig pcolormesh_type_plot.png
-    ds.spec.plot.pcolormesh(col="time");
 
 .. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
 .. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py

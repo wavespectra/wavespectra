@@ -71,7 +71,7 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
 
 
 SpecDataset
----------
+-----------
 
 .. autosummary::
    :nosignatures:
