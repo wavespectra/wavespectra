@@ -83,6 +83,8 @@ Output methods described in the `Output functions`_ section:
 :py:attr:`~SpecDataset.to_swan`
 :py:attr:`~SpecDataset.to_netcdf`
 :py:attr:`~SpecDataset.to_octopus`
+:py:attr:`~SpecDataset.to_ww3`
+:py:attr:`~SpecDataset.to_json`
 
 
 Input functions
@@ -115,6 +117,7 @@ Input functions
    read_octopus
    read_dataset
    read_ndbc
+   read_json
 
 **Convenience SWAN ASCII input functions**
 
@@ -140,6 +143,7 @@ Output functions
    SpecDataset.to_netcdf
    SpecDataset.to_octopus
    SpecDataset.to_ww3
+   SpecDataset.to_json
 
 
 Spectral reconstruction
