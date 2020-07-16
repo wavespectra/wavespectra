@@ -10,7 +10,7 @@ def read_json(filename, date_format="%Y-%m-%dT%H:%M:%SZ"):
     """Read Spectra from json.
 
     The wavespectra json format is produced from `SpecDataset.to_json` by running
-        `Dataset.to_dict` and converting times into iso8601 strings.
+    `Dataset.to_dict` and converting times into iso8601 strings.
 
     Args:
         - filename (str): filename of json to read.
