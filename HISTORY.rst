@@ -13,6 +13,18 @@ Releases
 ********
 
 
+3.6.6 (Unreleased)
+~~~~~~~~~~~~~~~~~~
+
+New Features
+------------
+* New json reader and writer (`PR20 <https://github.com/wavespectra/wavespectra/pull/20>`_).
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* Raise exception when trying to compute directional methods on 1d, frequency spectra.
+
+
 3.6.5 (2020-07-10)
 ~~~~~~~~~~~~~~~~~~
 
