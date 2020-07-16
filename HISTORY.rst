@@ -13,7 +13,7 @@ Releases
 ********
 
 
-3.6.6 (Unreleased)
+3.6.6 (2020-07-16)
 ~~~~~~~~~~~~~~~~~~
 
 New Features
