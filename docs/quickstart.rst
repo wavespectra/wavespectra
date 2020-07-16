@@ -186,6 +186,7 @@ Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defi
 frequency-direction spectral plots in polar coordinates.
 
 .. ipython:: python
+    :okwarning:
 
     ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=2.0)
     @savefig faceted_polar_plot.png

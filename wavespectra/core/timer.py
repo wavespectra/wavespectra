@@ -15,10 +15,12 @@ class Timer(object):
     """
 
     def __init__(self, msg="elapsed time", verbose=True):
-        """
-        msg :: will be printed before the elapsed time value.
-        verbose :: if True prints Elapsed time, if False only creates instance
-            with attributes.
+        """Timer object.
+
+        Args:
+            - msg (str): will be printed before the elapsed time value.
+            - verbose (bool): if True prints Elapsed time, if False only creates instance
+              with attributes.
 
         """
         self.msg = msg
