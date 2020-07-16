@@ -18,7 +18,7 @@ Releases
 
 New Features
 ------------
-* New json reader and writer (`PR20 <https://github.com/wavespectra/wavespectra/pull/20>`_).
+* New json reader and writer (`PR21 <https://github.com/wavespectra/wavespectra/pull/21>`_).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
