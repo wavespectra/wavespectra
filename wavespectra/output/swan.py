@@ -34,6 +34,7 @@ def to_swan(
         times = dset[attrs.TIMENAME].values
     else:
         times = dset[attrs.TIMENAME].to_index().to_pydatetime()
+        times = [f"{t:%Y%m%d.%H%M%S}" for t in times]
 
     # Ensure correct shape
     dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
