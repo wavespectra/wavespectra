@@ -208,23 +208,16 @@ class SwanSpecFile(object):
 
         """
         if time is not None:
-            self.fid.write(f"{time:40}{'date and time'}")
+            self.fid.write(f"{time:40}{'date and time'}\n")
         for spec in arr:
             fac = spec.max() / 9998.0
             if np.isnan(fac):
-                # strout = "NODATA\n"
                 self.fid.write("NODATA\n")
             elif fac <= 0:
-                # strout = "ZERO\n"
                 self.fid.write("ZERO\n")
             else:
-                # strout = f"FACTOR\n{'':4}{fac:0.8E}\n"
                 self.fid.write(f"FACTOR\n{'':4}{fac:0.8E}\n")
                 np.savetxt(self.fid, spec / fac, fmt="%5.0f", delimiter="")
-                # for row in spec:
-                #     import ipdb; ipdb.set_trace()
-                #     strout += self.fmt.format(*tuple(row / fac)) + "\n"
-            # self.fid.write(strout)
 
     def close(self):
         """Close file handle."""
