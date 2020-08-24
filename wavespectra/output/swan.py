@@ -9,7 +9,6 @@ def to_swan(
     filename,
     append=False,
     id="Created by wavespectra",
-    unique_times=False,
 ):
     """Write spectra in SWAN ASCII format.
 
@@ -17,8 +16,6 @@ def to_swan(
         - filename (str): str, name for output SWAN ASCII file.
         - append (bool): if True append to existing filename.
         - id (str): used for header in output file.
-        - unique_times (bool): if True, only last time is taken from
-          duplicate indices.
 
     Note:
         - Only datasets with lat/lon coordinates are currently supported.
