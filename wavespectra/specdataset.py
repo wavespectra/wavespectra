@@ -78,14 +78,15 @@ class SpecDataset(metaclass=Plugin):
         """Ensure dimensions are suitable for dumping in some ascii formats.
 
         Returns:
-            Dataset object with site dimension and with no grid dimensions
+            Dataset object with site dimension and with no grid dimensions.
 
         Note:
-            Grid is converted to site dimension which can be iterated over
-            Site is defined if not in dataset and not a grid
-            Dimensions are checked to ensure they are supported for dumping
+            Grid is converted to site dimension which can be iterated over.
+            Site is defined if not in dataset and not a grid.
+            Dimensions are checked to ensure they are supported for dumping.
+
         """
-        dset = self.dset.load().copy(deep=True)
+        dset = self.dset.copy(deep=True)
 
         unsupported_dims = set(dset[attrs.SPECNAME].dims) - set(self.supported_dims)
         if unsupported_dims:
