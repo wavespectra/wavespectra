@@ -95,7 +95,7 @@ def to_octopus(self, filename, site_id="spec", fcut=0.125, missing_val=-99999):
     try:
         lons = dset_dict["lon"]
         lats = dset_dict["lat"]
-    except AttributeError as err:
+    except KeyError as err:
         raise NotImplementedError(
             "lon-lat variables are required to write Octopus spectra file"
         ) from err
