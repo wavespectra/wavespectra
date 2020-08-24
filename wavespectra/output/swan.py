@@ -10,7 +10,6 @@ def to_swan(
     append=False,
     id="Created by wavespectra",
     unique_times=False,
-    dircap_270=False,
 ):
     """Write spectra in SWAN ASCII format.
 
@@ -20,8 +19,6 @@ def to_swan(
         - id (str): used for header in output file.
         - unique_times (bool): if True, only last time is taken from
           duplicate indices.
-        - dircap_270 (bool): if True, ensure directions do not exceed 270 degrees
-          as requerid for swan to prescribe boundaries.
 
     Note:
         - Only datasets with lat/lon coordinates are currently supported.
@@ -33,27 +30,32 @@ def to_swan(
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
 
-    # When prescribing bnds, SWAN doesn't like dir>270
-    if dircap_270:
-        direc = dset[attrs.DIRNAME].values
-        direc[direc > 270] = direc[direc > 270] - 360
-        dset = dset.update({attrs.DIRNAME: direc}).sortby("dir", ascending=False)
+    # Ensure time dimension exists
+    is_time = attrs.TIMENAME in dset[attrs.SPECNAME].dims
+    if not is_time:
+        dset = dset.expand_dims({attrs.TIMENAME: [None]})
+        times = dset[attrs.TIMENAME].values
+    else:
+        times = dset[attrs.TIMENAME].to_index().to_pydatetime()
 
-    darray = dset[attrs.SPECNAME]
-    is_time = attrs.TIMENAME in darray.dims
+    # Ensure correct shape
+    dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
+
+    # Loading for efficiency
+    specarray = dset[attrs.SPECNAME].values
 
     # Instantiate swan object
     try:
         x = dset.lon.values
         y = dset.lat.values
-    except NotImplementedError(
-        "lon/lat not found in dset, cannot dump SWAN file without locations"
-    ):
-        raise
+    except AttributeError as err:
+        raise NotImplementedError(
+            "lon-lat variables are required to write SWAN spectra file"
+        ) from err
     sfile = SwanSpecFile(
         filename,
-        freqs=darray.freq,
-        dirs=darray.dir,
+        freqs=dset.freq,
+        dirs=dset.dir,
         time=is_time,
         x=x,
         y=y,
@@ -62,33 +64,8 @@ def to_swan(
     )
 
     # Dump each timestep
-    if is_time:
-        for t in darray.time:
-            darrout = darray.sel(time=t, method="nearest")
-            if darrout.time.size == 1:
-                sfile.write_spectra(
-                    darrout.transpose(
-                        attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME
-                    ).values,
-                    time=to_datetime(t.values),
-                )
-            elif unique_times:
-                sfile.write_spectra(
-                    darrout.isel(time=-1)
-                    .transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
-                    .values,
-                    time=to_datetime(t.values),
-                )
-            else:
-                for it, tt in enumerate(darrout.time):
-                    sfile.write_spectra(
-                        darrout.isel(time=it)
-                        .transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
-                        .values,
-                        time=to_datetime(t.values),
-                    )
-    else:
-        sfile.write_spectra(
-            darray.transpose(attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME).values
-        )
+    for itime, time in enumerate(times):
+        darrout = specarray[itime]
+        sfile.write_spectra(darrout, time=time)
+
     sfile.close()
