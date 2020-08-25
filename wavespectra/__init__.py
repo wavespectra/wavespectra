@@ -13,7 +13,7 @@ except ImportError:
     warnings.warn("Cannot import accessors at the main module level")
 
 
-__version__ = "3.7.0"
+__version__ = "3.7.1"
 __author__ = "Wavespectra Developers"
 __contact__ = "r.guedes@oceanum.science"
 __url__ = "http://github.com/wavespectra/wavespectra"
