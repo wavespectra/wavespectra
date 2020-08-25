@@ -8,6 +8,7 @@ def to_swan(
     filename,
     append=False,
     id="Created by wavespectra",
+    ntime=None
 ):
     """Write spectra in SWAN ASCII format.
 
@@ -15,12 +16,17 @@ def to_swan(
         - filename (str): str, name for output SWAN ASCII file.
         - append (bool): if True append to existing filename.
         - id (str): used for header in output file.
+        - ntime (int, None): number of times to load into memory before dumping output
+          file if full dataset does not fit into memory, choose None to load all times.
 
     Note:
         - Only datasets with lat/lon coordinates are currently supported.
         - Extra dimensions other than time, site, lon, lat, freq, dim not yet
           supported.
         - Only 2D spectra E(f,d) are currently supported.
+        - ntime=None optimises speed as the dataset is loaded into memory however the
+          dataset may not fit into memory in which case a smaller number of times may
+          be prescribed.
 
     """
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
@@ -37,9 +43,6 @@ def to_swan(
 
     # Ensure correct shape
     dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
-
-    # Loading for efficiency
-    specarray = dset[attrs.SPECNAME].values
 
     # Instantiate swan object
     try:
@@ -61,8 +64,16 @@ def to_swan(
     )
 
     # Dump each timestep
-    for itime, time in enumerate(times):
-        darrout = specarray[itime]
-        sfile.write_spectra(darrout, time=time)
+    i0 = 0
+    i1 = min(ntime or dset.time.size, dset.time.size)
+    while i1 <= dset.time.size:
+        ds = dset.isel(time=slice(i0, i1))
+        part_times = times[i0:i1]
+        i0 = i1
+        i1 += ntime
+        specarray = ds[attrs.SPECNAME].values
+        for itime, time in enumerate(part_times):
+            darrout = specarray[itime]
+            sfile.write_spectra(darrout, time=time)
 
     sfile.close()
