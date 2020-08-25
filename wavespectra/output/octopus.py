@@ -32,6 +32,7 @@ def to_octopus(
 
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset_stacked = self._check_and_stack_dims()
+    ntime = min(ntime or dset_stacked.time.size, dset_stacked.time.size)
 
     # Writing format definitions
     fmt = ",".join(len(self.freq) * ["{:6.5f}"]) + ","
@@ -41,7 +42,7 @@ def to_octopus(
 
     # Load up to ntime times at a time to optimise memory and speed
     i0 = 0
-    i1 = min(ntime or dset_stacked.time.size, dset_stacked.time.size)
+    i1 = ntime
     while i1 <= dset_stacked.time.size:
         dset = dset_stacked.isel(time=slice(i0, i1)).load()
         if i0 == 0:
