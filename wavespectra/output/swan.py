@@ -31,6 +31,7 @@ def to_swan(
     """
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
+    ntime = min(ntime or dset.time.size, dset.time.size)
 
     # Ensure time dimension exists
     is_time = attrs.TIMENAME in dset[attrs.SPECNAME].dims
@@ -65,7 +66,7 @@ def to_swan(
 
     # Dump each timestep
     i0 = 0
-    i1 = min(ntime or dset.time.size, dset.time.size)
+    i1 = ntime
     while i1 <= dset.time.size:
         ds = dset.isel(time=slice(i0, i1))
         part_times = times[i0:i1]
