@@ -203,25 +203,21 @@ class SwanSpecFile(object):
         """Write spectra from single timestamp.
 
         Args:
-            arr (3D ndarray): spectra to write S(site, freq, dim)
-            time (datetime): timeof spectra to write
+            arr (3D ndarray): spectra to write S(site, freq, dim).
+            time (yyymmdd.HHMMSS): time of spectra to write.
 
         """
         if time is not None:
-            self.fid.write(
-                "{:40}{}\n".format(time.strftime("%Y%m%d.%H%M%S"), "date and time")
-            )
+            self.fid.write(f"{time:40}{'date and time'}\n")
         for spec in arr:
             fac = spec.max() / 9998.0
             if np.isnan(fac):
-                strout = "NODATA\n"
+                self.fid.write("NODATA\n")
             elif fac <= 0:
-                strout = "ZERO\n"
+                self.fid.write("ZERO\n")
             else:
-                strout = "FACTOR\n{:4}{:0.8E}\n".format("", fac)
-                for row in spec:
-                    strout += self.fmt.format(*tuple(row / fac)) + "\n"
-            self.fid.write(strout)
+                self.fid.write(f"FACTOR\n{'':4}{fac:0.8E}\n")
+                np.savetxt(self.fid, spec / fac, fmt="%5.0f", delimiter="")
 
     def close(self):
         """Close file handle."""
