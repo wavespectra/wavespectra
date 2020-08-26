@@ -13,7 +13,7 @@ Releases
 ********
 
 
-3.7.1 (Unreleased)
+3.7.1 (2020-08-26)
 ~~~~~~~~~~~~~~~~~~
 
 Internal Changes
