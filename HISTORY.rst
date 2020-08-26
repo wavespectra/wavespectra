@@ -13,6 +13,19 @@ Releases
 ********
 
 
+3.7.1 (2020-08-26)
+~~~~~~~~~~~~~~~~~~
+
+Internal Changes
+----------------
+* Optimise `to_swan`_ (over 100x improvements when writing very large spectra).
+* Optimise `to_octopus`_ (over 10x improvements when writing very large spectra).
+* Allow loading time chunks when writing swan and octopus files.
+
+.. _`to_swan`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/swan.py
+.. _`to_octopus`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/octopus.py
+
+
 3.7.0 (2020-07-16)
 ~~~~~~~~~~~~~~~~~~
 
@@ -21,7 +34,7 @@ New Features
 * New json reader and writer (`PR21 <https://github.com/wavespectra/wavespectra/pull/21>`_).
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Raise exception when trying to compute directional methods on 1d, frequency spectra.
 
 
@@ -29,7 +42,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~~~
 
 Bug Fixes
-~~~~~~~~~
+---------
 * Fix bug in sel methods.
 
 
@@ -37,7 +50,7 @@ Bug Fixes
 ~~~~~~~~~~~~~~~~~~
 
 Bug Fixes
-~~~~~~~~~
+---------
 * Ensure yml config is shipped with distribution.
 
 
@@ -45,7 +58,7 @@ Bug Fixes
 ~~~~~~~~~~~~~~~~~~
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Increase time resolution in netcdf outptu from to_netcdf.
 
 
@@ -53,7 +66,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~~~
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Make netcdf packing work for datasets in zarr format.
 
 
@@ -61,7 +74,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~~~
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Packing output netcdf files as int32 dtype by default.
 
 
@@ -74,7 +87,7 @@ New Features
 * New method to output spectra in native WW3 format.
 
 Bug Fixes
-~~~~~~~~~
+---------
 * Fix bug with selecting circular longitudes in different conventions (`GH20 <https://github.com/wavespectra/wavespectra/issues/20>`_).
 * Ensure directions in coming-from convention in read_era5 (`PR18 <https://github.com/wavespectra/wavespectra/pull/18>`_).
 * Fix radian convertions in read_era5 (`PR19 <https://github.com/wavespectra/wavespectra/pull/19>`_).
@@ -82,7 +95,7 @@ Bug Fixes
 * Ensure coordinates attributes are kept with certain readers.
 
 deprecation
-~~~~~~~~~~~
+-----------
 * Deprecated legacy `read_ww3_msl` reader.
 * Deprecated `read_dictionary` in favour of using xarray's `to_dict`_ and `from_dict`_ methods.
 
@@ -91,7 +104,7 @@ deprecation
 
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Remove curly brackets from units.
 * Remove original variable attributes from files hidden with underscores (`_units` and `_variable_name`).
 * Remove xarray version limitation to <0.15.0.
@@ -102,11 +115,11 @@ Internal Changes
 Fix xarray version until breaking changes with 0.15.1 are taken care of.
 
 Bug Fixes
-~~~~~~~~~
+---------
 * Avoid index duplication when merging datasets in to_octopus function.
 
 Internal Changes
-~~~~~~~~~~~~~~~~
+----------------
 * Fix xarray at 0.15.0 for now as 0.15.1 introduces many breaking changes.
 
 
