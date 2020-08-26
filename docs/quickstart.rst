@@ -19,6 +19,7 @@ Several methods are provided to read various file formats including spectral wav
 models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
 
 .. ipython:: python
+    :okwarning:
 
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3
@@ -41,6 +42,7 @@ SpecArray
 ~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     dset.efth.spec
 
@@ -48,6 +50,7 @@ SpecDset
 ~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     dset.spec
 
@@ -57,6 +60,7 @@ Several methods are available to calculate integrated wave parameters. They can 
 accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 .. ipython:: python
+    :okwarning:
 
     hs = dset.efth.spec.hs()
     hs
@@ -78,6 +82,7 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 
 .. ipython:: python
+    :okwarning:
 
     stats = dset.spec.stats(
         ["hs", "hmax", "tp", "tm01", "tm02", "dpm", "dm", "dspr", "swe"]
@@ -126,6 +131,7 @@ Spectral split
 ~~~~~~~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     fcut = 1 / 8
     sea = dset.spec.split(fmin=fcut)
@@ -151,6 +157,7 @@ Watershed
 ~~~~~~~~~
 
 .. ipython:: python
+    :okwarning:
 
     dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
     pstats = dspart.spec.stats(["hs", "dpm"])
@@ -195,6 +202,7 @@ frequency-direction spectral plots in polar coordinates.
 Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
 
 .. ipython:: python
+    :okwarning:
 
     @suppress
     plt.figure(figsize=(8, 4.5))
@@ -213,6 +221,7 @@ Wavespectra complements xarray's selecting_ and interpolating_ functionality wit
 interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.SpecDataset.sel` method.
 
 .. ipython:: python
+    :okwarning:
 
     idw = dset.spec.sel(
         lons=[92.01, 92.05, 92.09],
