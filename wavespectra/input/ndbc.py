@@ -38,7 +38,7 @@ def read_file(filename):
     if header.strip()[-1] == ">":  # Realtime file
         df = pd.read_csv(
             f,
-            delimiter="\s+",
+            delimiter=r"\s+",
             compression=compressed,
             engine="python",
             header=None,
@@ -60,7 +60,7 @@ def read_file(filename):
         f.seek(0, 0)
         df = pd.read_csv(
             f,
-            delimiter="\s+",
+            delimiter=r"\s+",
             engine="python",
             header=[0],
             parse_dates={"time": date_columns},
