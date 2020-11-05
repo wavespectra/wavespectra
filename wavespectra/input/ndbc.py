@@ -25,7 +25,10 @@ def read_file(filename):
     else:
         f = open(filename)
     header = f.readline()
-    if header.split()[4].lower() == "mm":
+    col5 = header.split()[4]
+    if isinstance(col5, bytes):
+        col5 = col5.decode("utf-8")
+    if col5 == "mm":
         date_columns = [0, 1, 2, 3, 4]
         date_parser = lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M")
     else:
