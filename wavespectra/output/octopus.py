@@ -100,6 +100,10 @@ def to_octopus(
         if attrs.DEPNAME not in dset:
             dset[attrs.DEPNAME] = 0 * dset["hs"] + missing_val
 
+        # Keeping only supported dimensions
+        dims_to_keep = {attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME}
+        dset = dset.drop_dims(set(dset.dims) - dims_to_keep)
+
         # Put everything in dict because it is a lot faster to slice
         dset_dict = {v: dset[v].values for v in dset.data_vars}
         data_vars = list(dset_dict.keys() - ("lon", "lat"))
