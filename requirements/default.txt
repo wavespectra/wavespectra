@@ -1,4 +1,3 @@
-attrdict
 click
 cmocean
 dask
