@@ -90,7 +90,7 @@ def to_octopus(
                 join="left"
             )
         )
-        dset = dset.drop("efth")
+        dset = dset.drop_vars("efth")
         dset = dset.sortby("dir").fillna(missing_val)
 
         if attrs.WDIRNAME not in dset:
