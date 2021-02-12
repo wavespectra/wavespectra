@@ -23,14 +23,14 @@ New Features
 
 Internal Changes
 ----------------
-* Stop fixating pandas and xarray versions
-* Remove attrdict dependency
-* Define `_FillValue` in `to_netcdf`_
+* Stop fixing pandas and xarray versions.
+* Remove attrdict dependency.
+* Define `_FillValue` in `to_netcdf`_.
 
 Bug Fixes
 ---------
 * Fix bug in sel with `"nearest"` option.
-* Ensure last time chunk is written in `to_swan` when the dataset time size is not divisible by ntime (`GH20 <https://github.com/wavespectra/wavespectra/issues/24>`_).
+* Ensure last time chunk is written in `to_swan`_ when the dataset time size is not divisible by ntime (`GH20 <https://github.com/wavespectra/wavespectra/issues/24>`_).
 
 
 .. _`to_netcdf`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/netcdf.py
