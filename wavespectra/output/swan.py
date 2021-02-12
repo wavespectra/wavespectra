@@ -42,6 +42,10 @@ def to_swan(
         times = dset[attrs.TIMENAME].to_index().to_pydatetime()
         times = [f"{t:%Y%m%d.%H%M%S}" for t in times]
 
+    # Keeping only supported dimensions
+    dims_to_keep = {attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME}
+    dset = dset.drop_dims(set(dset.dims) - dims_to_keep)
+
     # Ensure correct shape
     dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
 
