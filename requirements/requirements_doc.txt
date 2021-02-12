@@ -10,7 +10,7 @@ matplotlib
 mock
 netcdf4
 numpy
-pandas==1.0.5
+pandas
 python-dateutil
 pyyaml
 sortedcontainers

@@ -25,16 +25,25 @@ def read_file(filename):
     else:
         f = open(filename)
     header = f.readline()
+    col5 = header.split()[4]
+    if isinstance(col5, bytes):
+        col5 = col5.decode("utf-8")
+    if col5 == "mm":
+        date_columns = [0, 1, 2, 3, 4]
+        date_parser = lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M")
+    else:
+        date_columns = [0, 1, 2, 3]
+        date_parser = lambda x: datetime.datetime.strptime(x, "%Y %m %d %H")
     # Look for header like this: #YY  MM DD hh mm Sep_Freq  < spec_1 (freq_1) spec_2 (freq_2) spec_3 (freq_3) ... >
     if header.strip()[-1] == ">":  # Realtime file
         df = pd.read_csv(
             f,
-            delimiter="\s+",
+            delimiter=r"\s+",
             compression=compressed,
             engine="python",
             header=None,
-            parse_dates={"time": [0, 1, 2, 3, 4]},
-            date_parser=lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M"),
+            parse_dates={"time": date_columns},
+            date_parser=date_parser,
             index_col=0,
         )
         freqcols = df.select_dtypes(object)  # Get all columns with the frequency
@@ -51,11 +60,11 @@ def read_file(filename):
         f.seek(0, 0)
         df = pd.read_csv(
             f,
-            delimiter="\s+",
+            delimiter=r"\s+",
             engine="python",
             header=[0],
-            parse_dates={"time": [0, 1, 2, 3, 4]},
-            date_parser=lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M"),
+            parse_dates={"time": date_columns},
+            date_parser=date_parser,
             index_col=0,
         )
     f.close()

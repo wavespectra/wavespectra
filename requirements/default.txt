@@ -1,4 +1,3 @@
-attrdict
 click
 cmocean
 dask
@@ -6,11 +5,11 @@ gcsfs
 fsspec
 matplotlib
 numpy
-pandas==1.0.5
+pandas
 python-dateutil
 pyyaml
 sortedcontainers
 scipy
 toolz
-xarray>=0.15
+xarray
 zarr
