@@ -167,11 +167,11 @@ class TestSelCoordinatesConventions:
         dset["lat"].values = [30, 30]
         ds = dset.spec.sel(
             method="nearest",
-            lons=[-1],
+            lons=[-9],
             lats=[31],
             tolerance=5.0
         )
-        assert ds.lon == 0
+        assert ds.lon == -10
 
     def test_nearest_dset_180_slice_360(self):
         """Test nearest with Dataset in [-180 <--> 180] and slice in [0 <--> 360]."""
