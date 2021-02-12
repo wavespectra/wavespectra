@@ -71,7 +71,7 @@ def to_swan(
     # Dump each timestep
     i0 = 0
     i1 = ntime
-    while i1 <= dset.time.size:
+    while i1 <= dset.time.size or i0 < dset.time.size:
         ds = dset.isel(time=slice(i0, i1))
         part_times = times[i0:i1]
         i0 = i1
