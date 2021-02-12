@@ -642,6 +642,7 @@ def contourf(x, y, z, ax, clean_radius=False, clean_sector=False, **kwargs):
         clean_sector (bool): Remove directional axis.
 
     """
+    kwargs.pop("_is_facetgrid", None)
     primitive = ax.contourf(x, y, z, **kwargs)
     if clean_radius:
         ax.set_rticks([])
