@@ -68,3 +68,7 @@ class TestNDBC(object):
         assert self.ds_history_1d.spec.hs().values == pytest.approx(
             self.ds_history_2d.spec.hs().values, rel=0.01
         )
+
+    def test_history_1d_no_minutes(self):
+        ds = read_ndbc(os.path.join(FILES_DIR, "44004w2000.txt"))
+        assert hasattr(ds, "spec")
