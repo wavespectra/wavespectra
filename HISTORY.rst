@@ -13,6 +13,29 @@ Releases
 ********
 
 
+3.7.2 (2021-01-12)
+~~~~~~~~~~~~~~~~~~
+
+New Features
+------------
+* Handle ndbc spectra files with no minutes column (`PR25 <https://github.com/wavespectra/wavespectra/pull/25>`_).
+* Writers `to_swan`_ and `to_octopus`_ now deal with extra non-supported dimensions.
+
+Internal Changes
+----------------
+* Stop fixating pandas and xarray versions
+* Remove attrdict dependency
+* Define `_FillValue` in `to_netcdf`_
+
+Bug Fixes
+---------
+* Fix bug in sel with `"nearest"` option.
+* Ensure last time chunk is written in `to_swan` when the dataset time size is not divisible by ntime (`GH20 <https://github.com/wavespectra/wavespectra/issues/24>`_).
+
+
+.. _`to_netcdf`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/netcdf.py
+
+
 3.7.1 (2020-08-26)
 ~~~~~~~~~~~~~~~~~~
 
