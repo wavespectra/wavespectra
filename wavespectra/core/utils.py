@@ -15,6 +15,52 @@ D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
 
+def wavelen(freq, depth=None):
+    """Wavelength L.
+
+    Args:
+        - freq (ndarray): Frequencies (Hz) for calculating L.
+        - depth (float): Water depth, use deep water approximation by default.
+
+    Returns;
+        - L: ndarray of same shape as freq with wavelength for each frequency.
+
+    """
+    if depth is not None:
+        ang_freq = 2 * np.pi * freq
+        return 2 * np.pi / wavenuma(ang_freq, depth)
+    else:
+        return 1.56 / freq ** 2
+
+
+def wavenuma(ang_freq, water_depth):
+    """Chen and Thomson wavenumber approximation."""
+    k0h = 0.10194 * ang_freq * ang_freq * water_depth
+    D = [0, 0.6522, 0.4622, 0, 0.0864, 0.0675]
+    a = 1.0
+    for i in range(1, 6):
+        a += D[i] * k0h ** i
+    return (k0h * (1 + 1.0 / (k0h * a)) ** 0.5) / water_depth
+
+
+def celerity(freq, depth=None):
+    """Wave celerity C.
+
+    Args:
+        - freq (ndarray): Frequencies (Hz) for calculating C.
+        - depth (float): Water depth, use deep water approximation by default.
+
+    Returns;
+        - C: ndarray of same shape as freq with wave celerity for each frequency.
+
+    """
+    if depth is not None:
+        ang_freq = 2 * np.pi * freq
+        return ang_freq / wavenuma(ang_freq, depth)
+    else:
+        return 1.56 / freq
+
+
 def dnum_to_datetime(dnum):
     """Convert from numeric date to datetime."""
     return datetime.datetime.fromordinal(int(dnum) - 366) + datetime.timedelta(
