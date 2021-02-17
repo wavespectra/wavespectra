@@ -18,7 +18,7 @@ import warnings
 
 from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
-from wavespectra.core.misc import D2R, R2D
+from wavespectra.core.utils import D2R, R2D
 
 try:
     from sympy import Symbol

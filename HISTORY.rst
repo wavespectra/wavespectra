@@ -13,6 +13,22 @@ Releases
 ********
 
 
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+New Features
+------------
+* Watershed partition now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_)
+
+Internal Changes
+----------------
+* Core watershed partitioning code organised into watershed module.
+* Renamed module `wavespectra.core.misc` by `wavespectra.core.utils`.
+
+Bug Fixes
+---------
+
+
 3.7.2 (2021-01-12)
 ~~~~~~~~~~~~~~~~~~
 

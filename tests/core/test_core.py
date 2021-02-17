@@ -4,7 +4,7 @@ import pytest
 import datetime
 import xarray as xr
 
-from wavespectra.core.misc import dnum_to_datetime, to_nautical, unique_times, spddir_to_uv, uv_to_spddir, flatten_list
+from wavespectra.core.utils import dnum_to_datetime, to_nautical, unique_times, spddir_to_uv, uv_to_spddir, flatten_list
 from wavespectra import read_swan
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")

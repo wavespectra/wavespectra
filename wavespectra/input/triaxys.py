@@ -8,7 +8,7 @@ import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.misc import interp_spec
+from wavespectra.core.utils import interp_spec
 
 
 def read_triaxys(filename_or_fileglob, toff=0):
