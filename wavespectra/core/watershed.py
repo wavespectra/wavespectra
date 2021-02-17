@@ -2,10 +2,9 @@
 import numpy as np
 import xarray as xr
 
-from wavespectra.specarray import celerity
 from wavespectra.core.attributes import attrs
 from wavespectra.specpart import specpart
-from wavespectra.core.utils import D2R, R2D
+from wavespectra.core.utils import D2R, R2D, celerity
 
 
 def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
@@ -89,7 +88,7 @@ def partition(
     """Watershed partitioning.
 
     Args:
-        - dset (xr.Dataset): Wave spectra dataset in wavespectra convention.
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
         - wspd (xr.DataArray, str): Wind speed DataArray or variable name in dset.
         - wdir (xr.DataArray, str): Wind direction DataArray or variable name in dset.
         - dpt (xr.DataArray, str): Depth DataArray or the variable name in dset.
@@ -106,22 +105,24 @@ def partition(
 
     """
     # Sort out inputs
-    if isinstance("wspd", str):
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+    if isinstance(wspd, str):
         wspd = dset[wspd]
-    if isinstance("wdir", str):
+    if isinstance(wdir, str):
         wdir = dset[wdir]
-    if isinstance("dpt", str):
+    if isinstance(dpt, str):
         dpt = dset[dpt]
 
     # Partitioning full spectra
     dsout = xr.apply_ufunc(
         nppart,
-        dset.efth,
+        dset,
         dset.freq,
         dset.dir,
-        dset.wspd,
-        dset.wdir,
-        dset.dpt,
+        wspd,
+        wdir,
+        dpt,
         swells,
         agefac,
         wscut,
