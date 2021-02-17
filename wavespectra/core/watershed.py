@@ -8,14 +8,24 @@ from wavespectra.specpart import specpart
 from wavespectra.core.misc import D2R, R2D
 
 
-_ = np.newaxis
-
-
 def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
-    """Watershed partition on a numpy array."""
+    """Watershed partition on a numpy array.
 
-    all_parts = []
+    Args:
+        - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - freq (1darray): Wave frequency array with shape (nf).
+        - dir (1darray): Wave direction array with shape (nd).
+        - wspd (float): Wind speed.
+        - wdir (float): Wind direction.
+        - dpt (float): Water depth.
+        - swells (int): Number of swell partitions to compute.
+        - agefac (float): Age factor.
+        - wscut (float): Wind speed cutoff.
 
+    Returns:
+        - specpart (3darray): Wave spectrum partitions with shape (np, nf, nd).
+
+    """
     part_array = specpart.partition(spectrum)
 
     Up = agefac * wspd * np.cos(D2R * (dir - wdir))
@@ -53,6 +63,7 @@ def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3
 
     sorted_swells = np.flipud(partitions_hs_swell[1:].argsort() + 1)
     parts = np.concatenate(([0], sorted_swells[:swells]))
+    all_parts = []
     for part in parts:
         all_parts.append(np.where(part_array == part, spectrum, 0.0))
 
@@ -74,7 +85,6 @@ def partition(
     swells=3,
     agefac=1.7,
     wscut=0.3333,
-    hs_min=0.001,
 ):
     """Watershed partitioning.
 
@@ -86,7 +96,6 @@ def partition(
         - swells (int): Number of swell partitions to compute.
         - agefac (float): Age factor.
         - wscut (float): Wind speed cutoff.
-        - hs_min (float): minimum Hs for assigning swell partition.
 
     Returns:
         - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
@@ -158,93 +167,16 @@ def hs(spectrum, freq, dir, tail=True):
     return 4.0 * np.sqrt(Etot)
 
 
-def partition2(
-    dset,
-    wspd="wspd",
-    wdir="wdir",
-    dpt="dpt",
-    agefac=1.7,
-    wscut=0.3333,
-    hs_min=0.001,
-    max_swells=5
-):
-    """Watershed partitioning.
+def frequency_resolution(freq):
+    """Frequency resolution array.
 
     Args:
-        - dset (xr.Dataset): Wave spectra dataset in wavespectra convention.
-        - wspd (xr.DataArray, str): Wind speed DataArray or variable name in dset.
-        - wdir (xr.DataArray, str): Wind direction DataArray or variable name in dset.
-        - dpt (xr.DataArray, str): Depth DataArray or the variable name in dset.
-        - agefac (float): Age factor.
-        - wscut (float): Wind speed cutoff.
-        - hs_min (float): minimum Hs for assigning swell partition.
-        - max_swells: maximum number of swells to extract
+        - freq (1darray): Frequencies to calculate resolutions from with shape (nf).
 
     Returns:
-        - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
-
-    References:
-        - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
-            numerical wave models." JTECH 26.8 (2009): 1614-1633.
+        - df (1darray): Resolution for pairs of adjacent frequencies with shape (nf-1).
 
     """
-    # Sort out inputs
-    if isinstance("wspd", str):
-        wspd = dset[wspd]
-    if isinstance("wdir", str):
-        wdir = dset[wdir]
-    if isinstance("dpt", str):
-        dpt = dset[dpt]
-
-    dsout = xr.apply_ufunc(
-        specpart.partition,
-        dset.efth,
-        input_core_dims=[["freq", "dir"]],
-        output_core_dims=[["freq", "dir"]],
-        # exclude_dims=set(("freq", "dir")),
-        vectorize=True,
-        dask="parallelized",
-        output_dtypes=["int32"],
-    )
-
-    Up = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
-    windbool = celerity(dset.freq, dpt) < Up
-
-    ipeak = 1  # values from specpart.partition start at 1
-    part_array_max = dsout.max()
-    # partitions_hs_swell = np.zeros(part_array_max + 1)  # zero is used for sea
-
-    part_spec = dset.efth.where(dsout != 1, 0.0)
-
-    W = part_spec.where(windbool).sum(dim=["freq", "dir"]) / part_spec.sum(dim=["freq", "dir"])
-
-    dsout = dsout.where(W <= wscut, 0)
-
-    fig = plt.figure()
-    dsout.sortby("dir").plot()
-    plt.title("Partition array")
-
-    fig = plt.figure()
-    part_spec.sortby("dir").plot()
-    plt.title("Filtered partition array")
-
-    fig = plt.figure()
-    windbool.sortby("dir").plot()
-    plt.title("Wind criteria")
-
-    plt.show()
-
-    import ipdb; ipdb.set_trace()
-
-    # windbool = np.tile(Up, (nfreq, 1)) > np.tile(
-    #     celerity(freqs, dep)[:, _], (1, ndir)
-    # )
-
-    return dsout
-
-
-def frequency_resolution(freq):
-    """Frequency resolution array."""
     if len(freq) > 1:
         return abs(freq[1:] - freq[:-1])
     else:
@@ -252,12 +184,12 @@ def frequency_resolution(freq):
 
 
 def inflection(spectrum, freq, dfres=0.01, fmin=0.05):
-    """Finds points of inflection in smoothed frequency spectra.
+    """Points of inflection in smoothed frequency spectra.
 
     Args:
-        fdspec (ndarray): freq-dir 2D specarray.
-        dfres (float): used to determine length of smoothing window.
-        fmin (float): minimum frequency for looking for minima/maxima.
+        - fdspec (ndarray): freq-dir 2D specarray.
+        - dfres (float): used to determine length of smoothing window.
+        - fmin (float): minimum frequency for looking for minima/maxima.
 
     """
     if len(freq) > 1:
@@ -306,6 +238,5 @@ if __name__ == "__main__":
         swells=3,
         agefac=1.7,
         wscut=0.3333,
-        hs_min=0.001,
     )
     hs = dsout.spec.hs().load()
