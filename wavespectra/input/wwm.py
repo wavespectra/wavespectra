@@ -4,7 +4,7 @@ import numpy as np
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.misc import uv_to_spddir
+from wavespectra.core.utils import uv_to_spddir
 from wavespectra.input import open_netcdf_or_zarr, to_keep
 
 R2D = 180 / np.pi

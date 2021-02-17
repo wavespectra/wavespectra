@@ -190,20 +190,20 @@ Internal core functions and objects
    core.select.Coordinates.nearer
    core.select.Coordinates.nearest
 
-**misc module**
+**utils module**
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   core.misc.dnum_to_datetime
-   core.misc.to_nautical
-   core.misc.unique_times
-   core.misc.to_datetime
-   core.misc.spddir_to_uv
-   core.misc.uv_to_spddir
-   core.misc.interp_spec
-   core.misc.flatten_list
+   core.utils.dnum_to_datetime
+   core.utils.to_nautical
+   core.utils.unique_times
+   core.utils.to_datetime
+   core.utils.spddir_to_uv
+   core.utils.uv_to_spddir
+   core.utils.interp_spec
+   core.utils.flatten_list
 
 **timer module**
 

@@ -5,7 +5,7 @@ import xarray as xr
 from wavespectra.specarray import celerity
 from wavespectra.core.attributes import attrs
 from wavespectra.specpart import specpart
-from wavespectra.core.misc import D2R, R2D
+from wavespectra.core.utils import D2R, R2D
 
 
 def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
