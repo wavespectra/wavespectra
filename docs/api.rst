@@ -168,7 +168,19 @@ api is not properly established.
 Internal core functions and objects
 -----------------------------------
 
-**attrubutes module**
+**watershed module**
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   core.watershed.partition
+   core.watershed.npart
+   core.watershed.hs
+   core.watershed.frequency_resolution
+   core.watershed.inflection
+
+**attributes module**
 
 .. autosummary::
    :nosignatures:
@@ -196,6 +208,9 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
+   core.utils.wavelen
+   core.utils.wavenuma
+   core.utils.celerity
    core.utils.dnum_to_datetime
    core.utils.to_nautical
    core.utils.unique_times
