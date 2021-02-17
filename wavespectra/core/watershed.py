@@ -207,38 +207,3 @@ def inflection(spectrum, freq, dfres=0.01, fmin=0.05):
         imax = 0
         imin = 0
     return imax, imin
-
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-    from wavespectra import read_ww3, read_wavespectra
-
-    print("Testing watershed")
-
-    # dset = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")
-    dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
-
-    ds = (
-        dset.isel(time=slice(None, 1000)).drop_dims("fastsite").sortby("dir")
-    )  # .chunk({"time": 5000})#.load()
-
-    # #============
-    # # Old method
-    # #============
-    # dsout0 = ds.spec.partition(wsp_darr=ds.wspd, wdir_darr=ds.wdir, dep_darr=ds.dpt)
-    # hs0 = dsout0.spec.hs()
-
-    # ============
-    # New method
-    # ============
-    dsout = partition(
-        ds,
-        wspd="wspd",
-        wdir="wdir",
-        dpt="dpt",
-        swells=3,
-        agefac=1.7,
-        wscut=0.3333,
-    )
-    hs = dsout.spec.hs().load()
