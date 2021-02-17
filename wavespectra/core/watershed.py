@@ -73,7 +73,7 @@ def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3
         nmiss = (swells + 1) - len(all_parts)
         for i in range(nmiss):
             all_parts.append(nullspec)
-    
+
     return np.array(all_parts)
 
 
@@ -140,7 +140,7 @@ def partition(
     # Finalise output
     dsout.name = "efth"
     dsout["part"] = np.arange(swells + 1)
-    dsout.part.attrs={"standard_name": "spectral_partition_number", "units": ""}
+    dsout.part.attrs = {"standard_name": "spectral_partition_number", "units": ""}
 
     return dsout.transpose("part", ...)
 
@@ -218,8 +218,9 @@ if __name__ == "__main__":
     # dset = read_ww3("/source/wavespectra/tests/sample_files/ww3file.nc")
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
 
-    ds = dset.isel(time=slice(None, 1000)).drop_dims("fastsite").sortby("dir")#.chunk({"time": 5000})#.load()
-
+    ds = (
+        dset.isel(time=slice(None, 1000)).drop_dims("fastsite").sortby("dir")
+    )  # .chunk({"time": 5000})#.load()
 
     # #============
     # # Old method
@@ -227,9 +228,9 @@ if __name__ == "__main__":
     # dsout0 = ds.spec.partition(wsp_darr=ds.wspd, wdir_darr=ds.wdir, dep_darr=ds.dpt)
     # hs0 = dsout0.spec.hs()
 
-    #============
+    # ============
     # New method
-    #============
+    # ============
     dsout = partition(
         ds,
         wspd="wspd",
