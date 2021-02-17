@@ -162,50 +162,6 @@ class SpecArray(object):
         ipeak = arr.where(ispeak).fillna(0).argmax(dim=attrs.FREQNAME).astype(int)
         return ipeak
 
-    def _product(self, dict_of_ids):
-        """Dot product of a dictionary of ids used to construct arbitrary slicing dicts.
-
-        Example:
-            Input dictionary :: {'site': [0,1], 'time': [0,1]}
-            Output iterator :: {'site': 0, 'time': 0}
-                               {'site': 0, 'time': 1}
-                               {'site': 1, 'time': 0}
-                               {'site': 1, 'time': 1}
-
-        """
-        return (dict(zip(dict_of_ids, x)) for x in product(*iter(dict_of_ids.values())))
-
-    def _inflection(self, fdspec, dfres=0.01, fmin=0.05):
-        """Finds points of inflection in smoothed frequency spectra.
-
-        Args:
-            fdspec (ndarray): freq-dir 2D specarray
-            dfres (float): used to determine length of smoothing window
-            fmin (float): minimum frequency for looking for minima/maxima
-
-        """
-        if len(self.freq) > 1:
-            sf = fdspec.sum(axis=1)
-            nsmooth = int(dfres / self.df[0])  # Window size
-            if nsmooth > 1:
-                sf = np.convolve(sf, np.hamming(nsmooth), "same")  # Smoothed f-spectrum
-            sf[(sf < 0) | (self.freq.values < fmin)] = 0
-            diff = np.diff(sf)
-            imax = np.argwhere(np.diff(np.sign(diff)) == -2) + 1
-            imin = np.argwhere(np.diff(np.sign(diff)) == 2) + 1
-        else:
-            imax = 0
-            imin = 0
-        return imax, imin
-
-    def _same_dims(self, other):
-        """Check if another SpecArray has same non-spectral dims.
-
-        Used to ensure consistent slicing
-
-        """
-        return set(other.dims) == self._non_spec_dims
-
     def _my_name(self):
         """Returns the caller's name."""
         return inspect.stack()[1][3]
