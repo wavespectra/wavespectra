@@ -679,12 +679,6 @@ class SpecArray(object):
             wscut=wscut,
         )
 
-    def dpw(self):
-        """Wave spreading at the peak wave frequency."""
-        raise NotImplementedError(
-            "Wave spreading at the peak wave frequency method not defined"
-        )
-
     def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
         """Calculate multiple spectral stats into a Dataset.
 
