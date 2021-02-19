@@ -20,6 +20,7 @@ from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
 from wavespectra.core.watershed import partition
+from wavespectra.core.xrstats import peak_wave_period
 
 try:
     from sympy import Symbol
@@ -365,41 +366,15 @@ class SpecArray(object):
         else:
             return scaled
 
-    def tp(self, smooth=True, mask=np.nan):
+    def tp(self, smooth=True):
         """Peak wave period Tp.
 
         Args:
             - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the direction-integrated spectra.
-            - mask (float): value for missing data if there is no peak in spectra.
-
-        Warning: This method cannot be computed lazily.
+              period corresponding to the maxima in the frequency spectra.
 
         """
-        if len(self.freq) < 3:
-            return None
-        Sf = self.oned()
-        ipeak = self._peak(Sf).load()
-        fp = self.freq.astype("float64")[ipeak].drop_vars("freq")
-        if smooth:
-            f1, f2, f3 = [self.freq[ipeak + i].values for i in [-1, 0, 1]]
-            e1, e2, e3 = [Sf.isel(freq=ipeak + i).values for i in [-1, 0, 1]]
-            s12 = f1 + f2
-            q12 = (e1 - e2) / (f1 - f2)
-            q13 = (e1 - e3) / (f1 - f3)
-            qa = (q13 - q12) / (f3 - f2)
-            qa = np.ma.masked_array(qa, qa >= 0)
-            ind = ~qa.mask
-            fpsmothed = (s12[ind] - q12[ind] / qa[ind]) / 2.0
-            fp.values[ind] = fpsmothed
-        tp = (1 / fp).where(ipeak > 0).fillna(mask).rename("tp")
-        tp.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
-        return tp
+        return peak_wave_period(self._obj, smooth=smooth)
 
     def momf(self, mom=0):
         """Calculate given frequency moment."""
