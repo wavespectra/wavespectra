@@ -538,10 +538,8 @@ class SpecArray(object):
         crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
         crsd.attrs.update(
             {
-                "standard_name",
-                self._standard_name(self._my_name()),
-                "units",
-                self._units(self._my_name()),
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
             }
         )
         return crsd.rename(self._my_name())
