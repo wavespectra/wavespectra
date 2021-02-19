@@ -17,21 +17,33 @@ def peak_wave_period(dset, smooth=True):
         - tp (xr.DataArray): Peak wave period data array.
 
     """
+    # Ensure DataArray
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
+    # Choose peak period function
     if smooth:
         func = tps
     else:
         func = tp
+    # Integrate over directions
+    if attrs.DIRNAME in dset.dims:
+        dset = dset.sum(dim=attrs.DIRNAME)
+    # Vectorize won't work if dataset does not have dims other than (freq, dir)
+    if set(dset.dims) - {attrs.FREQNAME, attrs.DIRNAME}:
+        vectorize = True
+    else:
+        vectorize = False
+    # Apply function over the full dataset
     darr = xr.apply_ufunc(
         func,
-        dset.sum(dim=attrs.DIRNAME),
+        dset,
         dset[attrs.FREQNAME],
         input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME]],
-        vectorize=True,
+        vectorize=vectorize,
         dask="parallelized",
         output_dtypes=["float32"],
     )
+    # Finalise
     darr.name = "tp"
     darr.attrs = {
         "standard_name": attrs.ATTRS.tp.standard_name,
@@ -42,14 +54,15 @@ def peak_wave_period(dset, smooth=True):
 
 if __name__ == "__main__":
 
+    import datetime
     from wavespectra import read_wavespectra
 
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
 
     ds = dset.chunk({"time": 10000})
 
-    # # Existing method
-    # tp_old = ds.spec.tp()
+    t = datetime.datetime(1980, 4, 9, 12)
+    dsi = ds.sel(time=t)
 
-    # Xarray ufunc
-    tp_new = peak_wave_period(ds.efth)
+    # tp2 = ds.spec.tp2().load()
+    # tp = ds.spec.tp().load()
