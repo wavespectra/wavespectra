@@ -2,11 +2,26 @@
 import numpy as np
 
 
+def dp(dirspec, dir):
+    """Peak wave direction Dp.
+
+    Args:
+        - dirspec (1darray): Frequency-integrated wave spectrum array E(d).
+        - freq (1darray): Wave frequency array.
+
+    Returns:
+        - dp (float): Direction of the maximum energy density in the
+          frequency-integrated spectrum.
+
+    """
+    return dir[np.argmax(dirspec)]
+
+
 def tps(spectrum, freq):
     """Smooth peak wave period Tp.
 
     Args:
-        - spectrum (1darray): Frequency wave spectrum array E(f).
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
         - freq (1darray): Wave frequency array.
 
     Returns:
@@ -44,7 +59,7 @@ def tp(spectrum, freq):
     ipeak = fpeak(spectrum)
     if not ipeak:
         return None
-    return 1.0 / spectrum[ipeak]
+    return 1.0 / freq[ipeak]
 
 
 def fpeak(arr):
