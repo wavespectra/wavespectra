@@ -20,7 +20,7 @@ from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
 from wavespectra.core.watershed import partition
-from wavespectra.core.xrstats import peak_wave_period
+from wavespectra.core import xrstats
 
 try:
     from sympy import Symbol
@@ -374,7 +374,7 @@ class SpecArray(object):
               period corresponding to the maxima in the frequency spectra.
 
         """
-        return peak_wave_period(self._obj, smooth=smooth)
+        return xrstats.peak_wave_period(self._obj, smooth=smooth)
 
     def momf(self, mom=0):
         """Calculate given frequency moment."""
@@ -451,20 +451,7 @@ class SpecArray(object):
         frequency-integrated spectrum is maximum.
 
         """
-        if self.dir is None:
-            raise ValueError("Cannot calculate dp from 1d, frequency spectra.")
-        ipeak = self._obj.sum(dim=attrs.FREQNAME).argmax(dim=attrs.DIRNAME)
-        template = self._obj.sum(dim=attrs.FREQNAME, skipna=False).sum(
-            dim=attrs.DIRNAME, skipna=False
-        )
-        dp = self.dir.values[ipeak.values] * (0 * template + 1)
-        dp.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
-        return dp.rename(self._my_name())
+        return xrstats.peak_wave_direction(self._obj)
 
     def dpm(self, mask=np.nan):
         """Peak wave direction Dpm.
