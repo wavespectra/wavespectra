@@ -2,6 +2,28 @@
 import numpy as np
 
 
+def hs(spectrum, freq, dir, tail=True):
+    """Significant wave height Hmo.
+
+    Args:
+        - spectrum (2darray): wave spectrum array.
+        - freq (1darray): wave frequency array.
+        - dir (1darray): wave direction array.
+        - tail (bool): if True fit high-frequency tail before integrating spectra.
+
+    """
+    df = abs(freq[1:] - freq[:-1])
+    if len(dir) > 1:
+        ddir = abs(dir[1] - dir[0])
+        E = ddir * spectrum.sum(1)
+    else:
+        E = np.squeeze(spectrum)
+    Etot = 0.5 * sum(df * (E[1:] + E[:-1]))
+    if tail and freq[-1] > 0.333:
+        Etot += 0.25 * E[-1] * freq[-1]
+    return 4.0 * np.sqrt(Etot)
+
+
 def dp(dirspec, dir):
     """Peak wave direction Dp.
 
@@ -81,5 +103,4 @@ def fpeak(arr):
     )
     peak_pos = np.where(ispeak, arr, 0).argmax()
     return peak_pos
-
 
