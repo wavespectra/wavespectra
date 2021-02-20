@@ -3,7 +3,46 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import tps, tp
+from wavespectra.core.npstats import dp, tps, tp
+
+
+def peak_wave_direction(dset):
+    """Dp."""
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+    # Dimensions checking
+    if attrs.DIRNAME not in dset.dims:
+        raise ValueError("Cannot calculate dp from frequency spectra.")
+    if attrs.FREQNAME in dset.dims:
+        dset = dset.sum(attrs.FREQNAME)
+    # Vectorize won't work if dataset does not have dims other than (dir)
+    if set(dset.dims) - {attrs.DIRNAME}:
+        vectorize = True
+    else:
+        vectorize = False
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        dp,
+        dset,
+        dset[attrs.DIRNAME],
+        input_core_dims=[[attrs.DIRNAME], [attrs.DIRNAME]],
+        vectorize=vectorize,
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "dp"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.dp.standard_name,
+        "units": attrs.ATTRS.dp.units
+    }
+    return darr
+
+
+def mean_direction_at_peak_wave_period(dset):
+    """Dpm."""
+    pass
 
 
 def peak_wave_period(dset, smooth=True):
@@ -61,8 +100,13 @@ if __name__ == "__main__":
 
     ds = dset.chunk({"time": 10000})
 
-    t = datetime.datetime(1980, 4, 9, 12)
-    dsi = ds.sel(time=t)
+    # t = datetime.datetime(1980, 4, 9, 12)
+    # dsi = ds.sel(time=t)
 
     # tp2 = ds.spec.tp2().load()
     # tp = ds.spec.tp().load()
+
+    print("old method")
+    dp1 = ds.spec.dp()
+    print("new function")
+    dp2 = peak_wave_direction(dset)
