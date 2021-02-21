@@ -3,11 +3,19 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import dp, tps, tp
+from wavespectra.core.npstats import dpm, dp, tps, tp
 
 
 def peak_wave_direction(dset):
-    """Dp."""
+    """Peak wave direction Dp.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+
+    Returns:
+        - dp (xr.DataArray): Peak wave direction data array.
+
+    """
     # Ensure DataArray
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
@@ -41,8 +49,51 @@ def peak_wave_direction(dset):
 
 
 def mean_direction_at_peak_wave_period(dset):
-    """Dpm."""
-    pass
+    """Mean direction at the peak wave period Dpm.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+
+    Returns:
+        - dpm (xr.DataArray): Mean direction at the peak wave period data array.
+
+    Note from WW3 Manual:
+        - Peak wave direction, defined like the mean direction, using the freq/wavenum
+          bin containing of the spectrum F(k) that contains the peak frequency only.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+    # Dimensions checking
+    if attrs.DIRNAME not in dset.dims:
+        raise ValueError("Cannot calculate dp from frequency spectra.")
+    # Directional moments
+    msin, mcos = dset.spec.momd(1)
+    # Vectorize won't work if dataset does not have dims other than (dir)
+    if set(dset.dims) - {attrs.DIRNAME}:
+        vectorize = True
+    else:
+        vectorize = False
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        dpm,
+        dset.sum(attrs.DIRNAME),
+        dset[attrs.DIRNAME],
+        msin,
+        mcos,
+        input_core_dims=[[attrs.FREQNAME], [attrs.DIRNAME], [attrs.FREQNAME], [attrs.FREQNAME]],
+        vectorize=vectorize,
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "dpm"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.dpm.standard_name,
+        "units": attrs.ATTRS.dpm.units
+    }
+    return darr
 
 
 def peak_wave_period(dset, smooth=True):
@@ -94,6 +145,7 @@ def peak_wave_period(dset, smooth=True):
 if __name__ == "__main__":
 
     import datetime
+    from dask.diagnostics.progress import ProgressBar
     from wavespectra import read_wavespectra
 
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
@@ -106,7 +158,13 @@ if __name__ == "__main__":
     # tp2 = ds.spec.tp2().load()
     # tp = ds.spec.tp().load()
 
+    # ds = ds.isel(time=0).load()
+
     print("old method")
-    dp1 = ds.spec.dp()
+    with ProgressBar():
+        dp1 = ds.spec.dpm().load()
     print("new function")
-    dp2 = peak_wave_direction(dset)
+    with ProgressBar():
+        dp2 = mean_direction_at_peak_wave_period(ds).load()
+
+    print(f"{dp1.values} vs {dp2.values}")

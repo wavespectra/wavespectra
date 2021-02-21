@@ -24,6 +24,24 @@ def hs(spectrum, freq, dir, tail=True):
     return 4.0 * np.sqrt(Etot)
 
 
+def dpm(freqspec, dir, momsin, momcos):
+    """Mean direction at the peak wave period Dpm.
+
+    Args:
+        - freqspec (1darray): Direction-integrated wave spectrum array E(f).
+        - dir (1darray): Wave direction array.
+
+    Returns:
+        - dpm (float): Mean direction at the frequency peak of the spectrum.
+
+    """
+    ipeak = fpeak(freqspec)
+    if not ipeak:
+        return np.nan
+    dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
+    return (270 - np.degrees(dpm)) % 360.
+
+
 def dp(dirspec, dir):
     """Peak wave direction Dp.
 
