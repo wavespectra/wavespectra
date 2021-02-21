@@ -385,9 +385,9 @@ class SpecArray(object):
         )
 
     def momd(self, mom=0, theta=90.0):
+        """Calculate given directional moment."""
         if self.dir is None:
             raise ValueError("Cannot calculate momd from 1d, frequency spectra.")
-        """Calculate given directional moment."""
         cp = np.cos(np.radians(180 + theta - self.dir)) ** mom
         sp = np.sin(np.radians(180 + theta - self.dir)) ** mom
         msin = (self.dd * self._obj * sp).sum(dim=attrs.DIRNAME, skipna=False)
