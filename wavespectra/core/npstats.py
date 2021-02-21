@@ -1,6 +1,8 @@
 """Wave spectra stats on numpy arrays sourced by apply_ufuncs."""
 import numpy as np
 
+from wavespectra.core.utils import D2R, R2D
+
 
 def hs(spectrum, freq, dir, tail=True):
     """Significant wave height Hmo.
@@ -39,7 +41,7 @@ def dpm(freqspec, dir, momsin, momcos):
     if not ipeak:
         return np.nan
     dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
-    return (270 - np.degrees(dpm)) % 360.
+    return (270 - R2D * dpm) % 360.
 
 
 def dp(dirspec, dir):
