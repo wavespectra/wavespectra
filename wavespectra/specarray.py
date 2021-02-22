@@ -321,7 +321,6 @@ class SpecArray(object):
     def scale_by_hs(
         self,
         expr,
-        inplace=True,
         hs_min=-np.inf,
         hs_max=np.inf,
         tp_min=-np.inf,
@@ -333,7 +332,6 @@ class SpecArray(object):
 
         Args:
             - expr (str): expression to apply, e.g. '0.13*hs + 0.02'.
-            - inplace (bool): True to apply transformation in place, False otherwise.
             - hs_min, hs_max (float): Hs range over which expr is applied.
             - tp_min, tp_max (float): Tp range over which expr is applied.
             - dpm_min, dpm_max (float) Dpm range over which expr is applied.
@@ -361,10 +359,7 @@ class SpecArray(object):
                     & (dpm <= dpm_max)
                 )
             ).combine_first(self._obj)
-        if inplace:
-            self._obj.values = scaled.values
-        else:
-            return scaled
+        return scaled
 
     def tp(self, smooth=True):
         """Peak wave period Tp.
