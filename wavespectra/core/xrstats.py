@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import dpm, dpm_gufunc, dp, dp_gufunc, tps, tp
+from wavespectra.core import npstats
 
 
 def peak_wave_direction(dset):
@@ -31,9 +31,9 @@ def peak_wave_direction(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        dp_gufunc,
-        ipeak,
-        dset[attrs.DIRNAME],
+        npstats.dp_gufunc,
+        ipeak.astype("int64"),
+        dset[attrs.DIRNAME].astype("float32"),
         input_core_dims=[[], [attrs.DIRNAME]],
         dask="parallelized",
         output_dtypes=["float32"],
@@ -75,13 +75,13 @@ def mean_direction_at_peak_wave_period(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        dpm_gufunc,
-        ipeak,
-        msin,
-        mcos,
+        npstats.dpm_gufunc,
+        ipeak.astype("int64"),
+        msin.astype("float64"),
+        mcos.astype("float64"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
         dask="parallelized",
-        output_dtypes=[dset.dtype],
+        output_dtypes=["float32"],
     )
     # Finalise
     darr.name = "dpm"
@@ -89,7 +89,7 @@ def mean_direction_at_peak_wave_period(dset):
         "standard_name": attrs.ATTRS.dpm.standard_name,
         "units": attrs.ATTRS.dpm.units
     }
-    return darr.where((darr >= 0) & (darr <= 360))
+    return darr #.where((darr >= 0) & (darr <= 360))
 
 
 def peak_wave_period(dset, smooth=True):
@@ -106,26 +106,27 @@ def peak_wave_period(dset, smooth=True):
     # Ensure DataArray
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
+
     # Choose peak period function
     if smooth:
-        func = tps
+        func = npstats.tps_gufunc
     else:
-        func = tp
+        func = npstats.tp_gufunc
+
     # Integrate over directions
     if attrs.DIRNAME in dset.dims:
         dset = dset.sum(dim=attrs.DIRNAME)
-    # Vectorize won't work if dataset does not have dims other than (freq, dir)
-    if set(dset.dims) - {attrs.FREQNAME, attrs.DIRNAME}:
-        vectorize = True
-    else:
-        vectorize = False
+
+    # Frequency Peaks
+    ipeak = dset.spec._peak(dset)
+
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
         func,
-        dset,
-        dset[attrs.FREQNAME],
-        input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME]],
-        vectorize=vectorize,
+        ipeak.astype("int64"),
+        dset.astype("float64"),
+        dset[attrs.FREQNAME].astype("float32"),
+        input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -147,7 +148,7 @@ if __name__ == "__main__":
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
 
     ds = dset.chunk({"time": 10000})
-    ds = xr.concat(50*[ds], "newdim")
+    ds = xr.concat(10*[ds], "newdim")
 
     # t = datetime.datetime(1980, 4, 9, 12)
     # dsi = ds.sel(time=t)
@@ -164,11 +165,4 @@ if __name__ == "__main__":
 
     print("New method")
     with ProgressBar():
-        dp2 = ds.spec.dp().load()
-
-    # print("new function")
-    # with ProgressBar():
-    #     dp2 = mean_direction_at_peak_wave_period(ds).load()
-    # print(dp2[0].values)
-
-    # print(f"{dp1.values} vs {dp2.values}")
+        darr = ds.spec.dpm().load()
