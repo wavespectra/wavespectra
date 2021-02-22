@@ -451,40 +451,16 @@ class SpecArray(object):
         """
         return xrstats.peak_wave_direction(self._obj)
 
-    def dpm(self, mask=np.nan):
+    def dpm(self):
         """Peak wave direction Dpm.
 
-        From WW3 Manual: peak wave direction, defined like the mean direction,
-        using the frequency/wavenumber bin containing of the spectrum F(k)
-        that contains the peak frequency only.
-
-        Args:
-            - mask (float): value for missing data in output.
-
-        Warning: This method cannot be computed lazily.
+        Note From WW3 Manual:
+            - peak wave direction, defined like the mean direction, using the
+              frequency/wavenumber bin containing of the spectrum F(k) that contains
+              the peak frequency only.
 
         """
-        if self.dir is None:
-            raise ValueError("Cannot calculate dpm from 1d, frequency spectra.")
-        ipeak = self._peak(self.oned())
-        moms, momc = self.momd(1)
-        moms_peak = self._collapse_array(
-            moms.values, ipeak.values, axis=moms.get_axis_num(dim=attrs.FREQNAME)
-        )
-        momc_peak = self._collapse_array(
-            momc.values, ipeak.values, axis=momc.get_axis_num(dim=attrs.FREQNAME)
-        )
-        dpm = np.arctan2(moms_peak, momc_peak) * (
-            ipeak * 0 + 1
-        )  # Cheap way to turn dp into appropriate DataArray
-        dpm = (270 - R2D * dpm) % 360.0
-        dpm.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
-        return dpm.where(ipeak > 0).fillna(mask).rename(self._my_name())
+        return xrstats.mean_direction_at_peak_wave_period(self._obj)
 
     def dspr(self):
         """Directional wave spreading Dspr.

@@ -148,6 +148,7 @@ if __name__ == "__main__":
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
 
     ds = dset.chunk({"time": 10000})
+    # ds = xr.concat(50*[ds], "newdim")
 
     # t = datetime.datetime(1980, 4, 9, 12)
     # dsi = ds.sel(time=t)
@@ -160,11 +161,15 @@ if __name__ == "__main__":
 
     # print("old method")
     # with ProgressBar():
-        # dp1 = ds.spec.dpm().load()
+    #     dp1 = ds.spec.dpm().load()
 
-    print("new function")
+    print("New method")
     with ProgressBar():
-        dp2 = mean_direction_at_peak_wave_period(ds).load()
-    print(dp2[0].values)
+        dp2 = ds.spec.dpm1().load()
+
+    # print("new function")
+    # with ProgressBar():
+    #     dp2 = mean_direction_at_peak_wave_period(ds).load()
+    # print(dp2[0].values)
 
     # print(f"{dp1.values} vs {dp2.values}")
