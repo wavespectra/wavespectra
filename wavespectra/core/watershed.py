@@ -106,14 +106,14 @@ def partition(
 
     """
     # Sort out inputs
-    if isinstance(dset, xr.Dataset):
-        dset = dset[attrs.SPECNAME]
     if isinstance(wspd, str):
         wspd = dset[wspd]
     if isinstance(wdir, str):
         wdir = dset[wdir]
     if isinstance(dpt, str):
         dpt = dset[dpt]
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
 
     # Partitioning full spectra
     dsout = xr.apply_ufunc(
