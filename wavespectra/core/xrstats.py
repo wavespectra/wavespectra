@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import dpm, dp, tps, tp
+from wavespectra.core.npstats import dpm, dpm_gufunc, dp, tps, tp
 
 
 def peak_wave_direction(dset):
@@ -65,27 +65,24 @@ def mean_direction_at_peak_wave_period(dset):
     # Ensure DataArray
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
+
     # Dimensions checking
     if attrs.DIRNAME not in dset.dims:
         raise ValueError("Cannot calculate dp from frequency spectra.")
-    # Directional moments
+
+    # Directional moments and peaks
     msin, mcos = dset.spec.momd(1)
-    # Vectorize won't work if dataset does not have dims other than (dir)
-    if set(dset.dims) - {attrs.DIRNAME}:
-        vectorize = True
-    else:
-        vectorize = False
+    ipeak = dset.spec._peak(dset.spec.oned())
+
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        dpm,
-        dset.sum(attrs.DIRNAME),
-        dset[attrs.DIRNAME],
+        dpm_gufunc,
+        ipeak,
         msin,
         mcos,
-        input_core_dims=[[attrs.FREQNAME], [attrs.DIRNAME], [attrs.FREQNAME], [attrs.FREQNAME]],
-        vectorize=vectorize,
+        input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
         dask="parallelized",
-        output_dtypes=["float32"],
+        output_dtypes=[dset.dtype],
     )
     # Finalise
     darr.name = "dpm"
@@ -93,7 +90,7 @@ def mean_direction_at_peak_wave_period(dset):
         "standard_name": attrs.ATTRS.dpm.standard_name,
         "units": attrs.ATTRS.dpm.units
     }
-    return darr
+    return darr.where((darr >= 0) & (darr <= 360))
 
 
 def peak_wave_period(dset, smooth=True):
@@ -159,12 +156,15 @@ if __name__ == "__main__":
     # tp = ds.spec.tp().load()
 
     # ds = ds.isel(time=0).load()
+    # ds = ds.isel(time=slice(None, 100)).load()
 
-    print("old method")
-    with ProgressBar():
-        dp1 = ds.spec.dpm().load()
+    # print("old method")
+    # with ProgressBar():
+        # dp1 = ds.spec.dpm().load()
+
     print("new function")
     with ProgressBar():
         dp2 = mean_direction_at_peak_wave_period(ds).load()
+    print(dp2[0].values)
 
-    print(f"{dp1.values} vs {dp2.values}")
+    # print(f"{dp1.values} vs {dp2.values}")
