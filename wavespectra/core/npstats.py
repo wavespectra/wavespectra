@@ -53,6 +53,29 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
     out[0] = np.float32((270 - R2D * dpm) % 360.)
 
 
+@guvectorize(
+    "(int64, float32[:], float32[:])",
+    "(), (n) -> ()",
+    nopython=True,
+    target="cpu",
+    cache=True,
+    forceobj=True,
+)
+def dp_gufunc(ipeak, dir, out):
+    """Peak wave direction Dp.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in the frequency spectrum E(f).
+        - dir (1darray): Wave direction array.
+
+    Returns:
+        - dp (float): Direction of the maximum energy density in the
+          frequency-integrated spectrum.
+
+    """
+    out[0] = dir[ipeak]
+
+
 def dpm(ipeak, momsin, momcos):
     """Mean direction at the peak wave period Dpm.
 
@@ -71,19 +94,19 @@ def dpm(ipeak, momsin, momcos):
     return (270 - R2D * dpm) % 360.
 
 
-def dp(dirspec, dir):
+def dp(ipeak, dir):
     """Peak wave direction Dp.
 
     Args:
-        - dirspec (1darray): Frequency-integrated wave spectrum array E(d).
-        - freq (1darray): Wave frequency array.
+        - ipeak (int): Index of the maximum energy density in the frequency spectrum E(f).
+        - dir (1darray): Wave direction array.
 
     Returns:
         - dp (float): Direction of the maximum energy density in the
           frequency-integrated spectrum.
 
     """
-    return dir[np.argmax(dirspec)]
+    return dir[ipeak]
 
 
 def tps(spectrum, freq):

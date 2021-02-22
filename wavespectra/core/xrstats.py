@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import dpm, dpm_gufunc, dp, tps, tp
+from wavespectra.core.npstats import dpm, dpm_gufunc, dp, dp_gufunc, tps, tp
 
 
 def peak_wave_direction(dset):
@@ -19,23 +19,22 @@ def peak_wave_direction(dset):
     # Ensure DataArray
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
+
     # Dimensions checking
     if attrs.DIRNAME not in dset.dims:
         raise ValueError("Cannot calculate dp from frequency spectra.")
     if attrs.FREQNAME in dset.dims:
         dset = dset.sum(attrs.FREQNAME)
-    # Vectorize won't work if dataset does not have dims other than (dir)
-    if set(dset.dims) - {attrs.DIRNAME}:
-        vectorize = True
-    else:
-        vectorize = False
+
+    # Peak
+    ipeak = dset.argmax(dim=attrs.DIRNAME)
+
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        dp,
-        dset,
+        dp_gufunc,
+        ipeak,
         dset[attrs.DIRNAME],
-        input_core_dims=[[attrs.DIRNAME], [attrs.DIRNAME]],
-        vectorize=vectorize,
+        input_core_dims=[[], [attrs.DIRNAME]],
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -148,7 +147,7 @@ if __name__ == "__main__":
     dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
 
     ds = dset.chunk({"time": 10000})
-    # ds = xr.concat(50*[ds], "newdim")
+    ds = xr.concat(50*[ds], "newdim")
 
     # t = datetime.datetime(1980, 4, 9, 12)
     # dsi = ds.sel(time=t)
@@ -165,7 +164,7 @@ if __name__ == "__main__":
 
     print("New method")
     with ProgressBar():
-        dp2 = ds.spec.dpm1().load()
+        dp2 = ds.spec.dp().load()
 
     # print("new function")
     # with ProgressBar():
