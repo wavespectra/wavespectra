@@ -48,9 +48,10 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
 
     """
     if not ipeak:
-        return None
-    dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
-    out[0] = np.float32((270 - R2D * dpm) % 360.)
+        out[0] = np.nan
+    else:
+        dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
+        out[0] = np.float32((270 - R2D * dpm) % 360.)
 
 
 @guvectorize(
@@ -73,7 +74,77 @@ def dp_gufunc(ipeak, dir, out):
           frequency-integrated spectrum.
 
     """
-    out[0] = dir[ipeak]
+    out[0] = np.float32(dir[ipeak])
+
+
+@guvectorize(
+    "(int64, float64[:], float32[:], float32[:])",
+    "(), (n), (n) -> ()",
+    nopython=True,
+    target="cpu",
+    cache=True,
+    forceobj=True,
+)
+def tps_gufunc(ipeak, spectrum, freq, out):
+    """Smooth peak wave period Tp.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+
+    Returns:
+        - tp (float): Period of the maximum energy density in the smooth spectrum.
+
+    Note:
+        - The smooth peak period is the peak of a parabolic fit around the spectral
+          peak. It is the period commonly defined in SWAN and WW3 model output.
+
+    """
+    if not ipeak:
+        out[0] = np.nan
+    else:
+        f1 = freq[ipeak - 1]
+        f2 = freq[ipeak]
+        f3 = freq[ipeak + 1]
+        e1 = spectrum[ipeak - 1]
+        e2 = spectrum[ipeak]
+        e3 = spectrum[ipeak + 1]
+        s12 = f1 + f2
+        q12 = (e1 - e2) / (f1 - f2)
+        q13 = (e1 - e3) / (f1 - f3)
+        qa = (q13 - q12) / (f3 - f2)
+        fp = (s12 - q12 / qa) / 2.0
+        out[0] = np.float32(1.0 / fp)
+
+
+@guvectorize(
+    "(int64, float64[:], float32[:], float32[:])",
+    "(), (n), (n) -> ()",
+    nopython=True,
+    target="cpu",
+    cache=True,
+    forceobj=True,
+)
+def tp_gufunc(ipeak, spectrum, freq, out):
+    """Peak wave period Tp.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
+        - spectrum (1darray): Frequency wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+
+    Returns:
+        - tp (float): Period of the maximum energy density in the frequency spectrum.
+
+    Note:
+        - Arg spectrum is only defined so the signature is consistent with tps function.
+
+    """
+    if not ipeak:
+        out[0] = np.nan
+    else:
+        out[0] = np.float32(1.0 / freq[ipeak])
 
 
 def dpm(ipeak, momsin, momcos):
@@ -89,7 +160,7 @@ def dpm(ipeak, momsin, momcos):
 
     """
     if not ipeak:
-        return None
+        return np.nan
     dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
     return (270 - R2D * dpm) % 360.
 
@@ -109,10 +180,11 @@ def dp(ipeak, dir):
     return dir[ipeak]
 
 
-def tps(spectrum, freq):
+def tps(ipeak, spectrum, freq):
     """Smooth peak wave period Tp.
 
     Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
         - spectrum (1darray): Direction-integrated wave spectrum array E(f).
         - freq (1darray): Wave frequency array.
 
@@ -124,11 +196,14 @@ def tps(spectrum, freq):
           peak. It is the period commonly defined in SWAN and WW3 model output.
 
     """
-    ipeak = fpeak(spectrum)
     if not ipeak:
-        return None
-    f1, f2, f3 = [freq[ipeak + i] for i in [-1, 0, 1]]
-    e1, e2, e3 = [spectrum[ipeak + i] for i in [-1, 0, 1]]
+        return np.nan
+    f1 = freq[ipeak - 1]
+    f2 = freq[ipeak]
+    f3 = freq[ipeak + 1]
+    e1 = spectrum[ipeak - 1]
+    e2 = spectrum[ipeak]
+    e3 = spectrum[ipeak + 1]
     s12 = f1 + f2
     q12 = (e1 - e2) / (f1 - f2)
     q13 = (e1 - e3) / (f1 - f3)
@@ -137,10 +212,11 @@ def tps(spectrum, freq):
     return 1.0 / fp
 
 
-def tp(spectrum, freq):
+def tp(ipeak, spectrum, freq):
     """Peak wave period Tp.
 
     Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
         - spectrum (1darray): Frequency wave spectrum array E(f).
         - freq (1darray): Wave frequency array.
 
@@ -148,29 +224,6 @@ def tp(spectrum, freq):
         - tp (float): Period of the maximum energy density in the frequency spectrum.
 
     """
-    ipeak = fpeak(spectrum)
     if not ipeak:
-        return None
+        return np.nan
     return 1.0 / freq[ipeak]
-
-
-def fpeak(arr):
-    """Returns the index of largest peak in the frequency spectrum.
-
-    Args:
-        - arr (1darray): Frequency spectrum.
-
-    Returns:
-        - ipeak (SpecArray): indices for slicing arr at the frequency peak.
-
-    Note:
-        - A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1).
-        - Given the above, ipeak == 0 implies no peak has been detected.
-
-    """
-    ispeak = (np.diff(np.append(arr[0], arr)) > 0) & (
-        np.diff(np.append(arr, arr[-1])) < 0
-    )
-    peak_pos = np.where(ispeak, arr, 0).argmax()
-    return peak_pos
-
