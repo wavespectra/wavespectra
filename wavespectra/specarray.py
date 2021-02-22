@@ -123,18 +123,20 @@ class SpecArray(object):
             otherwise same dimensions as self._obj
 
         """
-        assert (
-            self.freq.min() < fint < self.freq.max()
-        ), "Spectra must have frequencies smaller and greater than fint"
+        if not (self.freq.min() < fint < self.freq.max()):
+            raise ValueError(
+                f"fint must be within freq range {self.freq.values}, got {fint}"
+            )
         ifreq = self.freq.searchsorted(fint)
         df = np.diff(self.freq.isel(freq=[ifreq - 1, ifreq]))[0]
-        Sint = self._obj.isel(freq=[ifreq]) * (
-            fint - self.freq.isel(freq=[ifreq - 1]).values
-        ) + self._obj.isel(freq=[ifreq - 1]).values * (
-            self.freq.isel(freq=[ifreq]).values - fint
-        )
-        Sint = Sint.assign_coords({"freq": [fint]})
-        return Sint / df
+
+        right = self._obj.isel(freq=[ifreq]) * (fint - self.freq[ifreq - 1])
+        left = self._obj.isel(freq=[ifreq - 1]) * (self.freq[ifreq] - fint)
+
+        right = right.assign_coords({"freq": [fint]})
+        left = left.assign_coords({"freq": [fint]})
+
+        return (left + right) / df
 
     def _peak(self, arr):
         """Returns indices of largest peaks along freq dim in a ND-array.
