@@ -140,28 +140,26 @@ class SpecArray(object):
         """Returns indices of largest peaks along freq dim in a ND-array.
 
         Args:
-            arr (SpecArray): 1D spectra (integrated over directions)
+            - arr (SpecArray): 1D spectra (integrated over directions)
 
         Returns:
-            ipeak (SpecArray): indices for slicing arr at the frequency peak
+            - ipeak (SpecArray): indices for slicing arr at the frequency peak
 
         Note:
-            A peak is found when arr(ipeak-1) < arr(ipeak) < arr(ipeak+1)
-            ipeak==0 does not satisfy above condition and is assumed to be
-                missing_value in other parts of the code
+            - Peak is defined IFF arr(ipeak-1) < arr(ipeak) < arr(ipeak+1).
+            - Values at the array boundary do not satisfy above condition and treated
+              as missing_value in other parts of the code.
+            - Flat peaks are ignored by this criterium.
+
         """
-        ispeak = np.logical_and(
-            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
-                attrs.FREQNAME, n=1, label="upper"
-            )
-            > 0,
-            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
+        fwd = xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
+            attrs.FREQNAME, n=1, label="upper"
+        ) > 0
+        bwd = xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
                 attrs.FREQNAME, n=1, label="lower"
-            )
-            < 0,
-        )
-        ipeak = arr.where(ispeak).fillna(0).argmax(dim=attrs.FREQNAME).astype(int)
-        return ipeak
+        ) < 0
+        ispeak = np.logical_and(fwd, bwd)
+        return arr.where(ispeak, 0).argmax(dim=attrs.FREQNAME).astype(int)
 
     def _my_name(self):
         """Returns the caller's name."""
