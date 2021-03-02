@@ -22,20 +22,10 @@ from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 
-try:
-    from sympy import Symbol
-    from sympy.utilities.lambdify import lambdify
-    from sympy.parsing.sympy_parser import parse_expr
-except ImportError:
-    warnings.warn(
-        'Cannot import sympy, install "extra" dependencies for full functionality'
-    )
 
 # TODO: dimension renaming and sorting in __init__ are not producing intended effect.
 #       They correctly modify xarray_obj as defined in xarray.spec._obj but the actual
 #       xarray is not modified - and they loose their direct association
-
-_ = np.newaxis
 
 
 @xr.register_dataarray_accessor("spec")
@@ -328,38 +318,31 @@ class SpecArray(object):
         dpm_min=-np.inf,
         dpm_max=np.inf,
     ):
-        """Scale spectra using equation based on Significant Wave Height Hs.
+        """Scale spectra using expression based on Significant Wave Height hs.
 
         Args:
             - expr (str): expression to apply, e.g. '0.13*hs + 0.02'.
-            - hs_min, hs_max (float): Hs range over which expr is applied.
-            - tp_min, tp_max (float): Tp range over which expr is applied.
-            - dpm_min, dpm_max (float) Dpm range over which expr is applied.
+            - hs_min, hs_max, tp_min, tp_max, dpm_min, dpm_max (float): Ranges of hs,
+                tp and dpm over which the scaling defined by `expr` is applied.
 
         """
-        func = lambdify(Symbol("hs"), parse_expr(expr.lower()), modules=["numpy"])
+        # Scale spectra by hs expression
         hs = self.hs()
-        k = (func(hs) / hs) ** 2
+        k = (eval(expr.lower()) / hs) ** 2
         scaled = k * self._obj
-        if any(
-            [
-                abs(arg) != np.inf
-                for arg in [hs_min, hs_max, tp_min, tp_max, dpm_min, dpm_max]
-            ]
-        ):
+
+        # Condition over which scaling applies
+        condition = True
+        if hs_min != -np.inf or hs_max != np.inf:
+            condition *= (hs >= hs_min) & (hs <= hs_max)
+        if tp_min != -np.inf or tp_max != np.inf:
             tp = self.tp()
+            condition *= (tp >= tp_min) & (tp <= tp_max)
+        if dpm_min != -np.inf or dpm_max != np.inf:
             dpm = self.dpm()
-            scaled = scaled.where(
-                (
-                    (hs >= hs_min)
-                    & (hs <= hs_max)
-                    & (tp >= tp_min)
-                    & (tp <= tp_max)
-                    & (dpm >= dpm_min)
-                    & (dpm <= dpm_max)
-                )
-            ).combine_first(self._obj)
-        return scaled
+            condition *= (dpm >= dpm_min) & (dpm <= dpm_max)
+
+        return scaled.where(condition, self._obj)
 
     def tp(self, smooth=True):
         """Peak wave period Tp.
