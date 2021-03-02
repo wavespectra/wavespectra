@@ -25,7 +25,8 @@ Internal Changes
 * Core watershed partitioning code organised into watershed module.
 * `max_swells` replaced by `swells` in watershed partition to return fixed number of swells.
 * Renamed module `wavespectra.core.misc` by `wavespectra.core.utils`.
-* Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`
+* Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`.
+* Get rid of simpy dependency.
 
 Bug Fixes
 ---------
