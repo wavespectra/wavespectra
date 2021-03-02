@@ -15,7 +15,6 @@ python-dateutil
 pyyaml
 sortedcontainers
 scipy
-simpy
 sphinx
 sphinx_gallery
 sphinx-autobuild
