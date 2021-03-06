@@ -198,18 +198,12 @@ def specpart(spectrum, ihmax=200):
         while True:
             ip = ind[m]
             if imi[ip] != ih:
-                # if dummy == 0:
-                #     # print(f"ih, ip, imi[ip]   {ih}   {ip}   {imi[ip]}")
-                #     print("Exiting on 1st break")
                 break
             # flag the point, if it stays flagged, it is a separate minimum.
             imo[ip] = mask
             # consider neighbors. if there is neighbor, set distance and add to queue.
             for i in range(neigh[8, ip]):
                 ipp = neigh[i, ip]
-                # if ih == 0:
-                #     print(f"ih, ip, ipp {ih+1} {ip+1} {ipp+1}")
-                #     # dummy += 1
                 if imo[ipp] > 0 or imo[ipp] == iwshed:
                     imd[ip] = 1
                     iq_end = fifo_add(ip, iq_end)
@@ -251,9 +245,6 @@ def specpart(spectrum, ihmax=200):
                 elif imo[ipp]  == mask and imd[ipp] == 0:
                     imd[ipp] = ic_dist + 1
                     iq_end = fifo_add(ipp, iq_end)
-        # # End while here
-
-        # print(f"ipp imo[ipp] {ipp} {imo[ipp]}")
 
         # 1.c check for mask values in imo to identify new basins
         m = msave
@@ -285,21 +276,13 @@ def specpart(spectrum, ihmax=200):
             else:
                 m = m + 1
 
-    #     print(f"m: {m}")
-    # print(f"imo: {imo}")
-    # print(f"imd: {imd}")
-    # print(f"imi: {imi}")
-            # end do
-#
-        # end while
-
     # 2.  find nearest neighbor of 0 watershed points and replace
     #     use original input to check which group to affiliate with 0
     #     soring changes first in imd to assure symetry in adjustment.
-    #
-    for j in range(5): #=1, 5
+
+    for j in range(5):
         imd = imo
-        for jl in range(nspec): #=1 , nspec
+        for jl in range(nspec):
             ipt = -1
             if imo[jl] == 0:
                 ep1 = zpmax
@@ -307,20 +290,17 @@ def specpart(spectrum, ihmax=200):
                     diff = abs(zp[jl] - zp[neigh[jn,jl]])
                     if diff <= ep1 and imo[neigh[jn,jl]] != 0:
                         ep1 = diff
-                        ipt = jn
-                        # end if
-                # end do
-                if ( ipt > 0 ):
+                        ipt = jn + 1
+                print(f"jl jn ipt   {jl}   {jn}   {ipt}")
+                if ipt > 0:
                     imd[jl] = imo[neigh[ipt, jl]]
-            # end if
-        # end do
         imo = imd
         if min(imo) > 0:
+            print(f"Exiting at j == {j}")
             break
-    # end do
-    npart = ic_label
-    print(f"npart {npart}")
-    print(f"imo {imo}")
+
+    # npart = ic_label
+    return imo.reshape((nk, nth), order="F")
 
 
 
@@ -446,4 +426,4 @@ if __name__ == "__main__":
     # nk, nth = spectrum.shape
     # ptnghb(nk, nth)
     p = specpart(spectrum)
-    # print(p)
+    print(p)
