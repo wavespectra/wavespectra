@@ -3,7 +3,7 @@ import numpy as np
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.misc import D2R
+from wavespectra.core.utils import D2R
 from wavespectra.input import open_netcdf_or_zarr, to_keep
 
 

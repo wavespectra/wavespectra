@@ -6,7 +6,7 @@ import xarray as xr
 
 # from wavespectra import __version__
 from wavespectra.core.attributes import attrs
-from wavespectra.core.misc import R2D
+from wavespectra.core.utils import R2D
 
 
 MAPPING = {
