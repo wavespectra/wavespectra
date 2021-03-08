@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.misc import to_nautical
+from wavespectra.core.utils import to_nautical
 
 E2V = 1025 * 9.81
 

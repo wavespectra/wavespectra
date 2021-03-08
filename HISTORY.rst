@@ -13,6 +13,27 @@ Releases
 ********
 
 
+X.Y.Z (YYYY-MM-DD)
+------------------
+
+New Features
+------------
+* Watershed partition now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_)
+
+Internal Changes
+----------------
+* Core watershed partitioning code organised into watershed module.
+* `max_swells` replaced by `swells` in watershed partition to return fixed number of swells.
+* Renamed module `wavespectra.core.misc` by `wavespectra.core.utils`.
+* Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`
+
+Bug Fixes
+---------
+
+deprecation
+-----------
+* Dropped args `hs_min` and `nearest` in `SpecArray.partition`.
+
 3.7.2 (2021-01-12)
 ~~~~~~~~~~~~~~~~~~
 

@@ -21,7 +21,7 @@ from sortedcontainers import SortedDict
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.swan import SwanSpecFile, read_tab
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.misc import uv_to_spddir, interp_spec, flatten_list
+from wavespectra.core.utils import uv_to_spddir, interp_spec, flatten_list
 
 
 def read_swan(filename, dirorder=True, as_site=False):
