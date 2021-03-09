@@ -9,6 +9,7 @@ ipython
 matplotlib
 mock
 netcdf4
+numba
 numpy
 pandas
 python-dateutil
