@@ -212,7 +212,7 @@ class SpecArray(object):
         else:
             return self._obj.copy(deep=True)
 
-    def split(self, fmin=None, fmax=None, dmin=None, dmax=None):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, rechunk=True):
         """Split spectra over freq and/or dir dims.
 
         Args:
@@ -220,9 +220,11 @@ class SpecArray(object):
             - fmax (float): highest frequency to split spectra, by default the highest.
             - dmin (float): lowest direction to split spectra at, by default min(dir).
             - dmax (float): highest direction to split spectra at, by default max(dir).
+            - rechunk (bool): Rechunk split dims so there is one single chunk.
 
         Note:
-            - spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
+            - Spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
+            - Recommended rechunk==True so ufuncs with freq/dir as core dims will work.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -247,6 +249,9 @@ class SpecArray(object):
 
         other.freq.attrs = self._obj.freq.attrs
         other.dir.attrs = self._obj.dir.attrs
+
+        if rechunk:
+            other = other.chunk({attrs.FREQNAME: None, attrs.DIRNAME: None})
 
         return other
 
