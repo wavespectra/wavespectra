@@ -31,7 +31,7 @@ def hs(spectrum, freq, dir, tail=True):
     "(int64, float64[:], float64[:], float32[:])",
     "(), (n), (n) -> ()",
     nopython=True,
-    target="cpu",
+    target="parallel",
     cache=True,
     forceobj=True,
 )
@@ -58,7 +58,7 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
     "(int64, float32[:], float32[:])",
     "(), (n) -> ()",
     nopython=True,
-    target="cpu",
+    target="parallel",
     cache=True,
     forceobj=True,
 )
@@ -81,7 +81,7 @@ def dp_gufunc(ipeak, dir, out):
     "(int64, float64[:], float32[:], float32[:])",
     "(), (n), (n) -> ()",
     nopython=True,
-    target="cpu",
+    target="parallel",
     cache=True,
     forceobj=True,
 )
@@ -122,7 +122,7 @@ def tps_gufunc(ipeak, spectrum, freq, out):
     "(int64, float64[:], float32[:], float32[:])",
     "(), (n), (n) -> ()",
     nopython=True,
-    target="cpu",
+    target="parallel",
     cache=True,
     forceobj=True,
 )

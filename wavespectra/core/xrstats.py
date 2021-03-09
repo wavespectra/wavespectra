@@ -137,32 +137,3 @@ def peak_wave_period(dset, smooth=True):
         "units": attrs.ATTRS.tp.units
     }
     return darr
-
-
-if __name__ == "__main__":
-
-    import datetime
-    from dask.diagnostics.progress import ProgressBar
-    from wavespectra import read_wavespectra
-
-    dset = read_wavespectra("/source/consultancy/jogchum/route/route_feb21/p04/spec.nc")
-
-    ds = dset.chunk({"time": 10000})
-    ds = xr.concat(10*[ds], "newdim")
-
-    # t = datetime.datetime(1980, 4, 9, 12)
-    # dsi = ds.sel(time=t)
-
-    # tp2 = ds.spec.tp2().load()
-    # tp = ds.spec.tp().load()
-
-    # ds = ds.isel(time=0).load()
-    # ds = ds.isel(time=slice(None, 100)).load()
-
-    # print("old method")
-    # with ProgressBar():
-    #     dp1 = ds.spec.dpm().load()
-
-    print("New method")
-    with ProgressBar():
-        darr = ds.spec.dpm().load()
