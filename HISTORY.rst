@@ -13,12 +13,19 @@ Releases
 ********
 
 
-X.Y.Z (YYYY-MM-DD)
+4.0.0 (2021-03-DD)
 ------------------
 
 New Features
 ------------
-* Watershed partition now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_)
+* Watershed partitioning now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_).
+* The following spectral parameters now support dask (`PR11 <https://github.com/wavespectra/wavespectra/pull/11>`_):
+
+  * tp
+  * dp
+  * dpm
+  * dspr
+* Spectral splitting now fully daskable.
 
 Internal Changes
 ----------------
@@ -27,13 +34,16 @@ Internal Changes
 * Renamed module `wavespectra.core.misc` by `wavespectra.core.utils`.
 * Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`.
 * Get rid of simpy dependency.
+* New daskable stats defined as ufuncs using numba.
 
 Bug Fixes
 ---------
 
 deprecation
 -----------
+* Drop support for python < 3.7
 * Dropped args `hs_min` and `nearest` in `SpecArray.partition`.
+
 
 3.7.2 (2021-01-12)
 ~~~~~~~~~~~~~~~~~~
