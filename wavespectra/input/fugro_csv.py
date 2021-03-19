@@ -2,8 +2,10 @@ import datetime
 import numpy as np
 import xarray as xr
 
-from wavespectra.specdataset import SpecDataset
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.attributes import attrs
+
+# "wnddir": attrs.WDIRNAME,
+# "wnd": attrs.WSPDNAME
 
 def read_record(f):
     """Reads a record or group of record from the file
@@ -28,7 +30,10 @@ def read_record(f):
     Depth = float(f.readline().split(',')[1])
 
     spectra = []
+    wind_speed = []
+    wind_direction = []
     timestamps = []
+    Hsig_reported = []
 
     for i in range(nrecs):
         f.readline()  # fist line is empty
@@ -51,10 +56,16 @@ def read_record(f):
                                       hour=HH,
                                       minute=mm)
 
+        wind_direction.append(float(parts[3]))
+        wind_speed.append(float(parts[4]))
+        Hsig_reported.append(float(parts[16]))
+
         parts = f.readline().split(',')
         freqs = [float(f) for f in parts[1:-1]]
 
         assert len(freqs) == nfreqs, f'invalid frequency row for record {timestamp}'
+
+
 
         # read the data-block
         rows = [f.readline().split(',') for i in range(ndirs)]
@@ -138,7 +149,23 @@ def read_record(f):
                         dims=('time', 'dir', 'freq'),
                         name='efth')
 
-    return efth
+    wind_speed = xr.DataArray(data = wind_speed, coords=[timestamps], dims = ['time'], name =  attrs.WSPDNAME)
+    wind_direction = xr.DataArray(data = wind_direction, coords=[timestamps], dims = ['time'],  name =  attrs.WDIRNAME)
+
+    rhs = xr.DataArray(data=Hsig_reported, coords=[timestamps], dims=['time'], name='Reported_Hs')
+
+    dataset = efth.to_dataset()
+    dataset = xr.merge([dataset, wind_speed, wind_direction, rhs])
+                        # coords= {   attrs.WDIRNAME: wind_direction,
+                        #             attrs.WSPDNAME: wind_speed },
+                        # name = 'wind')
+
+    dataset.attrs = {'lat': Latitude,
+                     'lon': Longitude,
+                     'waterdepth':Depth,
+                     'forcast_issue':meta}
+
+    return dataset
 
 
 def read_fugro_csv(filename):
@@ -163,9 +190,9 @@ def read_fugro_csv(filename):
                 break
 
             if dataset is None:
-                dataset = record.to_dataset(name='efth')
+                dataset = record
             else:
-                dataset = xr.merge([dataset, record.to_dataset(name='efth')])
+                dataset = xr.merge([dataset, record])
 
     return dataset
 
