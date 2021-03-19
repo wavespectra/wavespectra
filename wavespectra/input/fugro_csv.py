@@ -4,74 +4,74 @@ import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.utils import interp_spec
 
-def read_fugro_csv(filename):
-    """Read Spectra from fugro csv file.
+def read_record(f):
+    """Reads a record or group of record from the file
 
-    Args:
-        - filename (str, Path): File name to read
-
-    Returns:
-        - dset (SpecDataset): spectra dataset object read from file.
-
+    input: f: filepointer
     """
 
-    with open(filename, 'r') as f:
+    # skip empty lines
+    line = '\n'
+    while line == '\n':  # EOF is going to result in ''
+        line = f.readline()
+        if line == '': # EOF
+            return None
 
-        meta = f.readline().split(',')[0]
-        nfreqs = int(f.readline().split(',')[1])
-        ndirs = int(f.readline().split(',')[1])
-        nrecs = int(f.readline().split(',')[1])
-        Latitude = float(f.readline().split(',')[1])
-        Longitude = float(f.readline().split(',')[1])
-        Depth = float(f.readline().split(',')[1])
 
-        spectra = []
-        timestamps = []
+    meta = line.split(',')[0]
+    nfreqs = int(f.readline().split(',')[1])
+    ndirs = int(f.readline().split(',')[1])
+    nrecs = int(f.readline().split(',')[1])
+    Latitude = float(f.readline().split(',')[1])
+    Longitude = float(f.readline().split(',')[1])
+    Depth = float(f.readline().split(',')[1])
 
-        for i in range(nrecs):
-            f.readline() # fist line is empty
-            f.readline() # CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau,,,,,,,,,,,,,,,,,,
+    spectra = []
+    timestamps = []
 
-            parts = f.readline().split(',')
+    for i in range(nrecs):
+        f.readline()  # fist line is empty
+        f.readline()  # CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau,,,,,,,,,,,,,,,,,,
 
-            parts = [part.lstrip("'") for part in parts]
+        parts = f.readline().split(',')
 
-            CC = int(parts[0][:2])
-            YY = int(parts[0][2:4])
-            MM = int(parts[0][4:])
-            DD = int(parts[1][:2])
-            HH = int(parts[1][2:4])
-            mm = int(parts[1][4:])
+        parts = [part.lstrip("'") for part in parts]
 
-            timestamp = datetime.datetime(year = 100*CC + YY,
-                                          month = MM,
-                                          day = DD,
-                                          hour=HH,
-                                          minute=mm)
+        CC = int(parts[0][:2])
+        YY = int(parts[0][2:4])
+        MM = int(parts[0][4:])
+        DD = int(parts[1][:2])
+        HH = int(parts[1][2:4])
+        mm = int(parts[1][4:])
 
-            parts = f.readline().split(',')
-            freqs = [float(f) for f in parts[1:-1]]
+        timestamp = datetime.datetime(year=100 * CC + YY,
+                                      month=MM,
+                                      day=DD,
+                                      hour=HH,
+                                      minute=mm)
 
-            assert len(freqs)==nfreqs, f'invalid frequency row for record {timestamp}'
+        parts = f.readline().split(',')
+        freqs = [float(f) for f in parts[1:-1]]
 
-            # read the data-block
-            rows = [f.readline().split(',') for i in range(ndirs)]
+        assert len(freqs) == nfreqs, f'invalid frequency row for record {timestamp}'
 
-            headings = [float(r[0]) for r in rows]
+        # read the data-block
+        rows = [f.readline().split(',') for i in range(ndirs)]
 
-            # the first entry on each row is the heading
-            # the last entry on each row is the "anspec"
-            # everything in between is the spectra data
+        headings = [float(r[0]) for r in rows]
 
-            data = [[float(r) for r in row[1:-1]] for row in rows]
+        # the first entry on each row is the heading
+        # the last entry on each row is the "anspec"
+        # everything in between is the spectra data
 
-            f.readline() # fspec line (skip)
-            f.readline() # den line (skip)
+        data = [[float(r) for r in row[1:-1]] for row in rows]
 
-            spectra.append(data)
-            timestamps.append(timestamp)
+        f.readline()  # fspec line (skip)
+        f.readline()  # den line (skip)
+
+        spectra.append(data)
+        timestamps.append(timestamp)
 
     # spectra is the wave spectrum (deg,frequency [m2])
     # this is the energy in each bin
@@ -80,12 +80,14 @@ def read_fugro_csv(filename):
     # the freqs are the bin centers
     # the headings are the bin centers
 
+
     dheading = np.diff(headings)
     dheading = np.mod(dheading, 360)
     if len(np.unique(dheading)) > 1:
         import warnings
-        warnings.warn(f'Non-constant heading grid encountered in file {filename}: {dheading}, taking the mean value: {np.mean(dheading)}')
 
+        warnings.warn(
+            f'Non-constant heading grid encountered in file {filename}: {dheading}, taking the mean value: {np.mean(dheading)}')
 
     dh = np.mean(dheading)
 
@@ -104,7 +106,7 @@ def read_fugro_csv(filename):
     c1 = freqs[-1] / np.exp(c2 * nfreqs)
 
     # check the assumptions
-    ifreq = np.arange(1,nfreqs+1)
+    ifreq = np.arange(1, nfreqs + 1)
     freq_check = c1 * np.exp(c2 * ifreq)
 
     difference = freqs - freq_check
@@ -114,11 +116,11 @@ def read_fugro_csv(filename):
         raise ValueError("Can accurately fit an exponential curve through the provided frequency bin centers")
 
     # determine bin edges and bin-widths for frequency bins
-    left = c1 * np.exp(c2 * (ifreq-0.5))
+    left = c1 * np.exp(c2 * (ifreq - 0.5))
     right = c1 * np.exp(c2 * (ifreq + 0.5))
     df = right - left
 
-    bin_area = df * dh # deg / s
+    bin_area = df * dh  # deg / s
 
     # E        = time, direction, frequency
     # bin_area =                  frequency
@@ -128,7 +130,7 @@ def read_fugro_csv(filename):
 
     # construct the DataSet
     coords = {'time': timestamps,
-              'freq': freqs,     # frequency in Hz
+              'freq': freqs,  # frequency in Hz
               'dir': headings}
 
     efth = xr.DataArray(data=E,
@@ -136,10 +138,36 @@ def read_fugro_csv(filename):
                         dims=('time', 'dir', 'freq'),
                         name='efth')
 
-    return efth.to_dataset(name='efth')
+    return efth
 
 
+def read_fugro_csv(filename):
+    """Read Spectra from fugro csv file.
 
+    Args:
+        - filename (str, Path): File name to read
+
+    Returns:
+        - dset (SpecDataset): spectra dataset object read from file.
+
+    """
+
+    dataset = None
+
+    with open(filename, 'r') as f:
+
+        while f:
+            record = read_record(f)
+
+            if record is None:  # EOF reached
+                break
+
+            if dataset is None:
+                dataset = record.to_dataset(name='efth')
+            else:
+                dataset = xr.merge([dataset, record.to_dataset(name='efth')])
+
+    return dataset
 
 
 # Some tests if the file is run as main
