@@ -5,26 +5,24 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
 def spread(dp_matrix, dspr_matrix, dirs):
-    """Generic spreading function.
+    """Cosine 2s spreading function.
 
     Args:
-        dp_matrix:
-        dspr_matrix:
-        dirs:
-
+        dp_matrix: wave directions
+        dspr_matrix: wave directional spreads
+        dirs: direction coordinates
     Returns:
-        G1:
-
+        G1: normalized spreading
     Note:
-        Function defined such that \\int{G1 d\\theta}=1*
+        Function defined such that \int{G1 d\theta}=1*
 
     """
-    adirs = np.array(dirs).reshape((1, -1))
-    pidirs = np.deg2rad(270.0 - np.array(adirs))
-    st1 = np.sin(0.5 * np.deg2rad(270.0 - dp_matrix))
-    ct1 = np.cos(0.5 * np.deg2rad(270.0 - dp_matrix))
-    a = np.maximum(np.cos(0.5 * pidirs) * ct1 + np.sin(0.5 * pidirs) * st1, 0.0)
-    G1 = a ** (2.0 * dspr_matrix)
+    th1 = 0.5 * np.deg2rad(np.array(dirs).reshape((1, -1)))
+    th2 = 0.5 * np.deg2rad(dp_matrix)
+    a = abs(
+        np.cos(th1) * np.cos(th2) + np.sin(th1) * np.sin(th2)
+    )  # cos(a-b) = cos(a)cos(b)+sin(a)sin(b)
+    G1 = a ** (2.0 * dspr_matrix)  # cos((dirs-dp)/2) ** (2*dspr)
     G1 /= np.expand_dims(G1.sum(axis=-1) * abs(dirs[1] - dirs[0]), axis=-1)
     return G1
 
