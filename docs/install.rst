@@ -9,6 +9,12 @@ Installation
 Stable release
 --------------
 
+The wavespectra package can be installed using pip or conda.
+Installation from conda-forge includes pre-compiled versions of the non-python parts of the code. This means that no compiler is required on the target system.
+
+Install using pip
+~~~~~~~~~~~~~~~~~~~
+
 To install wavespectra, run this command in your terminal:
 
 .. code-block:: console
@@ -27,6 +33,15 @@ recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
+
+Install from conda
+~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: console
+
+    $ conda install -c conda-forge wavespectra
+
+
 
 From sources
 ------------
