@@ -9,7 +9,6 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-
 class TestToOrcaflex(object):
     """Test parameters from fugro example files."""
 

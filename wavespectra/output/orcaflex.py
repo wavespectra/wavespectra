@@ -33,9 +33,10 @@ def to_orcaflex(self, model, minEnergy = 1e-6):
         nTrains+=1
 
         env.NumberOfWaveTrains = nTrains
-        env.SelectedWaveTrain = f'Wave{nTrains}'
+        env.SelectedWaveTrainIndex = nTrains -1 # zero-based = f'Wave{nTrains}'
         env.WaveDirection = np.mod(90-dir + 180, 360) # convert from coming from to going to and from compass to ofx
         env.WaveType = 'User Defined Spectrum'
+        env.WaveNumberOfSpectralDirections = 1
 
         # interior points in the spectrum with zero energy are not allowed by orcaflex
         iFirst = np.where(E>0)[0][0]
