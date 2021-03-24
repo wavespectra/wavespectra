@@ -16,7 +16,7 @@ class TestToOrcaflex(object):
     def setup_class(self):
         """Setup class."""
         self.tmp_dir = mkdtemp()
-        self.example = read_fugro_csv(os.path.join(FILES_DIR, "FUGRO_example.csv"))
+        self.example = read_fugro_csv(os.path.join(FILES_DIR, "ARGOSS_example.csv"))
         self.example.spec.to_orcaflex(20)
 
 

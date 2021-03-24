@@ -1,9 +1,9 @@
-Forecast valid for 20170510060000  
+Forecast valid for 20170510060000
 nfreqs,29
 ndir,24
 nrecs,57
-Latitude,61.38
-Longitude,1.73
+Latitude,12.34
+Longitude,12.34
 Depth,159.4
 
 CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau

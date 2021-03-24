@@ -3,7 +3,7 @@ import shutil
 import pytest
 from tempfile import mkdtemp
 
-from wavespectra import read_fugro_csv
+from wavespectra import read_argoss_csv
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -31,14 +31,14 @@ EXAMPLE_TP = [5.65754783, 5.80281025, 5.77072902, 5.98590133, 6.10143477,
        6.77632831, 5.56417361, 6.17359651, 6.33412728, 6.37372178,
        6.39199468, 6.41551901, 6.43430349, 6.42704584]
 
-class TestFugroCSV(object):
+class TestArgossCSV(object):
     """Test parameters from fugro example files."""
 
     @classmethod
     def setup_class(self):
         """Setup class."""
         self.tmp_dir = mkdtemp()
-        self.example = read_fugro_csv(os.path.join(FILES_DIR, "FUGRO_example.csv"))
+        self.example = read_argoss_csv(os.path.join(FILES_DIR, "ARGOSS_example.csv"))
 
 
     def test_hs(self):

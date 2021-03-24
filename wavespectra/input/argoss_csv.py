@@ -168,7 +168,7 @@ def read_record(f):
     return dataset
 
 
-def read_fugro_csv(filename):
+def read_argoss_csv(filename):
     """Read Spectra from fugro csv file.
 
     Args:
@@ -201,7 +201,7 @@ def read_fugro_csv(filename):
 if __name__ == '__main__':
 
     # Filename relative to the current "workdir"
-    filename = r'./tests/sample_files/FUGRO_example.csv'
+    filename = r'./tests/sample_files/ARGOSS_example.csv'
 
     dset = read_fugro_csv(filename)
 
