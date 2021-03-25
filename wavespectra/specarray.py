@@ -33,7 +33,7 @@ class SpecArray(object):
     """Extends DataArray with methods to deal with wave spectra."""
 
     def __init__(self, xarray_obj):
-        """Define spectral attributes."""
+        """Initialise spec accessor."""
         self._obj = xarray_obj
 
         # These are set when property is first called to avoid computing more than once
