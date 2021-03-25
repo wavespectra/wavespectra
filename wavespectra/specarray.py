@@ -30,60 +30,77 @@ from wavespectra.core import xrstats
 
 @xr.register_dataarray_accessor("spec")
 class SpecArray(object):
-    """Extends xarray's DataArray to deal with wave spectra arrays."""
+    """Extends DataArray with methods to deal with wave spectra."""
 
-    def __init__(self, xarray_obj, dim_map=None):
+    def __init__(self, xarray_obj):
         """Define spectral attributes."""
-        # # Rename spectra coordinates if not 'freq' and/or 'dir'
-        # if 'dim_map' is not None:
-        #     xarray_obj = xarray_obj.rename(dim_map)
-
-        # # Ensure frequencies and directions are sorted
-        # for dim in [attrs.FREQNAME, attrs.DIRNAME]:
-        #     if (dim in xarray_obj.dims
-        #         and not self._strictly_increasing(xarray_obj[dim].values)):
-        #         xarray_obj = self._obj.sortby([dim])
-
         self._obj = xarray_obj
-        self._non_spec_dims = set(self._obj.dims).difference(
-            (attrs.FREQNAME, attrs.DIRNAME)
-        )
 
-        # Create attributes for accessor
-        self.freq = xarray_obj.freq
-        self.dir = xarray_obj.dir if attrs.DIRNAME in xarray_obj.dims else None
-
-        self.df = (
-            abs(self.freq[1:].values - self.freq[:-1].values)
-            if len(self.freq) > 1
-            else np.array((1.0,))
-        )
-        self.dd = (
-            abs(self.dir[1].values - self.dir[0].values)
-            if self.dir is not None and len(self.dir) > 1
-            else 1.0
-        )
-
-        # df darray with freq dimension - may replace above one in the future
-        if len(self.freq) > 1:
-            self.dfarr = xr.DataArray(
-                data=np.hstack((1.0, np.full(len(self.freq) - 2, 0.5), 1.0))
-                * (
-                    np.hstack((0.0, np.diff(self.freq)))
-                    + np.hstack((np.diff(self.freq), 0.0))
-                ),
-                coords={attrs.FREQNAME: self.freq},
-                dims=(attrs.FREQNAME),
-            )
-        else:
-            self.dfarr = xr.DataArray(
-                data=np.array((1.0,)),
-                coords={attrs.FREQNAME: self.freq},
-                dims=(attrs.FREQNAME),
-            )
+        # These are set when property is first called to avoid computing more than once
+        self._df = None
+        self._dd = None
+        self._dfarr = None
 
     def __repr__(self):
         return re.sub(r"<([^\s]+)", "<%s" % (self.__class__.__name__), str(self._obj))
+
+    @property
+    def freq(self):
+        """Frequency DataArray."""
+        return self._obj.freq
+
+    @property
+    def dir(self):
+        """Direction DataArray."""
+        if attrs.DIRNAME in self._obj.dims:
+            return self._obj[attrs.DIRNAME]
+        else:
+            return None
+
+    @property
+    def _non_spec_dims(self):
+        """Return the set of non-spectral dimensions in underlying dataset."""
+        return set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
+
+    @property
+    def dfarr(self):
+        """Frequency resolution DataArray."""
+        if self._dfarr is not None:
+            return self._dfarr
+        if len(self.freq) > 1:
+            fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
+            ldif = np.hstack((0.0, np.diff(self.freq)))
+            rdif = np.hstack((np.diff(self.freq), 0.0))
+            self._dfarr = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
+        else:
+            self._dfarr = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
+        return self._dfarr
+
+    @property
+    def df(self):
+        """Frequency resolution numpy array.
+
+        TODO: Check if this can be removed in favor of dfarr.
+
+        """
+        if self._df is not None:
+            return self._df
+        if len(self.freq) > 1:
+            self._df = abs(self.freq[1:].values - self.freq[:-1].values)
+        else:
+            self._df = np.array((1.0,))
+        return self._df
+
+    @property
+    def dd(self):
+        """Direction resolution float."""
+        if self._dd is not None:
+            return self._dd
+        if self.dir is not None and len(self.dir) > 1:
+            self._dd = abs(float(self.dir[1] - self.dir[0]))
+        else:
+            self._dd = 1.0
+        return self._dd
 
     def _strictly_increasing(self, arr):
         """Check if array is sorted in increasing order."""
