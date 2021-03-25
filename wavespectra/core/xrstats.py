@@ -26,6 +26,9 @@ def peak_wave_direction(dset):
     if attrs.FREQNAME in dset.dims:
         dset = dset.sum(attrs.FREQNAME)
 
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.DIRNAME: None})
+
     # Peak
     ipeak = dset.argmax(dim=attrs.DIRNAME)
 
@@ -68,6 +71,9 @@ def mean_direction_at_peak_wave_period(dset):
     # Dimensions checking
     if attrs.DIRNAME not in dset.dims:
         raise ValueError("Cannot calculate dp from frequency spectra.")
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
 
     # Directional moments and peaks
     msin, mcos = dset.spec.momd(1)
@@ -116,6 +122,9 @@ def peak_wave_period(dset, smooth=True):
     # Integrate over directions
     if attrs.DIRNAME in dset.dims:
         dset = dset.sum(dim=attrs.DIRNAME)
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
 
     # Frequency Peaks
     ipeak = dset.spec._peak(dset)
