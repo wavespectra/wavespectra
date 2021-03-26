@@ -26,6 +26,7 @@ New Features
   * dpm
   * dspr
 * Spectral splitting now fully daskable.
+* Wavespectra conda recipe by `RubendeBruin`_.
 
 Internal Changes
 ----------------
@@ -35,6 +36,7 @@ Internal Changes
 * Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`.
 * Get rid of simpy dependency.
 * New daskable stats defined as ufuncs using numba.
+* SpecArray attributes redefined as property methods.
 
 Bug Fixes
 ---------
@@ -43,6 +45,9 @@ deprecation
 -----------
 * Drop support for python < 3.7
 * Dropped args `hs_min` and `nearest` in `SpecArray.partition`.
+
+
+.. _`RubendeBruin`: https://github.com/RubendeBruin
 
 
 3.7.2 (2021-01-12)
