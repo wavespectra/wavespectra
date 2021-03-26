@@ -4,6 +4,7 @@ dask
 gcsfs
 fsspec
 matplotlib
+numba
 numpy
 pandas
 python-dateutil
