@@ -13,19 +13,19 @@ Releases
 ********
 
 
-3.8.0 (2021-03-DD)
+3.8.0 (2021-03-30)
 __________________
 
 New Features
 ------------
 * Watershed partitioning now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_).
+* Spectral splitting now supports dask.
 * The following spectral parameters now support dask (`PR11 <https://github.com/wavespectra/wavespectra/pull/11>`_):
 
   * tp
   * dp
   * dpm
   * dspr
-* Spectral splitting now fully daskable.
 * Wavespectra conda recipe by `RubendeBruin`_.
 
 Internal Changes
