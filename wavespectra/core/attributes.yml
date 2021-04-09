@@ -48,6 +48,9 @@ ATTRS:
     hs:
         standard_name: sea_surface_wave_significant_height
         units: m
+    hrms:
+        standard_name: sea_surface_wave_root_mean_square_height
+        units: m
     hmax:
         standard_name: sea_surface_wave_maximum_height
         units: m
