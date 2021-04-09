@@ -39,7 +39,6 @@ class SpecArray(object):
         # These are set when property is first called to avoid computing more than once
         self._df = None
         self._dd = None
-        self._dfarr = None
 
     def __repr__(self):
         return re.sub(r"<([^\s]+)", "<%s" % (self.__class__.__name__), str(self._obj))
@@ -63,32 +62,17 @@ class SpecArray(object):
         return set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
 
     @property
-    def dfarr(self):
+    def df(self):
         """Frequency resolution DataArray."""
-        if self._dfarr is not None:
-            return self._dfarr
+        if self._df is not None:
+            return self._df
         if len(self.freq) > 1:
             fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
             ldif = np.hstack((0.0, np.diff(self.freq)))
             rdif = np.hstack((np.diff(self.freq), 0.0))
-            self._dfarr = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
+            self._df = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
         else:
-            self._dfarr = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
-        return self._dfarr
-
-    @property
-    def df(self):
-        """Frequency resolution numpy array.
-
-        TODO: Check if this can be removed in favor of dfarr.
-
-        """
-        if self._df is not None:
-            return self._df
-        if len(self.freq) > 1:
-            self._df = abs(self.freq[1:].values - self.freq[:-1].values)
-        else:
-            self._df = np.array((1.0,))
+            self._df = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
         return self._df
 
     @property
@@ -274,7 +258,7 @@ class SpecArray(object):
 
     def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
         """Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)."""
-        E = self._obj * self.dfarr * self.dd
+        E = self._obj * self.df * self.dd
         E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
         return E.rename("energy")
 
@@ -286,7 +270,7 @@ class SpecArray(object):
 
         """
         Sf = self.oned(skipna=False)
-        E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
+        E = (Sf * self.df).sum(dim=attrs.FREQNAME)
         if tail and Sf.freq[-1] > 0.333:
             E += (
                 0.25
@@ -310,7 +294,7 @@ class SpecArray(object):
 
         """
         Sf = self.oned(skipna=False)
-        E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
+        E = (Sf * self.df).sum(dim=attrs.FREQNAME)
         if tail and Sf.freq[-1] > 0.333:
             E += (
                 0.25
@@ -413,7 +397,7 @@ class SpecArray(object):
     def momf(self, mom=0):
         """Calculate given frequency moment."""
         fp = self.freq ** mom
-        mf = self.dfarr * fp * self._obj
+        mf = self.df * fp * self._obj
         return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename(
             f"mom{mom:0.0f}"
         )
