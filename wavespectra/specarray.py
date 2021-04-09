@@ -376,6 +376,16 @@ class SpecArray(object):
         """
         return xrstats.peak_wave_period(self._obj, smooth=smooth)
 
+    def fp(self, smooth=True):
+        """Peak wave frequency Fp.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectra.
+
+        """
+        return 1 / self.tp(smooth=smooth)
+
     def momf(self, mom=0):
         """Calculate given frequency moment."""
         fp = self.freq ** mom
@@ -560,6 +570,21 @@ class SpecArray(object):
             }
         )
         return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
+
+    def gamma(self):
+        """Jonswap peak enhancement factor gamma.
+
+        The ratio between the peak in the frequency spectrum E(f) and its associate
+            Pierson-Moskowitz shape.
+
+        """
+        fp = self.fp()
+        b = (fp ** -1 / 1.057) ** -4
+        a = b * (self.hs() / 2) ** 2
+        pierson_moskowitz_max = a * fp ** -5 * np.exp(-b * fp ** -4)
+        gamma = self.oned().max(attrs.FREQNAME) / pierson_moskowitz_max
+        return gamma.where(gamma >= 1, 1)
+
 
     def celerity(self, depth=None):
         """Wave celerity C from frequency coords.
