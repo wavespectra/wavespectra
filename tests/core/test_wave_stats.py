@@ -31,6 +31,7 @@ class TestSpecArray(object):
             ("dpm", 1e-3),
             ("swe", 1e-3),
             ("sw", 1e-3),
+            ("fp", 1e-3),
         ],
     )
     def test_stat(self, stat_name, rel):
