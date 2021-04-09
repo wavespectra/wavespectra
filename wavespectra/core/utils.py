@@ -27,14 +27,23 @@ def wavelen(freq, depth=None):
 
     """
     if depth is not None:
-        ang_freq = 2 * np.pi * freq
-        return 2 * np.pi / wavenuma(ang_freq, depth)
+        return 2 * np.pi / wavenuma(freq, depth)
     else:
         return 1.56 / freq ** 2
 
 
-def wavenuma(ang_freq, water_depth):
-    """Chen and Thomson wavenumber approximation."""
+def wavenuma(freq, water_depth):
+    """Chen and Thomson wavenumber approximation.
+
+    Args:
+        freq (DataArray, 1darray, float): Frequencies (Hz).
+        water_depth (DataArray, float): Water depth (m).
+
+    Returns:
+        k (DataArray, 1darray, float): Wavenumber 2pi / L.
+
+    """
+    ang_freq = 2 * np.pi * freq
     k0h = 0.10194 * ang_freq * ang_freq * water_depth
     D = [0, 0.6522, 0.4622, 0, 0.0864, 0.0675]
     a = 1.0
@@ -51,12 +60,12 @@ def celerity(freq, depth=None):
         - depth (float): Water depth, use deep water approximation by default.
 
     Returns;
-        - C: ndarray of same shape as freq with wave celerity for each frequency.
+        - C: ndarray of same shape as freq with wave celerity (m/s) for each frequency.
 
     """
     if depth is not None:
         ang_freq = 2 * np.pi * freq
-        return ang_freq / wavenuma(ang_freq, depth)
+        return ang_freq / wavenuma(freq, depth)
     else:
         return 1.56 / freq
 
