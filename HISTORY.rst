@@ -13,13 +13,19 @@ Releases
 ********
 
 
-3.8.1 (YYYY-MM-DD)
+3.8.2 (YYYY-MM-DD)
 __________________
 
 New Features
 ------------
 * Peak frequency method in SpecArray.
+* Hrms method in SpecArray
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
+
+Internal Changes
+----------------
+* Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
+
 
 3.8.0 (2021-03-30)
 __________________
@@ -29,11 +35,10 @@ New Features
 * Watershed partitioning now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_).
 * Spectral splitting now supports dask.
 * The following spectral parameters now support dask (`PR11 <https://github.com/wavespectra/wavespectra/pull/11>`_):
-
-  * tp
-  * dp
-  * dpm
-  * dspr
+    * tp
+    * dp
+    * dpm
+    * dspr
 * Wavespectra conda recipe by `RubendeBruin`_.
 
 Internal Changes
