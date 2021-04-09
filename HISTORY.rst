@@ -27,6 +27,14 @@ Internal Changes
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 
 
+3.8.1 (2021-04-06)
+__________________
+
+Bug Fixes
+---------
+* Add numba to setup.py, not installed properly from requirements/default.txt for some reason.
+
+
 3.8.0 (2021-03-30)
 __________________
 
