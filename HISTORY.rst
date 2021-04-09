@@ -13,6 +13,14 @@ Releases
 ********
 
 
+3.8.1 (YYYY-MM-DD)
+__________________
+
+New Features
+------------
+* Peak frequency method in SpecArray.
+* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
+
 3.8.0 (2021-03-30)
 __________________
 
