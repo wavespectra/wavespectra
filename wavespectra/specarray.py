@@ -302,6 +302,30 @@ class SpecArray(object):
         )
         return hs.rename(self._my_name())
 
+    def hrms(self, tail=True):
+        """Root mean square wave height Hrms.
+
+        Args:
+            - tail (bool): if True fit high-frequency tail before integrating spectra.
+
+        """
+        Sf = self.oned(skipna=False)
+        E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
+        if tail and Sf.freq[-1] > 0.333:
+            E += (
+                0.25
+                * Sf[{attrs.FREQNAME: -1}].drop_vars(attrs.FREQNAME)
+                * Sf.freq[-1].values
+            )
+        hrms = np.sqrt(E * 8)
+        hrms.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return hrms.rename(self._my_name())
+
     def hmax(self):
         """Maximum wave height Hmax.
 
@@ -584,7 +608,6 @@ class SpecArray(object):
         pierson_moskowitz_max = a * fp ** -5 * np.exp(-b * fp ** -4)
         gamma = self.oned().max(attrs.FREQNAME) / pierson_moskowitz_max
         return gamma.where(gamma >= 1, 1)
-
 
     def celerity(self, depth=None):
         """Wave celerity C from frequency coords.
