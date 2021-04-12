@@ -21,6 +21,7 @@ def to_funwave(
         - filename (str): str, name for output SWAN ASCII file.
 
     Note:
+        - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
         - Only 2D spectra E(f,d) are currently supported.
         - If SpecArray is composed by more than one spectrum multiple files are created
           in a zip archive defined by replacing the extension of `filename` by ".zip".
@@ -70,7 +71,7 @@ def funwave_spectrum(darr, filename):
 
     """
     # Amplitudes and phases
-    amp = (np.sqrt(darr * self.dfarr * self.dd * 8) / 2).transpose().squeeze(drop=True)
+    amp = (np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2).transpose().squeeze(drop=True)
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0
 
@@ -100,9 +101,10 @@ if __name__ == "__main__":
 
     dset = read_wavespectra("/source/spec_recon_code/examples/weuro-spec-201201.nc")
 
-    # self = dset.isel(time=0, site=0, drop=True).spec
-    self = dset.isel(time=[0,1,2], site=0, drop=True).spec
+    self = dset.isel(time=0, site=0, drop=True).spec
+    # self = dset.isel(time=[0,1,2], site=0, drop=True).spec
 
+    print(f"Hs: {float(self.hs())}, Tp: {float(self.tp())}")
     to_funwave(
         self,
         filename="tmp/fw.txt",
