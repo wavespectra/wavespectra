@@ -46,7 +46,7 @@ class TestFunwave:
         xr.testing.assert_allclose(
             dset0.spec.stats(["hs", "tp", "dpm"]),
             dset1.spec.stats(["hs", "tp", "dpm"]),
-            rtol=1e-3
+            rtol=1e-3,
         )
 
     def test_write_multi(self):
@@ -55,4 +55,6 @@ class TestFunwave:
         zipname = filename.replace(".txt", ".zip")
         self.dsww3.spec.to_funwave(filename)
         assert os.path.isfile(zipname)
-        assert self._files_in_zip(zipname) == np.prod(self.dsww3.efth.isel(freq=0, dir=0).shape)
+        assert self._files_in_zip(zipname) == np.prod(
+            self.dsww3.efth.isel(freq=0, dir=0).shape
+        )

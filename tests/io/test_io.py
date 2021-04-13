@@ -15,7 +15,8 @@ from wavespectra import (
     read_wwm,
     read_dataset,
     read_era5,
-    read_wavespectra
+    read_wavespectra,
+    read_funwave,
 )
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -23,7 +24,7 @@ FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_
 
 class TestIO(object):
     """Test reading and writing of different file formats.
-    
+
     Extend IO tests by adding tuple to parametrize, e.g.:
         ('filename', read_{filetype}, 'to_{filetype}')
     Use None for 'to_{filetype} if there is no output method defined'.
@@ -48,7 +49,8 @@ class TestIO(object):
             ("triaxys.DIRSPEC", read_triaxys, None),
             ("triaxys.NONDIRSPEC", read_triaxys, None),
             ("wavespectra.nc", read_netcdf, "to_netcdf"),
-            ("era5file.nc", read_era5, None)
+            ("era5file.nc", read_era5, None),
+            ("funwavefile.txt", read_funwave, "to_funwave"),
         ],
     )
     def test_io(self, filename, read_func, write_method_name):
@@ -62,9 +64,8 @@ class TestIO(object):
                 self._write()
                 self._check()
             except NotImplementedError:
-                pytest.skip("Writing function {} not implemented yet".format(
-                    write_method_name
-                    )
+                pytest.skip(
+                    "Writing function {} not implemented yet".format(write_method_name)
                 )
         else:
             print(
