@@ -15,16 +15,16 @@ def to_funwave(
     self,
     filename,
 ):
-    """Write spectra in FUNWAVE format.
+    """Write spectra in Funwave format.
 
     Args:
-        - filename (str): str, name for output SWAN ASCII file.
+        - filename (str): Name for output Funwave file.
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
         - Only 2D spectra E(f,d) are currently supported.
-        - If SpecArray is composed by more than one spectrum multiple files are created
-          in a zip archive defined by replacing the extension of `filename` by ".zip".
+        - If the SpecArray has more than one spectrum, multiple files are created in a
+          zip archive defined by replacing the extension of `filename` by ".zip".
 
     """
     darr = self.efth.sortby(attrs.DIRNAME)
@@ -64,7 +64,7 @@ def funwave_spectrum(darr, filename):
     Args:
         darr (SpecArray): Spectrum to write (only `freq`, `dir` dims are allowed).
         filename (str): Name of file to save spectrum to, choose `None` if you don't
-            want to save it to file and only return the memory buffer.
+            want to save it to file but only return the memory buffer.
 
     Returns:
         StringIO memory buffer with spectrum object.
