@@ -12,6 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.9.0 (2021-MM-DD)
+__________________
+
+New Features
+------------
+* Funwave spectra reader `read_funwave`_.
+* Funwave spectra writer `to_funwave`_.
+
+.. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
+.. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py
+
 
 3.8.1 (2021-04-06)
 __________________
