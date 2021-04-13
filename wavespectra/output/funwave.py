@@ -41,12 +41,12 @@ def to_funwave(
         fpath, fext = os.path.splitext(filename)
         zipname = fpath + ".zip"
         logger.info(f"Multiple spectra, writing txt files in zip archive {zipname}")
-        with ZipFile(zipname, 'w', compression=ZIP_DEFLATED) as zstream:
+        with ZipFile(zipname, "w", compression=ZIP_DEFLATED) as zstream:
             for ind in range(darrs.stacked.size):
                 darr = darrs.isel(stacked=[ind]).unstack()
 
                 # Prefix to compose file name
-                prefix = "_".join([f"{dim}-{darr[dim].values[0]}" for dim in stack_dims])
+                prefix = "_".join([f"{d}-{darr[d].values[0]}" for d in stack_dims])
 
                 # Squeeze out non-spectral dimensions which should have lenght 1
                 darr = darr.squeeze(drop=True)
@@ -71,7 +71,8 @@ def funwave_spectrum(darr, filename):
 
     """
     # Amplitudes and phases
-    amp = (np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2).transpose().squeeze(drop=True)
+    amp = np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2
+    amp = amp.transpose().squeeze(drop=True)
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0
 

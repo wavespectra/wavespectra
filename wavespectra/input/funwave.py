@@ -52,4 +52,3 @@ def read_funwave(filename):
     dset["tp"] = tp
     set_spec_attributes(dset)
     return dset
-
