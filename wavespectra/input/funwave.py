@@ -13,7 +13,7 @@ def read_funwave(filename):
         - filename (str): Funwave file to read.
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from json file.
+        - dset (SpecDataset): spectra dataset object read from funwave file.
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
