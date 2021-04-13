@@ -32,10 +32,8 @@ def read_funwave(filename):
     # Tp
     tp = float(data.pop(0).split()[0])
 
-    # Frequencies
+    # Spectral coordinates
     freq = np.array([float(data.pop(0).split()[0]) for count in range(nf)])
-
-    # Directions
     dir = np.array([float(data.pop(0).split()[0]) for count in range(nd)])
 
     # Amplitude spectrum
