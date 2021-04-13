@@ -93,19 +93,3 @@ def funwave_spectrum(darr, filename):
             fid.write(s.getvalue())
 
     return s
-
-
-if __name__ == "__main__":
-
-    from wavespectra import read_wavespectra
-
-    dset = read_wavespectra("/source/spec_recon_code/examples/weuro-spec-201201.nc")
-
-    self = dset.isel(time=0, site=0, drop=True).spec
-    # self = dset.isel(time=[0,1,2], site=0, drop=True).spec
-
-    print(f"Hs: {float(self.hs())}, Tp: {float(self.tp())}")
-    to_funwave(
-        self,
-        filename="tmp/fw.txt",
-    )
