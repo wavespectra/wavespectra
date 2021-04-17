@@ -5,29 +5,21 @@ import numpy as np
 
 # Just some shape, please ignore the code - we just need something that looks like a wave-spectrum
 edges = np.sort(1.5 / 1.2 ** np.arange(0, 25))
-left = edges[:-1]
-right = edges[1:]
-widths = right - left
-datapoints = 0.5 * (left + right)
 
-# bin_values = ochihubble(
-#     hs=[1, 1.2],
-#     tp=[3, 20],
-#     dp=[180, 180],
-#     L=[1, 1],
-#     freqs=0.5 * (right + left),
-#     dspr=[0, 0],
-# ).spec.oned()
 
-ochihubble(
+demo = ochihubble(
     hs=[1, 1.2],
     tp=[3, 20],
     dp=[180, 180],
     L=[1, 1],
-    freqs=0.5 * (right + left),
-    dspr=[0, 0],
-).spec.oned().spec.from_bins_to_continuous()
+    freqs=0.5 * edges,
+    dspr=[20, 20],
+).spec.from_bins_to_continuous()
 
+demo.spec.plot()
+plt.show()
+
+"""
 
 # what we have
 # left
@@ -147,3 +139,4 @@ plt.show()
 
 
 
+"""

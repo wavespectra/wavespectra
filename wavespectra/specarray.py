@@ -284,28 +284,35 @@ class SpecArray(object):
 
         See:
             documentation : spectral_energy_and_bins
+
+        Returns:
+            returns the updated copy
+
         """
 
-        efth = self._obj # alias
+        # re-order with freq as last dimension for broadcasting
+        efth = self._obj.transpose(...,'freq') # alias
+
         # Based on the grid, try to obtain the bin edges
 
         left, right, width, center = bins_from_frequency_grid(self.freq)
 
-        m0_bins = np.sum(width * efth.data)
+        m0_bins = np.sum(width * efth.data, axis=-1)
+
+        if np.sum(m0_bins.shape) <= 1:
+            is_scalar = True
+        else:
+            is_scalar = False
+
 
         update_rate = 0.5  # new iteration = update_rate *guess + (1-update_rate) * actual_values
-        last_max_update = 0
+        last_update = 999
 
         # the spectal efth data is lcated at self._obj
         #
         # get the dim of the freq axis
 
-
-        efth.dims
-
         # s_datapoint = self.spec.efth.values
-
-        last_max_update = 0
 
         f_left = center[:-1]  # datapoint left of current
         f_right = center[1:]  # datapoint right of current
@@ -313,20 +320,24 @@ class SpecArray(object):
         dfl = edge_internal - f_left
         dfr = f_right - edge_internal
 
+        d_left = center - left
+        d_right = right - center
+
         e0 = efth.data * width
 
         for i in range(100):
 
-            s_left = efth.data[:-1]
-            s_right = efth.data[1:]
+            # interpolate the values on the bin-edges using linear interpolation
 
+            # take .data to get rid of the freq-coordinate as it is not correct anymore since we're refering to left or right
+            s_left = efth.isel(freq = slice(None, -1)).data
+            s_right = efth.isel(freq = slice(1, None)).data
 
-
-            # s_edge_internal = (dfl * s_left + dfr * s_right) / (dfr + dfl)
+            # These are the values at the edges between the centers
             s_edge_internal = s_left + dfl * (s_right - s_left) / (dfr + dfl)
 
-            # values at the outer edges are zero
-            s_edge = np.array([0, *s_edge_internal, 0], dtype=float)
+            # # values at the outer edges are zero
+            # s_edge = np.array([0, *s_edge_internal, 0], dtype=float)
 
             # move the data-points such that the energy per bins stays constant
             #
@@ -340,11 +351,11 @@ class SpecArray(object):
             # 0.5 * (s_left_edge + s_datapoint) * (datapoint - left_edge) +
             # 0.5 * (s_right_edge + s_datapoint) * (right_edge - datapoint) +
 
-            d_left = center - left
-            d_right = right - center
 
-            s_left = s_edge[:-1]
-            s_right = s_edge[1:]
+            # prepend zeros to s_edge_internal
+            zero_energy_at_outside = np.zeros(shape = (*s_edge_internal.shape[:-1],1))  # everything but the last dim
+            s_left =  np.append(zero_energy_at_outside, s_edge_internal, axis=-1)           # s_edge[:-1]
+            s_right = np.append(s_edge_internal, zero_energy_at_outside,axis=-1)
 
             # e0 =
             # 0.5 * (s_left_edge + s_datapoint) * d_left +
@@ -359,29 +370,39 @@ class SpecArray(object):
             # we may have gotten datapoints below zero
             new_estimate = np.maximum(new_estimate, 0)  # note, not max!
 
-            i_maxchange = np.argmax(np.abs(new_estimate - efth.data))
-            max_update = (new_estimate -  efth.data)[i_maxchange]  # signed
+            update = (new_estimate -  efth.data)# signed
 
-            change_in_update = max_update - last_max_update
-            last_max_update = max_update
-            print(f'change in update: {change_in_update}')
+            change_in_update = update - last_update
+            last_update = update
 
-            if abs(change_in_update) < 1e-5:
+            if np.max(np.abs(change_in_update)) < 1e-5:
                 break
 
-            print(f'it {i} , max update {max_update} as point {i_maxchange}')
+            print(f'it {i} , max update {np.max(np.abs(change_in_update))}')
 
             efth.data = update_rate * new_estimate + (1 - update_rate) * efth.data
 
-            # plt.plot(datapoints, s_datapoint, 'g*')
-
             # scale to original m0
-            m0_cont = -np.trapz(center, efth.data)
-            scale = m0_bins / m0_cont
+            m0_cont = -np.trapz(center, efth.data, axis=-1)
 
-            efth.data *= scale
+            # check for division by zeros or very small numbers
+            if is_scalar:
+                scale = m0_bins / m0_cont
+                efth *= scale
+            else:
+                m0_bins[m0_cont<=1e-9] = 1  # energy is always positive, so no need for abs
+                m0_cont[m0_cont<=1e-9] = 1
 
-        print('done')
+                # scale contains all dims except frequency
+                scale = m0_bins / m0_cont
+
+                # move freq to the front for multipliocation
+                data_scaled = efth.transpose('freq',...) * scale
+
+                efth = data_scaled.transpose(...,'freq')
+
+        # put data back in
+        return efth
 
 
 
