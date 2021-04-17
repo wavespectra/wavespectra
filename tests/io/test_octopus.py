@@ -7,6 +7,8 @@ from tempfile import mkdtemp
 from wavespectra import read_ncswan, read_octopus
 from wavespectra.core.attributes import attrs
 
+from numpy.testing import assert_allclose
+
 """
 Note:
 octopusfile.oct is invalid as the number of records listed in the file-header does not
@@ -140,6 +142,28 @@ class TestOctopus(object):
     def test_write_octopus(self):
         ds = read_ncswan(self.filename)
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_and_read(self):
+        ds = read_ncswan(self.filename)
+
+        file = os.path.join(self.tmp_dir, "spectra.oct")
+        ds.spec.to_octopus(file)
+
+        read_back = read_octopus(file)
+
+        a0 = read_back.isel(time=0).spec.oned()
+        b0 = ds.isel(time=0).spec.oned()
+
+        import matplotlib.pyplot as plt
+
+        plt.plot(a0.freq, a0.data, label = 'original')
+        plt.plot(b0.freq, b0.data.flatten(), label = 'stored and read')
+        plt.legend()
+        plt.show()
+
+        assert_allclose(ds.spec.hs().oned, read_back.spec.hs())
+
+
 
     def test_write_octopus_missing_winds_depth(self):
         ds = read_ncswan(self.filename)
