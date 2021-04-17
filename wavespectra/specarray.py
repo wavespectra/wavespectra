@@ -18,7 +18,14 @@ import warnings
 
 from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, bins_from_frequency_grid
+from wavespectra.core.utils import (
+    D2R,
+    R2D,
+    celerity,
+    wavenuma,
+    wavelen,
+    bins_from_frequency_grid,
+)
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 
@@ -71,9 +78,11 @@ class SpecArray(object):
             fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
             ldif = np.hstack((0.0, np.diff(self.freq)))
             rdif = np.hstack((np.diff(self.freq), 0.0))
-            self._dfarr = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
+            self._dfarr = xr.DataArray(
+                data=fact * (ldif + rdif), coords=self.freq.coords
+            )
         else:
-            self._dfarr = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
+            self._dfarr = xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
         return self._dfarr
 
     @property
@@ -161,12 +170,18 @@ class SpecArray(object):
             - Flat peaks are ignored by this criterium.
 
         """
-        fwd = xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
-            attrs.FREQNAME, n=1, label="upper"
-        ) > 0
-        bwd = xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
+        fwd = (
+            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
+                attrs.FREQNAME, n=1, label="upper"
+            )
+            > 0
+        )
+        bwd = (
+            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
                 attrs.FREQNAME, n=1, label="lower"
-        ) < 0
+            )
+            < 0
+        )
         ispeak = np.logical_and(fwd, bwd)
         return arr.where(ispeak, 0).argmax(dim=attrs.FREQNAME).astype(int)
 
@@ -278,9 +293,13 @@ class SpecArray(object):
         E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
         return E.rename("energy")
 
-    def from_bins_to_continuous(self):
+    def from_bins_to_continuous(self, tolerance=1e-5, maxiter=100):
         """Assuming that the spectral data currently in the array represents the spectrum by bins,
         converts this to an equivalent continuous spectral density.
+
+        Arg:
+            tolerance : this is an iterative process. The iterations stop when the change in the delta bewteen
+            two subsequent iterations is less than the tolerance.
 
         See:
             documentation : spectral_energy_and_bins
@@ -290,13 +309,13 @@ class SpecArray(object):
 
         """
 
-        # re-order with freq as last dimension for broadcasting
-        efth = self._obj.transpose(...,'freq') # alias
+        # re-order with freq as last dimension for broadcasting - this creates a copy which
+        efth = self._obj.transpose(..., "freq")  # alias
 
         # Based on the grid, try to obtain the bin edges
-
         left, right, width, center = bins_from_frequency_grid(self.freq)
 
+        # store the original energy per spectra / spectral direction
         m0_bins = np.sum(width * efth.data, axis=-1)
 
         if np.sum(m0_bins.shape) <= 1:
@@ -304,58 +323,51 @@ class SpecArray(object):
         else:
             is_scalar = False
 
-
-        update_rate = 0.5  # new iteration = update_rate *guess + (1-update_rate) * actual_values
+        # iterator settings
+        update_rate = (
+            0.5  # new iteration = update_rate *guess + (1-update_rate) * actual_values
+        )
         last_update = 999
 
-        # the spectal efth data is lcated at self._obj
         #
-        # get the dim of the freq axis
-
-        # s_datapoint = self.spec.efth.values
-
         f_left = center[:-1]  # datapoint left of current
         f_right = center[1:]  # datapoint right of current
-        edge_internal = left[1:]
-        dfl = edge_internal - f_left
-        dfr = f_right - edge_internal
+        edge_internal = left[1:]  # all internal edges
+        dfl = edge_internal - f_left  # internal edge to center of bin on left of edge
+        dfr = f_right - edge_internal  # internal edge to center of bin on left of edge
 
-        d_left = center - left
-        d_right = right - center
+        d_left = center - left  # width of left side of bin
+        d_right = right - center  # width of right side of bin
 
-        e0 = efth.data * width
+        e0 = efth.data * width  # energy per bin
 
-        for i in range(100):
+        _log = []
+
+        converged = False
+        for i in range(maxiter):
 
             # interpolate the values on the bin-edges using linear interpolation
 
-            # take .data to get rid of the freq-coordinate as it is not correct anymore since we're refering to left or right
-            s_left = efth.isel(freq = slice(None, -1)).data
-            s_right = efth.isel(freq = slice(1, None)).data
+            # spectral density at datapoint left or right of internal edge
+            # (take .data to get rid of the freq-coordinate as it is not correct anymore since we're refering to left or right)
+            s_left = efth.isel(freq=slice(None, -1)).data
+            s_right = efth.isel(freq=slice(1, None)).data
 
-            # These are the values at the edges between the centers
+            # Interpolate the values at the edges between the centers
             s_edge_internal = s_left + dfl * (s_right - s_left) / (dfr + dfl)
 
-            # # values at the outer edges are zero
-            # s_edge = np.array([0, *s_edge_internal, 0], dtype=float)
-
-            # move the data-points such that the energy per bins stays constant
-            #
-            # Energy in an original bin = bin_value * widths
-            # Energy in the continuous spectrum in the same area as the bin
-            #
-            # the spectral density at the edges is s_edge
-            # the spectral density at the locations of the original datapoint can now be calculated
-            #
-            # bin_value * width =
-            # 0.5 * (s_left_edge + s_datapoint) * (datapoint - left_edge) +
-            # 0.5 * (s_right_edge + s_datapoint) * (right_edge - datapoint) +
-
-
+            # values at the outer edges are zero
             # prepend zeros to s_edge_internal
-            zero_energy_at_outside = np.zeros(shape = (*s_edge_internal.shape[:-1],1))  # everything but the last dim
-            s_left =  np.append(zero_energy_at_outside, s_edge_internal, axis=-1)           # s_edge[:-1]
-            s_right = np.append(s_edge_internal, zero_energy_at_outside,axis=-1)
+            zero_energy_at_outside = np.zeros(
+                shape=(*s_edge_internal.shape[:-1], 1)
+            )  # everything but the last dim
+            s_left = np.append(
+                zero_energy_at_outside, s_edge_internal, axis=-1
+            )  # s_edge[:-1]
+            s_right = np.append(s_edge_internal, zero_energy_at_outside, axis=-1)
+
+            # Now calculate the spectral density at the frequency grid in order to keep the
+            # energy per bin the same as the initial value (e0)
 
             # e0 =
             # 0.5 * (s_left_edge + s_datapoint) * d_left +
@@ -365,21 +377,26 @@ class SpecArray(object):
             #
             # 0.5 * s_datapoint ( d_left + d_right ) = e0 - 0.5 * s_left_edge * d_left - 0.5 * s_right_edge * d_right
 
-            new_estimate = (e0 - 0.5 * s_left * d_left - 0.5 * s_right * d_right) / (0.5 * (d_left + d_right))
+            new_estimate = (e0 - 0.5 * s_left * d_left - 0.5 * s_right * d_right) / (
+                0.5 * (d_left + d_right)
+            )
 
             # we may have gotten datapoints below zero
             new_estimate = np.maximum(new_estimate, 0)  # note, not max!
 
-            update = (new_estimate -  efth.data)# signed
-
+            # update, convergence check
+            update = new_estimate - efth.data  # signed
             change_in_update = update - last_update
             last_update = update
 
-            if np.max(np.abs(change_in_update)) < 1e-5:
+            if np.max(np.abs(change_in_update)) < tolerance:
+                converged = True
                 break
 
-            print(f'it {i} , max update {np.max(np.abs(change_in_update))}')
+            # print(f'it {i} , max update {np.max(np.abs(change_in_update))}')
+            _log.append(f"it {i} , max update {np.max(np.abs(change_in_update))}")
 
+            # relaxed updates converge quicker
             efth.data = update_rate * new_estimate + (1 - update_rate) * efth.data
 
             # scale to original m0
@@ -390,21 +407,28 @@ class SpecArray(object):
                 scale = m0_bins / m0_cont
                 efth *= scale
             else:
-                m0_bins[m0_cont<=1e-9] = 1  # energy is always positive, so no need for abs
-                m0_cont[m0_cont<=1e-9] = 1
+                m0_bins[
+                    m0_cont <= 1e-9
+                ] = 1  # energy is always positive, so no need for abs
+                m0_cont[m0_cont <= 1e-9] = 1
 
                 # scale contains all dims except frequency
                 scale = m0_bins / m0_cont
 
                 # move freq to the front for multipliocation
-                data_scaled = efth.transpose('freq',...) * scale
+                data_scaled = efth.transpose("freq", ...) * scale
 
-                efth = data_scaled.transpose(...,'freq')
+                efth = data_scaled.transpose(..., "freq")
+
+        if not converged:
+            for l in _log:
+                print(l)
+            raise ValueError(
+                "Convergence criteria not reached - debug into printed above"
+            )
 
         # put data back in
         return efth
-
-
 
     def hs(self, tail=True):
         """Spectral significant wave height Hm0.
