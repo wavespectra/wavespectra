@@ -2,50 +2,41 @@ from wavespectra.construct import ochihubble
 from wavespectra.core.utils import bins_from_frequency_grid
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.testing import assert_allclose
+
 
 freqs = np.sort(1.5 / 1.2 ** np.arange(0, 25))
-
-demo = ochihubble(
+give_test_spectrum =  ochihubble(
     hs=[1, 1.2],
     tp=[3, 20],
     dp=[180, 180],
     L=[1, 1],
     freqs=freqs,
-    dspr=[0, 0],
-).spec.oned()
-
-# plot the input spectrum using bins
-
-# plot as bins
-left, right, width, center = bins_from_frequency_grid(freqs)
-for l, r, d in zip(left, right, demo.data):
-    plt.plot([l, l, r, r], [0, d, d, 0],lw=1)
-
-d1d = demo.spec.from_bins_to_continuous()
-
-plt.plot(d1d.freq, d1d.data,'k.-')
-
-plt.xlim([0, 0.12])
-plt.show()
+    dspr=[0, 0],)
 
 
-#----------- 2D
 
-edges = np.sort(1.5 / 1.2 ** np.arange(0, 25))
+def test_oned():
+    test = give_test_spectrum
+    test = test.spec.oned().spec.from_bins_to_continuous()
+    assert_allclose(test.spec.hs(), np.sqrt(1+1.2**2), atol = 0.01)
 
+def test_twod():
+    test = give_test_spectrum
+    test = test.spec.from_bins_to_continuous()
+    assert_allclose(test.spec.hs(), np.sqrt(1+1.2**2), atol = 0.01)
 
-ochihubble(
-    hs=[1, 1.2],
-    tp=[3, 20],
-    dp=[180, 180],
-    L=[1, 1],
-    freqs=0.5 * edges,
-    dspr=[20, 20],
-)
+def test_compare_1d_and_twod_squashed():
+    test = give_test_spectrum
+    test1 = test.spec.from_bins_to_continuous().spec.oned()
+    test2 = test.spec.oned().spec.from_bins_to_continuous()
 
-d2d = demo.spec.from_bins_to_continuous()
+    assert_allclose(test1.data, test2.data, atol=1e-2)
 
-d2d.plot()
+    # plt.plot(test1)
+    # plt.plot(test2)
+    # plt.show()
+
 
 
 """

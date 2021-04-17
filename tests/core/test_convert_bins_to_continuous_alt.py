@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# Just some shape, please ignore the code - we just need something that looks like a wave-spectrum
 edges = np.sort(1.5 / 1.2 ** np.arange(0, 25))
 
 
@@ -14,10 +13,19 @@ demo = ochihubble(
     L=[1, 1],
     freqs=0.5 * edges,
     dspr=[20, 20],
-).spec.from_bins_to_continuous()
+)
 
-demo.spec.plot()
+d1 = demo.spec.from_bins_to_continuous().spec.oned()
+
+d2 = demo.spec.oned().spec.from_bins_to_continuous()
+# demo.spec.plot()
+# plt.show()
+#
+plt.plot(d1, label = 'cont -> 1D')
+plt.plot(d2,'r.' , label = '1D ->cont')
+plt.legend()
 plt.show()
+
 
 """
 
