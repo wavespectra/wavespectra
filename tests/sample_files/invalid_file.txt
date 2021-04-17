@@ -1,0 +1,33 @@
+Forecast valid for 11-Mar-2018 00:00:00
+nfreqs,24
+ndir,36
+nrecs,181
+Latitude, -39.9723
+Longitude, 173.3090
+Depth,102.328500
+
+CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau
+Y2K1803,'110000,maari_20180311_00z,123,11.64,0.0759,6.54,239.2,0.0287,3.87,221.1,0.0473,10.98,242.5,0.01146,0.00265,1.1023,240,48,0
+
+
+This is an invalid file for testing purposes
+
+         _ .....Hit me I dare you......ya ya ya....
+        / \
+    __/    \_
+   /_  -  \  \                      ,:',:`,:' ........Oh yeah, yes you...HA!
+  / / /     \ \                  __||_||_||_||___
+ |    |     / |             ____[""""""""""""""""]___
+ /   /     \   \            \ " '''''''''''''''''''' \
+ ~~^~^~HZ~~^~^~^~~^~^~^~~jgs~^~^~^^~^~^~^~^~^~^~^~~^~^~^~^~~^~^
+
+                  _
+                 / \ ......See, I told you.....
+             __/    \_
+            /_  -  \  \                   ____  ..... Oh, heck...gulp..glub..
+           / / /     \ \            ,' ._|    \
+          |   |     /  |            :__: :    |
+         /   /      \   \            --: :    |\o
+~~^~~^~~~~^^~^~^~^~^~^~~~^~~^~HZ~~^~^~~~^~^~^^~~~~^~^~^~~^^^~^^^
+
+Howard Zivotofsky (HZ)
