@@ -10,14 +10,24 @@ right = edges[1:]
 widths = right - left
 datapoints = 0.5 * (left + right)
 
-bin_values = ochihubble(
+# bin_values = ochihubble(
+#     hs=[1, 1.2],
+#     tp=[3, 20],
+#     dp=[180, 180],
+#     L=[1, 1],
+#     freqs=0.5 * (right + left),
+#     dspr=[0, 0],
+# ).spec.oned()
+
+ochihubble(
     hs=[1, 1.2],
     tp=[3, 20],
     dp=[180, 180],
     L=[1, 1],
     freqs=0.5 * (right + left),
     dspr=[0, 0],
-).spec.oned()
+).spec.oned().spec.from_bins_to_continuous()
+
 
 # what we have
 # left

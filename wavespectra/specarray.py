@@ -18,7 +18,7 @@ import warnings
 
 from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, bins_from_frequency_grid
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 
@@ -277,6 +277,113 @@ class SpecArray(object):
         E = self._obj * self.dfarr * self.dd
         E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
         return E.rename("energy")
+
+    def from_bins_to_continuous(self):
+        """Assuming that the spectral data currently in the array represents the spectrum by bins,
+        converts this to an equivalent continuous spectral density.
+
+        See:
+            documentation : spectral_energy_and_bins
+        """
+
+        efth = self._obj # alias
+        # Based on the grid, try to obtain the bin edges
+
+        left, right, width, center = bins_from_frequency_grid(self.freq)
+
+        m0_bins = np.sum(width * efth.data)
+
+        update_rate = 0.5  # new iteration = update_rate *guess + (1-update_rate) * actual_values
+        last_max_update = 0
+
+        # the spectal efth data is lcated at self._obj
+        #
+        # get the dim of the freq axis
+
+
+        efth.dims
+
+        # s_datapoint = self.spec.efth.values
+
+        last_max_update = 0
+
+        f_left = center[:-1]  # datapoint left of current
+        f_right = center[1:]  # datapoint right of current
+        edge_internal = left[1:]
+        dfl = edge_internal - f_left
+        dfr = f_right - edge_internal
+
+        e0 = efth.data * width
+
+        for i in range(100):
+
+            s_left = efth.data[:-1]
+            s_right = efth.data[1:]
+
+
+
+            # s_edge_internal = (dfl * s_left + dfr * s_right) / (dfr + dfl)
+            s_edge_internal = s_left + dfl * (s_right - s_left) / (dfr + dfl)
+
+            # values at the outer edges are zero
+            s_edge = np.array([0, *s_edge_internal, 0], dtype=float)
+
+            # move the data-points such that the energy per bins stays constant
+            #
+            # Energy in an original bin = bin_value * widths
+            # Energy in the continuous spectrum in the same area as the bin
+            #
+            # the spectral density at the edges is s_edge
+            # the spectral density at the locations of the original datapoint can now be calculated
+            #
+            # bin_value * width =
+            # 0.5 * (s_left_edge + s_datapoint) * (datapoint - left_edge) +
+            # 0.5 * (s_right_edge + s_datapoint) * (right_edge - datapoint) +
+
+            d_left = center - left
+            d_right = right - center
+
+            s_left = s_edge[:-1]
+            s_right = s_edge[1:]
+
+            # e0 =
+            # 0.5 * (s_left_edge + s_datapoint) * d_left +
+            # 0.5 * (s_right_edge + s_datapoint) * d_right
+            # =
+            # 0.5*s_left_edge * d_left + 0.5*s_datapoint * d_left + 0.5 * s_right*edge*d_right + 0.5 * s_datapoint * d_right
+            #
+            # 0.5 * s_datapoint ( d_left + d_right ) = e0 - 0.5 * s_left_edge * d_left - 0.5 * s_right_edge * d_right
+
+            new_estimate = (e0 - 0.5 * s_left * d_left - 0.5 * s_right * d_right) / (0.5 * (d_left + d_right))
+
+            # we may have gotten datapoints below zero
+            new_estimate = np.maximum(new_estimate, 0)  # note, not max!
+
+            i_maxchange = np.argmax(np.abs(new_estimate - efth.data))
+            max_update = (new_estimate -  efth.data)[i_maxchange]  # signed
+
+            change_in_update = max_update - last_max_update
+            last_max_update = max_update
+            print(f'change in update: {change_in_update}')
+
+            if abs(change_in_update) < 1e-5:
+                break
+
+            print(f'it {i} , max update {max_update} as point {i_maxchange}')
+
+            efth.data = update_rate * new_estimate + (1 - update_rate) * efth.data
+
+            # plt.plot(datapoints, s_datapoint, 'g*')
+
+            # scale to original m0
+            m0_cont = -np.trapz(center, efth.data)
+            scale = m0_bins / m0_cont
+
+            efth.data *= scale
+
+        print('done')
+
+
 
     def hs(self, tail=True):
         """Spectral significant wave height Hm0.

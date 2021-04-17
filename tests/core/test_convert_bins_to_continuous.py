@@ -1,7 +1,36 @@
 from wavespectra.construct import ochihubble
+from wavespectra.core.utils import bins_from_frequency_grid
 import matplotlib.pyplot as plt
 import numpy as np
 
+freqs = np.sort(1.5 / 1.2 ** np.arange(0, 25))
+
+demo = ochihubble(
+    hs=[1, 1.2],
+    tp=[3, 20],
+    dp=[180, 180],
+    L=[1, 1],
+    freqs=freqs,
+    dspr=[0, 0],
+).spec.oned()
+
+# plot the input spectrum using bins
+
+# plot as bins
+left, right, width, center = bins_from_frequency_grid(freqs)
+for l, r, d in zip(left, right, demo.data):
+    plt.plot([l, l, r, r], [0, d, d, 0],lw=1)
+
+demo.spec.from_bins_to_continuous()
+
+plt.plot(demo.freq, demo.data,'k.-')
+
+plt.xlim([0, 0.12])
+plt.show()
+
+
+
+"""
 
 # Just some shape, please ignore the code - we just need something that looks like a wave-spectrum
 edges = np.sort(1.5 / 1.2 ** np.arange(0, 25))
@@ -118,3 +147,4 @@ plt.show()
 
 
 
+"""
