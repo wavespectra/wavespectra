@@ -26,6 +26,12 @@ There are two major ways of storing spectral data:
 1. As points on a continuous curve
 2. As energy bins defined by the center of the bin and the amount of energy in that bin.
 
+Both stored data-formats look identical
+
+.. image:: _static/cont_vs_bins1.png
+    :width: 150 px
+    :align: right
+
 If the size of the bins is constant then the these two can for all practical purposes be converted to eachother by multiplcation or division by the bin size.
 
 If....
