@@ -14,20 +14,33 @@ logging.basicConfig(level="INFO")
 def to_funwave(
     self,
     filename,
+    clip=True,
 ):
     """Write spectra in Funwave format.
 
     Args:
         - filename (str): Name for output Funwave file.
+        - clip (bool): Clip directions outside [-90, 90] range in cartesian convention.
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
+        - Directions converted from  wavespectra (0N, CW, from) to Cartesian (0E, CCW, to).
+        - Funwave only seems to deal with directions in the [-90, 90] range in
+          cartesian convention, use clip=True to clip spectra outside that range.
         - Only 2D spectra E(f,d) are currently supported.
         - If the SpecArray has more than one spectrum, multiple files are created in a
           zip archive defined by replacing the extension of `filename` by ".zip".
 
     """
-    darr = self.efth.sortby(attrs.DIRNAME)
+    # SpecArray in Cartesian convention
+    dir = (270 - self.dir.values) % 360
+    dir[dir > 180] = dir[dir > 180] - 360
+    darr = self.efth.assign_coords({attrs.DIRNAME: dir}).sortby(attrs.DIRNAME)
+
+    # Clip directions outside [-90, 90] range
+    if clip:
+        darr = darr.sel(**{attrs.DIRNAME: slice(-90, 90)})
+
     stack_dims = list(darr.spec._non_spec_dims)
     dimsizes = set([darr[d].size for d in darr.spec._non_spec_dims])
 
@@ -59,7 +72,7 @@ def to_funwave(
 
 
 def funwave_spectrum(darr, filename):
-    """Spectrum in Funwave file format.
+    """Funwave spectrum memory buffer.
 
     Args:
         darr (SpecArray): Spectrum to write (only `freq`, `dir` dims are allowed).

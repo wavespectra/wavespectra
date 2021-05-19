@@ -17,6 +17,7 @@ def read_funwave(filename):
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
+        - Directions converted from Cartesian (0E, CCW, to) to wavespectra (0N, CW, from).
         - Phases are ignored if present.
 
     """
@@ -32,9 +33,10 @@ def read_funwave(filename):
     # Tp
     tp = float(data.pop(0).split()[0])
 
-    # Spectral coordinates
+    # Spectral coordinates (convert dir from cartesian to wavespectra convention)
     freq = np.array([float(data.pop(0).split()[0]) for count in range(nf)])
     dir = np.array([float(data.pop(0).split()[0]) for count in range(nd)])
+    dir = (270 - dir) % 360
 
     # Amplitude spectrum
     amp = np.genfromtxt(data[:nd])
@@ -48,7 +50,7 @@ def read_funwave(filename):
     darr = darr ** 2 / (darr.spec.dfarr * darr.spec.dd * 2)
 
     # Define output dataset
-    dset = darr.to_dataset(name=attrs.SPECNAME)
+    dset = darr.to_dataset(name=attrs.SPECNAME).sortby(attrs.DIRNAME)
     dset["tp"] = tp
     set_spec_attributes(dset)
     return dset
