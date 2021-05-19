@@ -41,7 +41,7 @@ class TestFunwave:
         """
         filename = os.path.join(self.tmp_dir, "fw.txt")
         dset0 = self.dsww3.isel(time=0, site=0, drop=True)
-        dset0.spec.to_funwave(filename)
+        dset0.spec.to_funwave(filename, clip=False)
         dset1 = read_funwave(filename)
         xr.testing.assert_allclose(
             dset0.spec.stats(["hs", "tp", "dpm"]),
@@ -58,3 +58,22 @@ class TestFunwave:
         assert self._files_in_zip(zipname) == np.prod(
             self.dsww3.efth.isel(freq=0, dir=0).shape
         )
+
+    def test_clip(self):
+        """Test directions are / are not clipped."""
+        filename1 = os.path.join(self.tmp_dir, "fw1.txt")
+        filename2 = os.path.join(self.tmp_dir, "fw2.txt")
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True)
+        dset0.spec.to_funwave(filename1)
+        dset0.spec.to_funwave(filename2, clip=False)
+
+        dset1 = read_funwave(filename1)
+        dset2 = read_funwave(filename2)
+
+        dir1 = (270 - dset1.dir.values) % 360
+        dir2 = (270 - dset2.dir.values) % 360
+        dir1[dir1 > 180] = dir1[dir1 > 180] - 360
+        dir2[dir2 > 180] = dir2[dir2 > 180] - 360
+
+        assert dir1.min() >= -90 and dir1.max() <= 90
+        assert dir2.min() < -90 and dset2.dir.max() > 90
