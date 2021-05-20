@@ -88,7 +88,18 @@ def to_orcaflex(self, model, minEnergy=1e-6):
 
         env.WaveNumberOfUserSpectralPoints = len(E[iFirst:iLast])
         env.WaveSpectrumS = E[iFirst:iLast]
-        env.WaveSpectrumFrequency = freqs[iFirst:iLast]  # convert o rad/s
+        env.WaveSpectrumFrequency = freqs[iFirst:iLast]
+
+        env.WaveType = 'Airy'  #Temporary set the wave-type to Airy. This is to avoid re-calcultion of
+                               # the spectral properties each time the next train is set (can slow-down
+                               # considerably when using many sprectral components
+                               # !thank you people at orcina for your help solving this!
+
+
+    # When all data is set, restore all trains to 'user-defined'. The data that we set earlier
+    # will still be there.
+    for env.SelectedWaveTrainIndex in range(nTrains):
+        env.WaveType = 'User Defined Spectrum'
 
     if nTrains == 0:
         raise ValueError(
