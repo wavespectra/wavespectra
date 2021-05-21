@@ -240,8 +240,8 @@ class SpecArray(object):
             da = extended_freqs.interp(freq=new_freq, assume_sorted=False, kwargs={'fill_value': 0})
 
         if maintain_m0:
-            da['efth']
-            da.spec.scale_by_hs(inplace=True, hs = self.hs())
+            scale = self.hs()**2 / da.spec.hs()**2
+            da = da * scale
 
         return da
 
