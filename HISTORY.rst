@@ -12,6 +12,25 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.9.1 (2021-MM-DD)
+__________________
+
+New Features
+------------
+*
+
+
+Bug Fixes
+---------
+
+
+Internal Changes
+----------------
+* Fixed sphinx-gallery dependency by by `RubendeBruin`_.
+* Add new funwave functiont to docs.
+* Update authors list.
+
+
 3.9.0 (2021-05-29)
 __________________
 
