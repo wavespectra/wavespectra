@@ -33,3 +33,4 @@ These output functions are currently available as methods of :py:class:`~wavespe
     SpecDataset.to_swan
     SpecDataset.to_octopus
     SpecDataset.to_json
+    SpecDataset.to_funwave
