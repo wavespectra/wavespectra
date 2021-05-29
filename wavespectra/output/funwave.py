@@ -27,19 +27,23 @@ def to_funwave(
         - Directions converted from  wavespectra (0N, CW, from) to Cartesian (0E, CCW, to).
         - Funwave only seems to deal with directions in the [-90, 90] range in
           cartesian convention, use clip=True to clip spectra outside that range.
-        - Only 2D spectra E(f,d) are currently supported.
+        - Onedimensional frequency spectra are supported.
+        - Both 2D E(f,d) and 1d E(f) spectra are supported.
         - If the SpecArray has more than one spectrum, multiple files are created in a
           zip archive defined by replacing the extension of `filename` by ".zip".
 
     """
-    # SpecArray in Cartesian convention
-    dir = (270 - self.dir.values) % 360
-    dir[dir > 180] = dir[dir > 180] - 360
-    darr = self.efth.assign_coords({attrs.DIRNAME: dir}).sortby(attrs.DIRNAME)
+    darr = self.efth.copy(deep=True)
 
-    # Clip directions outside [-90, 90] range
-    if clip:
-        darr = darr.sel(**{attrs.DIRNAME: slice(-90, 90)})
+    # Convert directions to Cartesian, going-to convention
+    if attrs.DIRNAME in self.efth.dims:
+        dir = (270 - self.dir.values) % 360
+        dir[dir > 180] = dir[dir > 180] - 360
+        darr = darr.assign_coords({attrs.DIRNAME: dir}).sortby(attrs.DIRNAME)
+
+        # Clip directions outside [-90, 90] range
+        if clip:
+            darr = darr.sel(**{attrs.DIRNAME: slice(-90, 90)})
 
     stack_dims = list(darr.spec._non_spec_dims)
     dimsizes = set([darr[d].size for d in darr.spec._non_spec_dims])
@@ -83,9 +87,15 @@ def funwave_spectrum(darr, filename):
         StringIO memory buffer with spectrum object.
 
     """
+    # Ensure direction dim exists for 1D spectrum and has value 0
+    if attrs.DIRNAME not in darr.dims:
+        darr = darr.expand_dims({attrs.DIRNAME: [0]}, axis=-1)
+    elif darr[attrs.DIRNAME].size == 1:
+        darr = darr.assign_coords({attrs.DIRNAME: [0]})
+
     # Amplitudes and phases
     amp = np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2
-    amp = amp.transpose().squeeze(drop=True)
+    amp = amp.transpose()
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0
 
@@ -98,8 +108,11 @@ def funwave_spectrum(darr, filename):
     s.write(f"{tp:>10.3f}   - PeakPeriod\n")
     s.write(nf * "%10.5f   - Freq\n" % tuple(darr[attrs.FREQNAME].values))
     s.write(nd * "%10.3f   - Dire\n" % tuple(darr[attrs.DIRNAME].values))
-    np.savetxt(s, amp, fmt="%12.8f", delimiter="")
-    np.savetxt(s, phi, fmt="%12.3f", delimiter="")
+    if nd == 1:
+        np.savetxt(s, amp.squeeze(drop=True), fmt="%12.8f", delimiter="")
+    else:
+        np.savetxt(s, amp, fmt="%12.8f", delimiter="")
+        np.savetxt(s, phi, fmt="%12.3f", delimiter="")
 
     # Save to file
     if filename is not None:
