@@ -12,6 +12,7 @@ Developers
 
 * Tom Durrant
 * David Johnson
+* Ruben de Bruin
 * Jorge Perez
 
 Contributors
