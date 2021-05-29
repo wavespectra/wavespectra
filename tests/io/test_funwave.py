@@ -77,3 +77,22 @@ class TestFunwave:
 
         assert dir1.min() >= -90 and dir1.max() <= 90
         assert dir2.min() < -90 and dset2.dir.max() > 90
+
+    def test_1d(self):
+        """
+        * Write oned funwave spectrum from ww3 file.
+        * Read oned funwave spectrum written.
+        * Compare stats from original and new datasets.
+        * Check for dimension consistency.
+        """
+        filename = os.path.join(self.tmp_dir, "fw1d.txt")
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned().to_dataset()
+        dset0.spec.to_funwave(filename, clip=False)
+        dset1 = read_funwave(filename)
+        assert dset1.spec.dd == 1
+        assert dset1.spec.dir is None
+        xr.testing.assert_allclose(
+            dset0.spec.stats(["hs", "tp"]),
+            dset1.spec.stats(["hs", "tp"]),
+            rtol=1e-3,
+        )
