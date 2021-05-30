@@ -12,12 +12,12 @@ Developers
 
 * Tom Durrant
 * David Johnson
-* Ruben de Bruin
-* Jorge Perez
 
 Contributors
 ------------
 
+* Ruben de Bruin
+* Jorge Perez
 * Henrique Rapizo
 * Spicer Bak
 * JohnCHarrington
