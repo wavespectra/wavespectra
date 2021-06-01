@@ -12,23 +12,30 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+
 3.9.1 (2021-MM-DD)
 __________________
 
 New Features
 ------------
-*
-
+* Peak frequency method in SpecArray.
+* Hrms method in SpecArray
+* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
 
 Bug Fixes
 ---------
-
+*
 
 Internal Changes
 ----------------
+* Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_.
-* Add new funwave functiont to docs.
+* Add new funwave function to docs.
 * Update authors list.
+
+deprecation
+-----------
+* Remove `dfarr` attribute from SpecArray, replaced by `df`.
 
 
 3.9.0 (2021-05-29)
@@ -41,20 +48,6 @@ New Features
 
 .. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
 .. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py
-
-
-3.8.2 (YYYY-MM-DD)
-__________________
-
-New Features
-------------
-* Peak frequency method in SpecArray.
-* Hrms method in SpecArray
-* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
-
-Internal Changes
-----------------
-* Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 
 
 3.8.1 (2021-04-06)
