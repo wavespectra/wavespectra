@@ -17,7 +17,7 @@ __________________
 
 New Features
 ------------
-*
+* New Orcaflex export function by `RubendeBruin`_.
 
 
 Bug Fixes
