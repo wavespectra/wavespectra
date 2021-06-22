@@ -234,7 +234,7 @@ def check_same_coordinates(*args):
         if isinstance(darr1, xr.DataArray) and isinstance(darr2, xr.DataArray):
             if not darr1.coords.to_dataset().equals(darr2.coords.to_dataset()):
                 raise ValueError(f"{darr1.name} and {darr2.name} must have same coords")
-        else:
+        elif isinstance(darr1, xr.Dataset) or isinstance(darr2, xr.Dataset):
             raise TypeError(
                 f"Only DataArrays should be compared, got {type(darr1)}, {type(darr2)}"
             )
