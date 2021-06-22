@@ -4,7 +4,7 @@ import pytest
 import datetime
 import xarray as xr
 
-from wavespectra.core.utils import dnum_to_datetime, to_nautical, unique_times, spddir_to_uv, uv_to_spddir, flatten_list
+from wavespectra.core.utils import dnum_to_datetime, to_nautical, unique_times, spddir_to_uv, uv_to_spddir, flatten_list, check_same_coordinates, scaled
 from wavespectra import read_swan
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -43,6 +43,22 @@ def test_uv_spddir(dset):
 def test_flatten_list():
     l = [1, [2, 3], [4], [5, 6, 7]]
     assert flatten_list(l, []) == list(range(1, 8))
+
+
+def test_scaled(dset):
+    dset2 = scaled(dset, hs=2)
+    assert pytest.approx(dset2.spec.hs().values, 2)
+
+
+def test_check_same_coordinates(dset):
+    ds = dset.isel(lat=0, lon=0, drop=True)
+    check_same_coordinates(dset.efth, dset.efth)
+    with pytest.raises(ValueError):
+        check_same_coordinates(dset.efth, ds.efth)
+    with pytest.raises(TypeError):
+        check_same_coordinates(dset, ds)
+
+
 
 # class TestSpecArray(object):
 #     """Test methods from SpecArray class."""

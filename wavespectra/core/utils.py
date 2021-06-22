@@ -7,6 +7,7 @@ import xarray as xr
 
 from scipy.interpolate import griddata
 
+
 GAMMA = (
     lambda x: np.sqrt(2.0 * np.pi / x)
     * ((x / np.exp(1)) * np.sqrt(x * np.sinh(1.0 / x))) ** x
@@ -204,3 +205,36 @@ def flatten_list(l, a):
         else:
             a.append(i)
     return a
+
+
+def scaled(spec, hs):
+    """Scale spectra.
+
+    The energy density for all frequencies in each spectrum is scaled by a single
+        factor so that significant wave height calculated from the scaled spectrum
+        correspondsin to hs.
+
+    Args:
+        spec (SpecArray, SpecDataset): Wavespectra object to be scaled.
+        hs (DataArray, float): Hs values to use for scaling, if float it will scale
+            each spectrum in the dataset, if a DataArray it must have all non-spectral
+            coordinates as the spectra dataset.
+
+    Returns:
+        spec (SpecArray, SpecDataset): Scaled wavespectra object.
+
+    """
+    fac = (hs / spec.spec.hs()) ** 2
+    return fac * spec
+
+
+def check_same_coordinates(*args):
+    """Check if DataArrays have same coordinates."""
+    for darr1, darr2 in zip(args[:-1], args[1:]):
+        if isinstance(darr1, xr.DataArray) and isinstance(darr2, xr.DataArray):
+            if not darr1.coords.to_dataset().equals(darr2.coords.to_dataset()):
+                raise ValueError(f"{darr1.name} and {darr2.name} must have same coords")
+        else:
+            raise TypeError(
+                f"Only DataArrays should be compared, got {type(darr1)}, {type(darr2)}"
+            )
