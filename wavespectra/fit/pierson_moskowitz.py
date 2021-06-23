@@ -8,13 +8,13 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def pierson_moskowitz(hs, tp, freq):
+def pierson_moskowitz(freq, hs, tp):
     """Pierson and Moskowitz (Pierson and Moskowitz, 1964).
 
     Args:
+        freq (DataArray): Frequency array (Hz).
         hs (DataArray, float): Significant wave height (m).
         tp (DataArray, float): Peak wave period (s).
-        freq (DataArray): Frequency array (Hz).
 
     Returns:
         efth (SpecArray): One-dimension Pierson-Moskowitz spectrum E(f) (m2s).
