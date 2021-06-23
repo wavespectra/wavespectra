@@ -15,13 +15,15 @@ Different functions are available for fitting parametric frequency spectra withi
 
 
 .. ipython:: python
+    :okexcept:
     :okwarning:
 
     import numpy as np
     import xarray as xr
     import matplotlib.pyplot as plt
-    from wavespectra.fit.jonswap import jonswap
     from wavespectra.fit.pierson_moskowitz import pierson_moskowitz
+    from wavespectra.fit.jonswap import jonswap
+    from wavespectra.fit.tma import tma
     farr = np.arange(0.03, 0.3, 0.001)
     freq = xr.DataArray(
         farr,
@@ -39,7 +41,7 @@ Pierson-Moskowitz spectrum (`Pierson and Moskowitz, 1964`_)).
     :okexcept:
     :okwarning:
 
-    dset = pierson_moskowitz(2, 10, freq)
+    dset = pierson_moskowitz(freq=freq, hs=2, tp=10)
 
     hs = float(dset.spec.hs())
     tp = float(dset.spec.tp())
@@ -55,6 +57,7 @@ Pierson-Moskowitz spectrum (`Pierson and Moskowitz, 1964`_)).
     @savefig pm_1d.png
     plt.draw()
 
+
 Jonswap
 -------
 Jonswap paremetric spectrum (`Hasselmann et al., 1973`_).
@@ -62,8 +65,8 @@ Jonswap paremetric spectrum (`Hasselmann et al., 1973`_).
 .. ipython:: python
     :okwarning:
 
-    dset1 = jonswap(hs=2, tp=10, freq=freq, gamma=3.3)
-    dset2 = jonswap(hs=2, tp=10, freq=freq, gamma=2.0)
+    dset1 = jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
+    dset2 = jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
 
     hs1 = float(dset1.spec.hs())
     tp1 = float(dset1.spec.tp())
@@ -87,8 +90,8 @@ When the peak enhancement `gamma` is 1 or less Jonswap becomes a Pierson-Moskowi
 .. ipython:: python
     :okwarning:
 
-    dset1 = pierson_moskowitz(hs=2, tp=10, freq=freq)
-    dset2 = jonswap(hs=2, tp=10, freq=freq, gamma=1.0)
+    dset1 = pierson_moskowitz(freq=freq, hs=2, tp=10)
+    dset2 = jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -107,7 +110,45 @@ TMA
 ---
 TMA parametric spectrum (`Bouws et al., 1985`_).
 
+.. ipython:: python
+    :okexcept:
+    :okwarning:
 
+    dset1 = tma(freq=freq, hs=2, tp=10, dep=10)
+    dset2 = tma(freq=freq, hs=2, tp=10, dep=50)
+
+    @suppress
+    fig = plt.figure(figsize=(6, 4))
+
+    dset1.plot(label="Depth=10");
+    dset2.plot(label="Depth=50");
+
+    @supress
+    plt.legend();
+
+    @savefig tma_1d.png
+    plt.draw()
+
+In deep water TMA becomes a Jonswap spectrum:
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dset1 = jonswap(freq=freq, hs=2, tp=10)
+    dset2 = tma(freq=freq, hs=2, tp=10, dep=80)
+
+    @suppress
+    fig = plt.figure(figsize=(6, 4))
+
+    dset1.plot(label="Jonswap", linewidth=10);
+    dset2.plot(label="TMA in deep water", linewidth=3);
+
+    @suppress
+    plt.legend()
+
+    @savefig jonswap_tma_deepwater.png
+    plt.draw()
 
 
 Multiple fitting
