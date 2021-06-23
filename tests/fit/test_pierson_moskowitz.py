@@ -20,13 +20,13 @@ def freq():
 
 def test_hs_tp(freq):
     """Test Hs, Tp values are conserved."""
-    ds = pierson_moskowitz(hs=2, tp=10, freq=freq)
+    ds = pierson_moskowitz(freq=freq, hs=2, tp=10)
     assert pytest.approx(float(ds.spec.hs()), 2)
     assert pytest.approx(float(ds.spec.tp()), 10)
 
 
 def test_jonswap_gamma_1_equal(freq):
-    """Test peak is higher for higher gamma."""
-    ds1 = jonswap(hs=2, tp=10, freq=freq, gamma=1.0)
-    ds2 = pierson_moskowitz(hs=2, tp=10, freq=freq)
+    """Test Jonswap becomes Pierson-Moskowitz when gamma <= 1."""
+    ds1 = jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
+    ds2 = pierson_moskowitz(freq=freq, hs=2, tp=10)
     assert np.allclose(ds1.values, ds2.values, rtol=1e6)
