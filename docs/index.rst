@@ -27,6 +27,7 @@ Documentation
 * :doc:`conventions`
 * :doc:`plotting`
 * :doc:`selecting`
+* :doc:`fitting`
 
 .. toctree::
     :maxdepth: 1
@@ -39,6 +40,7 @@ Documentation
     conventions
     plotting
     selecting
+    fitting
 
 **Help & Reference**
 
