@@ -21,10 +21,11 @@ def jonswap(freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
         sigma_b (float): width of the peak enhancement parameter for f > fp.
 
     Returns:
-        efth (SpecArray): One-dimension Pierson-Moskowitz spectrum E(f) (m2s).
+        efth (SpecArray): Jonswap spectrum E(f) (m2s).
 
     Note:
-        If two or more input args are DataArrays they must share the same coordinates.
+        If two or more input args other than `freq` are DataArrays,
+            they must share the same coordinates.
 
     """
     check_same_coordinates(hs, tp)
