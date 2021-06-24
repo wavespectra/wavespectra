@@ -6,7 +6,7 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def fit_pierson_moskowitz(freq, hs, tp):
+def fit_pierson_moskowitz(freq, hs, tp, **kwargs):
     """Pierson and Moskowitz spectrum for fully developed seas (Pierson and Moskowitz, 1964).
 
     Args:
