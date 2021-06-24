@@ -9,9 +9,10 @@ Reconstruction
 spectrum reconstruction from partitioned wave parameters following the method
 of `Bunney et al., 2014`_.
 
-~~~~~~~
-Fitting
-~~~~~~~
+
+~~~~~~~~~~~~~
+Spectral form
+~~~~~~~~~~~~~
 
 Different functions are available for fitting parametric frequency spectra within the :py:mod:`~wavespectra.fit` subpackage:
 
@@ -221,8 +222,17 @@ along each coordinate.
     plt.draw()
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~
+Directional distribution
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Cartwright
+----------
+Cosine-squared distribution of `Cartwright (1963)`_.
+
 
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
 .. _`Hasselmann et al., 1973`: https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP
 .. _`Bouws et al., 1985`: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JC090iC01p00975
 .. _`Bunney et al., 2014`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
+.. _`Cartwright (1963)`: https://repository.tudelft.nl/islandora/object/uuid:b6c19f1e-cb31-4733-a4fb-0f685706269b
