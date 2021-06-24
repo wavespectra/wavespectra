@@ -22,21 +22,9 @@ New Features
   * tma
   * pierson-moskowitz
   * gaussian
-
-
-3.9.1 (2021-MM-DD)
-__________________
-
-New Features
-------------
 * Peak frequency method in SpecArray.
 * Hrms method in SpecArray
 * New Orcaflex export function by `RubendeBruin`_.
-
-
-Bug Fixes
----------
-*
 
 Internal Changes
 ----------------
