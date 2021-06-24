@@ -15,9 +15,10 @@ Fitting
 
 Different functions are available for fitting parametric frequency spectra within the :py:mod:`~wavespectra.fit` subpackage:
 
-* Pierson-Moskowitz
-* Jonswap
-* TMA
+* :func:`~wavespectra.fit.pierson_moskowitz.pierson_moskowitz`
+* :func:`~wavespectra.fit.jonswap.jonswap`
+* :func:`~wavespectra.fit.tma.tma`
+* :func:`~wavespectra.fit.gaussian.gaussian`
 
 
 
@@ -43,7 +44,7 @@ Different functions are available for fitting parametric frequency spectra withi
 
 Pierson-Moskowitz
 -----------------
-Pierson-Moskowitz spectrum (`Pierson and Moskowitz, 1964`_)).
+Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_).
 
 .. ipython:: python
     :okexcept:
@@ -68,7 +69,7 @@ Pierson-Moskowitz spectrum (`Pierson and Moskowitz, 1964`_)).
 
 Jonswap
 -------
-Jonswap paremetric spectrum (`Hasselmann et al., 1973`_).
+Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
 
 .. ipython:: python
     :okwarning:
@@ -111,7 +112,7 @@ When the peak enhancement `gamma` is 1 or less Jonswap becomes a Pierson-Moskowi
 
 TMA
 ---
-TMA parametric spectrum (`Bouws et al., 1985`_).
+TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_).
 
 .. ipython:: python
     :okexcept:
@@ -156,22 +157,25 @@ In deep water TMA becomes a Jonswap spectrum:
 
 Gaussian
 --------
-Gaussian parametric spectrum (`Bunney et al., 2014`_).
+Gaussian spectral form for swell (`Bunney et al., 2014`_). The authors define a criterion for choosing the gaussian fit based on the ratio :math:`rt` between the mean :math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) spectral periods:
+
+:math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} >= 0.95`
+
+where :math:`T_0` is the period corresponding to the lowest frequency bin.
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
     dset1 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=8)
-    dset2 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=7)
-    dset3 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
+    dset2 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
-    dset1.plot(label=f"Tm/Tz={8/8:0.1f}");
-    dset2.plot(label=f"Tm/Tz={8/7:0.1f}");
-    dset3.plot(label=f"Tm/Tz={8/6:0.1f}");
+    t0 = 1 / float(freq[0])
+    dset1.plot(label=f"rt={(8-t0)/(8-t0):0.2f}");
+    dset2.plot(label=f"rt={(8-t0)/(6.5-t0):0.2f}");
 
     @suppress
     plt.legend();
