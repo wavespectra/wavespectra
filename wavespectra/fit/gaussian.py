@@ -1,7 +1,6 @@
 """Gaussian spectrum."""
 import numpy as np
-import xarray as xr
-from scipy.constants import g, pi
+from scipy.constants import pi
 
 import matplotlib.pyplot as plt
 
@@ -10,7 +9,7 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def gaussian(freq, hs, fp, tm01, tm02):
+def fit_gaussian(freq, hs, fp, tm01, tm02):
     """Gaussian frequency spectrum (Bunney et al., 2014).
 
     Args:
@@ -28,6 +27,8 @@ def gaussian(freq, hs, fp, tm01, tm02):
           they must share the same coordinates.
 
     """
+    check_same_coordinates(hs, fp, tm01, tm02)
+
     mo = (hs / 4) ** 2
     sigma = np.sqrt( (mo / tm02**2) - (mo**2 / tm01**2) )
     term1 = mo / (sigma * np.sqrt(2 * pi))

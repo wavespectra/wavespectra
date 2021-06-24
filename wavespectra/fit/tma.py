@@ -1,14 +1,12 @@
 """TMA spectrum."""
 import numpy as np
-import xarray as xr
-from scipy.constants import g, pi
 
 from wavespectra import SpecArray
 from wavespectra.core.utils import scaled, check_same_coordinates, wavenuma
 from wavespectra.core.attributes import attrs
-from wavespectra.fit.jonswap import jonswap
+from wavespectra.fit.jonswap import fit_jonswap
 
-def tma(freq, hs, tp, dep, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
+def fit_tma(freq, hs, tp, dep, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
     """TMA frequency spectrum for seas in water of finite depth (Bouws et al., 1985).
 
     Args:
@@ -29,9 +27,9 @@ def tma(freq, hs, tp, dep, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
           they must share the same coordinates.
 
     """
-    check_same_coordinates(hs, tp, dep)
+    check_same_coordinates(hs, tp, dep, alpha, gamma, sigma_a, sigma_b)
 
-    dsout = jonswap(freq, hs, tp, alpha, gamma, sigma_a, sigma_b)
+    dsout = fit_jonswap(freq, hs, tp, alpha, gamma, sigma_a, sigma_b)
     k = wavenuma(freq, dep)
     phi = np.tanh(k * dep) ** 2 / (1 + (2 * k * dep) / np.sinh(2 * k * dep))
     dsout = dsout * phi
