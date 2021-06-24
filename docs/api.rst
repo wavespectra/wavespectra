@@ -146,23 +146,17 @@ Output functions
    SpecDataset.to_json
 
 
-Spectral reconstruction
------------------------
-
-Spectral reconstruction functionality is under development. There are functions
-available to fit parametric spectrum shapes from wave partitions but the construct
-api is not properly established.
+Spectral fitting
+----------------
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   construct.jonswap
-   construct.ochihubble
-   construct.helpers.spread
-   construct.helpers.arrange_inputs
-   construct.helpers.make_dataset
-   construct.helpers.check_coordinates
+   fit.pierson_moskowitz.pierson_moskowitz
+   fit.jonswap.jonswap
+   fit.tma.tma
+   fit.gaussian.gaussian
 
 
 Internal core functions and objects
