@@ -61,7 +61,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
 
     dset.plot(label=f"Hs={hs:0.0f}m, Tp={tp:0.0f}s");
 
-    @supress
+    @suppress
     plt.legend();
 
     @savefig pm_1d.png
@@ -81,8 +81,8 @@ Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
-    dset1.plot(label=f"Gamma=3.3");
-    dset2.plot(label=f"Gamma=2.0");
+    dset1.plot(label="$\gamma=3.3$");
+    dset2.plot(label="$\gamma=2.0$");
 
     @suppress
     plt.legend()
@@ -90,7 +90,7 @@ Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
     @savefig jonswap_1d.png
     plt.draw()
 
-When the peak enhancement `gamma` is 1 or less Jonswap becomes a Pierson-Moskowitz spectrum:
+When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz spectrum:
 
 .. ipython:: python
     :okwarning:
@@ -102,7 +102,7 @@ When the peak enhancement `gamma` is 1 or less Jonswap becomes a Pierson-Moskowi
     fig = plt.figure(figsize=(6, 4))
 
     dset1.plot(label="Pierson-Moskowitz", linewidth=10);
-    dset2.plot(label="Jonswap with gamma=1", linewidth=3);
+    dset2.plot(label="Jonswap with $\gamma=1$", linewidth=3);
 
     @suppress
     plt.legend()
