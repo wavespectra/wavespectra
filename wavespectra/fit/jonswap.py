@@ -8,7 +8,7 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def jonswap(freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
+def fit_jonswap(freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
     """Jonswap frequency spectrum for developing seas (Hasselmann et al., 1973).
 
     Args:
@@ -28,7 +28,7 @@ def jonswap(freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09):
           they must share the same coordinates.
 
     """
-    check_same_coordinates(hs, tp)
+    check_same_coordinates(hs, tp, alpha, gamma, sigma_a, sigma_b)
 
     fp = 1 / tp
     sigma = xr.full_like(freq, sigma_a).where(freq <= fp, sigma_b)
