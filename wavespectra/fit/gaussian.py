@@ -9,7 +9,7 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def fit_gaussian(freq, hs, fp, tm01, tm02):
+def fit_gaussian(freq, hs, fp, tm01, tm02, **kwargs):
     """Gaussian frequency spectrum (Bunney et al., 2014).
 
     Args:
