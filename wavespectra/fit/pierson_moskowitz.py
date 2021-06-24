@@ -7,18 +7,18 @@ from wavespectra.core.attributes import attrs
 
 
 def pierson_moskowitz(freq, hs, tp):
-    """Pierson and Moskowitz (Pierson and Moskowitz, 1964).
+    """Pierson and Moskowitz spectrum for fully developed seas (Pierson and Moskowitz, 1964).
 
     Args:
-        freq (DataArray): Frequency array (Hz).
-        hs (DataArray, float): Significant wave height (m).
-        tp (DataArray, float): Peak wave period (s).
+        - freq (DataArray): Frequency array (Hz).
+        - hs (DataArray, float): Significant wave height (m).
+        - tp (DataArray, float): Peak wave period (s).
 
     Returns:
-        efth (SpecArray): Pierson-Moskowitz frequency spectrum E(f) (m2s).
+        - efth (SpecArray): Pierson-Moskowitz frequency spectrum E(f) (m2s).
 
     Note:
-        If `hs` and `tp` args are DataArrays they must share the same coordinates.
+        - If `hs` and `tp` args are DataArrays they must share the same coordinates.
 
     """
     check_same_coordinates(hs, tp)
