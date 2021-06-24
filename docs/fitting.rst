@@ -2,9 +2,16 @@
     :width: 150 px
     :align: right
 
-=======
+==============
+Reconstruction
+==============
+
+spectrum reconstruction from partitioned wave parameters following the method
+of `Bunney et al., 2014`_.
+
+~~~~~~~
 Fitting
-=======
+~~~~~~~
 
 Different functions are available for fitting parametric frequency spectra within the :py:mod:`~wavespectra.fit` subpackage:
 
@@ -24,6 +31,7 @@ Different functions are available for fitting parametric frequency spectra withi
     from wavespectra.fit.pierson_moskowitz import pierson_moskowitz
     from wavespectra.fit.jonswap import jonswap
     from wavespectra.fit.tma import tma
+    from wavespectra.fit.gaussian import gaussian
     farr = np.arange(0.03, 0.3, 0.001)
     freq = xr.DataArray(
         farr,
@@ -68,16 +76,11 @@ Jonswap paremetric spectrum (`Hasselmann et al., 1973`_).
     dset1 = jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
     dset2 = jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
 
-    hs1 = float(dset1.spec.hs())
-    tp1 = float(dset1.spec.tp())
-    hs2 = float(dset2.spec.hs())
-    tp2 = float(dset2.spec.tp())
-
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
-    dset1.plot(label=f"Gamma=3.3, Hs={hs1:0.0f}m, Tp={tp1:0.0f}s");
-    dset2.plot(label=f"Gamma=2.0, Hs={hs2:0.0f}m, Tp={tp2:0.0f}s");
+    dset1.plot(label=f"Gamma=3.3");
+    dset2.plot(label=f"Gamma=2.0");
 
     @suppress
     plt.legend()
@@ -123,7 +126,7 @@ TMA parametric spectrum (`Bouws et al., 1985`_).
     dset1.plot(label="Depth=10");
     dset2.plot(label="Depth=50");
 
-    @supress
+    @suppress
     plt.legend();
 
     @savefig tma_1d.png
@@ -148,6 +151,32 @@ In deep water TMA becomes a Jonswap spectrum:
     plt.legend()
 
     @savefig jonswap_tma_deepwater.png
+    plt.draw()
+
+
+Gaussian
+--------
+Gaussian parametric spectrum (`Bunney et al., 2014`_).
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dset1 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=8)
+    dset2 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=7)
+    dset3 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
+
+    @suppress
+    fig = plt.figure(figsize=(6, 4))
+
+    dset1.plot(label=f"Tm/Tz={8/8:0.1f}");
+    dset2.plot(label=f"Tm/Tz={8/7:0.1f}");
+    dset3.plot(label=f"Tm/Tz={8/6:0.1f}");
+
+    @suppress
+    plt.legend();
+
+    @savefig gaussian_1d.png
     plt.draw()
 
 
@@ -192,3 +221,4 @@ along each coordinate.
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
 .. _`Hasselmann et al., 1973`: https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP
 .. _`Bouws et al., 1985`: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JC090iC01p00975
+.. _`Bunney et al., 2014`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
