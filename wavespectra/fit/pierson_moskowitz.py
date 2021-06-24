@@ -1,7 +1,5 @@
 """Pierson and Moskowitz spectrum."""
 import numpy as np
-import xarray as xr
-from scipy.constants import g, pi
 
 from wavespectra import SpecArray
 from wavespectra.core.utils import scaled, check_same_coordinates
@@ -17,7 +15,7 @@ def pierson_moskowitz(freq, hs, tp):
         tp (DataArray, float): Peak wave period (s).
 
     Returns:
-        efth (SpecArray): One-dimension Pierson-Moskowitz spectrum E(f) (m2s).
+        efth (SpecArray): Pierson-Moskowitz frequency spectrum E(f) (m2s).
 
     Note:
         If `hs` and `tp` args are DataArrays they must share the same coordinates.
