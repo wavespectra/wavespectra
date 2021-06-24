@@ -12,6 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.0.0 (2021-MM-DD)
+This major release brings spectra reconstruction capability based on the work from Bunney's.
+
+New Features
+------------
+* Parametric spectra functions in the `fit` module:
+  * jonswap
+  * tma
+  * pierson-moskowitz
+  * gaussian
+
 
 3.9.1 (2021-MM-DD)
 __________________
@@ -20,7 +31,8 @@ New Features
 ------------
 * Peak frequency method in SpecArray.
 * Hrms method in SpecArray
-* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
+* New Orcaflex export function by `RubendeBruin`_.
+
 
 Bug Fixes
 ---------
@@ -29,6 +41,7 @@ Bug Fixes
 Internal Changes
 ----------------
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
+* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_.
 * Add new funwave function to docs.
 * Update authors list.
