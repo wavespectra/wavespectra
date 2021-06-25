@@ -8,7 +8,7 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
 def cartwright(dir, dm, dspr):
-    """Cosine-squared directional spreading function of Cartwright (1963).
+    """Cosine-squared directional spreading of Cartwright (1963).
 
     Args:
         - dir (DataArray): Wave directions (degree).
@@ -16,7 +16,7 @@ def cartwright(dir, dm, dspr):
         - dspr (DataArray, float) Directional spreading (degree).
 
     Returns:
-        - gth (DataArray): Spread function.
+        - gth (DataArray): Normalised spreading function.
 
     Note:
         - If `dm` and `dspr` are DataArrays they must share the same coordinates.
@@ -40,8 +40,16 @@ def cartwright(dir, dm, dspr):
     return gth / R2D
 
 
-def skewed(dir, dpm, dm, fp, fm):
-    """Skewed, frequency-dependent directional spreading (Bunney et al., 2014)."""
+def bunney(dir, dpm, dm, fp, fm):
+    """Frequency-dependent assymetrical directional spreading of Bunney et al. (2014).
+
+    Args:
+        - dir ():
+        - dpm ():
+        - fp ():
+        - fm ():
+
+    """
     # dtf = (dpm - dm) / (fp - fm)
     pass
 
