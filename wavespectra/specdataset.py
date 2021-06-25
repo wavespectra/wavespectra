@@ -116,32 +116,32 @@ class SpecDataset(metaclass=Plugin):
         """Select stations near or at locations defined by (lons, lats) vector.
 
         Args:
-            lons (list): Longitude values of locations to select.
-            lats (list): Latitude values of locations to select.
-            method (str): Method to use for inexact matches:
-            * idw: Inverse distance weighting selection.
-            * nearest: Nearest site selection.
-            * bbox: Sites inside bbox [min(lons), min(lats)], [max(lons), max(lats)].
-            * None: Only exact matches.
-            tolerance (float): Maximum distance between locations and original stations
-                for inexact matches.
-            dset_lons (array): Longitude of stations in dset, not required but could
-                help improove speed.
-            dset_lats (array): Latitude of stations in dset, not required but could
-                help improove speed.
-            kwargs: Extra keywargs to pass to the respective sel function
-                (i.e., `sel_nearest`, `sel_idw`).
+            - lons (list): Longitude values of locations to select.
+            - lats (list): Latitude values of locations to select.
+            - method (str): Method to use for inexact matches:
+                * idw: Inverse distance weighting selection.
+                * nearest: Nearest site selection.
+                * bbox: Sites inside bbox [min(lons), min(lats)], [max(lons), max(lats)].
+                * None: Only exact matches.
+            - tolerance (float): Maximum distance between locations and original stations
+              for inexact matches.
+            - dset_lons (array): Longitude of stations in dset, not required but could
+              help improove speed.
+            - dset_lats (array): Latitude of stations in dset, not required but could
+              help improove speed.
+            - kwargs: Extra keywargs to pass to the respective sel function
+              (i.e., `sel_nearest`, `sel_idw`).
 
         Return:
-            Stations Dataset selected at locations defined by zip(lons, lats).
+            - Stations Dataset selected at locations defined by zip(lons, lats).
 
         Note:
-            `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'
-                sites with no neighbours within `tolerance` are masked whereas in
-                'nearest' an exception is raised.
-            `dset_lons`, `dset_lats` are not required but can improve performance when
-                `dset` is chunked with site=1 (expensive to access site coords) and
-                improve precision if projected coors are provided at high latitudes.
+            - `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'
+              sites with no neighbours within `tolerance` are masked whereas in
+              'nearest' an exception is raised.
+            - `dset_lons`, `dset_lats` are not required but can improve performance when
+              `dset` is chunked with site=1 (expensive to access site coords) and
+              improve precision if projected coors are provided at high latitudes.
 
         """
         funcs = {
