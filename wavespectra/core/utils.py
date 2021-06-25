@@ -1,10 +1,11 @@
-"""Miscellaneous functions."""
+"""Utility functions."""
 import copy
 import datetime
 import numpy as np
 import pandas as pd
 import xarray as xr
-
+from importlib import import_module
+from inspect import getmembers, isfunction
 from scipy.interpolate import griddata
 
 
@@ -210,18 +211,17 @@ def flatten_list(l, a):
 def scaled(spec, hs):
     """Scale spectra.
 
-    The energy density for all frequencies in each spectrum is scaled by a single
-        factor so that significant wave height calculated from the scaled spectrum
-        correspondsin to hs.
+    The energy density in each spectrum is scaled by a single factor so that
+        significant wave height calculated from the scaled spectrum corresponds to hs.
 
     Args:
-        spec (SpecArray, SpecDataset): Wavespectra object to be scaled.
-        hs (DataArray, float): Hs values to use for scaling, if float it will scale
-            each spectrum in the dataset, if a DataArray it must have all non-spectral
-            coordinates as the spectra dataset.
+        - spec (SpecArray, SpecDataset): Wavespectra object to be scaled.
+        - hs (DataArray, float): Hs values to use for scaling, if float it will scale
+          each spectrum in the dataset, if a DataArray it must have all non-spectral
+          coordinates as the spectra dataset.
 
     Returns:
-        spec (SpecArray, SpecDataset): Scaled wavespectra object.
+        - spec (SpecArray, SpecDataset): Scaled wavespectra object.
 
     """
     fac = (hs / spec.spec.hs()) ** 2
@@ -238,3 +238,28 @@ def check_same_coordinates(*args):
             raise TypeError(
                 f"Only DataArrays should be compared, got {type(darr1)}, {type(darr2)}"
             )
+
+
+def load_function(module_name, func_name, prefix=None):
+    """Returns a function object from string.
+
+    Args:
+        - module_name (str): Name of module to import function from.
+        - func_name (str): Name of function to import.
+        - prefix (str): Used to filter available functions in exception.
+
+    """
+    module = import_module(module_name)
+    try:
+        return getattr(module, func_name)
+    except AttributeError as exc:
+        members = getmembers(module, isfunction)
+        if prefix is not None:
+            # Check for functions starting with prefix
+            funcs = [mem[0] for mem in members if mem[0].startswith(prefix)]
+        else:
+            # Check for functions defined in module (exclude those imported in module)
+            funcs = [mem[0] for mem in members if mem[1].__module__ == module.__name__]
+        raise AttributeError(
+            f"'{func_name}' not available in {module.__name__}, available are: {funcs}"
+        ) from exc
