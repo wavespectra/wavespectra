@@ -32,7 +32,9 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    :toctree: generated/
 
    SpecArray.hs
+   SpecArray.hrms
    SpecArray.hmax
+   SpecArray.fp
    SpecArray.tp
    SpecArray.tm01
    SpecArray.tm02
@@ -40,7 +42,6 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
-   SpecArray.dpw
    SpecArray.swe
    SpecArray.sw
 
@@ -153,10 +154,10 @@ Spectral fitting
    :nosignatures:
    :toctree: generated/
 
-   fit.pierson_moskowitz.pierson_moskowitz
-   fit.jonswap.jonswap
-   fit.tma.tma
-   fit.gaussian.gaussian
+   fit_pierson_moskowitz
+   fit_jonswap
+   fit_tma
+   fit_gaussian
 
 
 Internal core functions and objects
@@ -169,8 +170,7 @@ Internal core functions and objects
    :toctree: generated/
 
    core.watershed.partition
-   core.watershed.npart
-   core.watershed.hs
+   core.watershed.nppart
    core.watershed.frequency_resolution
    core.watershed.inflection
 
@@ -189,7 +189,7 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs_gufunc
+   core.npstats.hs
    core.npstats.dpm_gufunc
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc

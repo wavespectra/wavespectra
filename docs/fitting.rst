@@ -14,12 +14,12 @@ of `Bunney et al., 2014`_.
 Spectral form
 ~~~~~~~~~~~~~
 
-Different functions are available for fitting parametric frequency spectra within the :py:mod:`~wavespectra.fit` subpackage:
+Different functions are available for fitting parametric frequency spectral shapes. The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
 
-* :func:`~wavespectra.fit.pierson_moskowitz.pierson_moskowitz`
-* :func:`~wavespectra.fit.jonswap.jonswap`
-* :func:`~wavespectra.fit.tma.tma`
-* :func:`~wavespectra.fit.gaussian.gaussian`
+* :func:`~wavespectra.fit_pierson_moskowitz`
+* :func:`~wavespectra.fit_jonswap`
+* :func:`~wavespectra.fit_tma`
+* :func:`~wavespectra.fit_gaussian`
 
 
 
@@ -30,10 +30,7 @@ Different functions are available for fitting parametric frequency spectra withi
     import numpy as np
     import xarray as xr
     import matplotlib.pyplot as plt
-    from wavespectra.fit.pierson_moskowitz import pierson_moskowitz
-    from wavespectra.fit.jonswap import jonswap
-    from wavespectra.fit.tma import tma
-    from wavespectra.fit.gaussian import gaussian
+    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
     farr = np.arange(0.03, 0.3, 0.001)
     freq = xr.DataArray(
         farr,
@@ -51,7 +48,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
     :okexcept:
     :okwarning:
 
-    dset = pierson_moskowitz(freq=freq, hs=2, tp=10)
+    dset = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
 
     hs = float(dset.spec.hs())
     tp = float(dset.spec.tp())
@@ -75,8 +72,8 @@ Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
 .. ipython:: python
     :okwarning:
 
-    dset1 = jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
-    dset2 = jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
+    dset1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
+    dset2 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -95,8 +92,8 @@ When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz s
 .. ipython:: python
     :okwarning:
 
-    dset1 = pierson_moskowitz(freq=freq, hs=2, tp=10)
-    dset2 = jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
+    dset1 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    dset2 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -119,8 +116,8 @@ TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_).
     :okexcept:
     :okwarning:
 
-    dset1 = tma(freq=freq, hs=2, tp=10, dep=10)
-    dset2 = tma(freq=freq, hs=2, tp=10, dep=50)
+    dset1 = fit_tma(freq=freq, hs=2, tp=10, dep=10)
+    dset2 = fit_tma(freq=freq, hs=2, tp=10, dep=50)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -140,8 +137,8 @@ In deep water TMA becomes a Jonswap spectrum:
     :okexcept:
     :okwarning:
 
-    dset1 = jonswap(freq=freq, hs=2, tp=10)
-    dset2 = tma(freq=freq, hs=2, tp=10, dep=80)
+    dset1 = fit_jonswap(freq=freq, hs=2, tp=10)
+    dset2 = fit_tma(freq=freq, hs=2, tp=10, dep=80)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -168,8 +165,8 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
     :okexcept:
     :okwarning:
 
-    dset1 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=8)
-    dset2 = gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
+    dset1 = fit_gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=8)
+    dset2 = fit_gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -193,12 +190,11 @@ along each coordinate.
 .. ipython:: python
 
     from wavespectra import read_swan
-    from wavespectra.fit.jonswap import jonswap
     dset = read_swan("_static/swanfile.spec")
     hs = dset.spec.hs()
     tp = dset.spec.tp()
     
-    ds = jonswap(
+    ds = fit_jonswap(
         hs=dset.spec.hs(),
         tp=dset.spec.tp(),
         freq=dset.freq,
