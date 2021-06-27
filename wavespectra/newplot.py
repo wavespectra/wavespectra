@@ -5,6 +5,8 @@ import xarray as xr
 from wavespectra.core.attributes import attrs
 
 
+RADII_TICKS = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
+RADII_LABELS = [".05", "0.1", "0.2", "0.3", "0.4Hz"]
 CONTOUR_LEVELS = np.array(
     [
         0.005,
@@ -36,56 +38,86 @@ def _polar_dir(darray):
         closure = darray.isel(**{dname: 0})
         closure = closure.assign_coords({dname: darray[dname][-1] + dd})
         darray = xr.concat((darray, closure), dim=dname)
+    # Convert to radians
+    darray = darray.assign_coords({dname: np.deg2rad(darray[dname])})
     return darray
 
 
 def polar_plot(
         da,
         kind="pcolormesh",
-        rmin=0,
-        rmax=None,
-        add_labels=False,
+        rmin=0.03,
+        rmax=0.5,
         normalised=False,
+        as_log10=True,
+        radii_labels_angle=22.5,
+        radii_ticks=RADII_TICKS,
+        radii_labels=RADII_LABELS,
+        radii_label_size=8,
         **kwargs
     ):
-    rname = attrs.FREQNAME
-    thetaname = attrs.DIRNAME
-    
-    # Convert directions to radians
+    fname = attrs.FREQNAME
+    dname = attrs.DIRNAME
+
+    # Set kwargs for plot
+    kwargs = {**kwargs, **{"x": dname, "y": fname}}
+    default_subplot_kws = {
+        "projection": kwargs.pop("projection", "polar"),
+        "theta_direction": kwargs.pop("theta_direction", -1),
+        "theta_offset": kwargs.pop("theta_offset", np.deg2rad(90)),
+        "rmin": rmin,
+        "rmax": rmax,
+    }
+    subplot_kws = {**default_subplot_kws, **kwargs.get("subplot_kws", {})}
+
+    # Adjust directions for polar axis
     dtmp = _polar_dir(da)
-    dtmp = dtmp.assign_coords({thetaname: np.deg2rad(dtmp[thetaname].values)})
 
     # Normalise energy density
     if normalised:
         dtmp /= dtmp.max()
+        # dtmp = dtmp.where(dtmp >= 1e-3, 1e-3)
 
-    kwargs["x"] = thetaname
-    kwargs["y"] = rname
-    kwargs["add_labels"] = add_labels
+    # Convert to log
+    if as_log10:
+        dtmp = dtmp.assign_coords({fname: np.log10(dtmp[fname] * 1000)})
+        rmin = np.log10(subplot_kws["rmin"] * 1000)
+        rmax = np.log10(subplot_kws["rmax"] * 1000)
 
-    subplot_kws = {
-        "projection": kwargs.pop("projection", "polar"),
-        "theta_direction": kwargs.pop("theta_direction", -1),
-        "theta_offset": kwargs.pop("theta_offset", np.deg2rad(90)),
-    }
-
+    # Call plotting function
     pobj = getattr(dtmp.plot, kind)(subplot_kws=subplot_kws, **kwargs)
 
-    # Set axes properties
-    # pobj.colorbar.set_ticks(CONTOUR_LEVELS)
-    # pobj.colorbar.set_ticklabels(CONTOUR_LEVELS)
+    # Adjusting axis
+    ax = pobj.axes
+    ax.set_rgrids(radii=radii_ticks, labels=radii_labels, angle=radii_labels_angle, size=radii_label_size)
+    ax.set_rmax(rmax)
+    ax.set_rmin(rmin)
+    # ax.tick_params(labelsize=6)
 
-    axes = pobj.axes
-    # import ipdb; ipdb.set_trace()
-    if not isinstance(pobj, xr.plot.facetgrid.FacetGrid):
-        # axes.set_rscale("log")
-        axes.set_rmin(rmin or dtmp.freq.min())
-        axes.set_rmax(rmax or dtmp.freq.max())
+    # # Set axes properties
+    # # pobj.colorbar.set_ticks(CONTOUR_LEVELS)
+    # # pobj.colorbar.set_ticklabels(CONTOUR_LEVELS)
+
+    # axes = pobj.axes
+    # # import ipdb; ipdb.set_trace()
+    # if not isinstance(pobj, xr.plot.facetgrid.FacetGrid):
+    #     # axes.set_rscale("log")
+    #     # axes.set_rmin(rmin or dtmp.freq.min())
+    #     # axes.set_rmax(rmax or dtmp.freq.max())
         
-        # axes.set_rlim((0.04, 0.4))
-        import ipdb; ipdb.set_trace()
-        axes.set_rscale("functionlog")
-        axes.set_rticks([0.1, 0.2, 0.3, 0.4])
+    #     axes.set_rmin(rmin)
+    #     axes.set_rmax(rmax)
+    #     # import ipdb; ipdb.set_trace()
+    #     if as_log10:
+    #         rT = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
+    #         axes.set_rgrids(rT, [str(v) for v in rT], size=7, horizontalalignment="right", angle=155)
+    #         axes.set_rscale("log")
+    #     # axes.set_rticks([0.1, 0.2, 0.3, 0.4])
+
+    #     # # Format rticks
+    #     # axes.set_rgrids(
+    #     #     rT, labels=rTL, size=7, horizontalalignment="right", angle=155
+    #     # )
 
     return pobj
 
@@ -99,20 +131,18 @@ ds = dset.isel(time=-1, drop=True)
 
 ds = ds.where(ds > 1e-3, 1e-3)
 
-# fig = plt.figure()
-# polar_plot(ds.efth, rmax=0.2, cmap="coolwarm", add_labels=True)
 
 fig = plt.figure()
-polar_plot(
+pobj = polar_plot(
     ds.efth,
     kind="contourf",
-    rmax=0.4,
+    # rmax=0.4,
     cmap="RdBu_r",
-    add_labels=True,
+    # cmap="pink",
     # normalised=True,
     levels=CONTOUR_LEVELS,
     # levels=(0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5),
-    extend="max",
+    extend="neither",
     # norm=matplotlib.colors.LogNorm(),
 )
 
