@@ -7,7 +7,8 @@ from wavespectra.core.attributes import attrs
 
 RADII_TICKS = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
 RADII_LABELS = [".05", "0.1", "0.2", "0.3", "0.4Hz"]
-CONTOUR_LEVELS = np.array(
+CBAR_TICKS = [1e-2, 1e-1, 1e0]
+LOG_LEVELS = np.array(
     [
         0.005,
         0.01,
@@ -43,6 +44,21 @@ def _polar_dir(darray):
     return darray
 
 
+def _set_labels(darr, normalised):
+    """Redefine attributes to show in plot labels."""
+    fname = attrs.FREQNAME
+    dname = attrs.DIRNAME
+    darr[fname].attrs["standard_name"] = "Wave frequency ($Hz$)"
+    darr[dname].attrs["standard_name"] = "Wave direction ($degree$)"
+    if normalised:
+        darr.attrs["standard_name"] = "Normalised Energy Density"
+        darr.attrs["units"] = ""
+    else:
+        darr.attrs["standard_name"] = "Energy Density"
+        darr.attrs["units"] = "$m^{2}s/deg$"
+    return darr
+
+
 def polar_plot(
         da,
         kind="pcolormesh",
@@ -50,12 +66,40 @@ def polar_plot(
         rmax=0.5,
         normalised=False,
         as_log10=True,
-        radii_labels_angle=22.5,
+        as_period=False,
         radii_ticks=RADII_TICKS,
         radii_labels=RADII_LABELS,
+        radii_labels_angle=22.5,
         radii_label_size=8,
+        cbar_ticks=CBAR_TICKS,
+        efth_min=1e-3,
         **kwargs
     ):
+    """Plot spectra in polar axis.
+
+    Args:
+        - da (DataArray): Wavespectra DataArray.
+        - kind (str): The kind of plot to produce, e.g. `contourf`, `pcolormesh`.
+        - rmin (float): Minimum value to clip the radius axis.
+        - rmax (float): Maximum value to clip the radius axis.
+        - normalised (bool): Plot normalised efth between 0 and 1.
+        - as_log10 (bool): Plot efth on a log radius.
+        - as_period (bool): Set radii as wave period instead of frequency.
+        - radii_ticks (array): Tick values for radii.
+        - radii_labels (array): Ticklabel values for radii.
+        - radii_labels_angle (float): Polar angle at which radii labels are positioned.
+        - radii_label_size (float): Fontsize for radii labels.
+        - cbar_ticks (array): Tick values for colorbar.
+        - efth_min (float): Mask energy density below this value.
+        - kwargs: All extra kwargs are passed to the plotting method defined by `kind`.
+
+    Returns:
+        - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
+
+    Note:
+        Plot and axes can be redefined from the xarray object returned in this function.
+
+    """
     fname = attrs.FREQNAME
     dname = attrs.DIRNAME
 
@@ -73,10 +117,13 @@ def polar_plot(
     # Adjust directions for polar axis
     dtmp = _polar_dir(da)
 
+    # Redefine labels
+    dtmp = _set_labels(dtmp, normalised)
+
     # Normalise energy density
     if normalised:
         dtmp /= dtmp.max()
-        # dtmp = dtmp.where(dtmp >= 1e-3, 1e-3)
+        dtmp = dtmp.where(dtmp >= efth_min, efth_min)
 
     # Convert to log
     if as_log10:
@@ -84,6 +131,7 @@ def polar_plot(
         rmin = np.log10(subplot_kws["rmin"] * 1000)
         rmax = np.log10(subplot_kws["rmax"] * 1000)
 
+    # import ipdb; ipdb.set_trace()
     # Call plotting function
     pobj = getattr(dtmp.plot, kind)(subplot_kws=subplot_kws, **kwargs)
 
@@ -92,58 +140,44 @@ def polar_plot(
     ax.set_rgrids(radii=radii_ticks, labels=radii_labels, angle=radii_labels_angle, size=radii_label_size)
     ax.set_rmax(rmax)
     ax.set_rmin(rmin)
-    # ax.tick_params(labelsize=6)
 
-    # # Set axes properties
-    # # pobj.colorbar.set_ticks(CONTOUR_LEVELS)
-    # # pobj.colorbar.set_ticklabels(CONTOUR_LEVELS)
+    ax.set_xlabel("")
+    ax.set_ylabel("")
 
-    # axes = pobj.axes
-    # # import ipdb; ipdb.set_trace()
-    # if not isinstance(pobj, xr.plot.facetgrid.FacetGrid):
-    #     # axes.set_rscale("log")
-    #     # axes.set_rmin(rmin or dtmp.freq.min())
-    #     # axes.set_rmax(rmax or dtmp.freq.max())
-        
-    #     axes.set_rmin(rmin)
-    #     axes.set_rmax(rmax)
-    #     # import ipdb; ipdb.set_trace()
-    #     if as_log10:
-    #         rT = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
-    #         axes.set_rgrids(rT, [str(v) for v in rT], size=7, horizontalalignment="right", angle=155)
-    #         axes.set_rscale("log")
-    #     # axes.set_rticks([0.1, 0.2, 0.3, 0.4])
-
-    #     # # Format rticks
-    #     # axes.set_rgrids(
-    #     #     rT, labels=rTL, size=7, horizontalalignment="right", angle=155
-    #     # )
+    # Adjusting colorbar
+    pobj.colorbar.set_ticks(cbar_ticks)
 
     return pobj
 
 
-import matplotlib.pyplot as plt
-from wavespectra import read_swan
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from wavespectra import read_swan
 
-dset = read_swan("/source/fork/wavespectra/tests/sample_files/swanfile.spec")
-dset = dset.isel(lat=0, lon=0, drop=True)
-ds = dset.isel(time=-1, drop=True)
-
-ds = ds.where(ds > 1e-3, 1e-3)
+    dset = read_swan("/source/fork/wavespectra/tests/sample_files/swanfile.spec")
+    dset = dset.isel(lat=0, lon=0, drop=True)
+    ds = dset.isel(time=-1, drop=True)
 
 
-fig = plt.figure()
-pobj = polar_plot(
-    ds.efth,
-    kind="contourf",
-    # rmax=0.4,
-    cmap="RdBu_r",
-    # cmap="pink",
-    # normalised=True,
-    levels=CONTOUR_LEVELS,
-    # levels=(0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5),
-    extend="neither",
-    # norm=matplotlib.colors.LogNorm(),
-)
+    fig = plt.figure()
+    pobj = polar_plot(
+        da=ds.efth,
+        kind="contourf",
+        rmin=0.03,
+        rmax=0.5,
+        normalised=True,
+        as_log10=True,
+        as_period=False,
+        radii_ticks=RADII_TICKS,
+        radii_labels=RADII_LABELS,
+        radii_labels_angle=22.5,
+        radii_label_size=8,
+        cbar_ticks=CBAR_TICKS,
+        efth_min=1e-3,
 
-plt.show()
+        cmap="RdBu_r",
+        extend="neither",
+        levels=LOG_LEVELS,
+    )
+
+    plt.show()
