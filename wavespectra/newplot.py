@@ -67,6 +67,8 @@ def polar_plot(
         normalised=False,
         as_log10=True,
         as_period=False,
+        show_theta_labels=True,
+        show_radii_labels=True,
         radii_ticks=RADII_TICKS,
         radii_labels=RADII_LABELS,
         radii_labels_angle=22.5,
@@ -85,6 +87,8 @@ def polar_plot(
         - normalised (bool): Plot normalised efth between 0 and 1.
         - as_log10 (bool): Plot efth on a log radius.
         - as_period (bool): Set radii as wave period instead of frequency.
+        - show_theta_labels (bool): Show direction tick labels.
+        - show_radii_labels (bool): Show radii tick labels.
         - radii_ticks (array): Tick values for radii.
         - radii_labels (array): Ticklabel values for radii.
         - radii_labels_angle (float): Polar angle at which radii labels are positioned.
@@ -97,7 +101,10 @@ def polar_plot(
         - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
 
     Note:
-        Plot and axes can be redefined from the xarray object returned in this function.
+        - Plot and axes can be redefined from the returned xarray object.
+        - Xarray uses the `sharex`, `sharey` args to control which panels receive axis
+          labels. In order to set labels for all panels, set these to `False`.
+
 
     """
     fname = attrs.FREQNAME
@@ -131,21 +138,36 @@ def polar_plot(
         rmin = np.log10(subplot_kws["rmin"] * 1000)
         rmax = np.log10(subplot_kws["rmax"] * 1000)
 
-    # import ipdb; ipdb.set_trace()
     # Call plotting function
     pobj = getattr(dtmp.plot, kind)(subplot_kws=subplot_kws, **kwargs)
 
-    # Adjusting axis
-    ax = pobj.axes
-    ax.set_rgrids(radii=radii_ticks, labels=radii_labels, angle=radii_labels_angle, size=radii_label_size)
-    ax.set_rmax(rmax)
-    ax.set_rmin(rmin)
+    if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
+        axes = list(pobj.axes.ravel())
+        cbar = pobj.cbar
+    else:
+        axes = [pobj.axes]
+        cbar = pobj.colorbar
 
-    ax.set_xlabel("")
-    ax.set_ylabel("")
+    # Adjusting axes
+    for ax in axes:
+        ax.set_rgrids(
+            radii_ticks, radii_labels, radii_labels_angle, size=radii_label_size,
+        )
+        ax.set_rmax(rmax)
+        ax.set_rmin(rmin)
+
+        # Disable labels as they are drawn on top of ticks
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+
+        # Disable or not tick labels
+        if not show_theta_labels:
+            ax.set_xticklabels("")
+        if not show_radii_labels:
+            ax.set_yticklabels("")
 
     # Adjusting colorbar
-    pobj.colorbar.set_ticks(cbar_ticks)
+    cbar.set_ticks(cbar_ticks)
 
     return pobj
 
@@ -159,15 +181,19 @@ if __name__ == "__main__":
     ds = dset.isel(time=-1, drop=True)
 
 
-    fig = plt.figure()
+    # fig = plt.figure()
     pobj = polar_plot(
-        da=ds.efth,
+        da=dset.efth,
+        col="time",
+        col_wrap=3,
         kind="contourf",
         rmin=0.03,
         rmax=0.5,
         normalised=True,
         as_log10=True,
         as_period=False,
+        show_radii_labels=False,
+        show_theta_labels=False,
         radii_ticks=RADII_TICKS,
         radii_labels=RADII_LABELS,
         radii_labels_angle=22.5,
@@ -178,6 +204,9 @@ if __name__ == "__main__":
         cmap="RdBu_r",
         extend="neither",
         levels=LOG_LEVELS,
+
+        sharex=True,
+        sharey=True,
     )
 
     plt.show()
