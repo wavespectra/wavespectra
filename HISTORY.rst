@@ -17,6 +17,9 @@ __________________
 
 New Features
 ------------
+* Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
+  no longer duplicate internal functions from xarray and should better integrate any upstream
+  changes. The new api also handles better log type plots and masking in a more natural way.
 * New Orcaflex export function by `RubendeBruin`_.
 
 
@@ -29,6 +32,15 @@ Internal Changes
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_.
 * Add new funwave functiont to docs.
 * Update authors list.
+
+
+Deprecation
+-----------
+* Calling the plot kind as a method from `SpecArray.plot`, e.g. `SpecArray.plot.contourf`
+  is deprecated with the new plotting api. Now `kind` needs to be provided as an argument.
+* Arguments `show_radius_label` and `show_direction_label` are deprecated from `SpecArray.plot`.
+  Labels are no longer drawn as they fall on top of ticks. In order to show it the axes
+  properties now must be manually defined from the axis.
 
 
 3.9.0 (2021-05-29)
