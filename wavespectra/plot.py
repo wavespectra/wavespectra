@@ -6,6 +6,10 @@ from wavespectra.core.attributes import attrs
 
 RADII_TICKS = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
 RADII_LABELS = [".05", "0.1", "0.2", "0.3", "0.4Hz"]
+
+RADII_PER_TICKS = np.log10((1 / np.array([0.05, 0.1, 0.2, 0.333333, 0.5])) * 1000.0)
+RADII_PER_LABELS = ["20s", "10s", "5s", "3s", "2s"]
+
 CBAR_TICKS = [1e-2, 1e-1, 1e0]
 LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1) , 14)
 DNAME = attrs.DIRNAME
@@ -45,6 +49,12 @@ def _set_labels(darr, normalised):
     else:
         darr.attrs["standard_name"] = "Energy Density"
         darr.attrs["units"] = "$m^{2}s/deg$"
+    return darr
+
+
+def _as_period(darr):
+    darr = darr.assign_coords({FNAME: 1 / darr[FNAME]})
+    darr[FNAME].attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
     return darr
 
 
@@ -121,6 +131,15 @@ def polar_plot(
     # Redefine labels
     dtmp = _set_labels(dtmp, normalised)
 
+    # period or frequency
+    if as_period:
+        dtmp = _as_period(dtmp)
+        radii_ticks = RADII_PER_TICKS
+        radii_labels = RADII_PER_LABELS
+        rmin = 1
+        rmax = 20
+    # import ipdb; ipdb.set_trace()
+
     # Normalise energy density
     if normalised:
         dtmp /= dtmp.max()
@@ -170,3 +189,14 @@ def polar_plot(
         cbar.set_ticks(cbar_ticks)
 
     return pobj
+
+
+if __name__ == "__main__":
+
+    import matplotlib.pyplot as plt
+    from wavespectra import read_swan
+    dset = read_swan("/source/fork/wavespectra/tests/sample_files/swanfile.spec").isel(lon=0, lat=0, drop=True)
+    ds = dset.isel(time=0, drop=True)
+
+    ds.spec.plot(as_period=True)
+    plt.show()
