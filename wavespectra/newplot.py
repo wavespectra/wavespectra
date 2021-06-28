@@ -8,24 +8,7 @@ from wavespectra.core.attributes import attrs
 RADII_TICKS = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * 1000.0)
 RADII_LABELS = [".05", "0.1", "0.2", "0.3", "0.4Hz"]
 CBAR_TICKS = [1e-2, 1e-1, 1e0]
-LOG_LEVELS = np.array(
-    [
-        0.005,
-        0.01,
-        0.02,
-        0.03,
-        0.04,
-        0.06,
-        0.08,
-        0.13,
-        0.19,
-        0.28,
-        0.43,
-        0.64,
-        0.96,
-        1.0,
-    ]
-)
+LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1) , 14)
 
 
 def _polar_dir(darray):
@@ -183,17 +166,17 @@ if __name__ == "__main__":
 
     # fig = plt.figure()
     pobj = polar_plot(
-        da=dset.efth,
-        col="time",
-        col_wrap=3,
+        da=ds.efth,
+        # col="time",
+        # col_wrap=3,
         kind="contourf",
         rmin=0.03,
         rmax=0.5,
         normalised=True,
         as_log10=True,
         as_period=False,
-        show_radii_labels=False,
-        show_theta_labels=False,
+        show_radii_labels=True,
+        show_theta_labels=True,
         radii_ticks=RADII_TICKS,
         radii_labels=RADII_LABELS,
         radii_labels_angle=22.5,
@@ -203,7 +186,7 @@ if __name__ == "__main__":
 
         cmap="RdBu_r",
         extend="neither",
-        levels=LOG_LEVELS,
+        levels=LOG_CONTOUR_LEVELS,
 
         sharex=True,
         sharey=True,
