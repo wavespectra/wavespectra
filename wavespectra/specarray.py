@@ -682,7 +682,7 @@ class SpecArray(object):
 
     def plot(
         self,
-        kind="pcolormesh",
+        kind="contourf",
         normalised=True,
         as_log10=True,
         as_period=False,

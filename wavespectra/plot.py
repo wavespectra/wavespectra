@@ -50,12 +50,12 @@ def _set_labels(darr, normalised):
 
 def polar_plot(
         da,
-        kind="pcolormesh",
-        rmin=0.03,
-        rmax=0.5,
+        kind="contourf",
         normalised=False,
         as_log10=True,
         as_period=False,
+        rmin=0.03,
+        rmax=0.5,
         show_theta_labels=True,
         show_radii_labels=True,
         radii_ticks=RADII_TICKS,
@@ -63,6 +63,8 @@ def polar_plot(
         radii_labels_angle=22.5,
         radii_label_size=8,
         cbar_ticks=CBAR_TICKS,
+        cmap="RdBu_r",
+        extend="neither",
         efth_min=1e-3,
         **kwargs
     ):
@@ -71,11 +73,11 @@ def polar_plot(
     Args:
         - da (DataArray): Wavespectra DataArray.
         - kind (str): The kind of plot to produce, e.g. `contourf`, `pcolormesh`.
-        - rmin (float): Minimum value to clip the radius axis.
-        - rmax (float): Maximum value to clip the radius axis.
         - normalised (bool): Plot normalised efth between 0 and 1.
         - as_log10 (bool): Plot efth on a log radius.
         - as_period (bool): Set radii as wave period instead of frequency.
+        - rmin (float): Minimum value to clip the radius axis.
+        - rmax (float): Maximum value to clip the radius axis.
         - show_theta_labels (bool): Show direction tick labels.
         - show_radii_labels (bool): Show radii tick labels.
         - radii_ticks (array): Tick values for radii.
@@ -83,6 +85,7 @@ def polar_plot(
         - radii_labels_angle (float): Polar angle at which radii labels are positioned.
         - radii_label_size (float): Fontsize for radii labels.
         - cbar_ticks (array): Tick values for colorbar.
+        - cmap (str, obj): Colormap to use.
         - efth_min (float): Mask energy density below this value.
         - kwargs: All extra kwargs are passed to the plotting method defined by `kind`.
 
@@ -102,13 +105,13 @@ def polar_plot(
         )
 
     # Set kwargs for plot
-    kwargs = {**kwargs, **{"x": DNAME, "y": FNAME}}
+    kwargs = {**kwargs, **{"x": DNAME, "y": FNAME, "cmap": cmap}}
+    if kind == "contourf" and "extend" not in kwargs:
+        kwargs.update({"extend": "neither"})
     default_subplot_kws = {
         "projection": kwargs.pop("projection", "polar"),
         "theta_direction": kwargs.pop("theta_direction", -1),
         "theta_offset": kwargs.pop("theta_offset", np.deg2rad(90)),
-        "rmin": rmin,
-        "rmax": rmax,
     }
     subplot_kws = {**default_subplot_kws, **kwargs.get("subplot_kws", {})}
 
@@ -126,8 +129,9 @@ def polar_plot(
     # Convert to log
     if as_log10:
         dtmp = dtmp.assign_coords({FNAME: np.log10(dtmp[FNAME] * 1000)})
-        rmin = np.log10(subplot_kws["rmin"] * 1000)
-        rmax = np.log10(subplot_kws["rmax"] * 1000)
+        if rmin > 0:
+            rmin = np.log10(rmin * 1000)
+        rmax = np.log10(rmax * 1000)
         # Use by default log colours in contourf if normalised
         if normalised and kind == "contourf" and "levels" not in kwargs:
             kwargs.update({"levels": LOG_CONTOUR_LEVELS})
@@ -143,6 +147,7 @@ def polar_plot(
         cbar = pobj.colorbar
 
     # Adjusting axes
+    #TODO: clip radii above rmax
     for ax in axes:
         ax.set_rgrids(
             radii_ticks, radii_labels, radii_labels_angle, size=radii_label_size,
