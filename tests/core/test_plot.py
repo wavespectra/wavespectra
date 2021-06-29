@@ -41,9 +41,20 @@ def test_single_as_period(load_specdataset):
     dset.efth.spec.plot(kind="contourf", as_period=True)
 
 
-def test_single_no_log10(load_specdataset):
+def test_single_no_logradius_frequency(load_specdataset):
     dset = load_specdataset.isel(time=0, site=0)
-    dset.efth.spec.plot(kind="contourf", as_period=True, as_log10=False)
+    dset.efth.spec.plot(kind="contourf", as_period=False, logradius=False)
+
+
+def test_single_no_logradius_period(load_specdataset):
+    dset = load_specdataset.isel(time=0, site=0)
+    dset.efth.spec.plot(kind="contourf", as_period=True, logradius=False)
+
+
+def test_single_not_normalised(load_specdataset):
+    dset = load_specdataset.isel(site=0, time=0)
+    pobj = dset.efth.spec.plot(kind="contourf", normalised=False)
+    assert pobj.levels != pytest.approx(LOG_CONTOUR_LEVELS)
 
 
 def test_single_sliced(load_specdataset):
@@ -103,3 +114,9 @@ def test_implemented(load_specdataset):
     dset = load_specdataset.isel(site=0, time=0)
     with pytest.raises(NotImplementedError):
         dset.efth.spec.plot(kind="imshow")
+
+
+def test_radii_in_range(load_specdataset):
+    dset = load_specdataset.isel(site=0, time=0)
+    with pytest.raises(ValueError):
+        dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True)
