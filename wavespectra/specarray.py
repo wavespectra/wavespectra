@@ -20,7 +20,7 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
-from wavespectra.plot import polar_plot, RADII_TICKS, RADII_LABELS, CBAR_TICKS, LOG_CONTOUR_LEVELS
+from wavespectra.plot import polar_plot, CBAR_TICKS
 
 
 @xr.register_dataarray_accessor("spec")
@@ -686,64 +686,66 @@ class SpecArray(object):
         normalised=True,
         as_log10=True,
         as_period=False,
-        rmin=0.03,
-        rmax=0.5,
+        rmin=None,
+        rmax=None,
         show_theta_labels=True,
         show_radii_labels=True,
-        radii_ticks=RADII_TICKS,
-        radii_labels=RADII_LABELS,
+        radii_ticks=None,
         radii_labels_angle=22.5,
         radii_label_size=8,
         cbar_ticks=CBAR_TICKS,
+        cmap="RdBu_r",
+        extend="neither",
         efth_min=1e-3,
         **kwargs
     ):
         """Plot spectra in polar axis.
 
-        Light wrapper around xarray plotting capability to define polar spectra.
-
         Args:
-            - kind (str): The kind of plot to produce, e.g. `contourf`, `pcolormesh`.
-            - normalised (bool): Plot normalised efth between 0 and 1.
-            - as_log10 (bool): Plot efth on a log radius.
+            - kind (str): Plot kind, one of (`contourf`, `contour`, `pcolormesh`).
+            - normalised (bool): Show efth normalised between 0 and 1.
+            - as_log10 (bool): Show efth on a log radius.
             - as_period (bool): Set radii as wave period instead of frequency.
             - rmin (float): Minimum value to clip the radius axis.
             - rmax (float): Maximum value to clip the radius axis.
             - show_theta_labels (bool): Show direction tick labels.
             - show_radii_labels (bool): Show radii tick labels.
             - radii_ticks (array): Tick values for radii.
-            - radii_labels (array): Ticklabel values for radii.
             - radii_labels_angle (float): Polar angle at which radii labels are positioned.
             - radii_label_size (float): Fontsize for radii labels.
             - cbar_ticks (array): Tick values for colorbar.
-            - efth_min (float): Mask energy density below this value.
+            - cmap (str, obj): Colormap to use.
+            - efth_min (float): Clip energy density below this value.
             - kwargs: All extra kwargs are passed to the plotting method defined by `kind`.
 
         Returns:
-            - pobj: Plotting object returned from xarray call.
+            - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
 
         Note:
+            - If normalised==True, contourf uses a logarithmic colour scale by default.
             - Plot and axes can be redefined from the returned xarray object.
-            - Xarray FacetGrid capability is fully supported.
             - Xarray uses the `sharex`, `sharey` args to control which panels receive axis
               labels. In order to set labels for all panels, set these to `False`.
+            - Masking of low values can be done in contourf by setting `efth_min` larger
+              than the lowest contour level along with `extend` set to "neither" or "min".
 
         """
         return polar_plot(
-            da=self._obj.copy(deep=True),
+            darr=self._obj.copy(deep=True),
             kind=kind,
-            rmin=rmin,
-            rmax=rmax,
             normalised=normalised,
             as_log10=as_log10,
             as_period=as_period,
+            rmin=rmin,
+            rmax=rmax,
             show_theta_labels=show_theta_labels,
             show_radii_labels=show_radii_labels,
             radii_ticks=radii_ticks,
-            radii_labels=radii_labels,
             radii_labels_angle=radii_labels_angle,
             radii_label_size=radii_label_size,
             cbar_ticks=cbar_ticks,
+            cmap=cmap,
+            extend=extend,
             efth_min=efth_min,
             **kwargs
         )
