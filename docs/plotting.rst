@@ -13,6 +13,7 @@ frequency-direction spectral plots in polar coordinates.
     :okwarning:
 
     import matplotlib.pyplot as plt
+    import cmocean
     from wavespectra import read_swan
     dset = read_swan("_static/swanfile.spec", as_site=True)
     ds = dset.isel(site=0, time=0, drop=True)
@@ -26,6 +27,7 @@ and attempts to define sensible settings for plotting normalised spectra on loga
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     figsize = (6, 4)
@@ -44,6 +46,7 @@ Frequency-direction spectra can be easily plotted in the period space.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -58,12 +61,66 @@ The spectrum is normalised by default as :math:`\frac{E_{d}(f,d)}{\max{E_{d}(f,d
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
     @savefig single_polar_plot_period_realvalues.png
     ds.spec.plot(as_period=True, normalised=False, cmap="pink_r");
+
+
+Logarithmic radii
+-----------------
+
+Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False`. Default intervals 
+for linear radii are defined for frequency and period types but they can be overwritten from the `radii_ticks` paramater:
+
+.. ipython:: python
+    :okwarning:
+    :okexcept:
+
+    @suppress
+    fig = plt.figure(figsize=figsize)
+
+    @savefig single_polar_plot_period_linear_radii.png
+    ds.spec.plot(
+        as_period=True,
+        normalised=False,
+        cmap="pink_r",
+        logradius=False,
+        radii_ticks=[5, 10, 15, 20],
+    );
+
+
+.. note::
+
+    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result can be achieved 
+    by calculating :math:`\log{E_{d}(f,d)}` beforehand:
+
+.. ipython:: python
+    :okwarning:
+    :okexcept:
+
+    @suppress
+    fig = plt.figure(figsize=figsize)
+
+    ds1 = ds.where(ds>0, 1e-5) # Avoid infinity values
+    ds1 = np.log10(ds1)
+
+    @savefig replicate_as_log10.png
+    ds1.spec.plot(
+        rmin=1,
+        rmax=25,
+        cmap=cmocean.cm.thermal_r,
+        as_period=True,
+        levels=20,
+        cbar_ticks=[1, 3, 5, 7],
+        cbar_kwargs={"label": "$\log{E_{d}(f,d)}$"},
+        extend="both",
+        efth_min=None
+    );
+
 
 Plotting parameters from xarray
 -------------------------------
@@ -73,6 +130,7 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     import matplotlib
 
@@ -82,7 +140,6 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
         as_period=True,
         normalised=False,
         cmap="turbo",
-        norm=matplotlib.colors.LogNorm(),
         add_colorbar=False,
         extend="both",
         levels=25,
@@ -105,6 +162,7 @@ The radii extent are controlled from `rmin` and `rmax` parameters.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
@@ -144,6 +202,7 @@ Xarray's faceting capability is fully supported.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @savefig faceted_polar_plot2.png
     dset.isel(site=0, time=slice(None, 4)).spec.plot(
@@ -160,6 +219,7 @@ Removing tick labels can be useful if plotting up many small axes for a more cle
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @savefig faceted_polar_plot3.png
     dset.isel(site=0).sel(freq=slice(0, 0.2)).spec.plot(
