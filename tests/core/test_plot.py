@@ -2,7 +2,7 @@ import os
 import pytest
 
 from wavespectra import read_swan
-from wavespectra.plot import LOG_CONTOUR_LEVELS
+from wavespectra.plot import WavePlot, LOG_CONTOUR_LEVELS
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -120,3 +120,16 @@ def test_radii_in_range(load_specdataset):
     dset = load_specdataset.isel(site=0, time=0)
     with pytest.raises(ValueError):
         dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True)
+
+
+def test_repr(load_specdataset):
+    dset = load_specdataset.isel(site=0, time=0)
+    wp = WavePlot(dset.efth)
+    assert f"<Waveplot {wp.kind}" in repr(wp)
+
+
+def test_rlim(load_specdataset):
+    dset = load_specdataset.isel(site=0, time=0)
+    with pytest.raises(ValueError):
+        dset.spec.plot(kind="contourf", rmin=-1, rmax=0)
+        dset.spec.plot(kind="contourf", rmin=-1, rmax=0, logradius=False)
