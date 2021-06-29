@@ -684,7 +684,7 @@ class SpecArray(object):
         self,
         kind="contourf",
         normalised=True,
-        as_log10=True,
+        logradius=True,
         as_period=False,
         rmin=None,
         rmax=None,
@@ -704,7 +704,7 @@ class SpecArray(object):
         Args:
             - kind (str): Plot kind, one of (`contourf`, `contour`, `pcolormesh`).
             - normalised (bool): Show efth normalised between 0 and 1.
-            - as_log10 (bool): Show efth on a log radius.
+            - logradius (bool): Set log radii.
             - as_period (bool): Set radii as wave period instead of frequency.
             - rmin (float): Minimum value to clip the radius axis.
             - rmax (float): Maximum value to clip the radius axis.
@@ -734,7 +734,7 @@ class SpecArray(object):
             darr=self._obj.copy(deep=True),
             kind=kind,
             normalised=normalised,
-            as_log10=as_log10,
+            logradius=logradius,
             as_period=as_period,
             rmin=rmin,
             rmax=rmax,

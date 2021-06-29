@@ -21,7 +21,7 @@ class WavePlot:
         - darr (DataArray): Wavespectra DataArray.
         - kind (str): Plot kind, one of (`contourf`, `contour`, `pcolormesh`).
         - normalised (bool): Show efth normalised between 0 and 1.
-        - as_log10 (bool): Show efth on a log radius.
+        - logradius (bool): Set log radii.
         - as_period (bool): Set radii as wave period instead of frequency.
         - rmin (float): Minimum value to clip the radius axis.
         - rmax (float): Maximum value to clip the radius axis.
@@ -44,7 +44,7 @@ class WavePlot:
         darr,
         kind="contourf",
         normalised=True,
-        as_log10=True,
+        logradius=True,
         as_period=False,
         rmin=None,
         rmax=None,
@@ -61,7 +61,7 @@ class WavePlot:
     ):
         self.kind = kind
         self.normalised = normalised
-        self.as_log10 = as_log10
+        self.logradius = logradius
         self.as_period = as_period
         self.show_theta_labels = show_theta_labels
         self.show_radii_labels = show_radii_labels
@@ -83,7 +83,7 @@ class WavePlot:
 
     def __repr__(self):
         s = f"<Waveplot {self.kind}>"
-        for attr in ["normalised", "as_log10", "as_period"]:
+        for attr in ["normalised", "logradius", "as_period"]:
             if getattr(self, attr):
                 s = s.replace(">", f" {attr.split('_')[-1]}>")
         return s
@@ -160,8 +160,8 @@ class WavePlot:
         if self.as_period:
             _darr = self._to_period(_darr)
         # Set log10 radii
-        if self.as_log10:
-            _darr = self._to_log10(_darr)
+        if self.logradius:
+            _darr = self._to_logradius(_darr)
         return _darr
 
     @property
@@ -169,7 +169,7 @@ class WavePlot:
         """The radius centre."""
         if self._rmin is None:
             return float(self.darr[self.fname].min())
-        if self.as_log10 and self._rmin > 0:
+        if self.logradius and self._rmin > 0:
             return np.log10(self._rmin * LOG_FACTOR)
         else:
             return self._rmin
@@ -179,7 +179,7 @@ class WavePlot:
         """The radius edge."""
         if self._rmax is None:
             return float(self.darr[self.fname].max())
-        if self.as_log10 and self._rmax > 0:
+        if self.logradius and self._rmax > 0:
             return np.log10(self._rmax * LOG_FACTOR)
         else:
             return self._rmax
@@ -189,7 +189,7 @@ class WavePlot:
         """Tick locations for the radii axis."""
         if self._radii_ticks is not None:
             return self._radii_ticks
-        if self.as_log10:
+        if self.logradius:
             if self.as_period:
                 self._radii_ticks = RADII_PER_TICKS_LOG
             else:
@@ -201,7 +201,7 @@ class WavePlot:
                 self._radii_ticks = RADII_FREQ_TICKS_LIN
         # Ensure radii ticks within (rmin, rmax)
         if self.rmin >= self._radii_ticks.max() or self.rmax <= self._radii_ticks.min():
-            if self.as_log10:
+            if self.logradius:
                 ticks = 10 ** self._radii_ticks / LOG_FACTOR
             else:
                 ticks = self._radii_ticks
@@ -217,7 +217,7 @@ class WavePlot:
     def radii_ticklabels(self):
         """Tick labels for the radii axis."""
         units = self.darr[self.fname].attrs.get("units", "Hz")
-        if self.as_log10:
+        if self.logradius:
             ticks = 10 ** self.radii_ticks / 1000
         else:
             ticks = self.radii_ticks
@@ -232,7 +232,7 @@ class WavePlot:
         }
         if self.kind == "contourf" and "extend" not in _kwargs:
             _kwargs.update({"extend": "neither"})
-        if self.normalised and "contour" in self.kind and "level" not in _kwargs:
+        if self.normalised and "contour" in self.kind and "levels" not in _kwargs:
             _kwargs.update({"levels": LOG_CONTOUR_LEVELS})
         return _kwargs
 
@@ -277,7 +277,7 @@ class WavePlot:
         )
         return darr
 
-    def _to_log10(self, darr):
+    def _to_logradius(self, darr):
         fattrs = darr[self.fname].attrs
         dattrs = darr[self.dname].attrs
         sattrs = darr.attrs
@@ -297,7 +297,7 @@ def polar_plot(*args, **kargs):
         - darr (DataArray): Wavespectra DataArray.
         - kind (str): Plot kind, one of (`contourf`, `contour`, `pcolormesh`).
         - normalised (bool): Show efth normalised between 0 and 1.
-        - as_log10 (bool): Show efth on a log radius.
+        - logradius (bool): Set log radii.
         - as_period (bool): Set radii as wave period instead of frequency.
         - rmin (float): Minimum value to clip the radius axis.
         - rmax (float): Maximum value to clip the radius axis.
@@ -317,3 +317,14 @@ def polar_plot(*args, **kargs):
     """
     wp = WavePlot(*args, **kargs)
     return wp()
+
+
+if __name__ == "__main__":
+    from wavespectra import read_swan
+    dset = read_swan(
+        "/source/fork/wavespectra/tests/sample_files/swanfile.spec",
+        as_site=True,
+    )
+    ds = dset.isel(site=0, time=0)
+
+    ds.spec.plot(kind="contour")
