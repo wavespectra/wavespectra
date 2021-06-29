@@ -230,8 +230,8 @@ class WavePlot:
         _kwargs = {
             **self._kwargs, **{"x": self.dname, "y": self.fname, "cmap": self.cmap}
         }
-        if self.kind == "contourf" and "extend" not in _kwargs:
-            _kwargs.update({"extend": "neither"})
+        if "contour" in self.kind:
+            _kwargs.update({"extend": self.extend})
         if self.normalised and "contour" in self.kind and "levels" not in _kwargs:
             _kwargs.update({"levels": LOG_CONTOUR_LEVELS})
         return _kwargs

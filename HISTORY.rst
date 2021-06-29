@@ -19,17 +19,18 @@ New Features
 ------------
 * Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
   no longer duplicate internal functions from xarray and should better integrate any upstream
-  changes. The new api also handles logarithmic axes and masking in a more natural way.
-* New Orcaflex export function by `RubendeBruin`_.
+  changes. The new api also handles logarithmic axes and masking in a more natural way 
+  (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
+* New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
 
 
 Bug Fixes
 ---------
-
+* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_)..
 
 Internal Changes
 ----------------
-* Fixed sphinx-gallery dependency by by `RubendeBruin`_.
+* Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
 * Add new funwave functiont to docs.
 * Update authors list.
 
@@ -50,8 +51,8 @@ __________________
 
 New Features
 ------------
-* Funwave spectra reader `read_funwave`_.
-* Funwave spectra writer `to_funwave`_.
+* Funwave spectra reader `read_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+* Funwave spectra writer `to_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
 
 .. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
 .. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py
