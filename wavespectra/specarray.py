@@ -97,10 +97,6 @@ class SpecArray(object):
             self._dd = 1.0
         return self._dd
 
-    def _strictly_increasing(self, arr):
-        """Check if array is sorted in increasing order."""
-        return all(x < y for x, y in zip(arr, arr[1:]))
-
     def _collapse_array(self, arr, indices, axis):
         """Collapse ndim array [arr] along [axis] using [indices]."""
         magic_index = [np.arange(i) for i in indices.shape]
