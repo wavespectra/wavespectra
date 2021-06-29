@@ -692,7 +692,7 @@ class SpecArray(object):
         show_radii_labels=True,
         radii_ticks=None,
         radii_labels_angle=22.5,
-        radii_label_size=8,
+        radii_labels_size=8,
         cbar_ticks=CBAR_TICKS,
         cmap="RdBu_r",
         extend="neither",
@@ -712,7 +712,7 @@ class SpecArray(object):
             - show_radii_labels (bool): Show radii tick labels.
             - radii_ticks (array): Tick values for radii.
             - radii_labels_angle (float): Polar angle at which radii labels are positioned.
-            - radii_label_size (float): Fontsize for radii labels.
+            - radii_labels_size (float): Fontsize for radii labels.
             - cbar_ticks (array): Tick values for colorbar.
             - cmap (str, obj): Colormap to use.
             - efth_min (float): Clip energy density below this value.
@@ -742,7 +742,7 @@ class SpecArray(object):
             show_radii_labels=show_radii_labels,
             radii_ticks=radii_ticks,
             radii_labels_angle=radii_labels_angle,
-            radii_label_size=radii_label_size,
+            radii_labels_size=radii_labels_size,
             cbar_ticks=cbar_ticks,
             cmap=cmap,
             extend=extend,

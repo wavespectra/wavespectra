@@ -57,7 +57,7 @@ Frequency-direction spectra can be easily plotted in the period space.
 Normalised
 ----------
 
-The spectrum is normalised by default as :math:`\frac{E_{d}(f,d)}{\max{E_{d}(f,d)}}` but the actual values can be shown instead:
+The spectrum is normalised by default as :math:`\frac{E_{d}(f,d)}{\max{E_{d}}}` but the actual values can be shown instead:
 
 .. ipython:: python
     :okwarning:
@@ -73,8 +73,8 @@ The spectrum is normalised by default as :math:`\frac{E_{d}(f,d)}{\max{E_{d}(f,d
 Logarithmic radii
 -----------------
 
-Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False`. Default intervals 
-for linear radii are defined for frequency and period types but they can be overwritten from the `radii_ticks` paramater:
+Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False` 
+(default radii ticks can be overwritten using the `radii_ticks` paramater:
 
 .. ipython:: python
     :okwarning:
@@ -93,10 +93,10 @@ for linear radii are defined for frequency and period types but they can be over
     );
 
 
-.. note::
+.. hint::
 
-    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result can be achieved 
-    by calculating :math:`\log{E_{d}(f,d)}` beforehand:
+    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result 
+    can be achieved by calculating the :math:`\log{E_{d}(f,d)}` beforehand:
 
 .. ipython:: python
     :okwarning:
@@ -115,11 +115,55 @@ for linear radii are defined for frequency and period types but they can be over
         cmap=cmocean.cm.thermal_r,
         as_period=True,
         levels=20,
-        cbar_ticks=[1, 3, 5, 7],
+        cbar_ticks=[1, 2, 3, 4, 5, 6],
         cbar_kwargs={"label": "$\log{E_{d}(f,d)}$"},
         extend="both",
-        efth_min=None
+        efth_min=None,
+        radii_labels_angle=250,
+        radii_labels_size=10,
     );
+
+
+Radii extents
+-------------
+
+The radii extents are controlled from `rmin` and `rmax` parameters.
+
+.. ipython:: python
+    :okwarning:
+    :okexcept:
+
+    @suppress
+    fig = plt.figure(figsize=figsize)
+
+    ds.spec.plot(
+        rmin=0,
+        rmax=0.15,
+        logradius=False,
+        normalised=False,
+        levels=25,
+        cmap="gray_r",
+        radii_ticks=[0.03, 0.06, 0.09, 0.12, 0.15],
+        radii_labels=["0.05", "0.1", "0.15Hz"],
+        cbar_ticks=np.arange(0, 0.18, 0.02),
+    );
+
+    @savefig single_polar_plot_ax_extent3.png
+    plt.draw()
+
+
+.. admonition:: Exclusive plotting parameters from wavespectra
+
+    * **kind** ("contourf") : Plot kind, one of ("contourf", "contour", "pcolormesh").
+    * **normalised** (True): Show :math:`E(f,d)` normalised between 0 and 1.
+    * **logradius** (True): Set log radii.
+    * **as_period** (False): Set radii as wave period instead of frequency.
+    * **show_radii_labels** (True): Display the radii tick labels.
+    * **show_theta_labels** (False): Display the directions tick labels.
+    * **radii_ticks** (array): Tick values for radii.
+    * **radii_labels_angle** (22.5): Polar angle at which radii labels are positioned.
+    * **radii_labels_size** (8): Fontsize for radii labels.
+    * **cbar_ticks** ([1e-2, 1e-1, 1e0]): Tick values for colorbar.
 
 
 Plotting parameters from xarray
@@ -145,9 +189,8 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
         levels=25,
     );
 
-.. warning::
-
-    **Some of the xarray parameters that are not exposed in wavespectra:**
+.. admonition:: Some of the xarray parameters that are not exposed in wavespectra
+    :class: warning
 
     * **projection**: Always set to "polar".
     * **x**, **y**: Set to wavespectra coordinates naming.
@@ -155,45 +198,6 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
     * **ax**, **aspect**, **size**: Conflict with axes defined in wavespectra.
     * **xlim**, **ylim**: produce no effect.
 
-Radii extent
-------------
-
-The radii extent are controlled from `rmin` and `rmax` parameters.
-
-.. ipython:: python
-    :okwarning:
-    :okexcept:
-
-    @suppress
-    fig = plt.figure(figsize=figsize)
-
-    ds.spec.plot(
-        rmin=0,
-        rmax=0.15,
-        logradius=False,
-        normalised=False,
-        levels=25,
-        cmap="gray_r",
-        radii_ticks=[0.03, 0.06, 0.09, 0.12, 0.15],
-        radii_labels=["0.05", "0.1", "0.15Hz"],
-        cbar_ticks=np.arange(0, 0.18, 0.02),
-    );
-
-    @savefig single_polar_plot_ax_extent3.png
-    plt.draw()
-
-
-.. note::
-
-    **Exclusive plotting parameters from wavespectra:**
-
-    * **kind** ("contourf") : Plot kind, one of ("contourf", "contour", "pcolormesh").
-    * **normalised** (True): Show :math:`E(f,d)` normalised between 0 and 1.
-    * **logradius** (True): Set log radii.
-    * **as_period** (False): Set radii as wave period instead of frequency.
-    * **show_radii_labels** (True): Display the radii tick labels.
-    * **show_theta_labels** (False): Display the directions tick labels.
-    * **cbar_ticks** ([1e-2, 1e-1, 1e0]): Tick values for colorbar.
 
 Faceting
 --------
