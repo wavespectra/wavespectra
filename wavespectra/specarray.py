@@ -97,13 +97,6 @@ class SpecArray(object):
             self._dd = 1.0
         return self._dd
 
-    def _collapse_array(self, arr, indices, axis):
-        """Collapse ndim array [arr] along [axis] using [indices]."""
-        magic_index = [np.arange(i) for i in indices.shape]
-        magic_index = np.ix_(*magic_index)
-        magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
-        return arr[magic_index]
-
     def _twod(self, darray, dim=attrs.DIRNAME):
         """Ensure dir,freq dims are present so moment calculations won't break."""
         if dim not in darray.dims:
