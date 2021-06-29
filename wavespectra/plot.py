@@ -43,7 +43,7 @@ class WavePlot:
         self,
         darr,
         kind="contourf",
-        normalised=False,
+        normalised=True,
         as_log10=True,
         as_period=False,
         rmin=None,
@@ -88,6 +88,54 @@ class WavePlot:
                 s = s.replace(">", f" {attr.split('_')[-1]}>")
         return s
 
+    def __call__(self):
+        """Execute plotting method."""
+
+        # kwargs for polar axis
+        default_subplot_kws = {
+            "projection": self._kwargs.pop("projection", "polar"),
+            "theta_direction": self._kwargs.pop("theta_direction", -1),
+            "theta_offset": self._kwargs.pop("theta_offset", np.deg2rad(90)),
+        }
+        subplot_kws = {**default_subplot_kws, **self._kwargs.get("subplot_kws", {})}
+
+        # Call plotting function
+        pobj = getattr(self.darr.plot, self.kind)(subplot_kws=subplot_kws, **self.kwargs)
+
+        # Adjusting axes
+        if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
+            axes = list(pobj.axes.ravel())
+            cbar = pobj.cbar
+        else:
+            axes = [pobj.axes]
+            cbar = pobj.colorbar
+
+        for ax in axes:
+            ax.set_rgrids(
+                radii=self.radii_ticks,
+                labels=self.radii_ticklabels,
+                angle=self.radii_labels_angle,
+                size=self.radii_label_size,
+            )
+            ax.set_rmax(self.rmax)
+            ax.set_rmin(self.rmin)
+
+            # Disable labels as they are drawn on top of ticks
+            ax.set_xlabel("")
+            ax.set_ylabel("")
+
+            # Disable or not tick labels
+            if self.show_theta_labels is False:
+                ax.set_xticklabels("")
+            if self.show_radii_labels is False:
+                ax.set_yticklabels("")
+
+        # Adjusting colorbar
+        if cbar is not None:
+            cbar.set_ticks(self.cbar_ticks)
+
+        return pobj
+
     @property
     def dname(self):
         return attrs.DIRNAME
@@ -98,10 +146,20 @@ class WavePlot:
 
     @property
     def darr(self):
+        # Define polar coordinates
         _darr = self._polar_dir(self._darr)
+        # Overwrite attributes for labels
         _darr = self._set_labels(_darr)
+        # Normalise
+        if self.normalised:
+            _darr /= _darr.max()
+        # Set lowest value for masking
+        if self.efth_min is not None:
+            _darr = _darr.where(_darr >= self.efth_min, self.efth_min)
+        # Convert frequencis to periods
         if self.as_period:
             _darr = self._to_period(_darr)
+        # Set log10 radii
         if self.as_log10:
             _darr = self._to_log10(_darr)
         return _darr
@@ -141,6 +199,16 @@ class WavePlot:
                 self._radii_ticks = RADII_PER_TICKS_LIN
             else:
                 self._radii_ticks = RADII_FREQ_TICKS_LIN
+        # Ensure radii ticks within (rmin, rmax)
+        if self.rmin >= self._radii_ticks.max() or self.rmax <= self._radii_ticks.min():
+            if self.as_log10:
+                ticks = 10 ** self._radii_ticks / LOG_FACTOR
+            else:
+                ticks = self._radii_ticks
+            raise ValueError(
+                f"radii_ticks '{ticks}' are outside the bounds "
+                f"defined by 'rmin={self._rmin}', 'rmax={self._rmax}'"
+            )
         # Clipping to radius limits
         self._radii_ticks = np.unique(self._radii_ticks.clip(self.rmin, self.rmax))
         return self._radii_ticks
@@ -221,55 +289,6 @@ class WavePlot:
         darr[self.dname].attrs = dattrs
         return darr
 
-    def __call__(self):
-        """Execute plotting method."""
-
-        # kwargs for polar axis
-        default_subplot_kws = {
-            "projection": self._kwargs.pop("projection", "polar"),
-            "theta_direction": self._kwargs.pop("theta_direction", -1),
-            "theta_offset": self._kwargs.pop("theta_offset", np.deg2rad(90)),
-        }
-        subplot_kws = {**default_subplot_kws, **self._kwargs.get("subplot_kws", {})}
-
-        # Call plotting function
-        pobj = getattr(self.darr.plot, self.kind)(subplot_kws=subplot_kws, **self.kwargs)
-
-        # Adjusting axes
-        if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
-            axes = list(pobj.axes.ravel())
-            cbar = pobj.cbar
-        else:
-            axes = [pobj.axes]
-            cbar = pobj.colorbar
-
-        for ax in axes:
-            # import ipdb; ipdb.set_trace()
-            ax.set_rgrids(
-                radii=self.radii_ticks,
-                labels=self.radii_ticklabels,
-                angle=self.radii_labels_angle,
-                size=self.radii_label_size,
-            )
-            ax.set_rmax(self.rmax)
-            ax.set_rmin(self.rmin)
-
-            # Disable labels as they are drawn on top of ticks
-            ax.set_xlabel("")
-            ax.set_ylabel("")
-
-            # Disable or not tick labels
-            if self.show_theta_labels is False:
-                ax.set_xticklabels("")
-            if self.show_radii_labels is False:
-                ax.set_yticklabels("")
-
-        # Adjusting colorbar
-        if cbar is not None:
-            cbar.set_ticks(self.cbar_ticks)
-
-        return pobj
-
 
 def polar_plot(*args, **kargs):
     """Plot spectra in polar axis.
@@ -298,44 +317,3 @@ def polar_plot(*args, **kargs):
     """
     wp = WavePlot(*args, **kargs)
     return wp()
-
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-    from wavespectra import read_swan
-    dset = read_swan("/source/fork/wavespectra/tests/sample_files/swanfile.spec").isel(lon=0, lat=0, drop=True)
-    ds = dset.isel(time=0, drop=True)
-
-    # self = WavePlot(
-    #     ds.efth.spec._obj,
-    #     normalised=False,
-    #     cmap="pink_r",
-    #     levels=15,
-    #     rmin=None,
-    #     rmax=0.3,
-    #     as_log10=False,
-    #     as_period=False,
-    #     radii_ticks=[0.05, 0.1, 0.15, 0.2, 0.25],
-    #     )
-
-    # fig = plt.figure()
-    # self()
-    # plt.show()
-
-
-    pobj = polar_plot(
-        ds.efth.spec._obj,
-        normalised=True,
-        # cmap="pink_r",
-        # levels=15,
-        rmin=None,
-        rmax=None,
-        as_log10=True,
-        as_period=True,
-        # radii_ticks=[0.05, 0.1, 0.15, 0.2, 0.25],
-    )
-
-    # fig = plt.figure()
-    # self()
-    plt.show()
