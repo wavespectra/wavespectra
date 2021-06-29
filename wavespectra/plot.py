@@ -29,7 +29,7 @@ class WavePlot:
         - show_radii_labels (bool): Show radii tick labels.
         - radii_ticks (array): Tick values for radii.
         - radii_labels_angle (float): Polar angle at which radii labels are positioned.
-        - radii_label_size (float): Fontsize for radii labels.
+        - radii_labels_size (float): Fontsize for radii labels.
         - cbar_ticks (array): Tick values for colorbar.
         - cmap (str, obj): Colormap to use.
         - efth_min (float): Clip energy density below this value.
@@ -52,7 +52,7 @@ class WavePlot:
         show_radii_labels=True,
         radii_ticks=None,
         radii_labels_angle=22.5,
-        radii_label_size=8,
+        radii_labels_size=8,
         cbar_ticks=CBAR_TICKS,
         cmap="RdBu_r",
         extend="neither",
@@ -66,7 +66,7 @@ class WavePlot:
         self.show_theta_labels = show_theta_labels
         self.show_radii_labels = show_radii_labels
         self.radii_labels_angle = radii_labels_angle
-        self.radii_label_size = radii_label_size
+        self.radii_labels_size = radii_labels_size
         self.cbar_ticks = cbar_ticks
         self.cmap = cmap
         self.extend = extend
@@ -115,7 +115,7 @@ class WavePlot:
                 radii=self.radii_ticks,
                 labels=self.radii_ticklabels,
                 angle=self.radii_labels_angle,
-                size=self.radii_label_size,
+                size=self.radii_labels_size,
             )
             ax.set_rmax(self.rmax)
             ax.set_rmin(self.rmin)
@@ -305,7 +305,7 @@ def polar_plot(*args, **kargs):
         - show_radii_labels (bool): Show radii tick labels.
         - radii_ticks (array): Tick values for radii.
         - radii_labels_angle (float): Polar angle at which radii labels are positioned.
-        - radii_label_size (float): Fontsize for radii labels.
+        - radii_labels_size (float): Fontsize for radii labels.
         - cbar_ticks (array): Tick values for colorbar.
         - cmap (str, obj): Colormap to use.
         - efth_min (float): Clip energy density below this value.
