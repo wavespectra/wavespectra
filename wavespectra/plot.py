@@ -317,14 +317,3 @@ def polar_plot(*args, **kargs):
     """
     wp = WavePlot(*args, **kargs)
     return wp()
-
-
-if __name__ == "__main__":
-    from wavespectra import read_swan
-    dset = read_swan(
-        "/source/fork/wavespectra/tests/sample_files/swanfile.spec",
-        as_site=True,
-    )
-    ds = dset.isel(site=0, time=0)
-
-    ds.spec.plot(kind="contour")
