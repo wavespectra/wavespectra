@@ -19,7 +19,7 @@ New Features
 ------------
 * Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
   no longer duplicate internal functions from xarray and should better integrate any upstream
-  changes. The new api also handles better log type plots and masking in a more natural way.
+  changes. The new api also handles logarithmic axes and masking in a more natural way.
 * New Orcaflex export function by `RubendeBruin`_.
 
 
@@ -41,6 +41,8 @@ Deprecation
 * Arguments `show_radius_label` and `show_direction_label` are deprecated from `SpecArray.plot`.
   Labels are no longer drawn as they fall on top of ticks. In order to show it the axes
   properties now must be manually defined from the axis.
+* Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
+  api. Similar result can be achieved in the new api by manually converting efth before plotting.
 
 
 3.9.0 (2021-05-29)
