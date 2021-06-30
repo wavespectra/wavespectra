@@ -72,13 +72,6 @@ def celerity(freq, depth=None):
         return 1.56 / freq
 
 
-def dnum_to_datetime(dnum):
-    """Convert from numeric date to datetime."""
-    return datetime.datetime.fromordinal(int(dnum) - 366) + datetime.timedelta(
-        days=dnum % 1
-    )
-
-
 def to_nautical(ang):
     """Convert from cartesian to nautical angle."""
     return np.mod(270 - ang, 360)
@@ -88,20 +81,6 @@ def unique_times(ds):
     """Remove duplicate times from dataset."""
     _, index = np.unique(ds["time"], return_index=True)
     return ds.isel(time=index)
-
-
-def to_datetime(np64):
-    """Convert Datetime64 date to datatime."""
-    if isinstance(np64, np.datetime64):
-        dt = pd.to_datetime(str(np64)).to_pydatetime()
-    elif isinstance(np64, xr.DataArray):
-        dt = pd.to_datetime(str(np64.values)).to_pydatetime()
-    else:
-        OSError(
-            "Cannot convert %s into datetime, expected np.datetime64 or xr.DataArray"
-            % type(np64)
-        )
-    return dt
 
 
 def spddir_to_uv(spd, direc, coming_from=False):
@@ -169,6 +148,9 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
         Choose indir=None if spectrum is 1D.
 
     """
+    ndim = inspec.ndim
+    if ndim > 2:
+        raise ValueError(f"interp_spec requires 2d spectra but inspec has {ndim} dims")
     outfreq = infreq if outfreq is None or outfreq is False else outfreq
     outdir = indir if outdir is None or outdir is False else outdir
 
@@ -186,15 +168,13 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
                 outfreq, infreq, np.array(inspec).ravel(), left=0.0, right=0.0
             )
     else:
-        dirs = D2R * (270 - np.expand_dims(outdir, 0))
-        dirs2 = D2R * (270 - np.expand_dims(indir, 0))
-        cosmat = np.dot(np.expand_dims(outfreq, -1), np.cos(dirs))
-        sinmat = np.dot(np.expand_dims(outfreq, -1), np.sin(dirs))
-        cosmat2 = np.dot(np.expand_dims(infreq, -1), np.cos(dirs2))
-        sinmat2 = np.dot(np.expand_dims(infreq, -1), np.sin(dirs2))
-        outspec = griddata(
-            (cosmat2.flat, sinmat2.flat), inspec.flat, (cosmat, sinmat), method, 0.0
-        )
+        outdir = D2R * (270 - np.expand_dims(outdir, 0))
+        outcos = np.dot(np.expand_dims(outfreq, -1), np.cos(outdir))
+        outsin = np.dot(np.expand_dims(outfreq, -1), np.sin(outdir))
+        indir = D2R * (270 - np.expand_dims(indir, 0))
+        incos = np.dot(np.expand_dims(infreq, -1), np.cos(indir)).flat
+        insin = np.dot(np.expand_dims(infreq, -1), np.sin(indir)).flat
+        outspec = griddata((incos, insin), inspec.flat, (outcos, outsin), method, 0.0)
     return outspec
 
 
