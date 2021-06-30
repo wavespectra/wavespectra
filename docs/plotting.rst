@@ -6,9 +6,6 @@
 Plotting
 ========
 
-Simplest usage
---------------
-
 Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defining
 frequency-direction spectral plots in polar coordinates.
 
@@ -16,125 +13,191 @@ frequency-direction spectral plots in polar coordinates.
     :okwarning:
 
     import matplotlib.pyplot as plt
+    import cmocean
     from wavespectra import read_swan
+    dset = read_swan("_static/swanfile.spec", as_site=True)
+    ds = dset.isel(site=0, time=0, drop=True)
+
+
+Simplest usage
+--------------
+
+The :py:meth:`~wavespectra.SpecArray.plot` method is available in :py:class:`~wavespectra.SpecArray`. The simplest usage takes no arguments 
+and attempts to define sensible settings for plotting normalised spectra on logarithmic scales:
+
+.. ipython:: python
+    :okwarning:
+    :okexcept:
 
     @suppress
     figsize = (6, 4)
-
-    dset = read_swan("_static/swanfile.spec", as_site=True)
-    ds = dset.isel(site=0, time=0)
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
     @savefig single_polar_plot.png
-    ds.spec.plot.contourf();
+    ds.spec.plot();
 
-Parameters
-----------
+
+Wave period spectrum
+--------------------
 
 Frequency-direction spectra can be easily plotted in the period space.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
     @savefig single_polar_plot_period.png
-    ds.spec.plot.contourf(as_period=True);
+    ds.spec.plot(as_period=True);
 
-By default the :math:`log10(efth)` is plotted but actual values can be shown instead.
+Normalised
+----------
+
+The spectrum is normalised by default as :math:`\frac{E_{d}(f,d)}{\max{E_{d}}}` but the actual values can be shown instead:
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
     @savefig single_polar_plot_period_realvalues.png
-    ds.spec.plot.contourf(as_period=True, as_log10=False, show_direction_label=True);
+    ds.spec.plot(as_period=True, normalised=False, cmap="pink_r");
 
-Plotting parameters from xarray can be prescribed.
+
+Logarithmic radii
+-----------------
+
+Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False` 
+(default radii ticks can be overwritten using the `radii_ticks` paramater:
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
-    @savefig single_polar_plot_xarray_parameters.png
-    ds.spec.plot.contourf(
-        cmap="viridis",
-        vmin=-5,
-        vmax=-2,
-        levels=15,
-        add_colorbar=False,
+    @savefig single_polar_plot_period_linear_radii.png
+    ds.spec.plot(
+        as_period=True,
+        normalised=False,
+        cmap="pink_r",
+        logradius=False,
+        radii_ticks=[5, 10, 15, 20],
     );
 
-Exclusive plotting parameters from wavespectra
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
+.. hint::
 
-    * **as_log10** (True): Plot the log10 of the spectrum for better visualisation.
-    * **as_period** (False): Plot spectra as period instead of frequency.
-    * **show_radius_label** (True): Display the radius labels.
-    * **show_direction_label** (False): Display the direction labels.
-
-Default xarray parameters set by wavespectra
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-
-    * **projection**: "polar"
-    * **cmap**: `cmocean`_.cm.thermal
-
-Radius extents
---------------
-
-The radius extents can be controlled either by slicing / splitting frequencies or by setting axis properties.
-
-Xarray's `selecting`_ methods
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result 
+    can be achieved by calculating the :math:`\log{E_{d}(f,d)}` beforehand:
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
-    @savefig single_polar_plot_ax_extent1.png
-    ds.sel(freq=slice(0.0, 0.2)).spec.plot.contourf(cmap="gray_r");
+    ds1 = ds.where(ds>0, 1e-5) # Avoid infinity values
+    ds1 = np.log10(ds1)
 
-Wavespectra's :py:meth:`~wavespectra.specarray.SpecArray.split` method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    @savefig replicate_as_log10.png
+    ds1.spec.plot(
+        rmin=1,
+        rmax=25,
+        cmap=cmocean.cm.thermal_r,
+        as_period=True,
+        levels=20,
+        cbar_ticks=[1, 2, 3, 4, 5, 6],
+        cbar_kwargs={"label": "$\log{E_{d}(f,d)}$"},
+        extend="both",
+        efth_min=None,
+        radii_labels_angle=250,
+        radii_labels_size=10,
+    );
+
+
+Radii extents
+-------------
+
+The radii extents are controlled from `rmin` and `rmax` parameters.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @suppress
     fig = plt.figure(figsize=figsize)
 
-    @savefig single_polar_plot_ax_extent2.png
-    ds.spec.split(fmin=0, fmax=0.2).spec.plot.contourf(cmap="gray_r");
-
-Matplotlib's axis properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. ipython:: python
-    :okwarning:
-
-    @suppress
-    fig = plt.figure(figsize=figsize)
-
-    ds.spec.plot.contourf(cmap="gray_r");
-    ax = plt.gca()
-    ax.set_rmin(0)
-    ax.set_rmax(0.2)
+    ds.spec.plot(
+        rmin=0,
+        rmax=0.15,
+        logradius=False,
+        normalised=False,
+        levels=25,
+        cmap="gray_r",
+        radii_ticks=[0.03, 0.06, 0.09, 0.12, 0.15],
+        radii_labels=["0.05", "0.1", "0.15Hz"],
+        cbar_ticks=np.arange(0, 0.18, 0.02),
+    );
 
     @savefig single_polar_plot_ax_extent3.png
     plt.draw()
+
+
+.. admonition:: Exclusive plotting parameters from wavespectra
+
+    * **kind** ("contourf") : Plot kind, one of ("contourf", "contour", "pcolormesh").
+    * **normalised** (True): Show :math:`E(f,d)` normalised between 0 and 1.
+    * **logradius** (True): Set log radii.
+    * **as_period** (False): Set radii as wave period instead of frequency.
+    * **show_radii_labels** (True): Display the radii tick labels.
+    * **show_theta_labels** (False): Display the directions tick labels.
+    * **radii_ticks** (array): Tick values for radii.
+    * **radii_labels_angle** (22.5): Polar angle at which radii labels are positioned.
+    * **radii_labels_size** (8): Fontsize for radii labels.
+    * **cbar_ticks** ([1e-2, 1e-1, 1e0]): Tick values for colorbar.
+
+
+Plotting parameters from xarray
+-------------------------------
+
+Wavespectra allows passing some parameters from the functions wrapped from xarray such as `contourf <http://xarray.pydata.org/en/stable/generated/xarray.plot.contourf.html>`_ 
+(excluding some that are manipulated in wavespectra such as `ax`, `x` and others):
+
+.. ipython:: python
+    :okwarning:
+    :okexcept:
+
+    import matplotlib
+
+    @savefig single_polar_plot_xarray_parameters.png
+    ds.spec.plot(
+        kind="contourf",
+        as_period=True,
+        normalised=False,
+        cmap="turbo",
+        add_colorbar=False,
+        extend="both",
+        levels=25,
+    );
+
+.. admonition:: Some of the xarray parameters that are not exposed in wavespectra
+    :class: warning
+
+    * **projection**: Always set to "polar".
+    * **x**, **y**: Set to wavespectra coordinates naming.
+    * **xlabel**, **ylabel**: Disabled.
+    * **ax**, **aspect**, **size**: Conflict with axes defined in wavespectra.
+    * **xlim**, **ylim**: produce no effect.
+
 
 Faceting
 --------
@@ -143,32 +206,37 @@ Xarray's faceting capability is fully supported.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @savefig faceted_polar_plot2.png
-    dset.isel(site=0).spec.plot.contourf(
+    dset.isel(site=0, time=slice(None, 4)).spec.plot(
         col="time",
-        col_wrap=3,
-        levels=15,
+        col_wrap=2,
         figsize=(15,8),
-        vmax=-1,
-        cmap="jet"
+        cmap="Spectral_r"
     )
 
-Setting clean axis is useful if plotting up many small axes for overview.
+Clean axes
+----------
+
+Removing tick labels can be useful if plotting up many small axes for a more clear overview.
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     @savefig faceted_polar_plot3.png
-    dset.isel(site=0).sel(freq=slice(0, 0.2)).spec.plot.contourf(
+    dset.isel(site=0).sel(freq=slice(0, 0.2)).spec.plot(
         col="time",
         col_wrap=3,
-        levels=15,
         figsize=(15,8),
-        vmax=-1,
-        clean_radius=True,
-        clean_sector=True
+        vmax=1,
+        show_theta_labels=False,
+        show_radii_labels=False
     )
+
+    @suppress
+    plt.close("all")
 
 
 Plotting types
@@ -180,18 +248,43 @@ Contour
 ~~~~~~~
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
-    ds = dset.isel(site=0, time=range(2))
+    @suppress
+    fig = plt.figure(figsize=figsize)
+
     @savefig contour_type_plot.png
-    ds.spec.plot.contour(col="time");
+    ds.spec.plot(kind="contour");
 
 Contourf
 ~~~~~~~~
 .. ipython:: python
     :okwarning:
+    :okexcept:
+
+    @suppress
+    fig = plt.figure(figsize=figsize)
 
     @savefig contourf_type_plot.png
-    ds.spec.plot.contourf(col="time");
+    ds.spec.plot(kind="contourf");
+
+Pcolormesh
+~~~~~~~~~~
+.. ipython:: python
+    :okwarning:
+    :okexcept:
+
+    @suppress
+    fig = plt.figure(figsize=figsize)
+
+    @savefig pcolormesh_type_plot.png
+    ds.spec.plot(
+        kind="pcolormesh",
+        cbar_ticks=np.arange(0, 1.1, 0.1),
+        vmin=0,
+        vmax=1.0,
+        cmap="gray_r",
+    );
 
 
 .. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
