@@ -55,6 +55,7 @@ Deprecation
   api. Similar result can be achieved in the new api by manually converting efth before plotting.
 * Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
 * Remove `dfarr` attribute from SpecArray, replaced by `df`.
+* Remove unused functions `to_datetime` and `dnum_to_datetime`.
 
 
 3.9.0 (2021-05-29)

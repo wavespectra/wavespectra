@@ -227,10 +227,8 @@ Internal core functions and objects
    core.utils.wavelen
    core.utils.wavenuma
    core.utils.celerity
-   core.utils.dnum_to_datetime
    core.utils.to_nautical
    core.utils.unique_times
-   core.utils.to_datetime
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec
