@@ -16,6 +16,7 @@ from wavespectra.core.utils import (
     wavelen,
     celerity,
     interp_spec,
+    load_function,
 )
 from wavespectra import read_swan
 
@@ -95,6 +96,19 @@ def test_interp_spec(dset):
     interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="linear")
     interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="cubic")
     interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
+
+    inspec = dset.isel(lat=0, lon=0, time=0).spec.oned().values
+    interp_spec(inspec, infreq, indir=None, outfreq=None, outdir=None, method="linear")
+
     with pytest.raises(ValueError):
         inspec = dset.efth.values
         interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
+
+
+def test_load_function():
+    func = load_function("wavespectra", "fit_jonswap", prefix="fit_")
+    func = load_function("wavespectra.directional_distribution", "cartwright")
+    with pytest.raises(AttributeError):
+        func = load_function("wavespectra", "fit_not_defined_spectrum", prefix="fit_")
+    with pytest.raises(AttributeError):
+        func = load_function("wavespectra.directional_distribution", "not_defined_distribution")
