@@ -321,7 +321,7 @@ class SpecArray(object):
         # Condition over which scaling applies
         condition = True
         if hs_min != -np.inf or hs_max != np.inf:
-            condition *= (hs >= hs_min) & (hs <= hs_max)
+            condition *= ((hs >= hs_min) & (hs <= hs_max)).chunk()
         if tp_min != -np.inf or tp_max != np.inf:
             tp = self.tp()
             condition *= (tp >= tp_min) & (tp <= tp_max)
