@@ -46,6 +46,7 @@ def test_split(dset):
     ds.dir.max() == 15
     with pytest.raises(ValueError):
         dset.spec.split(fmin=0.2, fmax=0.1)
+    with pytest.raises(ValueError):
         dset.spec.split(dmin=15, dmax=0)
 
 
@@ -66,9 +67,10 @@ def test_directional_methods_raise_on_oned_spec(dset):
     ds = dset.spec.oned()
     with pytest.raises(ValueError):
         ds.spec.momd()
+    with pytest.raises(ValueError):
         ds.spec.dm()
+    with pytest.raises(ValueError):
         ds.spec.dspr()
-
 
 def test_crsd(dset):
     dset.spec.crsd()
@@ -107,13 +109,12 @@ def test_stats(dset):
     assert hs1.values == pytest.approx(hs2.values)
 
     dset.spec.stats(["hs", "tp", "dpm"], names=["hs1", "tp1", "dpm1"])
-
+    dset.spec.stats({"hs": {}, "crsd": {"theta": 90}})
     with pytest.raises(ValueError):
         dset.spec.stats("hs")
+    with pytest.raises(ValueError):
         dset.spec.stats(["hs", "tp", "dpm"], names=["hs1", "tp1"])
+    with pytest.raises(ValueError):
         dset.spec.stats(["stat_not_implemented"])
+    with pytest.raises(ValueError):
         dset.spec.stats(["dd"])
-
-    # with pytest.raises(AttributeError):
-    #     dset.spec.stats("hs")
-    #     dset.spec.stats(["hs", "tp", "dpm"], names=["hs1", "tp1"])
