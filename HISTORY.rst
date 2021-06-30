@@ -25,6 +25,9 @@ New Features
 * Peak frequency method in SpecArray.
 * Hrms method in SpecArray
 * New Orcaflex export function by `RubendeBruin`_.
+* Refactored plotting api. The new wrapper no longer duplicates internal functions from xarray
+  and should better integrate any upstream changes. The new api also handles logarithmic axes
+  and masking in a more natural way (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
 
 Internal Changes
 ----------------
@@ -32,10 +35,25 @@ Internal Changes
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_.
 * Add new funwave function to docs.
-* Update authors list.
+* Fixed sphinx-gallery dependency by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
 
-deprecation
+
+Bug Fixes
+---------
+* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
+* Fix bug in `scale_by_hs` when run on dask datasets.
+
+
+Deprecation
 -----------
+* Calling the plot kind as a method from `SpecArray.plot`, e.g. `SpecArray.plot.contourf`
+  is deprecated with the new plotting api. Now `kind` needs to be provided as an argument.
+* Arguments `show_radius_label` and `show_direction_label` are deprecated from `SpecArray.plot`.
+  Labels are no longer drawn as they fall on top of ticks. In order to show it the axes
+  properties now must be manually defined from the axis.
+* Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
+  api. Similar result can be achieved in the new api by manually converting efth before plotting.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
 * Remove `dfarr` attribute from SpecArray, replaced by `df`.
 
 
@@ -44,8 +62,8 @@ __________________
 
 New Features
 ------------
-* Funwave spectra reader `read_funwave`_.
-* Funwave spectra writer `to_funwave`_.
+* Funwave spectra reader `read_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+* Funwave spectra writer `to_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
 
 .. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
 .. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py

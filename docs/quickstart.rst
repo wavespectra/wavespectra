@@ -197,7 +197,7 @@ frequency-direction spectral plots in polar coordinates.
 
     ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=2.0)
     @savefig faceted_polar_plot.png
-    ds.spec.plot.contourf(col="time", as_period=True, levels=20, vmin=-10, vmax=-1.5);
+    ds.spec.plot(kind="contourf", col="time", as_period=False, levels=20, vmin=0, vmax=1);
 
 Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
 
