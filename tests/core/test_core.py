@@ -86,23 +86,25 @@ def test_celerity(dset):
 
 def test_interp_spec(dset):
     inspec = dset.isel(lat=0, lon=0, time=0).efth.values
-    infreq = dset.freq.values
-    indir = dset.dir.values
-    outf = np.arange(infreq[0], infreq[-1], 0.01)
+    inf = dset.freq.values
+    ind = dset.dir.values
+    outf = np.arange(inf[0], inf[-1], 0.01)
     outd = np.arange(0, 360, 5)
-    interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear")
-    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=None, method="linear")
-    interp_spec(inspec, infreq, indir, outfreq=None, outdir=outd, method="linear")
-    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="linear")
-    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="cubic")
-    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
-
+    # 2D spectra
+    interp_spec(inspec, inf, ind, outfreq=None, outdir=None, method="linear")
+    interp_spec(inspec, inf, ind, outfreq=outf, outdir=None, method="linear")
+    interp_spec(inspec, inf, ind, outfreq=None, outdir=outd, method="linear")
+    interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="linear")
+    interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="cubic")
+    interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="nearest")
+    # 1D spectra
     inspec = dset.isel(lat=0, lon=0, time=0).spec.oned().values
-    interp_spec(inspec, infreq, indir=None, outfreq=None, outdir=None, method="linear")
+    interp_spec(inspec, inf, indir=None, outfreq=None, outdir=None, method="linear")
+    interp_spec(inspec, inf, indir=None, outfreq=outf, outdir=None, method="linear")
 
     with pytest.raises(ValueError):
         inspec = dset.efth.values
-        interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
+        interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="nearest")
 
 
 def test_load_function():

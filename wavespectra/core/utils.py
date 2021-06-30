@@ -151,8 +151,11 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
     ndim = inspec.ndim
     if ndim > 2:
         raise ValueError(f"interp_spec requires 2d spectra but inspec has {ndim} dims")
-    outfreq = infreq if outfreq is None or outfreq is False else outfreq
-    outdir = indir if outdir is None or outdir is False else outdir
+
+    if outfreq is None:
+        outfreq = infreq
+    if outdir is None:
+        outdir = indir
 
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
