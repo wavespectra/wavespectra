@@ -51,7 +51,7 @@ def read_funwave(filename):
     darr = xr.DataArray(data=amp.transpose(), coords=coords, dims=dims)
 
     # Energy density spectrum
-    darr = darr ** 2 / (darr.spec.dfarr * darr.spec.dd * 2)
+    darr = darr ** 2 / (darr.spec.df * darr.spec.dd * 2)
 
     # Define output dataset
     dset = darr.to_dataset(name=attrs.SPECNAME)

@@ -93,7 +93,7 @@ def funwave_spectrum(darr, filename):
         darr = darr.assign_coords({attrs.DIRNAME: [0]})
 
     # Amplitudes and phases
-    amp = np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2
+    amp = np.sqrt(darr * darr.spec.df * darr.spec.dd * 8) / 2
     amp = amp.transpose()
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0
