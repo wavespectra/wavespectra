@@ -2,9 +2,21 @@
 import os
 import pytest
 import datetime
+import numpy as np
 import xarray as xr
 
-from wavespectra.core.utils import dnum_to_datetime, to_nautical, unique_times, spddir_to_uv, uv_to_spddir, flatten_list, check_same_coordinates, scaled
+from wavespectra.core.utils import (
+    to_nautical,
+    unique_times,
+    spddir_to_uv,
+    uv_to_spddir,
+    flatten_list,
+    check_same_coordinates,
+    scaled,
+    wavelen,
+    celerity,
+    interp_spec,
+)
 from wavespectra import read_swan
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -15,10 +27,6 @@ def dset():
     filename = os.path.join(FILES_DIR, "swanfile.spec")
     _dset = read_swan(filename)
     yield _dset
-
-
-def test_dnum_to_datetime():
-    assert dnum_to_datetime(367) == datetime.datetime(1, 1, 1)
 
 
 def test_to_nautical():
@@ -59,46 +67,34 @@ def test_check_same_coordinates(dset):
         check_same_coordinates(dset, ds)
 
 
+def test_wavelen(dset):
+    wlen1 = wavelen(dset.freq, depth=10)
+    wlen2 = wavelen(dset.freq, depth=50)
+    wlen3 = wavelen(dset.freq, depth=None)
+    assert np.sum(wlen1) < np.sum(wlen2) < np.sum(wlen3)
+    assert wlen3.values == pytest.approx(1.56 / dset.freq ** 2)
 
-# class TestSpecArray(object):
-#     """Test methods from SpecArray class."""
 
-#     @classmethod
-#     def setup_class(self):
-#         """Read test spectra and pre-calculated stats from file."""
+def test_celerity(dset):
+    clen1 = celerity(dset.freq, depth=10)
+    clen2 = celerity(dset.freq, depth=50)
+    clen3 = celerity(dset.freq, depth=None)
+    assert np.sum(clen1) < np.sum(clen2) < np.sum(clen3)
+    assert clen3.values == pytest.approx(1.56 / dset.freq)
 
-#         self.control = pd.read_csv(os.path.join(FILES_DIR, "swanfile.txt"), sep="\t")
-#         self.swanspec = read_swan(os.path.join(FILES_DIR, "swanfile.spec"))
 
-#     @pytest.mark.parametrize(
-#         "stat_name, rel",
-#         [
-#             ("hs", 1e-3),
-#             ("hmax", 1e-3),
-#             ("tp", 1e-3),
-#             ("tm01", 1e-3),
-#             ("tm02", 1e-3),
-#             ("dm", 1e-3),
-#             ("dp", 1e-3),
-#             ("dpm", 1e-3),
-#             ("swe", 1e-3),
-#             ("sw", 1e-3),
-#         ],
-#     )
-#     def test_stat(self, stat_name, rel):
-#         """Compare stat between SpecArray and control file.
-
-#         Args:
-#             stat_name (str): name of wave spectral statistic to compare. Must
-#                 be the name of a valid method in SpecArray class.
-#             rel (float): relative tolerance for comparing two values as
-#                 described in pytest.approx() method.
-
-#         Asserts:
-#             values calculated from SpecArray method must be equal to those from
-#                 control file swanfile.txt within the relative tolerance rel.
-
-#         """
-#         ctrl = self.control[stat_name].values
-#         calc = getattr(self.swanspec.spec, stat_name)().values.ravel()
-#         assert calc == pytest.approx(ctrl, rel=rel)
+def test_interp_spec(dset):
+    inspec = dset.isel(lat=0, lon=0, time=0).efth.values
+    infreq = dset.freq.values
+    indir = dset.dir.values
+    outf = np.arange(infreq[0], infreq[-1], 0.01)
+    outd = np.arange(0, 360, 5)
+    interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear")
+    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=None, method="linear")
+    interp_spec(inspec, infreq, indir, outfreq=None, outdir=outd, method="linear")
+    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="linear")
+    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="cubic")
+    interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
+    with pytest.raises(ValueError):
+        inspec = dset.efth.values
+        interp_spec(inspec, infreq, indir, outfreq=outf, outdir=outd, method="nearest")
