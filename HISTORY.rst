@@ -26,7 +26,9 @@ New Features
 
 Bug Fixes
 ---------
-* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_)..
+* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
+* Fix bug in `scale_by_hs` when run on dask datasets.
+
 
 Internal Changes
 ----------------
@@ -44,6 +46,7 @@ Deprecation
   properties now must be manually defined from the axis.
 * Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
   api. Similar result can be achieved in the new api by manually converting efth before plotting.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
 
 
 3.9.0 (2021-05-29)
