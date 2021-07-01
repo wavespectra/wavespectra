@@ -38,39 +38,39 @@ def reconstruct():
     pass
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    import numpy as np
-    import xarray as xr
-    import matplotlib.pyplot as plt
-    import cmocean
+#     import numpy as np
+#     import xarray as xr
+#     import matplotlib.pyplot as plt
+#     import cmocean
 
-    farr = np.arange(0.03, 0.3, 0.001)
-    darr = np.arange(0, 360, 15)
-    dafreq = xr.DataArray(farr, coords={"freq": farr}, dims=("freq",), name="freq")
-    dadir = xr.DataArray(darr, coords={"dir": darr}, dims=("dir",), name="dir")
+#     farr = np.arange(0.03, 0.3, 0.001)
+#     darr = np.arange(0, 360, 15)
+#     dafreq = xr.DataArray(farr, coords={"freq": farr}, dims=("freq",), name="freq")
+#     dadir = xr.DataArray(darr, coords={"dir": darr}, dims=("dir",), name="dir")
 
-    fit_name = "fit_jonswap"
-    fit_kwargs = {"freq": dafreq, "hs": 2, "tp": 10}
-    dir_name = "cartwright"
-    dir_kwargs = {"dir": dadir, "dm": 90, "dspr": 20}
+#     fit_name = "fit_jonswap"
+#     fit_kwargs = {"freq": dafreq, "hs": 2, "tp": 10}
+#     dir_name = "cartwright"
+#     dir_kwargs = {"dir": dadir, "dm": 90, "dspr": 20}
 
-    # dset  = construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name)
-    # fig = plt.figure()
-    # dset.spec.plot.contourf(as_log10=False, levels=10)
+#     # dset  = construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name)
+#     # fig = plt.figure()
+#     # dset.spec.plot.contourf(as_log10=False, levels=10)
 
-    dir_kwargs = {"dir": dadir, "dm": 90, "dspr": 40}
-    dset  = construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name)
-    fig = plt.figure()
-    dset.spec.plot.contourf(
-        as_log10=False,
-        levels=20,
-        # cmap="pink_r",
-        cmap="coolwarm",
-        # cmap="terrain_r",
-        # cmap="Spectral_r",
-        as_period=False,
-        ylim=(0, 0.15),
-    )
+#     dir_kwargs = {"dir": dadir, "dm": 90, "dspr": 40}
+#     dset  = construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name)
+#     fig = plt.figure()
+#     dset.spec.plot.contourf(
+#         as_log10=False,
+#         levels=20,
+#         # cmap="pink_r",
+#         cmap="coolwarm",
+#         # cmap="terrain_r",
+#         # cmap="Spectral_r",
+#         as_period=False,
+#         ylim=(0, 0.15),
+#     )
 
-    plt.show()
+#     plt.show()
