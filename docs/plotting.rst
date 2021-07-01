@@ -212,9 +212,10 @@ Xarray's faceting capability is fully supported.
     dset.isel(site=0, time=slice(None, 4)).spec.plot(
         col="time",
         col_wrap=2,
-        figsize=(15,8),
+        rmax=0.4,
+        figsize=(11,10),
         cmap="Spectral_r"
-    )
+    );
 
 Clean axes
 ----------
@@ -229,11 +230,12 @@ Removing tick labels can be useful if plotting up many small axes for a more cle
     dset.isel(site=0).sel(freq=slice(0, 0.2)).spec.plot(
         col="time",
         col_wrap=3,
-        figsize=(15,8),
+        figsize=(11,8),
         vmax=1,
         show_theta_labels=False,
-        show_radii_labels=False
-    )
+        show_radii_labels=False,
+        add_colorbar=False,
+    );
 
     @suppress
     plt.close("all")
@@ -254,7 +256,7 @@ Contour
     fig = plt.figure(figsize=figsize)
 
     @savefig contour_type_plot.png
-    ds.spec.plot(kind="contour");
+    ds.spec.plot(kind="contour", rmax=0.4);
 
 Contourf
 ~~~~~~~~
@@ -266,7 +268,7 @@ Contourf
     fig = plt.figure(figsize=figsize)
 
     @savefig contourf_type_plot.png
-    ds.spec.plot(kind="contourf");
+    ds.spec.plot(kind="contourf", rmax=0.4);
 
 Pcolormesh
 ~~~~~~~~~~
@@ -280,7 +282,7 @@ Pcolormesh
     @savefig pcolormesh_type_plot.png
     ds.spec.plot(
         kind="pcolormesh",
-        cbar_ticks=np.arange(0, 1.1, 0.1),
+        rmax=0.4,
         vmin=0,
         vmax=1.0,
         cmap="gray_r",
