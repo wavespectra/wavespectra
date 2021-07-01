@@ -28,7 +28,6 @@ Documentation
 * :doc:`plotting`
 * :doc:`selecting`
 * :doc:`fitting_1d`
-* :doc:`fitting_2d`
 
 .. toctree::
     :maxdepth: 1
@@ -42,7 +41,6 @@ Documentation
     plotting
     selecting
     fitting_1d
-    fitting_2d
 
 **Help & Reference**
 
