@@ -160,6 +160,17 @@ Spectral fitting
    fit_gaussian
 
 
+Directional distribution
+------------------------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   directional_distribution.cartwright
+   directional_distribution.bunney
+
+
 Internal core functions and objects
 -----------------------------------
 

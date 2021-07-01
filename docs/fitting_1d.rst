@@ -2,25 +2,17 @@
     :width: 150 px
     :align: right
 
-==============
-Reconstruction
-==============
+======================
+Frequency spectrum fit
+======================
 
-spectrum reconstruction from partitioned wave parameters following the method
-of `Bunney et al., 2014`_.
-
-
-~~~~~~~~~~~~~
-Spectral form
-~~~~~~~~~~~~~
-
-Different functions are available for fitting parametric frequency spectral shapes. The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
+Different functions are available for fitting parametric spectral shapes.
+The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
 
 * :func:`~wavespectra.fit_pierson_moskowitz`
 * :func:`~wavespectra.fit_jonswap`
 * :func:`~wavespectra.fit_tma`
 * :func:`~wavespectra.fit_gaussian`
-
 
 
 .. ipython:: python
@@ -43,6 +35,7 @@ Different functions are available for fitting parametric frequency spectral shap
 
 Pierson-Moskowitz
 -----------------
+
 Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_).
 
 .. ipython:: python
@@ -68,6 +61,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
 
 Jonswap
 -------
+
 Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
 
 .. ipython:: python
@@ -108,7 +102,7 @@ When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz s
     @savefig pm_jonswap_gamma1.png
     plt.draw()
 
-Compare against real frequency spectrum with gamma adjusted for a good fit:
+Compare against real frequency spectrum (with gamma adjusted for a good fit):
 
 .. ipython:: python
 
@@ -136,6 +130,7 @@ Compare against real frequency spectrum with gamma adjusted for a good fit:
 
 TMA
 ---
+
 TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_).
 
 .. ipython:: python
@@ -181,7 +176,10 @@ In deep water TMA becomes a Jonswap spectrum:
 
 Gaussian
 --------
-Gaussian spectral form for swell (`Bunney et al., 2014`_). The authors define a criterion for choosing the gaussian fit based on the ratio :math:`rt` between the mean :math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) spectral periods:
+
+Gaussian spectral form for swell (`Bunney et al., 2014`_). The authors define a criterion for choosing
+the gaussian fit based on the ratio :math:`rt` between the mean :math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`)
+and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) spectral periods:
 
 :math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} >= 0.95`
 
@@ -228,7 +226,7 @@ such as times and watershed partitions:
     dspart_param
 
 
-Spectra are fit along all coodinates in the DataArray
+Spectra are fit along all coodinates in the DataArrays
 
 
 .. ipython:: python
@@ -294,22 +292,6 @@ Compare fits for the first swell partition:
 
     @savefig frequency_spectra_timeseries_original_fits.png
     plt.draw()
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~
-Directional distribution
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Cartwright
-----------
-Cosine-squared distribution of `Cartwright (1963)`_.
-
-
-Bunney
-------
-Swell Gaussian distribution of `Bunney et al., (2014)`_.
-
-TODO
 
 
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
