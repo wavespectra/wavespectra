@@ -24,13 +24,8 @@ The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
     import matplotlib.pyplot as plt
     import cmocean
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    farr = np.arange(0.03, 0.3, 0.001)
-    freq = xr.DataArray(
-        farr,
-        coords={"freq": farr},
-        dims=("freq",),
-        name="freq"
-    )
+    f = np.arange(0.03, 0.3, 0.001)
+    freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
 
 
 Pierson-Moskowitz
