@@ -5,10 +5,9 @@ import datetime
 import numpy as np
 import xarray as xr
 
-from wavespectra.direction_distribution import cartwright, bunney
-from wavespectra import read_swan
+from wavespectra.directional_distribution import cartwright, bunney
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
 
 
 @pytest.fixture(scope="module")
@@ -24,6 +23,9 @@ def test_cartwright(dir):
     gth = cartwright(dir, dm, dspr)
 
 
-def test_bunney(dset):
-    bunney()
-
+def test_bunney(dir):
+    dpm = 330
+    dm = 350
+    fp = 0.1
+    fm = 0.12
+    bunney(dir, dpm, dm, fp, fm)

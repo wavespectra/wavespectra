@@ -8,7 +8,7 @@ import xarray as xr
 from wavespectra.construct import construct_partition, reconstruct
 from wavespectra import read_swan
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
 
 
 @pytest.fixture(scope="module")
