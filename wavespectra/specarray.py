@@ -357,7 +357,14 @@ class SpecArray(object):
               period corresponding to the maxima in the frequency spectra.
 
         """
-        return 1 / self.tp(smooth=smooth)
+        fp = 1 / self.tp(smooth=smooth)
+        fp.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return fp.rename(self._my_name())
 
     def momf(self, mom=0):
         """Calculate given frequency moment."""
@@ -556,7 +563,14 @@ class SpecArray(object):
         a = b * (self.hs() / 2) ** 2
         pierson_moskowitz_max = a * fp ** -5 * np.exp(-b * fp ** -4)
         gamma = self.oned().max(attrs.FREQNAME) / pierson_moskowitz_max
-        return gamma.where(gamma >= 1, 1)
+        gamma = gamma.where(gamma >= 1, 1)
+        gamma.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return gamma.rename(self._my_name())
 
     def celerity(self, depth=None):
         """Wave celerity C from frequency coords.
