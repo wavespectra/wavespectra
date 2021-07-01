@@ -2,9 +2,12 @@
     :width: 150 px
     :align: right
 
-======================
-Frequency spectrum fit
-======================
+================
+Spectral fitting
+================
+
+One-dimensional fit
+___________________
 
 Different functions are available for fitting parametric spectral shapes.
 The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
@@ -287,6 +290,9 @@ Compare fits for the first swell partition:
 
     @savefig frequency_spectra_timeseries_original_fits.png
     plt.draw()
+
+
+.. include:: fitting_2d.rst
 
 
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
