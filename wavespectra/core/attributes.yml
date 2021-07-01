@@ -81,3 +81,9 @@ ATTRS:
     tm02:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment
         units: s
+    gamma:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    fp:
+        standard_name: sea_surface_wave_frequency_at_variance_spectral_density_maximum
+        units: Hz
