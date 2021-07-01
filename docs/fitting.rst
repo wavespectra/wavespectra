@@ -30,6 +30,7 @@ Different functions are available for fitting parametric frequency spectral shap
     import numpy as np
     import xarray as xr
     import matplotlib.pyplot as plt
+    import cmocean
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
     farr = np.arange(0.03, 0.3, 0.001)
     freq = xr.DataArray(
@@ -107,6 +108,31 @@ When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz s
     @savefig pm_jonswap_gamma1.png
     plt.draw()
 
+Compare against real frequency spectrum with gamma adjusted for a good fit:
+
+.. ipython:: python
+
+    from wavespectra import read_swan
+    ds = read_swan("_static/swanfile.spec").isel(time=0, lat=0, lon=0, drop=True)
+    ds_fit = fit_jonswap(
+        freq=ds.freq,
+        hs=ds.spec.hs(),
+        tp=ds.spec.tp(),
+        gamma=1.6,
+    )
+
+    @suppress
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+
+    ds.spec.oned().plot(ax=ax, label="Original spectrum");
+    ds_fit.plot(ax=ax, label="Jonswap fitting");
+
+    @suppress
+    plt.legend()
+
+    @savefig jonswap_original_fitting.png
+    plt.draw()
+
 
 TMA
 ---
@@ -182,39 +208,91 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
     plt.draw()
 
 
-Multiple fitting
-----------------
-When arguments to the function are DataArray objects, multiple spectra are fit
-along each coordinate.
+Fitting multiple spectra
+------------------------
+
+Fitting function parameters can be DataArrays with multiple dimensions
+such as times and watershed partitions:
 
 .. ipython:: python
+    :okexcept:
+    :okwarning:
 
-    from wavespectra import read_swan
-    dset = read_swan("_static/swanfile.spec")
-    hs = dset.spec.hs()
-    tp = dset.spec.tp()
-    
-    ds = fit_jonswap(
-        hs=dset.spec.hs(),
-        tp=dset.spec.tp(),
-        freq=dset.freq,
-        gamma=1.6
+    from wavespectra import read_wwm
+    dset = read_wwm("_static/wwmfile.nc").isel(site=0, drop=True)
+
+    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+    dspart_param = dspart.spec.stats(["hs", "tp", "gamma"])
+    dspart_param["dpt"] = dset.dpt.expand_dims({"part": dspart.part})
+
+    dspart_param
+
+
+Spectra are fit along all coodinates in the DataArray
+
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dspart_jonswap = fit_jonswap(
+        freq=dspart.freq,
+        hs=dspart_param.hs,
+        tp=dspart_param.tp,
+        gamma=dspart_param.gamma,
     )
-    ds
+    dspart_tma = fit_tma(
+        freq=dspart.freq,
+        hs=dspart_param.hs,
+        tp=dspart_param.tp,
+        gamma=dspart_param.gamma,
+        dep=dspart_param.dpt,
+    )
+    dspart_tma
 
-    ds_ori = dset.spec.oned().isel(lat=0, lon=0, time=0, drop=True)
-    ds_new = ds.isel(lat=0, lon=0, time=0, drop=True)
+
+Compare fits for the first swell partition:
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    cmap = cmocean.cm.thermal
+    fig = plt.figure(figsize=(12, 10))
+
+    # Original spectra
+    ax = fig.add_subplot(311)
+    ds = dspart.spec.oned().isel(part=1).transpose("freq", "time")
+    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
     @suppress
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+    ax.set_title("Original spectra")
+    @suppress
+    ax.set_xticklabels([])
+    @suppress
+    ax.set_xlabel("")
 
-    ds_ori.plot(ax=ax, label="Original spectrum");
-    ds_new.plot(ax=ax, label="Jonswap fitting");
+    # Jonswap fit
+    ax = fig.add_subplot(312)
+    ds = dspart_jonswap.isel(part=1).transpose("freq", "time")
+    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
     @suppress
-    plt.legend()
+    ax.set_title("Jonswap fit")
+    @suppress
+    ax.set_xticklabels([])
+    @suppress
+    ax.set_xlabel("")
 
-    @savefig jonswap_original_fitting.png
+    # TMA fit
+    ax = fig.add_subplot(313)
+    ds = dspart_tma.isel(part=1).transpose("freq", "time")
+    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
+
+    @suppress
+    ax.set_title("TMA fit")
+
+    @savefig frequency_spectra_timeseries_original_fits.png
     plt.draw()
 
 
@@ -225,6 +303,13 @@ Directional distribution
 Cartwright
 ----------
 Cosine-squared distribution of `Cartwright (1963)`_.
+
+
+Bunney
+------
+Swell Gaussian distribution of `Bunney et al., (2014)`_.
+
+TODO
 
 
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
