@@ -20,7 +20,8 @@ frequency spectrum.
     import cmocean
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
     from wavespectra.directional_distribution import cartwright, bunney
-    f = np.arange(0.03, 0.3, 0.001)
+    from wavespectra.construct import construct_partition
+    f = np.arange(0.03, 0.401, 0.001)
     d = np.arange(0, 360, 1)
     freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
     dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
@@ -105,6 +106,57 @@ where
     * :math:`\sigma_{m}` is the mean spread (`psw0` - `sea_surface_wave_spectral_width_partition_0`)?
 
     Only for partitions actively driven by wind?
+
+
+Construct from single partition
+-------------------------------
+
+Frequency-directional spectra :math:`E_{d}(f,d)` can be constructed from spectral wave parameters
+by applying a directional spreading function to a parametric frequency spectrum:
+
+.. ipython:: python
+    :okwarning:
+
+    ef = fit_jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
+    gth = cartwright(dir=dir, dm=135, dspr=25)
+    efth = ef * gth
+
+    @suppress
+    fig = plt.figure(figsize=(6, 4))
+
+    efth.spec.plot();
+
+    @savefig jonswap_2d.png
+    plt.draw()
+
+
+Constructor function
+~~~~~~~~~~~~~~~~~~~~
+
+The Constructor :func:`~wavespectra.construct.construct_partition` defines an api to construct spectra
+for a partition from available fit and spreading functions:
+
+.. ipython:: python
+    :okwarning:
+
+    efth = construct_partition(
+        fit_name="fit_tma",
+        fit_kwargs={"freq": freq, "hs": 2, "tp": 10, "dep": 10},
+        dir_name="cartwright",
+        dir_kwargs={"dir": dir, "dm": 225, "dspr": 15}
+    )
+
+    @suppress
+    fig = plt.figure(figsize=(6, 4))
+
+    efth.spec.plot(cmap="Spectral_r", add_colorbar=False);
+
+    @savefig tma_2d.png
+    plt.draw()
+
+
+Reconstruct the full spectrum
+-----------------------------
 
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114

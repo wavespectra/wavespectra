@@ -171,6 +171,17 @@ Directional distribution
    directional_distribution.bunney
 
 
+Construct
+---------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   construct.construct_partition
+   construct.reconstruct
+
+
 Internal core functions and objects
 -----------------------------------
 
