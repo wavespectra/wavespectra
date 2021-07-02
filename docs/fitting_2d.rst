@@ -211,9 +211,7 @@ Comparing parametric spectra
     tm02 = 7.5
 
     # Pierson-Moskowitz
-    efth_pm = construct_partition(
-        fit_name="fit_pierson_moskowitz", fit_kwargs={"freq": freq, "hs": hs, "tp": tp}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr}
-    )
+    efth_pm = construct_partition(fit_name="fit_pierson_moskowitz", fit_kwargs={"freq": freq, "hs": hs, "tp": tp}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Jonswap
     efth_jswap = construct_partition(fit_name="fit_jonswap", fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "gamma": gamma}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # TMA
@@ -237,6 +235,10 @@ Comparing parametric spectra
 
     @savefig compare_parametric_2d.png
     plt.draw()
+
+
+.. include:: reconstruct.rst
+
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
 .. _`Cartwright (1963)`: https://repository.tudelft.nl/islandora/object/uuid:b6c19f1e-cb31-4733-a4fb-0f685706269b
