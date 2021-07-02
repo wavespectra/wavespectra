@@ -18,6 +18,17 @@ ______________________
 Partition spectrum and reconstruct from Jonswap
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+.. admonition:: Quick reconstruction example from existing WW3 spectrum
+    :class: note
+
+    * Use Jonswap only (no Gaussian fit).
+    * No calculation for alpha (using default of 0.0081).
+    * Use default :math:`\sigma_a=0.07`, :math:`\sigma_b=0.09`. 
+    * Use :math:`\gamma` calculated from wavespectra.
+    * Use Cartwright cosine-squared distribution (no skewed wind sea spreading).
+
+
 .. ipython:: python
     :okexcept:
     :okwarning:
@@ -63,5 +74,21 @@ Partition spectrum and reconstruct from Jonswap
 
     @savefig original_vs_reconstructed.png
     plt.draw()
+
+
+.. admonition:: TODO
+    :class: note
+
+    Swell gaussian fit
+        * Stefan defines :math:`\sigma_a` (the left width of the peak enhancement factor :math:`\gamma`) from the Gaussian spread parameter
+          with :math:`\sigma_b=\sigma_{a}+0.1`, and uses them in the Jonswap formula.
+        * I have currently implemented the formula as given in Bunney's, not sure if they will be equivalent.
+        * Check these, compare, decide which one to use. The gaussian parameter is not implemented yet in wavespectra (but is in WW3 output files).
+    Skewed sea wind directional distribution
+        * This is not implemented from Stefan's code as far as I can tell.
+        * Some parameters as defined in the paper are not too clear to me so need to find those out.
+    Finalise the construct API
+        * Define function to choose the fittings based on criteria.
+        * Define functions to construct from WW3 and SWAN parameters files.
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
