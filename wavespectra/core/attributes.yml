@@ -69,6 +69,9 @@ ATTRS:
     dspr:
         standard_name: sea_surface_wave_directional_spread
         units: degree
+    dsprp:
+        standard_name: sea_surface_wave_directional_spread_at_variance_spectral_density_maximum
+        units: degree
     sw:
         standard_name: sea_surface_wave_spectral_width
         units: ""

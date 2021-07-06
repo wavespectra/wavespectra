@@ -462,9 +462,9 @@ class SpecArray(object):
         """
         if self.dir is None:
             raise ValueError("Cannot calculate dspr from 1d, frequency spectra.")
-        moms, momc = self.momd(1)
-        a = (moms * self.df).sum(dim=attrs.FREQNAME)
-        b = (momc * self.df).sum(dim=attrs.FREQNAME)
+        mom_sin, mom_cos = self.momd(1)
+        a = (mom_sin * self.df).sum(dim=attrs.FREQNAME)
+        b = (mom_cos * self.df).sum(dim=attrs.FREQNAME)
         e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
         dspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
         dspr.attrs.update(
@@ -474,6 +474,31 @@ class SpecArray(object):
             }
         )
         return dspr.rename(self._my_name())
+
+    def dsprp(self):
+        """Peak directional wave spread Dspr.
+
+        The directional width of system at peak period.
+
+        TODO: Make this lazy by converting to ufunc
+
+        """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dsprp from 1d, frequency spectra.")
+        mom_sin, mom_cos = self.momd(1)
+        peak = self._peak(self.oned()).load()
+        df = self.df[peak]
+        a = mom_sin.isel(**{attrs.FREQNAME: peak}) * df
+        b = mom_cos.isel(**{attrs.FREQNAME: peak}) * df
+        e = self.oned().isel(**{attrs.FREQNAME: peak}) * df
+        dsprp = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        dsprp.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return dsprp.rename(self._my_name())
 
     def crsd(self, theta=90.0):
         """Add description."""
