@@ -25,10 +25,11 @@ New Features
 * Directional distribution module with the following options:
   * Cartwright (1986) cosine-square distribution.
   * Bunney (2014) skewed distribution for turning wind sea.
-* Gaussian frequency width method in SpecArray.
-* Gamma peak enhancement factor method in SpecArray.
-* Peak frequency method in SpecArray.
-* Hrms method in SpecArray
+* Gaussian frequency width method gw in SpecArray.
+* Gamma peak enhancement factor method gamma in SpecArray.
+* Peak directional spread method dsprp in SpecArray.
+* Peak frequency method fp in SpecArray.
+* Root-mean-square wave height method hrms in SpecArray
 * New Orcaflex export function by `RubendeBruin`_.
 * Refactored plotting api. The new wrapper no longer duplicates internal functions from xarray
   and should better integrate any upstream changes. The new api also handles logarithmic axes
