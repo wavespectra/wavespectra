@@ -1,10 +1,22 @@
 """Spectra object based on DataArray to calculate spectral statistics.
 
 Reference:
+    - Bunney, C., Saulter, A., Palmer, T. (2014). Reconstruction of complex 2D wave spectra for
+      rapid deployment of nearshore wave models. From Sea to Shore—Meeting the Challenges of the
+      Sea (Coasts, Marine Structures and Breakwaters 2013), W. Allsop and K. Burgess, Eds., 1050–1059.
+
     - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima
       of a Random Function, Proceedings of the Royal Society of London. Series A,
       Mathematical and Physical Sciences, 237, 212-232.
+
+    - Hanson, Jeffrey L., et al. (2009). Pacific hindcast performance of three numerical wave models.
+      JTECH 26.8 (2009): 1614-1633.
+
     - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+
+    - Goda, Y. (1970). Numerical experiments on wave statistics with spectral simulation.
+      Report of the Port and Harbour Research Institute 9, 3-57.
+
     - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes
       of sea waves, Journal of Geophysical Research, 80, 2688-2694.
 
@@ -283,7 +295,7 @@ class SpecArray(object):
         not by much since the probability density function is rather narrow).
 
         Reference:
-            - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+            - Holthuijsen (2005).
 
         """
         if attrs.TIMENAME in self._obj.coords and self._obj.time.size > 1:
@@ -476,9 +488,9 @@ class SpecArray(object):
         return dspr.rename(self._my_name())
 
     def dsprp(self):
-        """Peak directional wave spread Dspr.
+        """Peak directional wave spread Dsprp.
 
-        The directional width of system at peak period.
+        The directional width of the spectrum at peak frequency.
 
         TODO: Make this lazy by converting to ufunc
 
@@ -519,8 +531,7 @@ class SpecArray(object):
         Represents the range of frequencies where the dominant energy exists.
 
         Reference:
-            - Cartwright and Longuet-Higgins (1956). The statistical distribution
-              of maxima of a random function. Proc. R. Soc. A237, 212-232.
+            - Cartwright and Longuet-Higgins (1956).
 
         """
         swe = (
@@ -546,8 +557,7 @@ class SpecArray(object):
         Represents energy distribution over entire frequency range.
 
         Reference:
-            - Longuet-Higgins (1975). On the joint distribution of the periods and
-              amplitudes of sea waves. JGR, 80, 2688-2694.
+            - Longuet-Higgins (1975).
 
         """
         sw = (
@@ -570,9 +580,7 @@ class SpecArray(object):
         Represents gaussian width of a swell partition.
 
         Reference:
-            - Bunney, C., Saulter, A., Palmer, T. (2014), Reconstruction of complex 2D
-              wave spectra for rapid deployment of nearshore wave models. Coasts, Marine
-              Structures and Breakwaters 2013), 1050–1059.
+            - Bunney et al. (2014).
 
         """
         m0 = (self.hs() / 4) ** 2
@@ -605,6 +613,24 @@ class SpecArray(object):
             }
         )
         return gamma.rename(self._my_name())
+
+    def goda(self):
+        """Goda peakedness parameter.
+
+        Reference:
+            - Goda (1970).
+
+        """
+        ef = self.oned()
+        mo2 = (ef * self.df).sum(dim=attrs.FREQNAME) ** 2
+        goda = (2 / mo2) * (ef ** 2 * self.freq * self.df).sum(attrs.FREQNAME)
+        goda.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return goda.rename(self._my_name())
 
     def celerity(self, depth=None):
         """Wave celerity C from frequency coords.
@@ -662,9 +688,8 @@ class SpecArray(object):
         Note:
             - Input DataArrays must have same non-spectral dims as SpecArray.
 
-        References:
-            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
-              numerical wave models." JTECH 26.8 (2009): 1614-1633.
+        Reference:
+            - Hanson et al. (2009).
 
         """
         # Assert expected dimensions are defined

@@ -90,6 +90,9 @@ ATTRS:
     gamma:
         standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
         units: ""
+    goda:
+        standard_name: sea_surface_wave_goda_peakedness
+        units: ""
     fp:
         standard_name: sea_surface_wave_frequency_at_variance_spectral_density_maximum
         units: Hz
