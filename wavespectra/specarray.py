@@ -455,7 +455,7 @@ class SpecArray(object):
         return xrstats.mean_direction_at_peak_wave_period(self._obj)
 
     def dspr(self):
-        """Directional wave spreading Dspr.
+        """Mean directional wave spread Dspr.
 
         The one-sided directional width of the spectrum.
 
@@ -463,19 +463,10 @@ class SpecArray(object):
         if self.dir is None:
             raise ValueError("Cannot calculate dspr from 1d, frequency spectra.")
         moms, momc = self.momd(1)
-        # Manipulate dimensions so calculations work
-        moms = self._twod(moms, dim=attrs.DIRNAME)
-        momc = self._twod(momc, dim=attrs.DIRNAME)
-        mom0 = self._twod(self.momf(0), dim=attrs.FREQNAME).spec.oned(skipna=False)
-
-        dspr = (
-            2
-            * R2D ** 2
-            * (1 - ((moms.spec.momf() ** 2 + momc.spec.momf() ** 2) ** 0.5 / mom0))
-        ) ** 0.5
-        dspr = dspr.sum(dim=attrs.FREQNAME, skipna=False).sum(
-            dim=attrs.DIRNAME, skipna=False
-        )
+        a = (moms * self.df).sum(dim=attrs.FREQNAME)
+        b = (momc * self.df).sum(dim=attrs.FREQNAME)
+        e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
+        dspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
         dspr.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),

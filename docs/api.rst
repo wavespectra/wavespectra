@@ -44,6 +44,8 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dspr
    SpecArray.swe
    SpecArray.sw
+   SpecArray.gw
+   SpecArray.gamma
 
 **Spectral partitioning**
 
