@@ -402,7 +402,9 @@ class SpecArray(object):
         True average period from the 1st spectral moment.
 
         """
-        tm01 = self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
+        tm01 = m0 / m1
         tm01.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),
@@ -417,9 +419,9 @@ class SpecArray(object):
         Average period of zero up-crossings (Zhang, 2011).
 
         """
-        tm02 = np.sqrt(
-            self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(2).sum(dim=attrs.DIRNAME)
-        )
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        tm02 = np.sqrt(m0 / m2)
         tm02.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),
@@ -534,14 +536,10 @@ class SpecArray(object):
             - Cartwright and Longuet-Higgins (1956).
 
         """
-        swe = (
-            1.0
-            - self.momf(2).sum(dim=attrs.DIRNAME) ** 2
-            / (
-                self.momf(0).sum(dim=attrs.DIRNAME)
-                * self.momf(4).sum(dim=attrs.DIRNAME)
-            )
-        ) ** 0.5
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        m4 = self.momf(4).sum(dim=attrs.DIRNAME)
+        swe = (1.0 - m2 ** 2 / (m0 * m4)) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
         swe.attrs.update(
             {
@@ -560,12 +558,10 @@ class SpecArray(object):
             - Longuet-Higgins (1975).
 
         """
-        sw = (
-            self.momf(0).sum(dim=attrs.DIRNAME)
-            * self.momf(2).sum(dim=attrs.DIRNAME)
-            / self.momf(1).sum(dim=attrs.DIRNAME) ** 2
-            - 1.0
-        ) ** 0.5
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        sw = (m0 * m2 / m1 ** 2 - 1.0) ** 0.5
         sw.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),
