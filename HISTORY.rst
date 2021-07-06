@@ -22,6 +22,11 @@ New Features
   * tma
   * pierson-moskowitz
   * gaussian
+* Directional distribution module with the following options:
+  * Cartwright (1986) cosine-square distribution.
+  * Bunney (2014) skewed distribution for turning wind sea.
+* Gaussian frequency width method in SpecArray.
+* Gamma peak enhancement factor method in SpecArray.
 * Peak frequency method in SpecArray.
 * Hrms method in SpecArray
 * New Orcaflex export function by `RubendeBruin`_.
@@ -56,6 +61,7 @@ Deprecation
 * Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
 * Remove `dfarr` attribute from SpecArray, replaced by `df`.
 * Remove unused functions `to_datetime` and `dnum_to_datetime`.
+* The "mask" argument has been removed from `SpecArray.sw` method.
 
 
 3.9.0 (2021-05-29)
