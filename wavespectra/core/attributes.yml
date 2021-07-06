@@ -75,6 +75,9 @@ ATTRS:
     swe:
         standard_name: sea_surface_wave_spectral_width
         units: ""
+    gw:
+        standard_name: sea_surface_wave_gaussian_spread
+        units: ""
     tm01:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment
         units: s

@@ -524,13 +524,10 @@ class SpecArray(object):
         )
         return swe.rename(self._my_name())
 
-    def sw(self, mask=np.nan):
+    def sw(self):
         """Spectral width parameter by Longuet-Higgins (1975).
 
         Represents energy distribution over entire frequency range.
-
-        Args:
-            - mask (float): value for missing data in output
 
         Reference:
             - Longuet-Higgins (1975). On the joint distribution of the periods and
@@ -549,13 +546,34 @@ class SpecArray(object):
                 "units": self._units(self._my_name()),
             }
         )
-        return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
+        return sw.where(self.hs() >= 0.001).rename(self._my_name())
+
+    def gw(self):
+        """Gaussian frequency spread by Bunney et al. (2014).
+
+        Represents gaussian width of a swell partition.
+
+        Reference:
+            - Bunney, C., Saulter, A., Palmer, T. (2014), Reconstruction of complex 2D
+              wave spectra for rapid deployment of nearshore wave models. Coasts, Marine
+              Structures and Breakwaters 2013), 1050–1059.
+
+        """
+        m0 = (self.hs() / 4) ** 2
+        gw = np.sqrt( (m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2) )
+        gw.attrs.update(
+            {
+                "standard_name": self._standard_name(self._my_name()),
+                "units": self._units(self._my_name()),
+            }
+        )
+        return gw.rename(self._my_name())
 
     def gamma(self):
         """Jonswap peak enhancement factor gamma.
 
-        The ratio between the peak in the frequency spectrum E(f) and its associate
-            Pierson-Moskowitz shape.
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
+        associate Pierson-Moskowitz shape.
 
         """
         fp = self.fp()
