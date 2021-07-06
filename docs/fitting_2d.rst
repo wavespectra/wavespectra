@@ -46,40 +46,26 @@ mean direction and :math:`F(s)` is a scaling parameter.
     :okexcept:
     :okwarning:
 
-    dm = 60
-    gth1 = cartwright(dir, dm, dspr=20)
-    gth2 = cartwright(dir, dm, dspr=30)
-    gth3 = cartwright(dir, dm, dspr=40)
-    gth4 = cartwright(dir, dm, dspr=50)
-
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
-    gth1.plot(label=f"$D_m$={dm:0.0f} deg, $\sigma$=20 deg");
-    gth2.plot(label=f"$D_m$={dm:0.0f} deg, $\sigma$=30 deg");
-    gth3.plot(label=f"$D_m$={dm:0.0f} deg, $\sigma$=40 deg");
-    gth4.plot(label=f"$D_m$={dm:0.0f} deg, $\sigma$=50 deg");
+    dm = 60
+    for dspr in [20, 30, 40, 50]:
+        gth = cartwright(dir, dm, dspr=dspr)
+        gth.plot(label=f"$D_m$={dm:0.0f} deg, $\sigma$={dspr} deg");
 
     @suppress
     plt.legend();
 
-    @suppress
-    plt.grid(False)
-
     @savefig cartwright_function.png
     plt.draw()
-
-
-.. attention::
-
-    Do we want that the function dropps off to zero after +-90 degrees from the peak?
 
 
 Bunney
 ~~~~~~
 
 The Asymmetrical distribution of `Bunney et al. (2014)`_ addresses the skewed directional shape
-often observed under turning wind seas. The function modifies the peak direction and the directional
+under turning wind seas. The function modifies the peak direction and the directional
 spread for each frequency above the peak so that
 
 :math:`\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}}=\frac{\displaystyle \theta_{p}-\theta_{m}}{\displaystyle f_{p}-f_{m}}`,
