@@ -489,8 +489,8 @@ class SpecArray(object):
         )
         return dspr.rename(self._my_name())
 
-    def dsprp(self):
-        """Peak directional wave spread Dsprp.
+    def dpspr(self):
+        """Peak directional wave spread Dpspr.
 
         The directional width of the spectrum at peak frequency.
 
@@ -498,21 +498,21 @@ class SpecArray(object):
 
         """
         if self.dir is None:
-            raise ValueError("Cannot calculate dsprp from 1d, frequency spectra.")
+            raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
         mom_sin, mom_cos = self.momd(1)
         peak = self._peak(self.oned()).load()
         df = self.df[peak]
         a = mom_sin.isel(**{attrs.FREQNAME: peak}) * df
         b = mom_cos.isel(**{attrs.FREQNAME: peak}) * df
         e = self.oned().isel(**{attrs.FREQNAME: peak}) * df
-        dsprp = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
-        dsprp.attrs.update(
+        dpspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        dpspr.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),
                 "units": self._units(self._my_name()),
             }
         )
-        return dsprp.rename(self._my_name())
+        return dpspr.rename(self._my_name())
 
     def crsd(self, theta=90.0):
         """Add description."""
