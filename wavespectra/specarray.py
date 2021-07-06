@@ -501,10 +501,10 @@ class SpecArray(object):
             raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
         mom_sin, mom_cos = self.momd(1)
         peak = self._peak(self.oned()).load()
-        df = self.df[peak]
-        a = mom_sin.isel(**{attrs.FREQNAME: peak}) * df
-        b = mom_cos.isel(**{attrs.FREQNAME: peak}) * df
-        e = self.oned().isel(**{attrs.FREQNAME: peak}) * df
+        df = self.df.isel(**{attrs.FREQNAME: peak}, drop=True)
+        a = mom_sin.isel(**{attrs.FREQNAME: peak}, drop=True) * df
+        b = mom_cos.isel(**{attrs.FREQNAME: peak}, drop=True) * df
+        e = self.oned().isel(**{attrs.FREQNAME: peak}, drop=True) * df
         dpspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
         dpspr.attrs.update(
             {
