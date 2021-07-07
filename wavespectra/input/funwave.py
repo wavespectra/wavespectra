@@ -17,7 +17,7 @@ def read_funwave(filename):
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
-        - Both 2D E(f,d) and 1d E(f) spectra are supported.
+        - Both 2D :math:`E(f,d)` and 1d :math:`E(f)` spectra are supported.
         - Directions converted from Cartesian (0E, CCW, to) to wavespectra (0N, CW, from).
         - Phases are ignored if present.
 
@@ -43,7 +43,7 @@ def read_funwave(filename):
     if nd == 1:
         amp = np.genfromtxt(data)
         coords = {attrs.FREQNAME: freq}
-        dims = (attrs.FREQNAME)
+        dims = attrs.FREQNAME
     else:
         amp = np.genfromtxt(data[:nd])
         coords = {attrs.FREQNAME: freq, attrs.DIRNAME: dir}

@@ -123,6 +123,7 @@ Input functions
    read_dataset
    read_ndbc
    read_json
+   read_funwave
 
 **Convenience SWAN ASCII input functions**
 
@@ -149,6 +150,8 @@ Output functions
    SpecDataset.to_octopus
    SpecDataset.to_ww3
    SpecDataset.to_json
+   SpecDataset.to_funwave
+   SpecDataset.to_orcaflex
 
 
 Spectral fitting

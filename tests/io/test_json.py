@@ -16,7 +16,7 @@ from wavespectra import (
     read_dataset,
     read_era5,
     read_wavespectra,
-    read_json
+    read_json,
 )
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -44,7 +44,7 @@ class TestIO:
             ("triaxys.NONDIRSPEC", read_triaxys),
             ("wavespectra.nc", read_netcdf),
             ("era5file.nc", read_era5),
-            ("jsonfile.json", read_json)
+            ("jsonfile.json", read_json),
         ],
     )
     def test_to_json(self, filename, read_func):

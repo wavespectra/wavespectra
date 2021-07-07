@@ -3,13 +3,7 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.swan import SwanSpecFile
 
 
-def to_swan(
-    self,
-    filename,
-    append=False,
-    id="Created by wavespectra",
-    ntime=None
-):
+def to_swan(self, filename, append=False, id="Created by wavespectra", ntime=None):
     """Write spectra in SWAN ASCII format.
 
     Args:

@@ -45,7 +45,7 @@ def peak_wave_direction(dset):
     darr.name = "dp"
     darr.attrs = {
         "standard_name": attrs.ATTRS.dp.standard_name,
-        "units": attrs.ATTRS.dp.units
+        "units": attrs.ATTRS.dp.units,
     }
     return darr
 
@@ -93,9 +93,9 @@ def mean_direction_at_peak_wave_period(dset):
     darr.name = "dpm"
     darr.attrs = {
         "standard_name": attrs.ATTRS.dpm.standard_name,
-        "units": attrs.ATTRS.dpm.units
+        "units": attrs.ATTRS.dpm.units,
     }
-    return darr #.where((darr >= 0) & (darr <= 360))
+    return darr  # .where((darr >= 0) & (darr <= 360))
 
 
 def peak_wave_period(dset, smooth=True):
@@ -143,6 +143,6 @@ def peak_wave_period(dset, smooth=True):
     darr.name = "tp"
     darr.attrs = {
         "standard_name": attrs.ATTRS.tp.standard_name,
-        "units": attrs.ATTRS.tp.units
+        "units": attrs.ATTRS.tp.units,
     }
     return darr

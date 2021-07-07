@@ -42,11 +42,11 @@ def test_construct_partition(freq, dir):
     dir_name = "cartwright"
     dir_kwargs = {"dir": dir, "dm": dm, "dspr": dspr}
 
-    dset  = construct_partition(
+    dset = construct_partition(
         fit_name=fit_name,
         fit_kwargs=fit_kwargs,
         dir_name=dir_name,
-        dir_kwargs=dir_kwargs
+        dir_kwargs=dir_kwargs,
     )
 
     assert float(dset.spec.hs()) == pytest.approx(hs, 1e5)
@@ -58,4 +58,3 @@ def test_construct_partition(freq, dir):
 
 def test_reconstruct(dset):
     reconstruct()
-

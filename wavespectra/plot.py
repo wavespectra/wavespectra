@@ -10,7 +10,7 @@ RADII_FREQ_TICKS_LIN = np.arange(0.1, 1.1, 0.1)
 RADII_PER_TICKS_LOG = np.log10((np.array([20, 10, 5, 3, 2])) * LOG_FACTOR)
 RADII_PER_TICKS_LIN = np.arange(5, 30, 5)
 CBAR_TICKS = [1e-2, 1e-1, 1e0]
-LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1) , 14)
+LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1), 14)
 SUPPORTED_KIND = ["pcolormesh", "contourf", "contour"]
 
 
@@ -39,6 +39,7 @@ class WavePlot:
         - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
 
     """
+
     def __init__(
         self,
         darr,
@@ -57,7 +58,7 @@ class WavePlot:
         cmap="RdBu_r",
         extend="neither",
         efth_min=1e-3,
-        **kwargs
+        **kwargs,
     ):
         self.kind = kind
         self.normalised = normalised
@@ -100,7 +101,9 @@ class WavePlot:
         subplot_kws = {**default_subplot_kws, **self._kwargs.get("subplot_kws", {})}
 
         # Call plotting function
-        pobj = getattr(self.darr.plot, self.kind)(subplot_kws=subplot_kws, **self.kwargs)
+        pobj = getattr(self.darr.plot, self.kind)(
+            subplot_kws=subplot_kws, **self.kwargs
+        )
 
         # Adjusting axes
         if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
@@ -228,7 +231,8 @@ class WavePlot:
     @property
     def kwargs(self):
         _kwargs = {
-            **self._kwargs, **{"x": self.dname, "y": self.fname, "cmap": self.cmap}
+            **self._kwargs,
+            **{"x": self.dname, "y": self.fname, "cmap": self.cmap},
         }
         if "contour" in self.kind:
             _kwargs.update({"extend": self.extend})
@@ -252,7 +256,9 @@ class WavePlot:
             if darray[self.dname][0] % 360 != darray[self.dname][-1] % 360:
                 dd = np.diff(darray[self.dname]).mean()
                 closure = darray.isel(**{self.dname: 0})
-                closure = closure.assign_coords({self.dname: darray[self.dname][-1] + dd})
+                closure = closure.assign_coords(
+                    {self.dname: darray[self.dname][-1] + dd}
+                )
                 darray = xr.concat((darray, closure), dim=self.dname)
         # Convert to radians
         darray = darray.assign_coords({self.dname: np.deg2rad(darray[self.dname])})
@@ -281,9 +287,7 @@ class WavePlot:
         fattrs = darr[self.fname].attrs
         dattrs = darr[self.dname].attrs
         sattrs = darr.attrs
-        darr = darr.assign_coords(
-            {self.fname: np.log10(darr[self.fname] * LOG_FACTOR)}
-        )
+        darr = darr.assign_coords({self.fname: np.log10(darr[self.fname] * LOG_FACTOR)})
         darr.attrs = sattrs
         darr[self.fname].attrs = fattrs
         darr[self.dname].attrs = dattrs

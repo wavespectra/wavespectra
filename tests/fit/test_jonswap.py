@@ -29,4 +29,3 @@ def test_gamma(freq):
     ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
     ds2 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
     assert ds2.max() > ds1.max()
-

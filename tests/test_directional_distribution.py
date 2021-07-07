@@ -37,13 +37,4 @@ def test_bunney(dir, freq):
     dpspr = 29
     fp = 0.1
     fm = 0.12
-    bunney(
-        dir=dir,
-        freq=freq,
-        dm=dm,
-        dpm=dpm,
-        dspr=dspr,
-        dpspr=dpspr,
-        fm=fm,
-        fp=fp
-    )
+    bunney(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)

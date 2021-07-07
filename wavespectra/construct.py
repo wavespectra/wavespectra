@@ -42,4 +42,3 @@ def construct_partition(
 
 def reconstruct():
     pass
-

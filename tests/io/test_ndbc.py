@@ -27,7 +27,7 @@ class TestNDBC(object):
                 os.path.join(FILES_DIR, "41010.swdir"),
                 os.path.join(FILES_DIR, "41010.swdir2"),
                 os.path.join(FILES_DIR, "41010.swr1"),
-                os.path.join(FILES_DIR, "41010.swr2")
+                os.path.join(FILES_DIR, "41010.swr2"),
             ]
         )
         self.ds_realtime_params = pd.read_csv(
