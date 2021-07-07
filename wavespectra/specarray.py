@@ -79,7 +79,7 @@ class SpecArray(object):
             rdif = np.hstack((np.diff(self.freq), 0.0))
             self._df = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
         else:
-            self._df = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
+            self._df = xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
         return self._df
 
     @property
@@ -141,12 +141,18 @@ class SpecArray(object):
             - Flat peaks are ignored by this criterium.
 
         """
-        fwd = xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
-            attrs.FREQNAME, n=1, label="upper"
-        ) > 0
-        bwd = xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
+        fwd = (
+            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
+                attrs.FREQNAME, n=1, label="upper"
+            )
+            > 0
+        )
+        bwd = (
+            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
                 attrs.FREQNAME, n=1, label="lower"
-        ) < 0
+            )
+            < 0
+        )
         ispeak = np.logical_and(fwd, bwd)
         return arr.where(ispeak, 0).argmax(dim=attrs.FREQNAME).astype(int)
 
@@ -580,7 +586,7 @@ class SpecArray(object):
 
         """
         m0 = (self.hs() / 4) ** 2
-        gw = np.sqrt( (m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2) )
+        gw = np.sqrt((m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2))
         gw.attrs.update(
             {
                 "standard_name": self._standard_name(self._my_name()),
@@ -787,7 +793,7 @@ class SpecArray(object):
         cmap="RdBu_r",
         extend="neither",
         efth_min=1e-3,
-        **kwargs
+        **kwargs,
     ):
         """Plot spectra in polar axis.
 
@@ -837,5 +843,5 @@ class SpecArray(object):
             cmap=cmap,
             extend=extend,
             efth_min=efth_min,
-            **kwargs
+            **kwargs,
         )

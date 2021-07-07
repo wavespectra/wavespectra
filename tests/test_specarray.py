@@ -60,7 +60,9 @@ def test_hmax_defalt(dset):
 def test_scale_by_hs(dset):
     ds = dset.spec.scale_by_hs(expr="2*hs")
     assert ds.spec.hs().values == pytest.approx(2 * dset.spec.hs().values)
-    dset.spec.scale_by_hs("2*hs", hs_min=1, hs_max=2, tp_min=5, tp_max=15, dpm_min=1, dpm_max=180)
+    dset.spec.scale_by_hs(
+        "2*hs", hs_min=1, hs_max=2, tp_min=5, tp_max=15, dpm_min=1, dpm_max=180
+    )
 
 
 def test_directional_methods_raise_on_oned_spec(dset):
@@ -71,6 +73,7 @@ def test_directional_methods_raise_on_oned_spec(dset):
         ds.spec.dm()
     with pytest.raises(ValueError):
         ds.spec.dspr()
+
 
 def test_crsd(dset):
     dset.spec.crsd()

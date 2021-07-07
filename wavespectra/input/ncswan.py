@@ -63,10 +63,16 @@ def from_ncswan(dset):
     dset = dset.rename(MAPPING)
     # Ensuring lon,lat are not function of time
     if attrs.TIMENAME in dset[attrs.LONNAME].dims:
-        dset = dset.assign({
-            attrs.LONNAME: dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0}),
-            attrs.LATNAME: dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
-        })
+        dset = dset.assign(
+            {
+                attrs.LONNAME: dset[attrs.LONNAME].isel(
+                    drop=True, **{attrs.TIMENAME: 0}
+                ),
+                attrs.LATNAME: dset[attrs.LATNAME].isel(
+                    drop=True, **{attrs.TIMENAME: 0}
+                ),
+            }
+        )
     # Calculating wind speeds and directions
     if "xwnd" in dset and "ywnd" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(

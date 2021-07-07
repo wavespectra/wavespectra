@@ -83,9 +83,7 @@ def ext_configuration(parent_package="", top_path=None):
         ],
     )
     config.add_data_files(
-        "LICENSE.txt",
-        "wavespectra/core/attributes.yml",
-        "wavespectra/output/ww3.yml"
+        "LICENSE.txt", "wavespectra/core/attributes.yml", "wavespectra/output/ww3.yml"
     )
     return config
 

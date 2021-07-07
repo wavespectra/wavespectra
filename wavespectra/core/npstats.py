@@ -51,7 +51,7 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
         out[0] = np.nan
     else:
         dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
-        out[0] = np.float32((270 - R2D * dpm) % 360.)
+        out[0] = np.float32((270 - R2D * dpm) % 360.0)
 
 
 @guvectorize(

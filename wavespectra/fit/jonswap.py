@@ -8,7 +8,9 @@ from wavespectra.core.utils import scaled, check_same_coordinates
 from wavespectra.core.attributes import attrs
 
 
-def fit_jonswap(freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09, **kwargs):
+def fit_jonswap(
+    freq, hs, tp, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09, **kwargs
+):
     """Jonswap frequency spectrum for developing seas (Hasselmann et al., 1973).
 
     Args:

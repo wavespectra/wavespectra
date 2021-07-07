@@ -114,14 +114,7 @@ if __name__ == "__main__":
     c = cartwright(dir=ds.dir, dm=dm, dspr=dspr)
 
     b = bunney(
-        dir=ds.dir,
-        freq=ds.freq,
-        dm=dm,
-        dpm=dpm,
-        dspr=dspr,
-        dpspr=dpspr,
-        fm=fm,
-        fp=fp
+        dir=ds.dir, freq=ds.freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp
     )
 
     ds1 = ds.spec.oned()

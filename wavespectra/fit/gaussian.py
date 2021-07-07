@@ -35,7 +35,7 @@ def fit_gaussian(freq, hs, fp, gw=None, tm01=None, tm02=None, **kwargs):
     mo = (hs / 4) ** 2
     if gw is None:
         if tm02 is not None and tm01 is not None:
-            sigma = np.sqrt( (mo / tm02**2) - (mo**2 / tm01**2) )
+            sigma = np.sqrt((mo / tm02 ** 2) - (mo ** 2 / tm01 ** 2))
         else:
             raise ValueError("Either provide gw or tm01 and tm02 to calculate it")
     else:
@@ -43,7 +43,7 @@ def fit_gaussian(freq, hs, fp, gw=None, tm01=None, tm02=None, **kwargs):
         if tm01 is not None or tm02 is not None:
             logger.debug("gw has been provided, tm01 and tm02 are ignored")
     term1 = mo / (sigma * np.sqrt(2 * pi))
-    term2 = np.exp( -((2 * pi * freq - 2 * pi * fp)**2 / (2 * (sigma)**2)) )
+    term2 = np.exp(-((2 * pi * freq - 2 * pi * fp) ** 2 / (2 * (sigma) ** 2)))
     dsout = term1 * term2
 
     dsout = scaled(dsout, hs)
