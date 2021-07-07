@@ -17,7 +17,7 @@ def cartwright(dir, dm, dspr, under_90=False):
         - under_90 (bool): Zero the spreading curve above 90 degrees range from dm.
 
     Returns:
-        - gth (DataArray): Normalised spreading function :math:`g(\theta)`.
+        - gth (DataArray): Normalised spreading function :math:`g(\\theta)`.
 
     Note:
         - If `dm` and `dspr` are DataArrays they must share the same coordinates.
@@ -58,7 +58,11 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp):
         - fp (DataArray, float) Peak wave frequency (Hz).
 
     Returns:
-        - gfth (DataArray): Modified normalised spreading function :math:`g(f,\theta)`.
+        - gfth (DataArray): Modified normalised spreading function :math:`g(f,\\theta)`.
+
+    Note:
+        - If arguments other than `dir` and `freq` are DataArrays
+          they must share the same coordinates.
 
     """
     check_same_coordinates(dm, dpm, dspr, dpspr, fm, fp)
