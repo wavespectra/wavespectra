@@ -42,10 +42,12 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
+   SpecArray.dpspr
    SpecArray.swe
    SpecArray.sw
    SpecArray.gw
    SpecArray.gamma
+   SpecArray.goda
 
 **Spectral partitioning**
 
