@@ -10,6 +10,8 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 def cartwright(dir, dm, dspr, under_90=False):
     """Cosine-squared directional spreading of Cartwright (1963).
 
+    :math:`G(\\theta,f)=F(s)cos^{2}\\frac{1}{2}(\\theta-\\theta_{m})`
+
     Args:
         - dir (DataArray): Wave directions (degree).
         - dm: (DataArray, float): Mean wave direction (degree).

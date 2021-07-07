@@ -74,20 +74,6 @@ spread for each frequency above the peak so that
 
 where 
 
-.. attention::
-
-    * :math:`\theta_{p}` is the peak wave direction (`pdp0` - `sea_surface_wave_peak_from_direction_partition_0`)
-    * :math:`\theta_{m}` is the mean wave direction (`pdir0` - `sea_surface_wave_from_direction_partition_0`)
-    * :math:`f_{m}` is the mean wave frequency?
-        * `pt01c0` - `sea_surface_wave_mean_period_t01_partition_0`?
-        * `pt02c0` - `sea_surface_wave_mean_period_t02_partition_0`?
-        * `ptm10c0` - `sea_surface_wave_mean_period_tm10_partition_0`?
-    * :math:`f_{p}` is the peak wave frequency (`ptp0` - `sea_surface_wave_period_at_variance_spectral_density_maximum_partition_0`)
-    * :math:`\sigma_{p}` is the peak spread (`psw0` - `sea_surface_wave_spectral_width_partition_0`)?
-    * :math:`\sigma_{m}` is the mean spread (`psw0` - `sea_surface_wave_spectral_width_partition_0`)?
-
-    Only for partitions actively driven by wind?
-
 
 Frequency-direction spectrum
 ----------------------------
