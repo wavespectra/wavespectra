@@ -4,7 +4,9 @@ from wavespectra.core.attributes import set_spec_attributes
 from wavespectra.core.utils import load_function
 
 
-def construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name="cartwright"):
+def construct_partition(
+    fit_name="jonswap", dir_name="cartwright", fit_kwargs={}, dir_kwargs={}
+):
     """Fit frequency-direction E(f, d) parametric spectrum for a partition.
 
     Args:
@@ -16,10 +18,14 @@ def construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name="cartwright")
     Returns:
         - efth (SpecArray): Two-dimensional, frequency-direction spectrum E(f, d) (m2/Hz/deg).
 
+    Note:
+        - Function `fit_name` must be available in main wavespectra package.
+        - Function `dir_name` must be available in wavespectra.directional subpackage.
+
     """
     # Import spectral fit and spreading functions
     fit_func = load_function("wavespectra", fit_name, prefix="fit_")
-    dir_func = load_function("wavespectra.directional_distribution", dir_name)
+    dir_func = load_function("wavespectra.directional", dir_name)
 
     # frequency spectrum
     efth1d = fit_func(**fit_kwargs)
