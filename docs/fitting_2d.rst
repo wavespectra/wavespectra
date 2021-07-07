@@ -15,7 +15,7 @@ frequency spectrum.
     import matplotlib.pyplot as plt
     import cmocean
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    from wavespectra.directional_distribution import cartwright, bunney
+    from wavespectra.directional import cartwright, bunney
     f = np.arange(0.03, 0.401, 0.001)
     d = np.arange(0, 360, 1)
     freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
@@ -27,8 +27,8 @@ Directional spreading functions
 
 Two directional spreading functions are currently implemented in wavespectra:
 
-* :func:`~wavespectra.directional_distribution.cartwright`
-* :func:`~wavespectra.directional_distribution.bunney` (TODO)
+* :func:`~wavespectra.directional.cartwright`
+* :func:`~wavespectra.directional.bunney` (TODO)
 
 
 Cartwright

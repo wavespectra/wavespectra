@@ -171,8 +171,8 @@ Directional distribution
    :nosignatures:
    :toctree: generated/
 
-   directional_distribution.cartwright
-   directional_distribution.bunney
+   directional.cartwright
+   directional.bunney
 
 
 Construct

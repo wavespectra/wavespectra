@@ -11,7 +11,7 @@ ______________________
     import matplotlib.pyplot as plt
     from wavespectra import read_ww3
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    from wavespectra.directional_distribution import cartwright, bunney
+    from wavespectra.directional import cartwright, bunney
     from wavespectra.construct import construct_partition
 
 
