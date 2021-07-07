@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 import xarray as xr
 
-from wavespectra.directional_distribution import cartwright, bunney
+from wavespectra.directional import cartwright, bunney
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
 
@@ -17,15 +17,33 @@ def dir():
     yield _dir
 
 
+@pytest.fixture(scope="module")
+def freq():
+    freqs = np.arange(0, 0.5, 0.01)
+    _freq = xr.DataArray(freqs, coords={"freq": freqs}, dims=("freq",), name="freq")
+    yield _freq
+
+
 def test_cartwright(dir):
     dm = 90
     dspr = 30
     gth = cartwright(dir, dm, dspr)
 
 
-def test_bunney(dir):
+def test_bunney(dir, freq):
     dpm = 330
     dm = 350
+    dspr = 30
+    dpspr = 29
     fp = 0.1
     fm = 0.12
-    bunney(dir, dpm, dm, fp, fm)
+    bunney(
+        dir=dir,
+        freq=freq,
+        dm=dm,
+        dpm=dpm,
+        dspr=dspr,
+        dpspr=dpspr,
+        fm=fm,
+        fp=fp
+    )
