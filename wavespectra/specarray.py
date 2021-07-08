@@ -485,23 +485,39 @@ class SpecArray(object):
         dspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dspr.rename(self._my_name())
 
-    def dpspr(self):
+    def fdspr(self, mom=1):
+        """Directional wave spread at frequency :math:`dspr(f)`.
+
+        The directional width of the spectrum at each frequency.
+
+        Args:
+            - mom (int): Directional moment to calculate the mth directional spread.
+
+        """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
+        mom_sin, mom_cos = self.momd(mom=mom)
+        a = mom_sin * self.df
+        b = mom_cos * self.df
+        e = self.oned() * self.df
+        fdspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        return fdspr.rename(f"fdspr{mom:0.0f}")
+
+    def dpspr(self, mom=1):
         """Peak directional wave spread Dpspr.
 
         The directional width of the spectrum at peak frequency.
+
+        Args:
+            - mom (int): Directional moment to calculate the mth directional spread.
 
         TODO: Make this lazy by converting to ufunc
 
         """
         if self.dir is None:
             raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
-        mom_sin, mom_cos = self.momd(1)
         peak = self._peak(self.oned()).load()
-        df = self.df.isel(**{attrs.FREQNAME: peak}, drop=True)
-        a = mom_sin.isel(**{attrs.FREQNAME: peak}, drop=True) * df
-        b = mom_cos.isel(**{attrs.FREQNAME: peak}, drop=True) * df
-        e = self.oned().isel(**{attrs.FREQNAME: peak}, drop=True) * df
-        dpspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        dpspr = self.fdspr(mom=mom).isel(**{attrs.FREQNAME: peak}, drop=True)
         dpspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dpspr.rename(self._my_name())
 
