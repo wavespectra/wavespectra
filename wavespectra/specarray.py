@@ -364,6 +364,10 @@ class SpecArray(object):
             - smooth (bool): True for the smooth wave period, False for the discrete
               period corresponding to the maxima in the frequency spectra.
 
+        Note:
+            - The smooth wave period is defined from a parabolic fit around the
+              discrete peak of the frequency spectrum.
+
         """
         return xrstats.peak_wave_period(self._obj, smooth=smooth)
 
@@ -372,7 +376,11 @@ class SpecArray(object):
 
         Args:
             - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the frequency spectra.
+              period corresponding to the maxima in the frequency spectrum.
+
+        Note:
+            - The smooth wave period is defined from a parabolic fit around the
+              discrete peak of the frequency spectrum.
 
         """
         fp = 1 / self.tp(smooth=smooth)
@@ -385,7 +393,15 @@ class SpecArray(object):
         return fp.rename(self._my_name())
 
     def momf(self, mom=0):
-        """Calculate given frequency moment."""
+        """Frequency moment.
+
+        Args:
+            - mom (int): Moment to calculate.
+
+        Returns:
+            - mf (DataArray): The mth frequency moments for each direction.
+
+        """
         fp = self.freq ** mom
         mf = self.df * fp * self._obj
         return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename(
@@ -393,7 +409,19 @@ class SpecArray(object):
         )
 
     def momd(self, mom=0, theta=90.0):
-        """Calculate given directional moment."""
+        """Directional moment.
+
+        Args:
+            - mom (int): Moment to calculate.
+            - theta (float): angle offset.
+
+        Returns:
+            - sinm (DataArray): Sin component of the mth directional moment
+              for each frequency.
+            - cosm (DataArray): Cosine component of the mth directional moment
+              for each frequency.
+
+        """
         if self.dir is None:
             raise ValueError("Cannot calculate momd from 1d, frequency spectra.")
         cp = np.cos(np.radians(180 + theta - self.dir)) ** mom
