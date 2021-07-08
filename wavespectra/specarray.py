@@ -404,9 +404,7 @@ class SpecArray(object):
         """
         fp = self.freq ** mom
         mf = self.df * fp * self._obj
-        return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename(
-            f"mom{mom:0.0f}"
-        )
+        return mf.sum(dim=attrs.FREQNAME, skipna=False).rename(f"mom{mom:0.0f}")
 
     def momd(self, mom=0, theta=90.0):
         """Directional moment.
