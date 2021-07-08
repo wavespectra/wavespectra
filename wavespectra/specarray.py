@@ -180,6 +180,10 @@ class SpecArray(object):
             )
             return ""
 
+    def _get_cf_attributes(self, name):
+        """Returns dict with standard_name and units for method defined by name."""
+        return {"standard_name": self._standard_name(name), "units": self._units(name)}
+
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
@@ -261,12 +265,7 @@ class SpecArray(object):
                 * Sf.freq[-1].values
             )
         hs = 4 * np.sqrt(E)
-        hs.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        hs.attrs.update(self._get_cf_attributes(self._my_name()))
         return hs.rename(self._my_name())
 
     def hrms(self, tail=True):
@@ -285,12 +284,7 @@ class SpecArray(object):
                 * Sf.freq[-1].values
             )
         hrms = np.sqrt(E * 8)
-        hrms.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        hrms.attrs.update(self._get_cf_attributes(self._my_name()))
         return hrms.rename(self._my_name())
 
     def hmax(self):
@@ -313,12 +307,7 @@ class SpecArray(object):
         else:
             k = 1.86  # assumes N = 3*3600 / 10.8
         hmax = k * self.hs()
-        hmax.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        hmax.attrs.update(self._get_cf_attributes(self._my_name()))
         return hmax.rename(self._my_name())
 
     def scale_by_hs(
@@ -384,12 +373,7 @@ class SpecArray(object):
 
         """
         fp = 1 / self.tp(smooth=smooth)
-        fp.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        fp.attrs.update(self._get_cf_attributes(self._my_name()))
         return fp.rename(self._my_name())
 
     def momf(self, mom=0):
@@ -414,9 +398,9 @@ class SpecArray(object):
             - theta (float): angle offset.
 
         Returns:
-            - sinm (DataArray): Sin component of the mth directional moment
+            - msin (DataArray): Sin component of the mth directional moment
               for each frequency.
-            - cosm (DataArray): Cosine component of the mth directional moment
+            - mcos (DataArray): Cosine component of the mth directional moment
               for each frequency.
 
         """
@@ -437,12 +421,7 @@ class SpecArray(object):
         m0 = self.momf(0).sum(dim=attrs.DIRNAME)
         m1 = self.momf(1).sum(dim=attrs.DIRNAME)
         tm01 = m0 / m1
-        tm01.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        tm01.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm01.rename(self._my_name())
 
     def tm02(self):
@@ -454,12 +433,7 @@ class SpecArray(object):
         m0 = self.momf(0).sum(dim=attrs.DIRNAME)
         m2 = self.momf(2).sum(dim=attrs.DIRNAME)
         tm02 = np.sqrt(m0 / m2)
-        tm02.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        tm02.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm02.rename(self._my_name())
 
     def dm(self):
@@ -472,12 +446,7 @@ class SpecArray(object):
             momc.sum(dim=attrs.FREQNAME, skipna=False),
         )
         dm = (270 - R2D * dm) % 360.0
-        dm.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        dm.attrs.update(self._get_cf_attributes(self._my_name()))
         return dm.rename(self._my_name())
 
     def dp(self):
@@ -513,12 +482,7 @@ class SpecArray(object):
         b = (mom_cos * self.df).sum(dim=attrs.FREQNAME)
         e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
         dspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
-        dspr.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        dspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dspr.rename(self._my_name())
 
     def dpspr(self):
@@ -538,12 +502,7 @@ class SpecArray(object):
         b = mom_cos.isel(**{attrs.FREQNAME: peak}, drop=True) * df
         e = self.oned().isel(**{attrs.FREQNAME: peak}, drop=True) * df
         dpspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
-        dpspr.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        dpspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dpspr.rename(self._my_name())
 
     def crsd(self, theta=90.0):
@@ -551,12 +510,7 @@ class SpecArray(object):
         cp = np.cos(D2R * (180 + theta - self.dir))
         sp = np.sin(D2R * (180 + theta - self.dir))
         crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
-        crsd.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        crsd.attrs.update(self._get_cf_attributes(self._my_name()))
         return crsd.rename(self._my_name())
 
     def swe(self):
@@ -573,12 +527,7 @@ class SpecArray(object):
         m4 = self.momf(4).sum(dim=attrs.DIRNAME)
         swe = (1.0 - m2 ** 2 / (m0 * m4)) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
-        swe.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        swe.attrs.update(self._get_cf_attributes(self._my_name()))
         return swe.rename(self._my_name())
 
     def sw(self):
@@ -594,12 +543,7 @@ class SpecArray(object):
         m1 = self.momf(1).sum(dim=attrs.DIRNAME)
         m2 = self.momf(2).sum(dim=attrs.DIRNAME)
         sw = (m0 * m2 / m1 ** 2 - 1.0) ** 0.5
-        sw.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        sw.attrs.update(self._get_cf_attributes(self._my_name()))
         return sw.where(self.hs() >= 0.001).rename(self._my_name())
 
     def gw(self):
@@ -613,12 +557,7 @@ class SpecArray(object):
         """
         m0 = (self.hs() / 4) ** 2
         gw = np.sqrt((m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2))
-        gw.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        gw.attrs.update(self._get_cf_attributes(self._my_name()))
         return gw.rename(self._my_name())
 
     def gamma(self):
@@ -634,12 +573,7 @@ class SpecArray(object):
         pierson_moskowitz_max = a * fp ** -5 * np.exp(-b * fp ** -4)
         gamma = self.oned().max(attrs.FREQNAME) / pierson_moskowitz_max
         gamma = gamma.where(gamma >= 1, 1)
-        gamma.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.rename(self._my_name())
 
     def goda(self):
@@ -652,12 +586,7 @@ class SpecArray(object):
         ef = self.oned()
         mo2 = (ef * self.df).sum(dim=attrs.FREQNAME) ** 2
         goda = (2 / mo2) * (ef ** 2 * self.freq * self.df).sum(attrs.FREQNAME)
-        goda.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        goda.attrs.update(self._get_cf_attributes(self._my_name()))
         return goda.rename(self._my_name())
 
     def celerity(self, depth=None):
