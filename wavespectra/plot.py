@@ -230,10 +230,9 @@ class WavePlot:
 
     @property
     def kwargs(self):
-        _kwargs = {
-            **self._kwargs,
-            **{"x": self.dname, "y": self.fname, "cmap": self.cmap},
-        }
+        _kwargs = {**self._kwargs, **{"x": self.dname, "y": self.fname}}
+        if "colors" not in self._kwargs:
+            _kwargs.update({"cmap": self.cmap})
         if "contour" in self.kind:
             _kwargs.update({"extend": self.extend})
         if self.normalised and "contour" in self.kind and "levels" not in _kwargs:
