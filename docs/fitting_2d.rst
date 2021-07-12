@@ -10,15 +10,29 @@ frequency spectrum.
     :okexcept:
     :okwarning:
 
+    @suppress
     import numpy as np
+    @suppress
     import xarray as xr
+    @suppress
     import matplotlib.pyplot as plt
+    @suppress
     import cmocean
+    @suppress
+    from wavespectra import read_ww3
+    @suppress
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
+    @suppress
     from wavespectra.directional import cartwright, bunney
+    @suppress
+    from wavespectra.construct import construct_partition
+    @suppress
     f = np.arange(0.03, 0.401, 0.001)
+    @suppress
     d = np.arange(0, 360, 1)
+    @suppress
     freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
+    @suppress
     dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
 
 
@@ -28,7 +42,7 @@ Directional spreading functions
 Two directional spreading functions are currently implemented in wavespectra:
 
 * :func:`~wavespectra.directional.cartwright`
-* :func:`~wavespectra.directional.bunney` (TODO)
+* :func:`~wavespectra.directional.bunney`
 
 
 Cartwright
@@ -72,7 +86,39 @@ spread for each frequency above the peak so that
 
 :math:`\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}}=\frac{\displaystyle \sigma_{p}-\sigma_{m}}{\displaystyle f_{p}-f_{m}}`
 
-where 
+where :math:`\theta` is the wave direction, :math:`\sigma` is the directional spread,
+:math:`f` is the wave frequency and subscripts :math:`p` and :math:`m` denote
+peak and mean respectively.
+
+The gradients are used to modify the wave direction :math:`\theta` and directional spread :math:`\sigma_p`
+above the frequency spectral peak :math:`f_p`:
+
+:math:`\theta=\theta_p \frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
+
+:math:`\theta=\theta_p, \forall f < f_p,`
+
+and
+
+:math:`\sigma=\sigma_p \frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
+
+:math:`\sigma=\sigma_p, \forall f < f_p`.
+
+As defined, these equations would result in :math:`f=f_p \Rightarrow \theta=0, \sigma=0` which do not make physical sense.
+We have implemented a slightly modified version of the method as described in `Bunney et al. (2014)`_ for :math:`f \geq f_p`:
+
+:math:`\theta=\theta_p+\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`,
+
+:math:`\sigma=\sigma_p+\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
+
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    b = bunney(dir=dir, freq=freq, dm=45, dpm=50, dspr=20, dpspr=17, fm=0.1, fp=0.09)
+
+    @savefig bunney_distribution.png
+    b.spec.plot()
 
 
 Frequency-direction spectrum
@@ -98,6 +144,42 @@ by applying a directional spreading function to a parametric frequency spectrum:
     plt.draw()
 
 
+Symmetrical vs asymmetrical spreading
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
+    dset = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt).isel(part=0, drop=True)
+
+    ds = dset.spec.stats(["dm", "dpm", "dspr", "dpspr", "tm01", "fp"])
+    ds["fm"] = 1 / ds.tm01
+
+    c = cartwright(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
+
+    b = bunney(dir=dset.dir, freq=dset.freq, dm=ds.dm, dpm=ds.dpm, dspr=ds.dspr, dpspr=ds.dpspr, fm=ds.fm, fp=ds.fp)
+
+    # Apply directional distributions to the one-dimensional spectrum
+    dscart = dset.spec.oned() * c
+    dsbun = dset.spec.oned() * b
+
+    dsall = xr.concat([dset, dscart, dsbun], dim="fit")
+    dsall["fit"] = ["Original", "Cartwright", "Bunney"]
+    dsall.spec.plot(
+        figsize=(12, 5),
+        col="fit",
+        logradius=False,
+        rmax=0.5,
+        add_colorbar=False,
+        show_theta_labels=False,
+    )
+
+    @savefig original_cartwright_bunney.png
+    plt.draw()
+
+
 Constructor function
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -107,8 +189,6 @@ for a partition from available fit and spreading functions:
 .. ipython:: python
     :okexcept:
     :okwarning:
-
-    from wavespectra.construct import construct_partition
 
     efth = construct_partition(
         fit_name="fit_tma",
