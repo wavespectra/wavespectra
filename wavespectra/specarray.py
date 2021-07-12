@@ -760,7 +760,7 @@ class SpecArray(object):
         radii_ticks=None,
         radii_labels_angle=22.5,
         radii_labels_size=8,
-        cbar_ticks=CBAR_TICKS,
+        cbar_ticks=None,
         cmap="RdBu_r",
         extend="neither",
         efth_min=1e-3,
