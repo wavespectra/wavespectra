@@ -2,15 +2,20 @@
 Plotting parameters from xarray
 ===============================
 
-Plotting parameters from xarray are fully supported
+Wavespectra allows passing some parameters from the functions wrapped from xarray such as `contourf <http://xarray.pydata.org/en/stable/generated/xarray.plot.contourf.html>`_ 
+(excluding some that are manipulated in wavespectra such as `ax`, `x` and others):
 
 """
 import matplotlib.pyplot as plt
-from wavespectra import read_swan
+from wavespectra import read_era5
 
-dset = read_swan("../_static/swanfile.spec", as_site=True)
-ds = dset.isel(site=0, time=0)
-fig = plt.figure(figsize=(6, 4))
-p = ds.spec.plot.contourf(
-    cmap="viridis", vmin=-5, vmax=-2, levels=15, add_colorbar=False
-)
+
+dset = read_era5("../_static/era5file.nc")
+ds = dset.isel(lat=0, lon=0, time=0)
+p = ds.spec.plot(
+    kind="contourf",
+    cmap="turbo",
+    add_colorbar=False,
+    extend="both",
+    levels=25
+    )
