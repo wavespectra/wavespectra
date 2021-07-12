@@ -277,7 +277,6 @@ Xarray's faceting capability is fully supported.
         radii_labels_size=5,
         cmap="Spectral_r",
     );
-    @suppress
     plt.tight_layout()
     @savefig faceted.png
     plt.draw()
@@ -307,7 +306,6 @@ equivalent to disabling ticks from the axis by calling `ax.set_rticks=[]`, `ax.s
         cmap=cmocean.cm.thermal,
         add_colorbar=False,
     );
-    @suppress
     plt.tight_layout()
     @savefig faceted_cleanaxis.png
     plt.draw()
