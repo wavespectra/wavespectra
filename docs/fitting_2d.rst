@@ -86,30 +86,25 @@ spread for each frequency above the peak so that
 
 :math:`\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}}=\frac{\displaystyle \sigma_{p}-\sigma_{m}}{\displaystyle f_{p}-f_{m}}`
 
-where :math:`\theta` is the wave direction, :math:`\sigma` is the directional spread,
-:math:`f` is the wave frequency and subscripts :math:`p` and :math:`m` denote
-peak and mean respectively.
+where :math:`\theta` is the wave direction, :math:`\sigma` is the directional spread, :math:`f` is the wave
+frequency and subscripts :math:`p` and :math:`m` denote peak and mean respectively. The gradients are used
+to modify the wave direction and directional spread for frequencies above the spectral peak :math:`f_p`:
 
-The gradients are used to modify the wave direction :math:`\theta` and directional spread :math:`\sigma_p`
-above the frequency spectral peak :math:`f_p`:
-
-:math:`\theta=\theta_p \frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
-
-:math:`\theta=\theta_p, \forall f < f_p,`
-
-and
+:math:`\theta=\theta_p \frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p,`
 
 :math:`\sigma=\sigma_p \frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
 
-:math:`\sigma=\sigma_p, \forall f < f_p`.
+with :math:`\theta=\theta_p` and :math:`\sigma=\sigma_p` :math:`\forall f<f_p`. As defined, these equations result in
+:math:`f=f_p \Rightarrow \theta=0` and :math:`f=f_p \Rightarrow \sigma=0` which do not make physical sense.
+We have implemented a slightly modified version of the method described in `Bunney et al. (2014)`_ for :math:`f \geq f_p`:
 
-As defined, these equations would result in :math:`f=f_p \Rightarrow \theta=0, \sigma=0` which do not make physical sense.
-We have implemented a slightly modified version of the method as described in `Bunney et al. (2014)`_ for :math:`f \geq f_p`:
-
-:math:`\theta=\theta_p+\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`,
+:math:`\theta=\theta_p+\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p,`
 
 :math:`\sigma=\sigma_p+\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
 
+which imply that :math:`f=f_p \Rightarrow \theta=\theta_p` and :math:`f=f_p \Rightarrow \sigma=\sigma_p`
+with values linearly increasing or decreasing above the frequency peak according to the gradients
+:math:`\frac{\partial{\theta}}{\partial{f}}` and :math:`\frac{\partial{\sigma}}{\partial{f}}`.
 
 .. ipython:: python
     :okexcept:
