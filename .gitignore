@@ -74,6 +74,8 @@ docs/_build
 docs/generated
 docs/auto_gallery
 docs/savefig
+docs/wavespectra*.rst
+docs/modules.rst
 
 # PyBuilder
 target/
