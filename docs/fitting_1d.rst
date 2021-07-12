@@ -6,6 +6,24 @@
 Spectral fitting
 ================
 
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    import numpy as np
+    import xarray as xr
+    import matplotlib.pyplot as plt
+    import cmocean
+    from wavespectra import read_ww3
+    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
+    from wavespectra.directional import cartwright, bunney
+    from wavespectra.construct import construct_partition
+    f = np.arange(0.03, 0.401, 0.001)
+    freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
+    d = np.arange(0, 360, 1)
+    dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
+
+
 One-dimensional fit
 ___________________
 
@@ -16,19 +34,6 @@ The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
 * :func:`~wavespectra.fit_jonswap`
 * :func:`~wavespectra.fit_tma`
 * :func:`~wavespectra.fit_gaussian`
-
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    import numpy as np
-    import xarray as xr
-    import matplotlib.pyplot as plt
-    import cmocean
-    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    f = np.arange(0.03, 0.3, 0.001)
-    freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
 
 
 Pierson-Moskowitz

@@ -27,7 +27,7 @@ New Features
   * Bunney (2014) skewed distribution for turning wind sea.
 * Gaussian frequency width method gw in SpecArray.
 * Gamma peak enhancement factor method gamma in SpecArray.
-* Peak directional spread method dsprp in SpecArray.
+* Peak directional spread method dpspr in SpecArray.
 * Peak frequency method fp in SpecArray.
 * Root-mean-square wave height method hrms in SpecArray
 * New Orcaflex export function by `RubendeBruin`_.
