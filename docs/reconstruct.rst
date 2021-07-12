@@ -55,7 +55,7 @@ Partition spectrum and reconstruct from Jonswap
     }
     dir_name = "cartwright"
     dir_kwargs = {"dir": ds.dir, "dm": dsparam.dm, "dspr": dsparam.dspr}
-    efth_part = construct_partition(fit_name, fit_kwargs, dir_kwargs, dir_name)
+    efth_part = construct_partition(fit_name, dir_name, fit_kwargs, dir_kwargs)
 
     # Reconstruct from the max along the part dim
     efth_max = efth_part.max(dim="part")
