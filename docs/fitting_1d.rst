@@ -62,6 +62,14 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
     plt.draw()
 
 
+.. tip::
+
+    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_pierson_moskowitz` function:
+
+    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
+    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
+
+
 Jonswap
 -------
 
@@ -131,6 +139,15 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
     plt.draw()
 
 
+.. tip::
+
+    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_jonswap` function:
+
+    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
+    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
+    * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
+
+
 TMA
 ---
 
@@ -177,6 +194,15 @@ In deep water TMA becomes a Jonswap spectrum:
     plt.draw()
 
 
+.. tip::
+
+    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_tma` function:
+
+    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
+    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
+    * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
+
+
 Gaussian
 --------
 
@@ -207,6 +233,17 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
 
     @savefig gaussian_1d.png
     plt.draw()
+
+
+.. tip::
+
+    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_gaussian` function:
+
+    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
+    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
+    * Gaussian width :meth:`~wavespectra.SpecArray.gw`.
+    * Mean wave period from the first spectral moment :meth:`~wavespectra.SpecArray.tm01`.
+    * Mean wave period from the second spectral moment :meth:`~wavespectra.SpecArray.tm02`.
 
 
 Fitting multiple spectra

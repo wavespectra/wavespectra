@@ -2,10 +2,6 @@ Two-dimensional fit
 ___________________
 
 
-Frequency-direction spectra can be fit by applying a directional spreding function to a
-frequency spectrum.
-
-
 .. ipython:: python
     :okexcept:
     :okwarning:
@@ -36,17 +32,16 @@ frequency spectrum.
     dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
 
 
-Directional spreading functions
--------------------------------
+Frequency-direction spectra can be fit by applying a directional spreding
+function to a frequency spectrum. Two directional spreading functions are
+currently implemented in wavespectra:
 
-Two directional spreading functions are currently implemented in wavespectra:
-
-* :func:`~wavespectra.directional.cartwright`
-* :func:`~wavespectra.directional.bunney`
+* Symmetrical cosine-squared distribution of :func:`~wavespectra.directional.cartwright`
+* Asymmetrical directional distribution of :func:`~wavespectra.directional.bunney`
 
 
-Cartwright
-~~~~~~~~~~
+Cartwright symmetrical spread
+-----------------------------
 
 The cosine-squared distribution of `Cartwright (1963)`_ assumes single mean direction and directional spread
 for all frequencies with a symmetrical decay of energy around the peak represented by a cosine-squared function:
@@ -75,8 +70,16 @@ mean direction and :math:`F(s)` is a scaling parameter.
     plt.draw()
 
 
-Bunney
-~~~~~~
+.. tip::
+
+    Relevant wavespectra stats methods for the :meth:`~wavespectra.directional.cartwright` function:
+
+    * Mean wave direction :meth:`~wavespectra.SpecArray.dm`.
+    * Mean direction spread :meth:`~wavespectra.SpecArray.dspr`.
+
+
+Bunney asymmetrical spread
+--------------------------
 
 The Asymmetrical distribution of `Bunney et al. (2014)`_ addresses the skewed directional shape
 under turning wind seas. The function modifies the peak direction and the directional
@@ -88,22 +91,22 @@ spread for each frequency above the peak so that
 
 where :math:`\theta` is the wave direction, :math:`\sigma` is the directional spread, :math:`f` is the wave
 frequency and subscripts :math:`p` and :math:`m` denote peak and mean respectively. The gradients are used
-to modify the wave direction and directional spread for frequencies above the spectral peak :math:`f_p`:
+to modify the wave direction and directional spread :math:`\forall f \geq f_p`:
 
-:math:`\theta=\theta_p \frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p,`
+:math:`\theta=\theta_p \frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p),`
 
-:math:`\sigma=\sigma_p \frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
+:math:`\sigma=\sigma_p \frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p)`
 
-with :math:`\theta=\theta_p` and :math:`\sigma=\sigma_p` :math:`\forall f<f_p`. As defined, these equations result in
+with :math:`\theta=\theta_p` and :math:`\sigma=\sigma_p` :math:`\forall f<f_p`. As defined, these equations imply
 :math:`f=f_p \Rightarrow \theta=0` and :math:`f=f_p \Rightarrow \sigma=0` which do not make physical sense.
 We have implemented a slightly modified version of the method described in `Bunney et al. (2014)`_ for :math:`f \geq f_p`:
 
-:math:`\theta=\theta_p+\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p,`
+:math:`\theta=\theta_p+\frac{\displaystyle \partial{\theta}}{\displaystyle \partial{f}} (f-f_p),`
 
-:math:`\sigma=\sigma_p+\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p), \forall f \geq f_p`
+:math:`\sigma=\sigma_p+\frac{\displaystyle \partial{\sigma}}{\displaystyle \partial{f}} (f-f_p)`
 
-which imply that :math:`f=f_p \Rightarrow \theta=\theta_p` and :math:`f=f_p \Rightarrow \sigma=\sigma_p`
-with values linearly increasing or decreasing above the frequency peak according to the gradients
+which yield :math:`f=f_p \Rightarrow \theta=\theta_p` and :math:`f=f_p \Rightarrow \sigma=\sigma_p`
+with values linearly increasing or decreasing above the frequency peak at rates defined by the gradients
 :math:`\frac{\partial{\theta}}{\partial{f}}` and :math:`\frac{\partial{\sigma}}{\partial{f}}`.
 
 .. ipython:: python
@@ -114,6 +117,92 @@ with values linearly increasing or decreasing above the frequency peak according
 
     @savefig bunney_distribution.png
     b.spec.plot()
+
+
+.. tip::
+
+    Relevant wavespectra stats methods for the :meth:`~wavespectra.directional.bunney` function:
+
+    * Mean wave direction :meth:`~wavespectra.SpecArray.dm`.
+    * Peak wave direction :meth:`~wavespectra.SpecArray.dpm` (or alternatively :meth:`~wavespectra.SpecArray.dm`).
+    * Mean direction spread :meth:`~wavespectra.SpecArray.dspr`.
+    * Peak direction spread :meth:`~wavespectra.SpecArray.dpspr`.
+    * Mean wave period :meth:`~wavespectra.SpecArray.tm01` (or alternatively :meth:`~wavespectra.SpecArray.tm02`).
+    * Peak wave frequency :meth:`~wavespectra.SpecArray.fp`.
+
+
+Parameter sensitivity
+~~~~~~~~~~~~~~~~~~~~~
+
+The gradients :math:`\frac{\partial{\theta}}{\partial{f}}` and :math:`\frac{\partial{\sigma}}{\partial{f}}` define the shape
+of the asymmetrical spread function of `Bunney et al. (2014)`_. Here we briefly examine sensitivity to :math:`\theta`,
+:math:`\sigma` and :math:`f` parameters:
+
+
+:math:`\partial{\theta}`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dim = "$d_p-d_m$"
+    dm = xr.DataArray([49., 45., 40.], coords={dim: [49, 45, 40]}, dims=(dim,))
+    dpm = xr.full_like(dm, 50)
+    dspr = xr.full_like(dm, 20)
+    dpspr = xr.full_like(dm, 17)
+    fm = xr.full_like(dm, 0.1)
+    fp = xr.full_like(dm, 0.09)
+
+    b = bunney(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
+    # Just for titles
+    b = b.assign_coords({dim: (dpm - dm).values})
+
+    @savefig bunney_distribution_vary_dm.png
+    b.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
+
+
+:math:`\partial{\sigma}`
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dim = "$\sigma_p-\sigma_m$"
+    dspr = xr.DataArray([19.9, 19.5, 19.1], coords={dim: [19.9, 19.5, 19.1]}, dims=(dim,))
+    dpspr = xr.full_like(dspr, 20)
+    dpm = xr.full_like(dspr, 50)
+    dm = xr.full_like(dspr, 45)
+    fm = xr.full_like(dspr, 0.1)
+    fp = xr.full_like(dspr, 0.09)
+
+    b = bunney(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
+    b = b.assign_coords({dim: (dpspr - dspr).values})
+
+    @savefig bunney_distribution_vary_dspr.png
+    b.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
+
+:math:`\partial{f}`
+^^^^^^^^^^^^^^^^^^^
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    dim = "$f_p-f_m$"
+    fm = xr.DataArray([0.095, 0.1, 0.15], coords={dim: [0.095, 0.1, 0.15]}, dims=(dim,))
+    fp = xr.full_like(fm, 0.09)
+    dspr = xr.full_like(fm, 19.5)
+    dpspr = xr.full_like(fm, 20)
+    dpm = xr.full_like(fm, 50)
+    dm = xr.full_like(fm, 45)
+
+    b = bunney(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
+    b = b.assign_coords({dim: (fp - fm).values})
+
+    @savefig bunney_distribution_vary_fm.png
+    b.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
 
 
 Frequency-direction spectrum
@@ -139,8 +228,11 @@ by applying a directional spreading function to a parametric frequency spectrum:
     plt.draw()
 
 
-Symmetrical vs asymmetrical spreading
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Symmetrical vs asymmetrical
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Two-dimensional spectra can be constructed from existing frequency spectra. This example fits symmetrical and
+asymmetrical directional distributions to one-dimensional spectrum :math:`E_d(f)` integrated from existing :math:`E_d(f,d)`.
 
 .. ipython:: python
     :okexcept:
@@ -152,8 +244,8 @@ Symmetrical vs asymmetrical spreading
     ds = dset.spec.stats(["dm", "dpm", "dspr", "dpspr", "tm01", "fp"])
     ds["fm"] = 1 / ds.tm01
 
+    # Define directional distributions
     c = cartwright(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
-
     b = bunney(dir=dset.dir, freq=dset.freq, dm=ds.dm, dpm=ds.dpm, dspr=ds.dspr, dpspr=ds.dpspr, fm=ds.fm, fp=ds.fp)
 
     # Apply directional distributions to the one-dimensional spectrum
@@ -169,7 +261,7 @@ Symmetrical vs asymmetrical spreading
         rmax=0.5,
         add_colorbar=False,
         show_theta_labels=False,
-    )
+    );
 
     @savefig original_cartwright_bunney.png
     plt.draw()
@@ -178,8 +270,9 @@ Symmetrical vs asymmetrical spreading
 Constructor function
 ~~~~~~~~~~~~~~~~~~~~
 
-The Constructor :func:`~wavespectra.construct.construct_partition` defines an api to construct spectra
-for a partition from available fit and spreading functions:
+The :func:`~wavespectra.construct.construct_partition` constructor defines a low-level api
+to fit two-dimensional spectra for a partition from available frequency fit and directional
+spread functions in wavespectra:
 
 .. ipython:: python
     :okexcept:
@@ -201,48 +294,8 @@ for a partition from available fit and spreading functions:
     plt.draw()
 
 
-Fitting multiple spectra
-------------------------
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    n = 9
-    gamma = np.linspace(1, 3.3, n)
-    hs = xr.DataArray(n*[2], {"gamma": gamma}, ("gamma",))
-    tp = xr.DataArray(n*[10], {"gamma": gamma}, ("gamma",))
-    dep = xr.DataArray(n*[30], {"gamma": gamma}, ("gamma",))
-
-    efth = construct_partition(
-        fit_name="fit_tma",
-        fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "dep": dep, "gamma": hs.gamma},
-        dir_name="cartwright",
-        dir_kwargs={"dir": dir, "dm": 225, "dspr": 20}
-    )
-
-    efth.spec.plot(
-        normalised=False,
-        as_period=False,
-        logradius=False,
-        levels=20,
-        cmap="turbo",
-        figsize=(12,12),
-        show_theta_labels=False,
-        radii_ticks=np.array([0.1, 0.15, 0.2]),
-        rmin=0.05,
-        rmax=0.22,
-        add_colorbar=False,
-        col="gamma",
-        col_wrap=3,
-    );
-
-    @savefig parameter_checking.png
-    plt.draw()
-
-
-Comparing parametric spectra
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Here we use the constructor to define two-dimensional spectra with a cosine-square
+directional distribution and four different spectral shapes: 
 
 .. ipython:: python
     :okexcept:
@@ -281,6 +334,46 @@ Comparing parametric spectra
     );
 
     @savefig compare_parametric_2d.png
+    plt.draw()
+
+
+In this example the constructor is used to fit multiple spectra with a common directional distribution
+and spectral shape but varying fit parameters defined by DataArrays:
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    n = 9
+    gamma = np.linspace(1, 3.3, n)
+    hs = xr.DataArray(n*[2], {"gamma": gamma}, ("gamma",))
+    tp = xr.DataArray(n*[10], {"gamma": gamma}, ("gamma",))
+    dep = xr.DataArray(n*[30], {"gamma": gamma}, ("gamma",))
+
+    efth = construct_partition(
+        fit_name="fit_tma",
+        fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "dep": dep, "gamma": hs.gamma},
+        dir_name="cartwright",
+        dir_kwargs={"dir": dir, "dm": 225, "dspr": 20}
+    )
+
+    efth.spec.plot(
+        normalised=False,
+        as_period=False,
+        logradius=False,
+        levels=20,
+        cmap="turbo",
+        figsize=(12,12),
+        show_theta_labels=False,
+        radii_ticks=np.array([0.1, 0.15, 0.2]),
+        rmin=0.05,
+        rmax=0.22,
+        add_colorbar=False,
+        col="gamma",
+        col_wrap=3,
+    );
+
+    @savefig parameter_checking.png
     plt.draw()
 
 
