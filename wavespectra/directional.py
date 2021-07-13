@@ -87,43 +87,7 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp):
     sigma = sigma_p + dsigma * (freq - fp)
     sigma = R2D * sigma.where(freq > fp, sigma_p)
 
-    # Asymmetrical spreading
+    # Apply cosine-square to modified parameters
     gfth = cartwright(dir, theta, sigma, under_90=False)
 
     return gfth
-
-
-if __name__ == "__main__":
-
-    import matplotlib.pyplot as plt
-    from wavespectra import read_wavespectra
-
-    dset = read_wavespectra("/source/spec_recon_code/examples/weuro-spec-201201.nc")
-
-    ds = dset.isel(time=0, site=0, drop=True).load().sortby("dir").drop_dims("fastsite")
-    ds = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt).isel(part=0, drop=True)
-    ds.attrs = {}
-
-    dm = ds.spec.dm().load()
-    dpm = ds.spec.dpm().load()
-    dspr = ds.spec.dspr().load()
-    dpspr = ds.spec.dpspr().load()
-    fm = 1 / ds.spec.tm01().load()
-    fp = ds.spec.fp().load()
-
-    c = cartwright(dir=ds.dir, dm=dm, dspr=dspr)
-
-    b = bunney(
-        dir=ds.dir, freq=ds.freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp
-    )
-
-    ds1 = ds.spec.oned()
-    dsc = ds1 * c
-    dsb = ds1 * b
-
-    dss = xr.concat([ds, dsc, dsb], dim="fit")
-    dss["fit"] = ["Original", "Cartwright", "Bunney"]
-    dss.spec.plot(figsize=(15, 5), col="fit", logradius=True)
-
-    plt.savefig("test_bunney.png", bbox_inches="tight")
-    plt.show()
