@@ -19,8 +19,8 @@ def fit_jonswap(
         - tp (DataArray, float): Peak wave period (s).
         - alpha (DataArray, float): Phillip's fetch-dependent scaling coefficient.
         - gamma (DataArray, float): Peak enhancement parameter.
-        - sigma_a (float): width of the peak enhancement parameter for f <= fp.
-        - sigma_b (float): width of the peak enhancement parameter for f > fp.
+        - sigma_a (DataArray, float): width of the peak enhancement parameter for f <= fp.
+        - sigma_b (DataArray, float): width of the peak enhancement parameter for f > fp.
 
     Returns:
         - efth (SpecArray): Jonswap spectrum E(f) (m2s).
@@ -33,7 +33,7 @@ def fit_jonswap(
     check_same_coordinates(hs, tp, alpha, gamma, sigma_a, sigma_b)
 
     fp = 1 / tp
-    sigma = xr.full_like(freq, sigma_a).where(freq <= fp, sigma_b)
+    sigma = xr.where(freq <= fp, sigma_a, sigma_b)
     term1 = alpha * g ** 2 * (2 * pi) ** -4 * freq ** -5
     term2 = np.exp(-(5 / 4) * (freq / fp) ** -4)
     term3 = gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma ** 2 * fp ** 2))
