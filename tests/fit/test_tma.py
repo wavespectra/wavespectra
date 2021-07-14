@@ -33,3 +33,12 @@ def test_jonswap_tma_deepwater_equal(freq):
     ds1 = fit_jonswap(freq=freq, hs=2, tp=10)
     ds2 = fit_tma(freq=freq, hs=2, tp=10, dep=80)
     assert np.allclose(ds1.values, ds2.values, rtol=1e6)
+
+
+def test_freq_input_type(freq):
+    """Test frequency input can also list, numpy or DataArray."""
+    ds1 = fit_tma(freq=freq, hs=2, tp=10, dep=10.0)
+    ds2 = fit_tma(freq=freq.values, hs=2, tp=10, dep=10.0)
+    ds3 = fit_tma(freq=list(freq.values), hs=2, tp=10, dep=10.0)
+    assert ds1.identical(ds2)
+    assert ds1.identical(ds3)

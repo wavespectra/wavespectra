@@ -4,7 +4,7 @@ import xarray as xr
 from scipy.constants import g, pi
 
 from wavespectra import SpecArray
-from wavespectra.core.utils import scaled, check_same_coordinates
+from wavespectra.core.utils import scaled, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs
 
 
@@ -14,7 +14,7 @@ def fit_jonswap(
     """Jonswap frequency spectrum for developing seas (Hasselmann et al., 1973).
 
     Args:
-        - freq (DataArray): Frequency array (Hz).
+        - freq (DataArray, 1darray, list): Frequency array (Hz).
         - hs (DataArray, float): Significant wave height (m).
         - tp (DataArray, float): Peak wave period (s).
         - alpha (DataArray, float): Phillip's fetch-dependent scaling coefficient.
@@ -31,6 +31,8 @@ def fit_jonswap(
 
     """
     check_same_coordinates(hs, tp, alpha, gamma, sigma_a, sigma_b)
+    if not isinstance(freq, xr.DataArray):
+        freq = to_coords(freq, "freq")
 
     fp = 1 / tp
     sigma = xr.where(freq <= fp, sigma_a, sigma_b)
