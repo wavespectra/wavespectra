@@ -18,10 +18,8 @@ Spectral fitting
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
     from wavespectra.directional import cartwright, bunney
     from wavespectra.construct import construct_partition
-    f = np.arange(0.03, 0.401, 0.001)
-    freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
-    d = np.arange(0, 360, 1)
-    dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
+    freq = np.arange(0.03, 0.401, 0.001)
+    dir = np.arange(0, 360, 1)
 
 
 One-dimensional fit

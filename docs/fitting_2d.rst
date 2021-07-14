@@ -23,13 +23,9 @@ ___________________
     @suppress
     from wavespectra.construct import construct_partition
     @suppress
-    f = np.arange(0.03, 0.401, 0.001)
+    freq = np.arange(0.03, 0.401, 0.001)
     @suppress
-    d = np.arange(0, 360, 1)
-    @suppress
-    freq = xr.DataArray(f, {"freq": f}, ("freq",), "freq")
-    @suppress
-    dir = xr.DataArray(d, {"dir": d}, ("dir",), "dir")
+    dir = np.arange(0, 360, 1)
 
 
 Frequency-direction spectra can be fit by applying a directional spreding
