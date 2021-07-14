@@ -112,7 +112,7 @@ with values linearly increasing or decreasing above the frequency peak at rates 
     b = bunney(dir=dir, freq=freq, dm=45, dpm=50, dspr=20, dpspr=17, fm=0.1, fp=0.09)
 
     @savefig bunney_distribution.png
-    b.spec.plot()
+    b.spec.plot();
 
 
 .. tip::
@@ -120,7 +120,7 @@ with values linearly increasing or decreasing above the frequency peak at rates 
     Relevant wavespectra stats methods for the :meth:`~wavespectra.directional.bunney` function:
 
     * Mean wave direction :meth:`~wavespectra.SpecArray.dm`.
-    * Peak wave direction :meth:`~wavespectra.SpecArray.dpm` (or alternatively :meth:`~wavespectra.SpecArray.dm`).
+    * Peak wave direction :meth:`~wavespectra.SpecArray.dpm` (or alternatively :meth:`~wavespectra.SpecArray.dp`).
     * Mean direction spread :meth:`~wavespectra.SpecArray.dspr`.
     * Peak direction spread :meth:`~wavespectra.SpecArray.dpspr`.
     * Mean wave period :meth:`~wavespectra.SpecArray.tm01` (or alternatively :meth:`~wavespectra.SpecArray.tm02`).

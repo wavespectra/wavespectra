@@ -207,7 +207,7 @@ Plotting to compare
         show_theta_labels=False,
     );
 
-    @savefig original_cartwright_bunney.png
+    @savefig compare_stefan_methods.png
     plt.draw()
 
 
