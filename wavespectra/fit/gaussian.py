@@ -1,11 +1,10 @@
 """Gaussian spectrum."""
 import numpy as np
+import xarray as xr
 from scipy.constants import pi
 
-import matplotlib.pyplot as plt
-
 from wavespectra import SpecArray
-from wavespectra.core.utils import scaled, check_same_coordinates
+from wavespectra.core.utils import scaled, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs
 
 
@@ -31,6 +30,8 @@ def fit_gaussian(freq, hs, fp, gw=None, tm01=None, tm02=None, **kwargs):
 
     """
     check_same_coordinates(hs, fp, gw, tm01, tm02)
+    if not isinstance(freq, xr.DataArray):
+        freq = to_coords(freq, "freq")
 
     mo = (hs / 4) ** 2
     if gw is None:

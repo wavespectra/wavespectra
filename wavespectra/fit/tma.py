@@ -1,8 +1,9 @@
 """TMA spectrum."""
 import numpy as np
+import xarray as xr
 
 from wavespectra import SpecArray
-from wavespectra.core.utils import scaled, check_same_coordinates, wavenuma
+from wavespectra.core.utils import scaled, check_same_coordinates, wavenuma, to_coords
 from wavespectra.core.attributes import attrs
 from wavespectra.fit.jonswap import fit_jonswap
 
@@ -13,7 +14,7 @@ def fit_tma(
     """TMA frequency spectrum for seas in water of finite depth (Bouws et al., 1985).
 
     Args:
-        - freq (DataArray, 1darray): Frequency array (Hz).
+        - freq (DataArray, 1darray, list): Frequency array (Hz).
         - hs (DataArray, float): Significant wave height (m).
         - tp (DataArray, float): Peak wave period (s).
         - dep (DataArray, float): Water depth (m).
@@ -31,6 +32,8 @@ def fit_tma(
 
     """
     check_same_coordinates(hs, tp, dep, alpha, gamma, sigma_a, sigma_b)
+    if not isinstance(freq, xr.DataArray):
+        freq = to_coords(freq, "freq")
 
     dsout = fit_jonswap(freq, hs, tp, alpha, gamma, sigma_a, sigma_b)
     k = wavenuma(freq, dep)

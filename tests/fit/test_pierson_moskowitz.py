@@ -30,3 +30,12 @@ def test_jonswap_gamma_1_equal(freq):
     ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
     ds2 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
     assert np.allclose(ds1.values, ds2.values, rtol=1e6)
+
+
+def test_freq_input_type(freq):
+    """Test frequency input can also list, numpy or DataArray."""
+    ds1 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    ds2 = fit_pierson_moskowitz(freq=freq.values, hs=2, tp=10)
+    ds3 = fit_pierson_moskowitz(freq=list(freq.values), hs=2, tp=10)
+    assert ds1.identical(ds2)
+    assert ds1.identical(ds3)

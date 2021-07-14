@@ -8,6 +8,8 @@ from importlib import import_module
 from inspect import getmembers, isfunction
 from scipy.interpolate import griddata
 
+from wavespectra.core.attributes import attrs, set_spec_attributes
+
 
 GAMMA = (
     lambda x: np.sqrt(2.0 * np.pi / x)
@@ -246,3 +248,19 @@ def load_function(module_name, func_name, prefix=None):
         raise AttributeError(
             f"'{func_name}' not available in {module.__name__}, available are: {funcs}"
         ) from exc
+
+
+def to_coords(array, name):
+    """Create coordinates DataArray.
+
+    Args:
+        - array (list, 1darray): Coordinate values.
+        - name (str): Coordinate name.
+
+    Returns:
+        coords (DataArray): Coordinates DataArray.
+
+    """
+    coords = xr.DataArray(array, coords={name: array}, dims=(name,))
+    set_spec_attributes(coords)
+    return coords

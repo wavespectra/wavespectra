@@ -3,7 +3,7 @@ import xarray as xr
 from scipy.constants import g, pi
 
 from wavespectra import SpecArray
-from wavespectra.core.utils import D2R, R2D, wavenuma, scaled, check_same_coordinates
+from wavespectra.core.utils import D2R, R2D, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
@@ -13,7 +13,7 @@ def cartwright(dir, dm, dspr, under_90=False):
     :math:`G(\\theta,f)=F(s)cos^{2}\\frac{1}{2}(\\theta-\\theta_{m})`
 
     Args:
-        - dir (DataArray): Wave directions (degree).
+        - dir (DataArray, 1darray, list): Wave directions (degree).
         - dm: (DataArray, float): Mean wave direction (degree).
         - dspr (DataArray, float): Directional spreading (degree).
         - under_90 (bool): Zero the spreading curve above 90 degrees range from dm.
@@ -26,6 +26,8 @@ def cartwright(dir, dm, dspr, under_90=False):
 
     """
     check_same_coordinates(dm, dspr)
+    if not isinstance(dir, xr.DataArray):
+        dir = to_coords(dir, "dir")
 
     # Angular difference from mean direction:
     dth = np.abs(dir - dm)
@@ -50,8 +52,8 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp):
     """Asymmetrical directional spreading of Bunney et al. (2014).
 
     Args:
-        - dir (DataArray): Wave directions (degree).
-        - freq (DataArray): Wave frequency (Hz).
+        - dir (DataArray, 1darray, list): Wave directions (degree).
+        - freq (DataArray, 1darray, list): Wave frequency (Hz).
         - dm: (DataArray, float): Mean wave direction (degree).
         - dpm: (DataArray, float): Peak wave direction (degree).
         - dspr (DataArray, float) Mean directional spreading (degree).
@@ -68,6 +70,10 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp):
 
     """
     check_same_coordinates(dm, dpm, dspr, dpspr, fm, fp)
+    if not isinstance(freq, xr.DataArray):
+        freq = to_coords(freq, "freq")
+    if not isinstance(dir, xr.DataArray):
+        dir = to_coords(dir, "dir")
 
     # Convert to radians
     theta_p = D2R * dpm

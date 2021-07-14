@@ -29,3 +29,12 @@ def test_gamma(freq):
     ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
     ds2 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
     assert ds2.max() > ds1.max()
+
+
+def test_freq_input_type(freq):
+    """Test frequency input can also list, numpy or DataArray."""
+    ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
+    ds2 = fit_jonswap(freq=freq.values, hs=2, tp=10, gamma=1.0)
+    ds3 = fit_jonswap(freq=list(freq.values), hs=2, tp=10, gamma=1.0)
+    assert ds1.identical(ds2)
+    assert ds1.identical(ds3)
