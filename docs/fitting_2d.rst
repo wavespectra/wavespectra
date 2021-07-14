@@ -28,7 +28,7 @@ ___________________
     dir = np.arange(0, 360, 1)
 
 
-Frequency-direction spectra can be fit by applying a directional spreding
+Frequency-direction spectra can be fit by applying a directional spreading
 function to a frequency spectrum. Two directional spreading functions are
 currently implemented in wavespectra:
 

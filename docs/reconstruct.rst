@@ -2,6 +2,11 @@ Spectra reconstruction
 ______________________
 
 
+Wavespectra contains several methods for re-creating 2-dimensional wave spectra
+from a subset of integrated paramaters describing wave systems derived from
+spectral partitioning of wave spectra. These are described below, and thier
+efficacy examined. 
+
 .. ipython:: python
     :okexcept:
     :okwarning:
