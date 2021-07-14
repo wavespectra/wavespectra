@@ -15,7 +15,7 @@ def fit_gaussian(freq, hs, fp, gw=None, tm01=None, tm02=None, **kwargs):
         - freq (DataArray): Frequency array (Hz).
         - hs (DataArray, float): Significant wave height (m).
         - fp (DataArray, float): Peak wave frequency (Hz).
-        - gw (DataArray, float): Gaussian widht parameter.
+        - gw (DataArray, float): Gaussian width parameter.
         - tm01 (DataArray, float): Mean wave period Tm.
         - tm02 (DataArray, float): Zero-upcrossing wave period Tz.
 
