@@ -90,6 +90,9 @@ ATTRS:
     gamma:
         standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
         units: ""
+    alpha:
+        standard_name: sea_surface_wave_jonswap_fetch_dependant_coefficient
+        units: "m s-3"
     goda:
         standard_name: sea_surface_wave_goda_peakedness
         units: ""
