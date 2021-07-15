@@ -303,8 +303,7 @@ directional distribution and four different spectral shapes:
     dep = 15
     dm = 225
     dspr = 20
-    tm01 = 8
-    tm02 = 7.5
+    gw = 0.07
 
     # Pierson-Moskowitz
     efth_pm = construct_partition(fit_name="fit_pierson_moskowitz", fit_kwargs={"freq": freq, "hs": hs, "tp": tp}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
@@ -313,7 +312,7 @@ directional distribution and four different spectral shapes:
     # TMA
     efth_tma = construct_partition(fit_name="fit_tma", fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "dep": dep, "gamma": gamma}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Gaussian
-    efth_gaus = construct_partition(fit_name="fit_gaussian", fit_kwargs={"freq": freq, "hs": hs, "fp": 1/tp, "tm01": tm01, "tm02": tm02}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
+    efth_gaus = construct_partition(fit_name="fit_gaussian", fit_kwargs={"freq": freq, "hs": hs, "fp": 1/tp, "gw": gw}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Concat along the new "method" dimension
     efth = xr.concat([efth_pm, efth_jswap, efth_tma, efth_gaus], dim="method")
     efth["method"] = ["Pierson-Moskowitz", "Jonswap", "TMA", "Gaussian"]
@@ -333,8 +332,8 @@ directional distribution and four different spectral shapes:
     plt.draw()
 
 
-In this example the constructor is used to fit multiple spectra with a common directional distribution
-and spectral shape but varying fit parameters defined by DataArrays:
+In this example the constructor is used to fit multiple spectra with common :func:`~wavespectra.directional.cartwright` distribution
+and :func:`~wavespectra.fit_jonswap` shape but varying the :math:`\gamma` parameter:
 
 .. ipython:: python
     :okexcept:
