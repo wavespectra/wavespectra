@@ -27,7 +27,7 @@ def test_hs_tp(freq):
 
 def test_jonswap_gamma_1_equal(freq):
     """Test Jonswap becomes Pierson-Moskowitz when gamma <= 1."""
-    ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
+    ds1 = fit_jonswap(freq=freq, fp=0.1, gamma=1.0, hs=2)
     ds2 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
     assert np.allclose(ds1.values, ds2.values, rtol=1e6)
 

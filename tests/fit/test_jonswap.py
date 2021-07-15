@@ -17,24 +17,32 @@ def freq():
     yield _dset.freq
 
 
-def test_hs_tp(freq):
-    """Test Hs, Tp values are conserved."""
-    ds = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.5)
+def test_hs_fp(freq):
+    """Test Hs, fp values are conserved."""
+    ds = fit_jonswap(freq=freq, fp=0.1, gamma=1.5, hs=2.0)
     assert pytest.approx(float(ds.spec.hs()), 2)
     assert pytest.approx(float(ds.spec.tp()), 10)
 
 
 def test_gamma(freq):
     """Test peak is higher for higher gamma."""
-    ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
-    ds2 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=3.3)
+    ds1 = fit_jonswap(freq=freq, fp=0.1, gamma=1.0, hs=2)
+    ds2 = fit_jonswap(freq=freq, fp=0.1, gamma=3.3, hs=2)
     assert ds2.max() > ds1.max()
 
 
 def test_freq_input_type(freq):
     """Test frequency input can also list, numpy or DataArray."""
-    ds1 = fit_jonswap(freq=freq, hs=2, tp=10, gamma=1.0)
-    ds2 = fit_jonswap(freq=freq.values, hs=2, tp=10, gamma=1.0)
-    ds3 = fit_jonswap(freq=list(freq.values), hs=2, tp=10, gamma=1.0)
+    ds1 = fit_jonswap(freq=freq, fp=0.1, gamma=1.0, hs=2)
+    ds2 = fit_jonswap(freq=freq.values, fp=0.1, gamma=1.0, hs=2)
+    ds3 = fit_jonswap(freq=list(freq.values), fp=0.1, gamma=1.0, hs=2)
     assert ds1.identical(ds2)
     assert ds1.identical(ds3)
+
+
+def test_scaling(freq):
+    """Test peak is higher for higher gamma."""
+    ds1 = fit_jonswap(freq=freq, fp=0.1, gamma=1.0, alpha=0.0081, hs=2)
+    ds2 = fit_jonswap(freq=freq, fp=0.1, gamma=3.3, alpha=0.0081)
+    assert np.isclose(ds1.spec.hs(), 2)
+    assert not np.isclose(ds2.spec.hs(), 2)
