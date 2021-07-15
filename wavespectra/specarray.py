@@ -602,7 +602,7 @@ class SpecArray(object):
             - Phillips (1957).
 
         """
-        sp = (self.oned() * self.freq).max(attrs.FREQNAME)
+        sp = self.oned().max(attrs.FREQNAME)
         a = sp / (self.gamma() * g**2 * (2 * pi)**-4 * self.fp()**-5 * np.exp(-5/4))
         a.attrs.update(self._get_cf_attributes(self._my_name()))
         return a.rename(self._my_name())
