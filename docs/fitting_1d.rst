@@ -37,7 +37,9 @@ The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
 Pierson-Moskowitz
 -----------------
 
-Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_).
+Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_):
+
+:math:`S(f)=Af^{-5} \exp{(-Bf^{-4})}`.
 
 .. ipython:: python
     :okexcept:
@@ -71,7 +73,9 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
 Jonswap
 -------
 
-Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
+Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_):
+
+:math:`S(f) = \alpha g^2 (2\pi)^{-4} f^{-5} \exp{\left [-\frac{5}{4} \left (\frac{f}{f_p} \right)^{-4} \right]} \gamma^{\exp{[\frac{(f-f_p)^2}{2\sigma^2f_p^2}}]}`.
 
 .. ipython:: python
     :okwarning:
@@ -144,12 +148,15 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
     * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
+    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
 
 
 TMA
 ---
 
-TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_).
+TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_):
+
+:math:`S(f) = S_{J}(f) \tanh{kh}^2 (1 + \frac{2kh} {\sinh{2kh}})^{-1}`
 
 .. ipython:: python
     :okexcept:
@@ -199,14 +206,23 @@ In deep water TMA becomes a Jonswap spectrum:
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
     * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
+    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
 
 
 Gaussian
 --------
 
-Gaussian spectral form for swell (`Bunney et al., 2014`_). The authors define a criterion for choosing
-the gaussian fit based on the ratio :math:`rt` between the mean :math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`)
-and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) spectral periods:
+Gaussian spectral form for swell (`Bunney et al., 2014`_):
+
+:math:`S(f)=\frac{\displaystyle m_0^2}{\displaystyle \sigma \sqrt{2\pi}} \exp{\left(-\frac{\displaystyle (f-f_p)^2}{\displaystyle 2\sigma^2}\right)}`
+
+where :math:`m_0=\left(\frac{Hs}{4} \right)^2`, and the gaussian width :math:`\sigma` (:meth:`~wavespectra.SpecArray.gw`) is calculatd from the mean
+:math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) as
+
+:math:`\sigma=\sqrt{\frac{\displaystyle m_0}{\displaystyle T_z^2} - \frac{\displaystyle m_0^2}{\displaystyle T_m^2}}`.
+
+The authors define a criterion for fitting a swell partition with the Gaussian
+distribution based on the ratio :math:`rt` between :math:`T_m` and :math:`T_z`:
 
 :math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} >= 0.95`
 
@@ -216,15 +232,19 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
     :okexcept:
     :okwarning:
 
-    dset1 = fit_gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=8)
-    dset2 = fit_gaussian(freq=freq, hs=2, fp=1/10, tm01=8, tm02=6)
+    def sigma(hs, tm, tz):
+        m0 = (hs / 4) ** 2
+        return np.sqrt((m0 / (tz ** 2)) - (m0 ** 2 / tm ** 2))
+
+    dset1 = fit_gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=6.5))
+    dset2 = fit_gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=8.0))
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
     t0 = 1 / float(freq[0])
-    dset1.plot(label=f"rt={(8-t0)/(8-t0):0.2f}");
-    dset2.plot(label=f"rt={(8-t0)/(6.5-t0):0.2f}");
+    dset1.plot(label=f"rt={(8-t0)/(6.5-t0):0.2f}");
+    dset2.plot(label=f"rt={(8-t0)/(8-t0):0.2f}");
 
     @suppress
     plt.legend();
@@ -240,8 +260,6 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
     * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
     * Gaussian width :meth:`~wavespectra.SpecArray.gw`.
-    * Mean wave period from the first spectral moment :meth:`~wavespectra.SpecArray.tm01`.
-    * Mean wave period from the second spectral moment :meth:`~wavespectra.SpecArray.tm02`.
 
 
 Fitting multiple spectra
