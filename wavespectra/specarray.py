@@ -20,6 +20,8 @@ Reference:
     - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes
       of sea waves, Journal of Geophysical Research, 80, 2688-2694.
 
+    - Phillips (1957). On the generation of waves by turbulent wind, Journal of Fluid Mechanics, 2, pp 426-434.
+
 """
 import re
 import numpy as np
@@ -27,6 +29,7 @@ import xarray as xr
 from itertools import product
 import inspect
 import warnings
+from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
@@ -591,6 +594,18 @@ class SpecArray(object):
         gamma = gamma.where(gamma >= 1, 1)
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.rename(self._my_name())
+
+    def alpha(self):
+        """Jonswap fetch dependant scaling coefficient alpha.
+
+        Reference:
+            - Phillips (1957).
+
+        """
+        sp = (self.oned() * self.freq).max(attrs.FREQNAME)
+        a = sp / (self.gamma() * g**2 * (2 * pi)**-4 * self.fp()**-5 * np.exp(-5/4))
+        a.attrs.update(self._get_cf_attributes(self._my_name()))
+        return a.rename(self._my_name())
 
     def goda(self):
         """Goda peakedness parameter.
