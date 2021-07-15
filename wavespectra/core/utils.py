@@ -1,5 +1,6 @@
 """Utility functions."""
 import copy
+import itertools
 import datetime
 import numpy as np
 import pandas as pd
@@ -215,7 +216,7 @@ def scaled(spec, hs):
 
 def check_same_coordinates(*args):
     """Check if DataArrays have same coordinates."""
-    for darr1, darr2 in zip(args[:-1], args[1:]):
+    for darr1, darr2 in itertools.combinations(args, 2):
         if isinstance(darr1, xr.DataArray) and isinstance(darr2, xr.DataArray):
             if not darr1.coords.to_dataset().equals(darr2.coords.to_dataset()):
                 raise ValueError(f"{darr1.name} and {darr2.name} must have same coords")
