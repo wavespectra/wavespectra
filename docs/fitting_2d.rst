@@ -211,7 +211,7 @@ by applying a directional spreading function to a parametric frequency spectrum:
     :okexcept:
     :okwarning:
 
-    ef = fit_jonswap(freq=freq, hs=2, tp=10, gamma=2.0)
+    ef = fit_jonswap(freq=freq, fp=0.1, gamma=2.0, hs=2.0)
     gth = cartwright(dir=dir, dm=135, dspr=25)
     efth = ef * gth
 
@@ -276,7 +276,7 @@ spread functions in wavespectra:
 
     efth = construct_partition(
         fit_name="fit_tma",
-        fit_kwargs={"freq": freq, "hs": 2, "tp": 10, "dep": 10},
+        fit_kwargs={"freq": freq, "fp": 0.1, "dep": 10, "hs": 2.0},
         dir_name="cartwright",
         dir_kwargs={"dir": dir, "dm": 225, "dspr": 15}
     )
@@ -300,6 +300,7 @@ directional distribution and four different spectral shapes:
     gamma = 3.3
     hs = 2
     tp = 10
+    fp = 1 / tp
     dep = 15
     dm = 225
     dspr = 20
@@ -308,11 +309,11 @@ directional distribution and four different spectral shapes:
     # Pierson-Moskowitz
     efth_pm = construct_partition(fit_name="fit_pierson_moskowitz", fit_kwargs={"freq": freq, "hs": hs, "tp": tp}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Jonswap
-    efth_jswap = construct_partition(fit_name="fit_jonswap", fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "gamma": gamma}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
+    efth_jswap = construct_partition(fit_name="fit_jonswap", fit_kwargs={"freq": freq, "fp": fp, "gamma": gamma, "hs": hs}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # TMA
-    efth_tma = construct_partition(fit_name="fit_tma", fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "dep": dep, "gamma": gamma}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
+    efth_tma = construct_partition(fit_name="fit_tma", fit_kwargs={"freq": freq, "fp": fp, "dep": dep, "gamma": gamma, "hs": hs}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Gaussian
-    efth_gaus = construct_partition(fit_name="fit_gaussian", fit_kwargs={"freq": freq, "hs": hs, "fp": 1/tp, "gw": gw}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
+    efth_gaus = construct_partition(fit_name="fit_gaussian", fit_kwargs={"freq": freq, "hs": hs, "fp": fp, "gw": gw}, dir_name="cartwright", dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr})
     # Concat along the new "method" dimension
     efth = xr.concat([efth_pm, efth_jswap, efth_tma, efth_gaus], dim="method")
     efth["method"] = ["Pierson-Moskowitz", "Jonswap", "TMA", "Gaussian"]
@@ -342,12 +343,12 @@ and :func:`~wavespectra.fit_jonswap` shape but varying the :math:`\gamma` parame
     n = 9
     gamma = np.linspace(1, 3.3, n)
     hs = xr.DataArray(n*[2], {"gamma": gamma}, ("gamma",))
-    tp = xr.DataArray(n*[10], {"gamma": gamma}, ("gamma",))
+    fp = xr.DataArray(n*[0.1], {"gamma": gamma}, ("gamma",))
     dep = xr.DataArray(n*[30], {"gamma": gamma}, ("gamma",))
 
     efth = construct_partition(
         fit_name="fit_tma",
-        fit_kwargs={"freq": freq, "hs": hs, "tp": tp, "dep": dep, "gamma": hs.gamma},
+        fit_kwargs={"freq": freq, "fp": fp, "dep": dep, "gamma": hs.gamma, "hs": hs},
         dir_name="cartwright",
         dir_kwargs={"dir": dir, "dm": 225, "dspr": 20}
     )
