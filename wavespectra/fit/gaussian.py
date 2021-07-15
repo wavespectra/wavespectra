@@ -8,7 +8,7 @@ from wavespectra.core.utils import scaled, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs
 
 
-def fit_gaussian(freq, hs, fp, gw=None, **kwargs):
+def fit_gaussian(freq, hs, fp, gw, **kwargs):
     """Gaussian frequency spectrum (Bunney et al., 2014).
 
     Args:
@@ -21,6 +21,7 @@ def fit_gaussian(freq, hs, fp, gw=None, **kwargs):
         - efth (SpecArray): Gaussian frequency spectrum E(f) (m2s).
 
     Note:
+        - The spectra are scaled so that :math:`4\\sqrt{m_0} = hs`.
         - If two or more input args other than `freq` are DataArrays,
           they must share the same coordinates.
 
