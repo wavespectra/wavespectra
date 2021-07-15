@@ -29,9 +29,9 @@ Reconstruction methods can be evaluated by partitioning existing spectra, fittin
 two-dimensional shapes for each partition and recombining.
 
 The example below uses the :meth:`~wavespectra.directional.cartwright` spreading and the
-:meth:`~wavespectra.fit_jonswap` fitting with default values for :math:`\alpha=0.0081`,
-:math:`\sigma_a=0.07` and :math:`\sigma_b=0.09`, and :math:`\gamma` calculated from the
-:meth:`~wavespectra.SpecArray.gamma` method.
+:meth:`~wavespectra.fit_jonswap` fitting with default values for :math:`\sigma_a=0.07`
+and :math:`\sigma_b=0.09`, :math:`\gamma` calculated from the :meth:`~wavespectra.SpecArray.gamma`
+method and :math:`\alpha` calculated from the :meth:`~wavespectra.SpecArray.alpha` method.
 
 The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partitions for each spectral bin.
 
@@ -45,16 +45,15 @@ The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partition
     dspart = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt).load()
 
     # Integrated parameters partitions
-    dsparam = dspart.spec.stats(["hs", "tp", "dm", "tm01", "tm02", "dspr", "gamma"])
+    dsparam = dspart.spec.stats(["fp", "dm", "dspr", "gamma", "alpha"])
     dsparam["dpt"] = ds.dpt.expand_dims({"part": dspart.part})
 
     # Construct spectra for partitions
     fit_kwargs = {
         "freq": ds.freq,
-        "hs": dsparam.hs,
-        "tp": dsparam.tp,
+        "fp": dsparam.fp,
         "gamma": dsparam.gamma,
-        "alpha": 0.0081,
+        "alpha": dsparam.alpha,
         "sigma_a": 0.07,
         "sigma_b": 0.09
     }
@@ -108,7 +107,7 @@ The methods differ in how they specify some Jonswap parameters.
 
     * :math:`\gamma` calculated from the spectra.
 
-    * :math:`\sigma_a=g_w`.
+    * :math:`\sigma_a=g_w` (but capped at min=0.04, max=0.09).
 
     * :math:`\sigma_b=g_w+0.1`.
 
@@ -138,7 +137,7 @@ First define some input data:
     dsetp = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
 
     # Calculating parameters
-    ds = dsetp.spec.stats(["hs", "tp", "dm", "dspr", "fp", "gamma", "gw"])
+    ds = dsetp.spec.stats(["fp", "dm", "dspr", "gamma", "gw", "hs"])
 
     # Alpha
     ds["alpha"] = (5 * np.pi**4 / 9.81**2) * ds.hs**2 * ds.fp**4
@@ -151,7 +150,7 @@ First define some input data:
     dir_name = "cartwright"
     dir_kwargs = dict(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
     fit_name = "fit_jonswap"
-    kw = dict(freq=dset.freq, hs=ds.hs, tp=ds.tp)
+    kw = dict(freq=dset.freq, fp=ds.fp)
 
 
 Reconstruct from method 1
@@ -215,12 +214,8 @@ Plotting to compare
 .. admonition:: TODO
     :class: note
 
-    * Look into Stefan's calculation of alpha instead of using default 0.0081.
     * Compare Gaussian fits using the :math:`\sigma` parameter from Bunney's based :math:`Tm01` and :math:`Tm02` and the Gaussian least square parameter :math:`g_w` in WW3.
     * Review Bunney's skewed spread function.
     * Finalise the construct API.
-        * Define function to choose the fittings based on criteria.
-        * Define functions to construct from WW3 and SWAN parameters files.
-
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
