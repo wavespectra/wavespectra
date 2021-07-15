@@ -47,6 +47,7 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.sw
    SpecArray.gw
    SpecArray.gamma
+   SpecArray.alpha
    SpecArray.goda
 
 **Spectral partitioning**
