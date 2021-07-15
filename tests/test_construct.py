@@ -34,11 +34,11 @@ def dir():
 
 def test_construct_partition(freq, dir):
     hs = 2
-    tp = 10
+    fp = 0.1
     dm = 90
     dspr = 20
     fit_name = "fit_jonswap"
-    fit_kwargs = {"freq": freq, "hs": hs, "tp": tp}
+    fit_kwargs = {"freq": freq, "hs": hs, "fp": fp}
     dir_name = "cartwright"
     dir_kwargs = {"dir": dir, "dm": dm, "dspr": dspr}
 
@@ -50,7 +50,7 @@ def test_construct_partition(freq, dir):
     )
 
     assert float(dset.spec.hs()) == pytest.approx(hs, 1e5)
-    assert float(dset.spec.tp()) == pytest.approx(tp, 1e5)
+    assert float(dset.spec.fp()) == pytest.approx(fp, 1e5)
     assert float(dset.spec.dm()) == pytest.approx(dm, 1e5)
     assert dset.freq.values == pytest.approx(freq)
     assert dset.dir.values == pytest.approx(dir)
