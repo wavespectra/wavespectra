@@ -88,40 +88,41 @@ Zieger approach
 Zieger defined three spectra reconstruction options based on Cartwright spread and Jonswap fits.
 The methods differ in how they specify some Jonswap parameters.
 
-Method 1:
-~~~~~~~~~
+.. admonition:: Method 1
+    :class: note
 
-Default Jonswap parameters.
+    Default Jonswap parameters.
 
-* Default :math:`\gamma=3.3`.
+    * Default :math:`\gamma=3.3`.
 
-* Default :math:`\sigma_a=0.7`.
+    * Default :math:`\sigma_a=0.7`.
 
-* Default :math:`\sigma_b=0.9`.
+    * Default :math:`\sigma_b=0.9`.
 
-* :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
+    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
 
-Method 2:
-~~~~~~~~~
+.. admonition:: Method 2
+    :class: note
 
-Gaussian width :math:`g_w` used to define the widths :math:`\sigma_a`, :math:`\sigma_b` of the peak enhancement factor :math:`\gamma`.
+    Gaussian width :math:`g_w` used to define the widths :math:`\sigma_a`, :math:`\sigma_b` of the peak enhancement factor :math:`\gamma`.
 
-* :math:`\gamma` calculated from the spectra.
+    * :math:`\gamma` calculated from the spectra.
 
-* :math:`\sigma_a=g_w`.
+    * :math:`\sigma_a=g_w`.
 
-* :math:`\sigma_b=g_w+0.1`.
+    * :math:`\sigma_b=g_w+0.1`.
 
-* :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
+    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
 
-Method 3:
-~~~~~~~~~
 
-Scale :math:`Hs` for very small partitions.
+.. admonition:: Method 3
+    :class: note
 
-* Bump :math:`Hs` by 12% to calculate :math:`\alpha` if :math:`Hs<0.7m`.
+    Scale :math:`Hs` for very small partitions.
 
-* Otherwise same as method 2.
+    * Bump :math:`Hs` by 12% to calculate :math:`\alpha` if :math:`Hs<0.7m`.
+
+    * Otherwise same as method 2.
 
 
 Below are examples on how to implement the methods defined from Zieger from wavespectra.
