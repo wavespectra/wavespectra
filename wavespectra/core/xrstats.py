@@ -146,3 +146,47 @@ def peak_wave_period(dset, smooth=True):
         "units": attrs.ATTRS.tp.units,
     }
     return darr
+
+
+def peak_directional_spread(dset, mom=1):
+    """Wave spreading at the peak wave frequency Dpspr.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - mom (int): Directional moment for calculating the mth directional spread.
+
+    Returns:
+        - dpspr (xr.DataArray): Wave spreading at the peak wave frequency data array.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+
+    # Dimensions checking
+    if attrs.DIRNAME not in dset.dims:
+        raise ValueError("Cannot calculate dpspr from frequency spectra.")
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
+
+    # Frequency dependant directional spread and frequency peaks
+    fdspr = dset.spec.fdspr(mom=mom)
+    ipeak = dset.spec._peak(dset.spec.oned())
+
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        npstats.dpspr_gufunc,
+        ipeak.astype("int64"),
+        fdspr.astype("float64"),
+        input_core_dims=[[], [attrs.FREQNAME]],
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "dpspr"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.dpspr.standard_name,
+        "units": attrs.ATTRS.dpspr.units,
+    }
+    return darr

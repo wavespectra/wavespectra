@@ -145,3 +145,27 @@ def tp_gufunc(ipeak, spectrum, freq, out):
         out[0] = np.nan
     else:
         out[0] = np.float32(1.0 / freq[ipeak])
+
+
+@guvectorize(
+    "(int64, float64[:], float32[:])",
+    "(), (n) -> ()",
+    nopython=True,
+    target="parallel",
+    cache=True,
+    forceobj=True,
+)
+def dpspr_gufunc(ipeak, fdspr, out):
+    """Peak directional wave spread Dpspr.
+
+    - ipeak (int): Index of the maximum energy density in the frequency spectrum E(f).
+    - fdsprd (1darray): Direction spread as a function of frequency :math:`\\sigma(f)`.
+
+    Returns:
+        - dpspr (float): Directional wave spreading at the peak wave frequency.
+
+    """
+    if not ipeak:
+        out[0] = np.nan
+    else:
+        out[0] = fdspr[ipeak]
