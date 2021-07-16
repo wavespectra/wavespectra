@@ -5,6 +5,7 @@ import xarray as xr
 import pytest
 
 from wavespectra import SpecArray
+from wavespectra import _import_functions
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
@@ -73,6 +74,10 @@ def test_directional_methods_raise_on_oned_spec(dset):
         ds.spec.dm()
     with pytest.raises(ValueError):
         ds.spec.dspr()
+    with pytest.raises(ValueError):
+        ds.spec.dpspr()
+    with pytest.raises(ValueError):
+        ds.spec.fdspr()
 
 
 def test_crsd(dset):
@@ -121,3 +126,13 @@ def test_stats(dset):
         dset.spec.stats(["stat_not_implemented"])
     with pytest.raises(ValueError):
         dset.spec.stats(["dd"])
+
+
+def test_import_function():
+    _import_functions("input", "read")
+    _import_functions("dummy", "dummy2")
+
+
+def test_one_frequency_bin(dset):
+    ds = dset.isel(freq=[0])
+    assert ds.spec.freq == dset.isel(freq=0).freq

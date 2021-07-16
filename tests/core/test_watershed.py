@@ -4,8 +4,35 @@ import pytest
 import pandas as pd
 
 from wavespectra import read_swan
+from wavespectra.core.watershed import inflection, partition
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
+
+
+@pytest.fixture(scope="module")
+def dset():
+    """Load SpecDset but skip test if matplotlib is not installed."""
+    pytest.importorskip("matplotlib")
+    dset = read_swan(os.path.join(FILES_DIR, "swanfile.spec"), as_site=True)
+    return dset
+
+
+def test_inflection(dset):
+    ds = dset.isel(time=0, site=0, drop=True)
+    imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.01, fmin=0.05)
+    assert int(imax) == 5
+    assert not imin
+    imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.015, fmin=0.05)
+    assert int(imax) == 6
+    assert not imin
+    ds = dset.isel(freq=[0])
+    imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.01, fmin=0.05)
+    assert imax == 0
+    assert imin == 0
+
+
+def test_partition_function(dset):
+    dsp = partition(dset=dset, wspd="wspd", wdir="wdir", dpt="dpt")
 
 
 class TestSpecArray(object):
@@ -47,3 +74,5 @@ class TestSpecArray(object):
 
         """
         stat = getattr(self.wshed.spec, stat_name)()
+
+

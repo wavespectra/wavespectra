@@ -37,6 +37,7 @@ class TestSpecArray(object):
             ("goda", 1e-3),
             ("gw", 1e-3),
             ("dpspr", 1e-3),
+            ("alpha", 1e-3),
         ],
     )
     def test_stat(self, stat_name, rel):
