@@ -38,6 +38,7 @@ New Features
 
 Internal Changes
 ----------------
+* Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_.
@@ -60,7 +61,7 @@ Deprecation
   properties now must be manually defined from the axis.
 * Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
   api. Similar result can be achieved in the new api by manually converting efth before plotting.
-* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array` and `_twod`.
 * Remove `dfarr` attribute from SpecArray, replaced by `df`.
 * Remove unused functions `to_datetime` and `dnum_to_datetime`.
 * The "mask" argument has been removed from `SpecArray.sw` method.

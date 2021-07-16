@@ -17,13 +17,6 @@ def runner():
     yield instance
 
 
-@pytest.fixture(scope="module")
-def config():
-    conf = os.path.join(TESTDIR, "reconstruct.yml")
-    instance = yaml.load(open(conf), Loader=yaml.Loader)
-    yield instance
-
-
 def test_main(runner):
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
