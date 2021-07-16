@@ -211,6 +211,43 @@ Plotting to compare
     plt.draw()
 
 
+Reconstruct CLI
+---------------
+
+Command line interface are available to reconstruct spectra.
+
+.. code::
+
+    $ wavespectra reconstruct --help
+    Usage: wavespectra reconstruct [OPTIONS] COMMAND [ARGS]...
+
+    Options:
+    --help  Show this message and exit.
+
+    Commands:
+    spectra  Partition and reconstruct spectra from file.
+
+
+Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
+
+
 .. admonition:: TODO
     :class: note
 
