@@ -32,6 +32,7 @@ def test_main_reconstruct(runner):
 def test_main_reconstruct_spectra(runner, tmpdir):
     INFILE = os.path.join(TESTDIR, "sample_files/ww3file.nc")
     OUTFILE = str(tmpdir / "outspec.nc")
-    CONFIG = os.path.join(TESTDIR, "reconstruct.yml")
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, CONFIG])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE])
     assert result.exit_code == 0
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, INFILE])
+    assert isinstance(result.exception, ValueError)
