@@ -487,7 +487,7 @@ class SpecArray(object):
         The directional width of the spectrum at each frequency.
 
         Args:
-            - mom (int): Directional moment to calculate the mth directional spread.
+            - mom (int): Directional moment for calculating the mth directional spread.
 
         """
         if self.dir is None:
@@ -507,15 +507,8 @@ class SpecArray(object):
         Args:
             - mom (int): Directional moment to calculate the mth directional spread.
 
-        TODO: Make this lazy by converting to ufunc
-
         """
-        if self.dir is None:
-            raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
-        peak = self._peak(self.oned()).load()
-        dpspr = self.fdspr(mom=mom).isel(**{attrs.FREQNAME: peak}, drop=True)
-        dpspr.attrs.update(self._get_cf_attributes(self._my_name()))
-        return dpspr.rename(self._my_name())
+        return xrstats.peak_directional_spread(self._obj)
 
     def crsd(self, theta=90.0):
         """Add description."""
