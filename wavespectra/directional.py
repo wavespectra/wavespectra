@@ -7,7 +7,7 @@ from wavespectra.core.utils import D2R, R2D, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-def cartwright(dir, dm, dspr, under_90=False):
+def cartwright(dir, dm, dspr, under_90=False, **kwargs):
     """Cosine-squared directional spreading of Cartwright (1963).
 
     :math:`G(\\theta,f)=F(s)cos^{2}\\frac{1}{2}(\\theta-\\theta_{m})`
@@ -48,7 +48,7 @@ def cartwright(dir, dm, dspr, under_90=False):
     return gth / R2D
 
 
-def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp):
+def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
     """Asymmetrical directional spreading of Bunney et al. (2014).
 
     Args:
