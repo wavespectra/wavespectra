@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from wavespectra import read_swan
-from wavespectra.core.npstats import hs, dpm_gufunc, dp_gufunc, tps_gufunc, tp_gufunc
+from wavespectra.core.npstats import hs, dpm_gufunc, dp_gufunc, tps_gufunc, tp_gufunc, dpspr_gufunc
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -66,4 +66,21 @@ def test_tp_gufunc(dset):
     out = tp_gufunc(ipeak, spectrum, freq, out)
     assert np.isclose(out, 13.568521)
     out = tp_gufunc(0, spectrum, freq, out)
+    assert np.isnan(out)
+
+
+def test_dpspr_gufunc(dset):
+    ds = dset.isel(time=0, site=0, drop=True)
+    ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
+    fdspr1 = ds.spec.fdspr(mom=1).values.astype("float64")
+    fdspr2 = ds.spec.fdspr(mom=2).values.astype("float64")
+
+    out = np.array([float(0)]).astype("float32")
+    out = dpspr_gufunc(ipeak, fdspr1, out)
+    assert np.isclose(out, 8.463889)
+
+    out = dpspr_gufunc(ipeak, fdspr2, out)
+    assert np.isclose(out, 29.384691)
+
+    out = dpspr_gufunc(0, fdspr1, out)
     assert np.isnan(out)
