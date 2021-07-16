@@ -96,13 +96,6 @@ class SpecArray(object):
             self._dd = 1.0
         return self._dd
 
-    def _twod(self, darray, dim=attrs.DIRNAME):
-        """Ensure dir,freq dims are present so moment calculations won't break."""
-        if dim not in darray.dims:
-            return darray.expand_dims(dim={dim: [1]}, axis=-1)
-        else:
-            return darray
-
     def _interp_freq(self, fint):
         """Linearly interpolate spectra at frequency fint.
 
