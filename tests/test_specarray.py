@@ -136,3 +136,4 @@ def test_import_function():
 def test_one_frequency_bin(dset):
     ds = dset.isel(freq=[0])
     assert ds.spec.freq == dset.isel(freq=0).freq
+    assert ds.spec.df.size == 1
