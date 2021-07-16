@@ -21,10 +21,10 @@ def test_inflection(dset):
     ds = dset.isel(time=0, site=0, drop=True)
     imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.01, fmin=0.05)
     assert int(imax) == 5
-    assert not imin
+    assert imin.size == 0
     imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.015, fmin=0.05)
     assert int(imax) == 6
-    assert not imin
+    assert imin.size == 0
     ds = dset.isel(freq=[0])
     imax, imin = inflection(ds.efth.values, ds.freq.values, dfres=0.01, fmin=0.05)
     assert imax == 0
