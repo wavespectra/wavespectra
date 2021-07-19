@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 import xarray as xr
 
-from wavespectra.construct import construct_partition, reconstruct
+from wavespectra.construct import construct_partition, partition_and_reconstruct
 from wavespectra import read_swan
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
@@ -56,5 +56,41 @@ def test_construct_partition(freq, dir):
     assert dset.dir.values == pytest.approx(dir)
 
 
-def test_reconstruct(dset):
-    reconstruct()
+def test_partition_and_reconstruct_one_fit_all_partitions(dset):
+    dsout = partition_and_reconstruct(
+        dset,
+        swells=3,
+        fit_name="fit_jonswap",
+        dir_name="cartwright",
+        method_combine="max",
+    )
+
+
+def test_partition_and_reconstruct_one_fit_per_partition(dset):
+    dsout = partition_and_reconstruct(
+        dset,
+        swells=3,
+        fit_name=["fit_jonswap", "fit_jonswap", "fit_jonswap", "fit_jonswap"],
+        dir_name=["cartwright", "cartwright", "cartwright", "cartwright"],
+        method_combine="max",
+    )
+
+
+def test_partition_and_reconstruct_inconsistent_number_of_partitions(dset):
+    with pytest.raises(ValueError):
+        dsout = partition_and_reconstruct(
+            dset,
+            swells=3,
+            fit_name=["fit_jonswap", "fit_jonswap"],
+            dir_name="cartwright",
+            method_combine="max",
+        )
+    with pytest.raises(ValueError):
+        dsout = partition_and_reconstruct(
+            dset,
+            swells=3,
+            fit_name="fit_jonswap",
+            dir_name=["cartwright"],
+            method_combine="max",
+        )
+
