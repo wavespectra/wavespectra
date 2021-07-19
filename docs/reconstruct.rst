@@ -25,8 +25,6 @@ ______________________
 Spectra with multiple wave systems can be reconstructed by fitting spectral shapes
 and directional distributions to individual wave partitions and combining them together.
 
-Partition and reconstruct
--------------------------
 
 The example below uses the :meth:`~wavespectra.directional.cartwright` spreading and the
 :meth:`~wavespectra.fit_jonswap` fitting with default values for :math:`\sigma_a=0.07`
@@ -81,7 +79,11 @@ The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partition
     plt.draw()
 
 
-The :func:`~wavespectra.construct.partition_and_reconstruct` function uses allows
+Partition and reconstruct
+-------------------------
+
+
+The :func:`~wavespectra.construct.partition_and_reconstruct` function allows
 partitioning and reconstructing existing spectra in a convenient way:
 
 .. ipython:: python
