@@ -106,6 +106,7 @@ def partition_and_reconstruct(
 
     # Calculating parameters
     dparam = dspart.spec.stats(STATS)
+    dparam["fm"] = 1 / dparam.tm01
 
     # Reconstruct partitions
     reconstructed = []
@@ -115,11 +116,13 @@ def partition_and_reconstruct(
         kw = {**coords, **{k: v for k, v in dparam.sel(part=[part]).data_vars.items()}}
 
         # Reconstruct current partition
-        reconstructed = construct_partition(
-            fit_name=fit_name[ipart],
-            dir_name=dir_name[ipart],
-            fit_kwargs=kw,
-            dir_kwargs=kw
+        reconstructed.append(
+            construct_partition(
+                fit_name=fit_name[ipart],
+                dir_name=dir_name[ipart],
+                fit_kwargs=kw,
+                dir_kwargs=kw
+            )
         )
 
     # Combine partitions
@@ -141,4 +144,3 @@ def partition_and_reconstruct(
         "directional_spread": dir_name,
     }
     return reconstructed
-
