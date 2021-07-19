@@ -32,7 +32,15 @@ def test_main_reconstruct(runner):
 def test_main_reconstruct_spectra(runner, tmpdir):
     INFILE = os.path.join(TESTDIR, "sample_files/ww3file.nc")
     OUTFILE = str(tmpdir / "outspec.nc")
+
     result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE])
     assert result.exit_code == 0
+
     result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, INFILE])
     assert isinstance(result.exception, ValueError)
+
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-s", "2", "-d", "cartwright,cartwright,cartwright"])
+    assert result.exit_code == 0
+
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-s", "2", "-f", "fit_jonswap,fit_jonswap,fit_jonswap"])
+    assert result.exit_code == 0
