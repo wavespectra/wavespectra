@@ -92,7 +92,7 @@ partitioning and reconstructing existing spectra in a convenient way:
 
     ds = read_ww3("_static/ww3file.nc").isel(time=0, site=0, drop=True).sortby("dir")
 
-    # Use Cartwright and Jonswap and Cartwright
+    # Use Cartwright and Jonswap
     dsr1 = partition_and_reconstruct(
         ds,
         swells=3,
