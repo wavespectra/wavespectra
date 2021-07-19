@@ -145,68 +145,190 @@ The methods differ in how they specify some Jonswap parameters.
 
     * Default :math:`\sigma_b=0.9`.
 
-    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
+    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. admonition:: Method 2
-    :class: note
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
 
     Gaussian width :math:`g_w` used to define the widths :math:`\sigma_a`, :math:`\sigma_b` of the peak enhancement factor :math:`\gamma`.
 
     * :math:`\gamma` calculated from the spectra.
 
     * :math:`\sigma_a=g_w` (but capped at min=0.04, max=0.09).
+Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    * :math:`\sigma_b=g_w+0.1`.
+.. code::
 
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
     * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
 
 
 .. admonition:: Method 3
     :class: note
+Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
     Scale :math:`Hs` for very small partitions.
 
     * Bump :math:`Hs` by 12% to calculate :math:`\alpha` if :math:`Hs<0.7m`.
 
     * Otherwise same as method 2.
 
+Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Below are examples on how to implement the methods defined from Zieger from wavespectra.
+.. code::
 
-First define some input data:
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
     # Reading and partitioning existing spectrum
-    dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
+    dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
     dsetp = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
 
     # Calculating parameters
     ds = dsetp.spec.stats(["fp", "dm", "dspr", "gamma", "gw", "hs"])
 
-    # Alpha
-    ds["alpha"] = (5 * np.pi**4 / 9.81**2) * ds.hs**2 * ds.fp**4
+    # AlphaPartition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # Alpha for method #3
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
     hs = ds.hs.where(ds.hs >= 0.7, ds.hs * 1.12)
     ds["alpha3"] = (5 * np.pi**4 / 9.81**2) * hs**2 * ds.fp**4
 
     # Common reconstruct parameters
     dir_name = "cartwright"
     dir_kwargs = dict(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
-    fit_name = "fit_jonswap"
-    kw = dict(freq=dset.freq, fp=ds.fp)
+    fit_name = "fit_jonswap"Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. code::
 
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
 Reconstruct from method 1
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
-    fit_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}
+    fit_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}Partition and reconstruct spectra from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
     method1 = construct_partition(fit_name, dir_name, fit_kwargs, dir_kwargs)
     method1 = method1.max(dim="part")
 
@@ -277,6 +399,22 @@ Command line interface are available to reconstruct spectra.
 
 Partition and reconstruct spectra from file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
 
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
