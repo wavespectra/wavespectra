@@ -187,7 +187,7 @@ Construct
    :toctree: generated/
 
    construct.construct_partition
-   construct.reconstruct
+   construct.partition_and_reconstruct
 
 
 Internal core functions and objects
@@ -224,6 +224,7 @@ Internal core functions and objects
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
    core.npstats.tp_gufunc
+   core.npstats.dpspr_gufunc
 
 **xrstats**
 
@@ -234,6 +235,7 @@ Internal core functions and objects
    core.xrstats.peak_wave_direction
    core.xrstats.mean_direction_at_peak_wave_period
    core.xrstats.peak_wave_period
+   core.xrstats.peak_directional_spread
 
 **select module**
 
