@@ -2,11 +2,6 @@ Spectra reconstruction
 ______________________
 
 
-Wavespectra contains several methods for re-creating 2-dimensional wave spectra
-from a subset of integrated paramaters describing wave systems derived from
-spectral partitioning of wave spectra. These are described below, and their
-efficacy examined. 
-
 .. ipython:: python
     :okexcept:
     :okwarning:
@@ -27,11 +22,11 @@ efficacy examined.
     from wavespectra.construct import construct_partition
 
 
+Spectra with multiple wave systems can be reconstructed by fitting spectral shapes
+and directional distributions to individual wave partitions and combining them together.
+
 Partition and reconstruct
 -------------------------
-
-Reconstruction methods can be evaluated by partitioning existing spectra, fitting
-two-dimensional shapes for each partition and recombining.
 
 The example below uses the :meth:`~wavespectra.directional.cartwright` spreading and the
 :meth:`~wavespectra.fit_jonswap` fitting with default values for :math:`\sigma_a=0.07`
@@ -83,6 +78,51 @@ The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partition
     );
 
     @savefig original_vs_reconstructed.png
+    plt.draw()
+
+
+The :func:`~wavespectra.construct.partition_and_reconstruct` function uses allows
+partitioning and reconstructing existing spectra in a convenient way:
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    ds = read_ww3("_static/ww3file.nc").isel(time=0, site=0, drop=True).sortby("dir")
+
+    # Use Cartwright and Jonswap and Cartwright
+    dsr1 = partition_and_reconstruct(
+        ds,
+        swells=3,
+        fit_name="fit_jonswap",
+        dir_name="cartwright",
+        method_combine="max",
+    )
+
+    # Use Bunney for wind sea and Cartwright for swells, and Jonswap for all partitions
+    dsr2 = partition_and_reconstruct(
+        ds,
+        swells=3,
+        fit_name="fit_jonswap",
+        dir_name=["bunney", "cartwright", "cartwright", "cartwright",],
+        method_combine="max",
+    )
+
+    # Plotting
+    dsall = xr.concat([ds.efth, dsr1.efth, dsr2.efth], dim="directype")
+    dsall["directype"] = ["Original", "Cartwright", "Bunney+Cartwright"]
+
+    dsall.spec.plot(
+        figsize=(8,4),
+        show_theta_labels=False,
+        add_colorbar=False,
+        col="directype",
+    );
+
+    @suppress
+    plt.tight_layout()
+
+    @savefig original_vs_cartwright_vs_bunney.png
     plt.draw()
 
 
@@ -236,28 +276,5 @@ Command line interface are available to reconstruct spectra.
 Partition and reconstruct spectra from file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code::
-
-    $ wavespectra reconstruct spectra --help
-    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
-
-    Partition and reconstruct spectra from file.
-
-    Options:
-    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
-    -d, --dir_name TEXT        Spread function  [default: cartwright]
-    -m, --method_combine TEXT  Method to combine partitions  [default: max]
-    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
-    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
-    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
-    --help                     Show this message and exit.
-
-
-.. admonition:: TODO
-    :class: note
-
-    * Compare Gaussian fits using the :math:`\sigma` parameter from Bunney's based :math:`Tm01` and :math:`Tm02` and the Gaussian least square parameter :math:`g_w` in WW3.
-    * Review Bunney's skewed spread function.
-    * Finalise the construct API.
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114

@@ -7,26 +7,8 @@ from dask.diagnostics.progress import ProgressBar
 
 from wavespectra.core.utils import load_function
 from wavespectra.core.attributes import attrs
-from wavespectra.construct import construct_partition
+from wavespectra.construct import partition_and_reconstruct, STATS
 
-
-SNAME = attrs.SPECNAME
-FNAME = attrs.FREQNAME
-DNAME = attrs.DIRNAME
-PNAME = attrs.PARTNAME
-STATS = [
-    "hs",
-    "tp",
-    "fp",
-    "dm",
-    "dpm",
-    "dspr",
-    # "dpspr",
-    "tm01",
-    "tm02",
-    "gamma",
-    "alpha",
-]
 
 
 @click.group()
@@ -59,29 +41,23 @@ def spectra(infile, outfile, fit_name, dir_name, method_combine, swells, reader,
     chunks = yaml.load(chunks, Loader=yaml.Loader)
     dset = reader(infile).chunk(chunks)
 
-    # Partitioning
-    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt, swells=swells)
+    # Sorting out input arguments
+    if "," in fit_name:
+        fit_name = fit_name.split(",")
+    if "," in dir_name:
+        dir_name = dir_name.split(",")
 
-    # Calculating parameters
-    dsparam = dspart.spec.stats(STATS)
-
-    # Turn DataArrays into Kwargs for sea partition
-    kw_sea = {k: v for k, v in dsparam.isel(part=[0]).data_vars.items()}
-    kw_sea.update({FNAME: dset[FNAME], DNAME: dset[DNAME]})
-
-    # Turn DataArrays into Kwargs for swell partition
-    kw_sw = {k: v for k, v in dsparam.isel(part=slice(1, None)).data_vars.items()}
-    kw_sw.update({FNAME: dset[FNAME], DNAME: dset[DNAME]})
-
-    # Reconstruct partitions
-    sea = construct_partition(fit_name, dir_name, fit_kwargs=kw_sea, dir_kwargs=kw_sea)
-    swell = construct_partition(fit_name, dir_name, fit_kwargs=kw_sw, dir_kwargs=kw_sw)
-
-    # Combine partitions
-    reconstructed = getattr(xr.concat([sea, swell], PNAME), method_combine)(PNAME)
+    # Run
+    reconstructed = partition_and_reconstruct(
+        dset,
+        swells=swells,
+        fit_name=fit_name,
+        dir_name=dir_name,
+        method_combine=method_combine,
+    )
 
     # Save to file
     with ProgressBar():
-        reconstructed.to_dataset(name=SNAME).spec.to_netcdf(outfile)
+        reconstructed.spec.to_netcdf(outfile)
 
     click.echo(f"Reconstructed file created: {outfile}")

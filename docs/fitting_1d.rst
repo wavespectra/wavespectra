@@ -17,7 +17,7 @@ Spectral fitting
     from wavespectra import read_ww3, read_swan
     from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
     from wavespectra.directional import cartwright, bunney
-    from wavespectra.construct import construct_partition
+    from wavespectra.construct import construct_partition, partition_and_reconstruct
     freq = np.arange(0.03, 0.401, 0.001)
     dir = np.arange(0, 360, 1)
 
