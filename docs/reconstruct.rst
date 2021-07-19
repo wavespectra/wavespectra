@@ -4,7 +4,7 @@ ______________________
 
 Wavespectra contains several methods for re-creating 2-dimensional wave spectra
 from a subset of integrated paramaters describing wave systems derived from
-spectral partitioning of wave spectra. These are described below, and thier
+spectral partitioning of wave spectra. These are described below, and their
 efficacy examined. 
 
 .. ipython:: python
