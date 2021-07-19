@@ -27,7 +27,7 @@ def reconstruct():
 @click.option("-f", "--fit_name", default="fit_jonswap", help="Fit function", show_default=True)
 @click.option("-d", "--dir_name", default="cartwright", help="Spread function", show_default=True)
 @click.option("-m", "--method_combine", default="max", help="Method to combine partitions", show_default=True)
-@click.option("-s", "--swells", type=int, default=6, help="Swell partitions to keep", show_default=True)
+@click.option("-s", "--swells", type=int, default=4, help="Swell partitions to keep", show_default=True)
 @click.option("-r", "--reader", default="read_ww3", help="Spectra file reader", show_default=True)
 @click.option("-c", "--chunks", default="{}", help="chunks dictionary to chunk dataset", show_default=True)
 def spectra(infile, outfile, fit_name, dir_name, method_combine, swells, reader, chunks):
