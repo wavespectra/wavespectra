@@ -289,7 +289,7 @@ Partition and reconstruct from file
     -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
     -d, --dir_name TEXT        Spread function  [default: cartwright]
     -m, --method_combine TEXT  Method to combine partitions  [default: max]
-    -s, --swells INTEGER       Swell partitions to keep  [default: 6]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 4]
     -r, --reader TEXT          Spectra file reader  [default: read_ww3]
     -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
     --help                     Show this message and exit.
