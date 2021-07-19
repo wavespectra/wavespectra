@@ -13,7 +13,7 @@ def cartwright(dir, dm, dspr, under_90=False, **kwargs):
     :math:`G(\\theta,f)=F(s)cos^{2}\\frac{1}{2}(\\theta-\\theta_{m})`
 
     Args:
-        - dir (DataArray, 1darray, list): Wave directions (degree).
+        - dir (DataArray, 1darray, list): Wave direction coords (degree).
         - dm: (DataArray, float): Mean wave direction (degree).
         - dspr (DataArray, float): Directional spreading (degree).
         - under_90 (bool): Zero the spreading curve above 90 degrees range from dm.
@@ -52,8 +52,8 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
     """Asymmetrical directional spreading of Bunney et al. (2014).
 
     Args:
-        - dir (DataArray, 1darray, list): Wave directions (degree).
-        - freq (DataArray, 1darray, list): Wave frequency (Hz).
+        - dir (DataArray, 1darray, list): Wave direction coords (degree).
+        - freq (DataArray, 1darray, list): Wave frequency coords (Hz).
         - dm: (DataArray, float): Mean wave direction (degree).
         - dpm: (DataArray, float): Peak wave direction (degree).
         - dspr (DataArray, float) Mean directional spreading (degree).
@@ -75,25 +75,30 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
     if not isinstance(dir, xr.DataArray):
         dir = to_coords(dir, "dir")
 
-    # Convert to radians
-    theta_p = D2R * dpm
-    theta_m = D2R * dm
-    sigma_p = D2R * dpspr
-    sigma_m = D2R * dspr
-
     # Gradients
-    dtheta = (theta_p - theta_m) / (fp - fm)
-    dsigma = (sigma_p - sigma_m) / (fp - fm)
+    #==========
+    # Limiters to avoid negative and large numbers
+    dd = dm - dpm
+    ds = np.maximum(dspr - dpspr, 0)
+    df = np.maximum(fm - fp, 0.001)
+    dddf = dd / df
+    dsdf = ds / df
 
     # Modified peak direction
-    theta = theta_p + dtheta * (freq - fp)
-    theta = (R2D * theta.where(freq > fp, theta_p)) % 360
+    #========================
+    # Limiter for frequency band peak directon (30% peak spread)
+    theta = dpm + dddf * (freq - fp)
+    theta = np.minimum(1.5 * dpm, np.maximum(0.5 * dpm, theta))
 
     # Modified spread parameter
-    sigma = sigma_p + dsigma * (freq - fp)
-    sigma = R2D * sigma.where(freq > fp, sigma_p)
+    #==========================
+    # Limiter for frequency band spreading, 0.14 limits s to ~100 for narrow beamwidths
+    sigma = dpspr + dsdf * (freq - fp)
+    sigma = np.maximum(0.5 * dspr, np.minimum(1.5 * np.maximum(dspr, dpspr), sigma))
+    sigma = sigma.where(sigma >= 0.14, 0.14)
 
     # Apply cosine-square to modified parameters
+    #===========================================
     gfth = cartwright(dir, theta, sigma, under_90=False)
 
     return gfth
