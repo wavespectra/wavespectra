@@ -29,7 +29,7 @@ class SwanSpecFile(object):
         tabfile=None,
     ):
         self.times = False
-        self.filename = filename
+        self.filename = str(filename)
         self.tabfile = (
             tabfile or os.path.splitext(self.filename.replace(".gz", ""))[0] + ".tab"
         )
