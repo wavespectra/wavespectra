@@ -10,7 +10,7 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-class TestNcSwan(object):
+class TestSwan(object):
     """Test read swan ascii functions."""
 
     @classmethod
@@ -30,7 +30,7 @@ class TestNcSwan(object):
             ds.isel(site=[0]).spec.hs().values, rel=1e-2
         )
 
-    def test_read_swans(self):
+    def test_read_hotswan(self):
         ds = read_hotswan([self.filename])
         assert self.ds.spec.hs().values.ravel() == pytest.approx(
             ds.isel(lon=0, lat=0).spec.hs().values, rel=1e-2
