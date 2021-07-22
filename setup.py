@@ -15,7 +15,6 @@ CLASSIFIERS = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Topic :: Scientific/Engineering",
@@ -99,6 +98,7 @@ install_requires = [
     "gcsfs",
     "fsspec",
     "matplotlib",
+    "numba",
     "numpy",
     "pandas",
     "python-dateutil",
@@ -106,7 +106,7 @@ install_requires = [
     "sortedcontainers",
     "scipy",
     "toolz",
-    "xarray>=0.15",
+    "xarray",
     "zarr",
 ]
 
