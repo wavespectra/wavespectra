@@ -43,6 +43,13 @@ Install from pypi
    # Complete install
    pip install wavespectra[extra]
 
+Install from conda
+~~~~~~~~~~~~~~~~~~~
+.. code:: bash
+
+    # wavespectra is available in the conda-forge channel
+    conda install -c conda-forge wavespectra
+
 Install from sources
 ~~~~~~~~~~~~~~~~~~~~
 Install requirements. Navigate to the base root of wavespectra_ and execute:

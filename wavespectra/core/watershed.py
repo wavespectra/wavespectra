@@ -5,6 +5,7 @@ import xarray as xr
 from wavespectra.core.attributes import attrs
 from wavespectra.specpart import specpart
 from wavespectra.core.utils import D2R, R2D, celerity
+from wavespectra.core.npstats import hs
 
 
 def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
@@ -105,14 +106,14 @@ def partition(
 
     """
     # Sort out inputs
-    if isinstance(dset, xr.Dataset):
-        dset = dset[attrs.SPECNAME]
     if isinstance(wspd, str):
         wspd = dset[wspd]
     if isinstance(wdir, str):
         wdir = dset[wdir]
     if isinstance(dpt, str):
         dpt = dset[dpt]
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
 
     # Partitioning full spectra
     dsout = xr.apply_ufunc(
@@ -144,28 +145,6 @@ def partition(
     dsout.part.attrs = {"standard_name": "spectral_partition_number", "units": ""}
 
     return dsout.transpose("part", ...)
-
-
-def hs(spectrum, freq, dir, tail=True):
-    """Significant wave height Hmo.
-
-    Args:
-        - spectrum (2darray): wave spectrum array
-        - freq (1darray): wave frequency array
-        - dir (1darray): wave direction array
-        - tail (bool): if True fit high-frequency tail before integrating spectra
-
-    """
-    df = abs(freq[1:] - freq[:-1])
-    if len(dir) > 1:
-        ddir = abs(dir[1] - dir[0])
-        E = ddir * spectrum.sum(1)
-    else:
-        E = np.squeeze(spectrum)
-    Etot = 0.5 * sum(df * (E[1:] + E[:-1]))
-    if tail and freq[-1] > 0.333:
-        Etot += 0.25 * E[-1] * freq[-1]
-    return 4.0 * np.sqrt(Etot)
 
 
 def frequency_resolution(freq):
