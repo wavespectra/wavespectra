@@ -22,7 +22,7 @@ import sys
 import wavespectra
 
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("../wavespectra"))
+sys.path.insert(0, os.path.abspath("../"))
 
 # -- General configuration ------------------------------------------------
 
@@ -72,6 +72,9 @@ master_doc = "index"
 project = "wavespectra"
 copyright = "2018, MetOcean Solutions"
 author = "Wavespectra Developers"
+
+html_show_copyright = False
+html_show_sphinx = False
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -202,3 +205,6 @@ texinfo_documents = [
 # -- Options for sorting by source in autodoc -----------------------------
 
 autodoc_member_order = "bysource"
+
+# Remove parentheses from functions cross-referenced
+add_function_parentheses = False
