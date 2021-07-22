@@ -6,7 +6,7 @@ from tempfile import mkdtemp
 
 from wavespectra import read_ncswan, read_octopus
 from wavespectra.core.attributes import attrs
-from wavespectra.core.timer import Timer
+
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
@@ -32,9 +32,8 @@ class TestOctopus(object):
             dset = read_octopus(os.path.join(FILES_DIR, "octopusfile.oct"))
 
     def test_write_octopus(self):
-        with Timer("Testing Octopus writer"):
-            ds = read_ncswan(self.filename)
-            ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+        ds = read_ncswan(self.filename)
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
     def test_write_octopus_missing_winds_depth(self):
         ds = read_ncswan(self.filename)

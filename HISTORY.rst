@@ -12,30 +12,103 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-
-X.Y.Z (YYYY-MM-DD)
-------------------
+3.9.1 (2021-MM-DD)
+__________________
 
 New Features
 ------------
-* Watershed partition now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_)
+* Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
+  no longer duplicate internal functions from xarray and should better integrate any upstream
+  changes. The new api also handles logarithmic axes and masking in a more natural way 
+  (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
+* New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
+
+
+Bug Fixes
+---------
+* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
+* Fix bug in `scale_by_hs` when run on dask datasets.
+
+
+Internal Changes
+----------------
+* Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
+* Add new funwave functiont to docs.
+* Update authors list.
+
+
+Deprecation
+-----------
+* Calling the plot kind as a method from `SpecArray.plot`, e.g. `SpecArray.plot.contourf`
+  is deprecated with the new plotting api. Now `kind` needs to be provided as an argument.
+* Arguments `show_radius_label` and `show_direction_label` are deprecated from `SpecArray.plot`.
+  Labels are no longer drawn as they fall on top of ticks. In order to show it the axes
+  properties now must be manually defined from the axis.
+* Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
+  api. Similar result can be achieved in the new api by manually converting efth before plotting.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
+
+
+3.9.0 (2021-05-29)
+__________________
+
+New Features
+------------
+* Funwave spectra reader `read_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+* Funwave spectra writer `to_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+
+.. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
+.. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py
+
+
+3.8.1 (2021-04-06)
+__________________
+
+Bug Fixes
+---------
+* Add numba to setup.py, not installed properly from requirements/default.txt for some reason.
+
+
+3.8.0 (2021-03-30)
+__________________
+
+New Features
+------------
+* Watershed partitioning now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_).
+* Spectral splitting now supports dask.
+* The following spectral parameters now support dask (`PR11 <https://github.com/wavespectra/wavespectra/pull/11>`_):
+
+  * tp
+  * dp
+  * dpm
+  * dspr
+* Wavespectra conda recipe by `RubendeBruin`_.
 
 Internal Changes
 ----------------
 * Core watershed partitioning code organised into watershed module.
 * `max_swells` replaced by `swells` in watershed partition to return fixed number of swells.
 * Renamed module `wavespectra.core.misc` by `wavespectra.core.utils`.
-* Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`
+* Removed deprecated method `_same_dims`, `_inflection` and `_product` from `SpecArray`.
+* Get rid of simpy dependency.
+* New daskable stats defined as ufuncs using numba.
+* SpecArray attributes redefined as property methods.
 
 Bug Fixes
 ---------
 
 deprecation
 -----------
+* Drop support for python < 3.7
 * Dropped args `hs_min` and `nearest` in `SpecArray.partition`.
 
+
+.. _`RubendeBruin`: https://github.com/RubendeBruin
+
+
 3.7.2 (2021-01-12)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -58,7 +131,8 @@ Bug Fixes
 
 
 3.7.1 (2020-08-26)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Internal Changes
 ----------------
@@ -71,7 +145,8 @@ Internal Changes
 
 
 3.7.0 (2020-07-16)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -83,7 +158,8 @@ Internal Changes
 
 
 3.6.5 (2020-07-10)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -91,7 +167,8 @@ Bug Fixes
 
 
 3.6.4 (2020-06-29)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -99,7 +176,8 @@ Bug Fixes
 
 
 3.6.3 (2020-06-28)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Internal Changes
 ----------------
@@ -107,7 +185,8 @@ Internal Changes
 
 
 3.6.2 (2020-06-28)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Internal Changes
 ----------------
@@ -115,7 +194,8 @@ Internal Changes
 
 
 3.6.1 (2020-06-28)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Internal Changes
 ----------------
@@ -123,7 +203,8 @@ Internal Changes
 
 
 3.6.0 (2020-06-27)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -155,7 +236,8 @@ Internal Changes
 
 
 3.5.3 (2020-04-14)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 Fix xarray version until breaking changes with 0.15.1 are taken care of.
 
 Bug Fixes
@@ -168,7 +250,8 @@ Internal Changes
 
 
 3.5.2 (2020-03-09)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -181,7 +264,8 @@ New Features
 
 
 3.5.1 (2019-12-12)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -194,7 +278,8 @@ Internal Changes
 
 
 3.5.0 (2019-12-09)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 **The first PyPI release from new** `wavespectra`_ **github organisation.**
 
 Breaking Changes
@@ -235,7 +320,8 @@ Internal Changes
 
 
 3.4.0 (2019-03-28)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 **The last PyPI release from old metocean github organisation.**
 
 New Features
@@ -244,7 +330,8 @@ New Features
 
 
 3.3.1 (2019-03-19)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -253,7 +340,8 @@ New Features
 
 
 3.3.0 (2019-02-21)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -269,7 +357,8 @@ Internal Changes
 
 
 3.2.5 (2019-01-25)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -277,7 +366,8 @@ Bug Fixes
 
 
 3.2.4 (2019-01-23)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -285,7 +375,8 @@ Bug Fixes
 
 
 3.2.3 (2019-01-08)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -297,7 +388,8 @@ Bug Fixes
 
 
 3.2.2 (2018-12-04)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -305,7 +397,8 @@ Bug Fixes
 
 
 3.2.1 (2018-11-14)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -317,7 +410,8 @@ Bug Fixes
 
 
 3.2.0 (2018-11-04)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -333,7 +427,8 @@ Internal changes
 
 
 3.1.4 (2018-08-29)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -341,7 +436,8 @@ Bug Fixes
 
 
 3.1.3 (2018-07-27)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Changes
 -------
@@ -349,7 +445,8 @@ Changes
 
 
 3.1.2 (2018-07-05)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Changes
 -------
@@ -361,7 +458,8 @@ Bug Fixes
 
 
 3.1.1 (2018-05-17)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -372,7 +470,8 @@ New Features
 
 
 3.1.0 (2018-05-09)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -384,7 +483,8 @@ Bug Fixes
 
 
 3.0.2 (2018-05-03)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 Bug Fixes
 ---------
@@ -392,7 +492,8 @@ Bug Fixes
 
 
 3.0.1 (2018-04-28)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 
 New Features
 ------------
@@ -416,7 +517,8 @@ Internal Changes
 
 
 3.0 (2018-03-05)
-~~~~~~~~~~~~~~~~~~
+__________________
+
 **This major release marks the migration from the predecessor** `pyspectra` **library,
 as well as the open-sourcing of wavespectra and first PyPI release.**
 
