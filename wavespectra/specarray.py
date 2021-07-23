@@ -17,7 +17,7 @@ import inspect
 import warnings
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
@@ -177,65 +177,6 @@ class SpecArray(object):
                 "Ensure it is defined in attributes.yml"
             )
             return ""
-
-    def regrid_spec(self, new_freq = None, new_dir = None, maintain_m0 = True):
-        """Returns a linear re-grid of spectra
-
-        0-360 is taken care off
-        if needed a zero frequency with zero energy is added
-        new frequencies above the available frequencies are set to 0
-
-        """
-        da = self._obj.copy(deep=True)
-
-        if new_dir is not None:
-
-            # Interpolate heading
-            da = da.sortby('dir')
-
-            # Repeat the first and last direction with 360 deg offset
-            # but only when required
-
-            to_concat = [da]
-            if np.min(new_dir) < np.min(da.dir):
-                highest = da.isel(dir=-1)
-                highest['dir'] = highest.dir - 360
-
-                to_concat = [highest, da]
-
-            if np.max(new_dir) > np.max(da.dir):
-                lowest = da.isel(dir=0)
-                lowest['dir'] = lowest.dir + 360
-
-                to_concat.append(lowest)
-
-            if len(to_concat) == 1:
-                extended_dirs = da
-            else:
-                extended_dirs = xr.concat(to_concat, dim='dir')
-
-            # extended-dirs
-            da = extended_dirs.interp(dir=new_dir, assume_sorted=True)
-
-        if new_freq is not None:
-
-            # If needed, add a new frequency at f=0 with zero energy
-            if np.min(new_freq) < np.min(da.freq):
-                # add zero frequency
-                fzero = 0 * da.isel(freq=0)
-                fzero['freq'] = 0
-                extended_freqs = xr.concat([fzero, da], dim='freq')
-            else:
-                extended_freqs = da
-
-            # For requested frequencies above the available freqs use 0
-            da = extended_freqs.interp(freq=new_freq, assume_sorted=False, kwargs={'fill_value': 0})
-
-        if maintain_m0:
-            scale = self.hs()**2 / da.spec.hs()**2
-            da = da * scale
-
-        return da
 
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
@@ -727,6 +668,40 @@ class SpecArray(object):
                 )
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
+
+    def interp(self, freq=None, dir=None, maintain_m0=True):
+        """Interpolate onto new spectral basis.
+
+        Args:
+            - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+            - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        Note:
+            - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+            - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+            - Only the 'linear' method is currently supported.
+
+        """
+        return regrid_spec(self._obj, freq, dir, maintain_m0=maintain_m0)
+
+    def interp_like(self, other, maintain_m0=True):
+        """Interpolate onto coordinates from other spectra.
+
+        Args:
+            - other (Dataset, DataArray): Spectra defining new spectral basis.
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        """
+        freq = getattr(other.spec, attrs.FREQNAME)
+        dir = getattr(other.spec, attrs.DIRNAME)
+        return self.interp(freq=freq, dir=dir, maintain_m0=maintain_m0)
 
     def plot(
         self,
