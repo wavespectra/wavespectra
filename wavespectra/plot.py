@@ -282,7 +282,7 @@ class WavePlot:
         dattrs = darr[self.dname].attrs
         sattrs = darr.attrs
         freqs = np.log10(darr.freq * LOG_FACTOR)
-        freqs = freqs.where(xr.ufuncs.isfinite(freqs), 0)
+        freqs = freqs.where(np.isfinite(freqs), 0)
         darr = darr.assign_coords({self.fname: freqs})
         darr.attrs = sattrs
         darr[self.fname].attrs = fattrs
