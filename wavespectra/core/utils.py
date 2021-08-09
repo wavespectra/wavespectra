@@ -76,10 +76,24 @@ def to_nautical(ang):
     return np.mod(270 - ang, 360)
 
 
+def unique_indices(ds, dim="time"):
+    """Remove duplicate indices from dataset.
+
+    Args:
+        - ds (Dataset, DataArray): Dataset to remove duplicate indices from.
+        - dim (str): Dimension to remove duplicate indices from.
+
+    Returns:
+        dsout (Dataset, DataArray): Dataset with duplicate indices along dim removed.
+
+    """
+    _, index = np.unique(ds[dim], return_index=True)
+    return ds.isel(**{dim: index})
+
+
 def unique_times(ds):
     """Remove duplicate times from dataset."""
-    _, index = np.unique(ds["time"], return_index=True)
-    return ds.isel(time=index)
+    return unique_indices(ds, "time")
 
 
 def to_datetime(np64):
@@ -161,6 +175,8 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
         If either outfreq or outdir is None or False this coordinate is not interpolated
         Choose indir=None if spectrum is 1D.
 
+    TODO: Deprecate in favour of new regrid_spec function.
+
     """
     outfreq = infreq if outfreq is None or outfreq is False else outfreq
     outdir = indir if outdir is None or outdir is False else outdir
@@ -217,12 +233,17 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
         - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
         - Only the 'linear' method is currently supported.
+        - Duplicate wrapped directions (e.g., 0 and 360) are removed when regridding
+          directions because indices must be unique to intepolate.
 
     """
     dsout = dset.copy()
 
     if dir is not None:
         dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
+
+        # Remove any duplicate direction index
+        dsout = unique_indices(dsout, attrs.DIRNAME)
 
         # Interpolate heading
         dsout = dsout.sortby('dir')
