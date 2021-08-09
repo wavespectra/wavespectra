@@ -12,16 +12,20 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.9.1 (2021-MM-DD)
+3.9.1 (2021-08-21)
 __________________
 
 New Features
 ------------
+* New option in `read_triaxys` to allow providing the magnitic declination to correct.
+* New spectral regridding capability by `RubendeBruin`_. The function is wrapped in `SpecArray.interp`
+  and `SpecArray.interp_by` which mimic the behaviour in the respective counterparts from xarray.
 * Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
   no longer duplicate internal functions from xarray and should better integrate any upstream
   changes. The new api also handles logarithmic axes and masking in a more natural way 
   (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
 * New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
+* New `wavespectra.core.utils.unique_indices` function (unique_times will be deprecated in future releases.
 
 
 Bug Fixes
