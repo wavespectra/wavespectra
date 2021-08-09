@@ -17,7 +17,7 @@ import inspect
 import warnings
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
@@ -668,6 +668,40 @@ class SpecArray(object):
                 )
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
+
+    def interp(self, freq=None, dir=None, maintain_m0=True):
+        """Interpolate onto new spectral basis.
+
+        Args:
+            - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+            - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        Note:
+            - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+            - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+            - Only the 'linear' method is currently supported.
+
+        """
+        return regrid_spec(self._obj, freq, dir, maintain_m0=maintain_m0)
+
+    def interp_like(self, other, maintain_m0=True):
+        """Interpolate onto coordinates from other spectra.
+
+        Args:
+            - other (Dataset, DataArray): Spectra defining new spectral basis.
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        """
+        freq = getattr(other.spec, attrs.FREQNAME)
+        dir = getattr(other.spec, attrs.DIRNAME)
+        return self.interp(freq=freq, dir=dir, maintain_m0=maintain_m0)
 
     def plot(
         self,
