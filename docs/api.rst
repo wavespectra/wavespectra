@@ -40,7 +40,6 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
-   SpecArray.dpw
    SpecArray.swe
    SpecArray.sw
 
@@ -177,7 +176,7 @@ Internal core functions and objects
    :toctree: generated/
 
    core.watershed.partition
-   core.watershed.npart
+   core.watershed.nppart
    core.watershed.hs
    core.watershed.frequency_resolution
    core.watershed.inflection
@@ -197,7 +196,7 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs_gufunc
+   core.npstats.hs
    core.npstats.dpm_gufunc
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
