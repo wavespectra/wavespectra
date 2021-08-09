@@ -190,6 +190,8 @@ class Triaxys(object):
 
     @property
     def filenames(self):
+        if isinstance(self._filename_or_fileglob, Path):
+            self._filename_or_fileglob = str(self._filename_or_fileglob)
         if isinstance(self._filename_or_fileglob, list):
             filenames = sorted(self._filename_or_fileglob)
         elif isinstance(self._filename_or_fileglob, str):
