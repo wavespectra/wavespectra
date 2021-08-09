@@ -197,22 +197,32 @@ frequency-direction spectral plots in polar coordinates.
 
     ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=2.0)
     @savefig faceted_polar_plot.png
-    ds.spec.plot(kind="contourf", col="time", as_period=False, levels=20, vmin=0, vmax=1);
+    ds.spec.plot(
+        kind="contourf",
+        col="time",
+        as_period=False,
+        normalised=True,
+        logradius=True,
+        add_colorbar=False,
+        figsize=(8, 5)
+    );
 
 Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
 
 .. ipython:: python
     :okwarning:
 
-    @suppress
-    plt.figure(figsize=(8, 4.5))
+    import cmocean
 
-    ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"}).load()
+    @suppress
+    plt.figure(figsize=(8, 4))
+
+    ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"})
     ds = ds.assign_coords({"period": 1 / ds.period})
     ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
 
     @savefig hovmoller_plot.png
-    ds.plot.contourf(x="time", y="period", vmax=1.25);
+    ds.plot.contourf(x="time", y="period", vmax=1.25, cmap=cmocean.cm.thermal, levels=10);
 
 Selecting
 ---------

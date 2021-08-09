@@ -6,9 +6,9 @@ Contour type plot of wave spectrum
 
 """
 import matplotlib.pyplot as plt
-from wavespectra import read_swan
+from wavespectra import read_era5
 
-dset = read_swan("../_static/swanfile.spec", as_site=True)
-ds = dset.isel(site=0, time=0)
-fig = plt.figure(figsize=(6, 4))
-p = ds.spec.plot.contour()
+
+dset = read_era5("../_static/era5file.nc")
+ds = dset.isel(lat=0, lon=0, time=0)
+p = ds.spec.plot(kind="contour", colors="#af1607", linewidths=0.5)
