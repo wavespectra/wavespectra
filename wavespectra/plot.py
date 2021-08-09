@@ -5,12 +5,12 @@ from wavespectra.core.attributes import attrs
 
 
 LOG_FACTOR = 1e3
-RADII_FREQ_TICKS_LOG = np.log10(np.array([0.05, 0.1, 0.2, 0.3, 0.4]) * LOG_FACTOR)
+RADII_FREQ_TICKS_LOG = np.array([0.05, 0.1, 0.2, 0.3, 0.4])
 RADII_FREQ_TICKS_LIN = np.arange(0.1, 1.1, 0.1)
-RADII_PER_TICKS_LOG = np.log10((np.array([20, 10, 5, 3, 2])) * LOG_FACTOR)
+RADII_PER_TICKS_LOG = (np.array([20, 10, 5, 3, 2]))
 RADII_PER_TICKS_LIN = np.arange(5, 30, 5)
 CBAR_TICKS = [1e-2, 1e-1, 1e0]
-LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1) , 14)
+LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1), 14)
 SUPPORTED_KIND = ["pcolormesh", "contourf", "contour"]
 
 
@@ -33,12 +33,14 @@ class WavePlot:
         - cbar_ticks (array): Tick values for colorbar.
         - cmap (str, obj): Colormap to use.
         - efth_min (float): Clip energy density below this value.
+        - clean_axis (bool): Remove radii and theta axis lines for clean view.
         - kwargs: All extra kwargs are passed to the plotting method defined by `kind`.
 
     Returns:
         - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
 
     """
+
     def __init__(
         self,
         darr,
@@ -53,11 +55,12 @@ class WavePlot:
         radii_ticks=None,
         radii_labels_angle=22.5,
         radii_labels_size=8,
-        cbar_ticks=CBAR_TICKS,
+        cbar_ticks=None,
         cmap="RdBu_r",
         extend="neither",
         efth_min=1e-3,
-        **kwargs
+        clean_axis=False,
+        **kwargs,
     ):
         self.kind = kind
         self.normalised = normalised
@@ -67,16 +70,17 @@ class WavePlot:
         self.show_radii_labels = show_radii_labels
         self.radii_labels_angle = radii_labels_angle
         self.radii_labels_size = radii_labels_size
-        self.cbar_ticks = cbar_ticks
         self.cmap = cmap
         self.extend = extend
         self.efth_min = efth_min
+        self.clean_axis = clean_axis
 
         # Attributes set based on other attributes
         self._darr = darr
         self._rmin = rmin
         self._rmax = rmax
         self._radii_ticks = radii_ticks
+        self._cbar_ticks = cbar_ticks
         self._kwargs = kwargs
 
         self._validate()
@@ -97,10 +101,12 @@ class WavePlot:
             "theta_direction": self._kwargs.pop("theta_direction", -1),
             "theta_offset": self._kwargs.pop("theta_offset", np.deg2rad(90)),
         }
-        subplot_kws = {**default_subplot_kws, **self._kwargs.get("subplot_kws", {})}
+        subplot_kws = {**default_subplot_kws, **self._kwargs.pop("subplot_kws", {})}
 
         # Call plotting function
-        pobj = getattr(self.darr.plot, self.kind)(subplot_kws=subplot_kws, **self.kwargs)
+        pobj = getattr(self.darr.plot, self.kind)(
+            subplot_kws=subplot_kws, **self.kwargs
+        )
 
         # Adjusting axes
         if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
@@ -130,6 +136,11 @@ class WavePlot:
             if self.show_radii_labels is False:
                 ax.set_yticklabels("")
 
+            # Clean axis
+            if self.clean_axis:
+                ax.set_rticks([])
+                ax.set_xticks([])
+
         # Adjusting colorbar
         if cbar is not None:
             cbar.set_ticks(self.cbar_ticks)
@@ -152,7 +163,7 @@ class WavePlot:
         _darr = self._set_labels(_darr)
         # Normalise
         if self.normalised:
-            _darr /= _darr.max()
+            _darr = (_darr - _darr.min()) / (_darr.max() - _darr.min())
         # Set lowest value for masking
         if self.efth_min is not None:
             _darr = _darr.where(_darr >= self.efth_min, self.efth_min)
@@ -185,33 +196,51 @@ class WavePlot:
             return self._rmax
 
     @property
+    def cbar_ticks(self):
+        """Colorbar ticks."""
+        if self._cbar_ticks is None and self.normalised and "contour" in self.kind and "levels" not in self._kwargs:
+            self._cbar_ticks = CBAR_TICKS
+        return self._cbar_ticks
+
+    @property
     def radii_ticks(self):
         """Tick locations for the radii axis."""
-        if self._radii_ticks is not None:
-            return self._radii_ticks
-        if self.logradius:
-            if self.as_period:
-                self._radii_ticks = RADII_PER_TICKS_LOG
-            else:
-                self._radii_ticks = RADII_FREQ_TICKS_LOG
-        else:
-            if self.as_period:
-                self._radii_ticks = RADII_PER_TICKS_LIN
-            else:
-                self._radii_ticks = RADII_FREQ_TICKS_LIN
-        # Ensure radii ticks within (rmin, rmax)
-        if self.rmin >= self._radii_ticks.max() or self.rmax <= self._radii_ticks.min():
+        radii_ticks = self._radii_ticks
+        # Assign default values
+        if self._radii_ticks is None:
             if self.logradius:
-                ticks = 10 ** self._radii_ticks / LOG_FACTOR
+                if self.as_period:
+                    radii_ticks = RADII_PER_TICKS_LOG
+                else:
+                    radii_ticks = RADII_FREQ_TICKS_LOG
             else:
-                ticks = self._radii_ticks
+                if self.as_period:
+                    radii_ticks = RADII_PER_TICKS_LIN
+                else:
+                    radii_ticks = RADII_FREQ_TICKS_LIN
+        # Ensure numpy array
+        radii_ticks = np.array(radii_ticks)
+        # Taking the log10 if logradius is True
+        if self.logradius:
+            radii_ticks = np.log10(radii_ticks * LOG_FACTOR)
+        # Raise ValueError if radii ticks are not within (rmin, rmax)
+        if self.rmin >= radii_ticks.max() or self.rmax <= radii_ticks.min():
+            if self.logradius:
+                ticks = 10 ** radii_ticks / LOG_FACTOR
+                rmin = 10 ** self.rmin / LOG_FACTOR
+                rmax = 10 ** self.rmax / LOG_FACTOR
+            else:
+                ticks = radii_ticks
+                rmin = self.rmin
+                rmax = self.rmax
             raise ValueError(
-                f"radii_ticks '{ticks}' are outside the bounds "
-                f"defined by 'rmin={self._rmin}', 'rmax={self._rmax}'"
+                f"radii_ticks '{ticks}' outside the bounds defined by 'rmin={rmin}', "
+                f"'rmax={rmax}', perhaps you are trying to define frequency radii "
+                "ticks on period radii or vice-versa?"
             )
-        # Clipping to radius limits
-        self._radii_ticks = np.unique(self._radii_ticks.clip(self.rmin, self.rmax))
-        return self._radii_ticks
+        # Clipping to radii limits
+        radii_ticks = np.unique(radii_ticks.clip(self.rmin, self.rmax))
+        return radii_ticks
 
     @property
     def radii_ticklabels(self):
@@ -227,9 +256,9 @@ class WavePlot:
 
     @property
     def kwargs(self):
-        _kwargs = {
-            **self._kwargs, **{"x": self.dname, "y": self.fname, "cmap": self.cmap}
-        }
+        _kwargs = {**self._kwargs, **{"x": self.dname, "y": self.fname}}
+        if "colors" not in self._kwargs:
+            _kwargs.update({"cmap": self.cmap})
         if "contour" in self.kind:
             _kwargs.update({"extend": self.extend})
         if self.normalised and "contour" in self.kind and "levels" not in _kwargs:
@@ -252,7 +281,9 @@ class WavePlot:
             if darray[self.dname][0] % 360 != darray[self.dname][-1] % 360:
                 dd = np.diff(darray[self.dname]).mean()
                 closure = darray.isel(**{self.dname: 0})
-                closure = closure.assign_coords({self.dname: darray[self.dname][-1] + dd})
+                closure = closure.assign_coords(
+                    {self.dname: darray[self.dname][-1] + dd}
+                )
                 darray = xr.concat((darray, closure), dim=self.dname)
         # Convert to radians
         darray = darray.assign_coords({self.dname: np.deg2rad(darray[self.dname])})
