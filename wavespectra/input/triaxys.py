@@ -1,6 +1,7 @@
 import glob
 import copy
 import datetime
+from pathlib import Path
 from collections import OrderedDict
 from dateutil import parser
 import numpy as np
@@ -11,13 +12,18 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import interp_spec
 
 
-def read_triaxys(filename_or_fileglob, toff=0):
+def read_triaxys(filename_or_fileglob, toff=0, magnetic_variation=None, regrid_dir=True):
     """Read spectra from TRIAXYS wave buoy ASCII files.
 
     Args:
         - filename_or_fileglob (str): filename or fileglob specifying one or
           more files to read.
         - toff (float): time-zone offset from UTC in hours.
+        - magnetic_variation (float): The angle between the magnetic and geographic
+          meridians to correct from magnetic north to true north. Positive and negative
+          values indicate East and West declination respectively.
+        - regrid_dir (bool): Regrid directions after correcting for the magnetic
+          variation so the direction coordinate remains the same.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from Triaxys file.
@@ -25,11 +31,21 @@ def read_triaxys(filename_or_fileglob, toff=0):
     Note:
         - frequencies and directions from first file are used as reference
           to interpolate spectra from other files in case they differ.
+        - Duplicate dir coordinates (e.g., 0 and 360) are removed when correcting for
+          the magnetic variation since indices must be unique to regrid.
 
     """
     txys = Triaxys(filename_or_fileglob, toff)
     txys.run()
-    return txys.dset
+    dset = txys.dset
+    if magnetic_variation is not None and dset.spec.dir is not None:
+        # Rotate
+        dirs = dset.dir
+        dset = dset.assign_coords({"dir": dirs + magnetic_variation})
+        # Regrid
+        if regrid_dir:
+            dset = dset.spec.interp(dir=dirs)
+    return dset
 
 
 class Triaxys(object):
@@ -199,3 +215,25 @@ class Triaxys(object):
         if not filenames:
             raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    filename1 = "../../tests/sample_files/triaxys.DIRSPEC"
+    filename2 = str(Path(filename1))
+    dset1 = read_triaxys(filename2)
+    dset2 = read_triaxys(filename2, magnetic_variation=22)
+    dset3 = read_triaxys(filename2, magnetic_variation=22, regrid_dir=False)
+
+    fig = plt.figure()
+    dset1.isel(time=0).spec.plot(rmin=0.05)
+    plt.title("Original")
+    fig = plt.figure()
+    dset2.isel(time=0).spec.plot(rmin=0.05)
+    plt.title("Rotated 22 degrees, regridded")
+    fig = plt.figure()
+    dset3.isel(time=0).spec.plot(rmin=0.05)
+    plt.title("Rotated 22 degrees, not regridded")
+
+    plt.show()
