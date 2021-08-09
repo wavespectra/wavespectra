@@ -2,6 +2,8 @@ wavespectra
 ===========
 Python library for ocean wave spectra.
 
+.. image:: https://zenodo.org/badge/205463939.svg
+   :target: https://zenodo.org/badge/latestdoi/205463939
 .. image:: https://travis-ci.org/wavespectra/wavespectra.svg?branch=master
     :target: https://travis-ci.org/wavespectra/wavespectra
 .. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg
