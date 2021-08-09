@@ -57,14 +57,14 @@ def test_maintain_m0(dset):
     new_freq = np.linspace(0, 0.5, 25)
     new_dir = np.arange(0, 360, 5)
     dsi = regrid_spec(dset, dir=new_dir, freq=new_freq)
-    assert dset.spec.hs().values == pytest.approx(dsi.spec.hs())
+    assert dset.spec.hs().values == pytest.approx(dsi.spec.hs().values)
 
 
 def test_not_maintain_m0(dset):
     new_freq = np.linspace(0, 0.5, 25)
     new_dir = np.arange(0, 360, 5)
     dsi = regrid_spec(dset, dir=new_dir, freq=new_freq, maintain_m0=False)
-    assert dset.spec.hs().values != pytest.approx(dsi.spec.hs())
+    assert dset.spec.hs().values != pytest.approx(dsi.spec.hs().values)
 
 
 def test_interp_lower_frequency(dset2):
