@@ -195,3 +195,63 @@ def flatten_list(l, a):
         else:
             a.append(i)
     return a
+
+
+def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
+    """Regrid spectra onto new spectral basis.
+
+    Args:
+        - dset (Dataset, DataArray): Spectra to interpolate.
+        - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+        - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+        - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+    Returns:
+        - dsi (Dataset, DataArray): Regridded spectra.
+
+    Note:
+        - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+        - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+        - Only the 'linear' method is currently supported.
+
+    """
+    dsout = dset.copy()
+
+    if dir is not None:
+
+        # Interpolate heading
+        dsout = dsout.sortby('dir')
+        to_concat = [dsout]
+
+        # Repeat the first and last direction with 360 deg offset when required
+        if dir.min() < dsout.dir.min():
+            highest = dsout.isel(dir=-1)
+            highest['dir'] = highest.dir - 360
+            to_concat = [highest, dsout]
+        if dir.max() > dsout.dir.max():
+            lowest = dsout.isel(dir=0)
+            lowest['dir'] = lowest.dir + 360
+            to_concat.append(lowest)
+
+        if len(to_concat) > 1:
+            dsout = xr.concat(to_concat, dim='dir')
+
+        # Interpolate directions
+        dsout = dsout.interp(dir=dir, assume_sorted=True)
+
+    if freq is not None:
+
+        # If needed, add a new frequency at f=0 with zero energy
+        if freq.min() < dsout.freq.min():
+            fzero = 0 * dsout.isel(freq=0)
+            fzero['freq'] = 0
+            dsout = xr.concat([fzero, dsout], dim='freq')
+
+        # Interpolate frequencies
+        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={'fill_value': 0})
+
+    if maintain_m0:
+        scale = dset.spec.hs()**2 / dsout.spec.hs()**2
+        dsout = dsout * scale
+
+    return dsout
