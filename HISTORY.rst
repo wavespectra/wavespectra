@@ -12,7 +12,7 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.9.1 (2021-08-21)
+3.10.0 (2021-08-21)
 __________________
 
 New Features
@@ -32,7 +32,6 @@ Bug Fixes
 ---------
 * Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
 * Fix bug in `scale_by_hs` when run on dask datasets.
-* Allow pathlib objects in read_triaxys.
 
 
 Internal Changes
@@ -40,6 +39,7 @@ Internal Changes
 * Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
 * Add new funwave functiont to docs.
 * Update authors list.
+* Allow pathlib objects in read_triaxys.
 
 
 Deprecation
