@@ -32,6 +32,7 @@ Bug Fixes
 ---------
 * Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
 * Fix bug in `scale_by_hs` when run on dask datasets.
+* Allow pathlib objects in read_triaxys.
 
 
 Internal Changes
