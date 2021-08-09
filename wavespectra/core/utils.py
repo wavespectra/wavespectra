@@ -7,6 +7,9 @@ import xarray as xr
 
 from scipy.interpolate import griddata
 
+from wavespectra.core.attributes import attrs
+
+
 GAMMA = (
     lambda x: np.sqrt(2.0 * np.pi / x)
     * ((x / np.exp(1)) * np.sqrt(x * np.sinh(1.0 / x))) ** x
@@ -91,6 +94,7 @@ def to_datetime(np64):
             % type(np64)
         )
     return dt
+
 
 
 def spddir_to_uv(spd, direc, coming_from=False):
@@ -218,6 +222,7 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
     dsout = dset.copy()
 
     if dir is not None:
+        dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
 
         # Interpolate heading
         dsout = dsout.sortby('dir')
