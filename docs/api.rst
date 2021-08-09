@@ -68,6 +68,8 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.scale_by_hs
    SpecArray.oned
    SpecArray.to_energy
+   SpecArray.interp
+   SpecArray.interp_like
 
 
 SpecDataset
@@ -235,12 +237,14 @@ Internal core functions and objects
    core.utils.celerity
    core.utils.dnum_to_datetime
    core.utils.to_nautical
+   core.utils.unique_indices
    core.utils.unique_times
    core.utils.to_datetime
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec
    core.utils.flatten_list
+   core.utils.regrid_spec
 
 **swan module**
 
