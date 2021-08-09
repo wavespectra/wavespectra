@@ -8,6 +8,7 @@ Partition spectra and plot parameters
 import matplotlib.pyplot as plt
 from wavespectra import read_ww3
 
+
 dset = read_ww3("../_static/ww3file.nc")
 
 dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
