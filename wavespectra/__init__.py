@@ -44,7 +44,7 @@ def _import_read_functions(pkgname="input"):
                 import_module(f"wavespectra.{pkgname}.{module}"), func_name
             )
         except Exception as exc:
-            print(f"Cannot import reading function {func_name}:\n{exc}")
+            print(f"Cannot import reading function {func_name} because:\n{exc}")
 
 
 _import_read_functions()
