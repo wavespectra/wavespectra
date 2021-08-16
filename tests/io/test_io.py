@@ -98,11 +98,14 @@ class TestIO(object):
     def test_zarr(self):
         """Check reading of zarr dataset in ww3 format."""
         filename = os.path.join(FILES_DIR, "ww3file.zarr")
+
         dset = read_ww3(filename, file_format="zarr")
         outfile = os.path.join(self.tmp_dir, "tmp.nc")
+        print(outfile)
         dset.spec.to_netcdf(outfile)
+
         dset2 = read_netcdf(outfile)
-        dset.equals(dset2)
+        xr.testing.assert_allclose(dset, dset2, atol=5e-6)
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)
