@@ -12,6 +12,59 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.10.0 (2021-08-21)
+__________________
+
+New Features
+------------
+* New option in `read_triaxys` to allow providing the magnitic declination to correct.
+* New spectral regridding capability by `RubendeBruin`_. The function is wrapped in `SpecArray.interp`
+  and `SpecArray.interp_by` which mimic the behaviour in the respective counterparts from xarray.
+* Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
+  no longer duplicate internal functions from xarray and should better integrate any upstream
+  changes. The new api also handles logarithmic axes and masking in a more natural way 
+  (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
+* New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
+* New `wavespectra.core.utils.unique_indices` function (unique_times will be deprecated in future releases.
+
+
+Bug Fixes
+---------
+* Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
+* Fix bug in `scale_by_hs` when run on dask datasets.
+
+
+Internal Changes
+----------------
+* Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
+* Add new funwave functiont to docs.
+* Update authors list.
+* Allow pathlib objects in read_triaxys.
+
+
+Deprecation
+-----------
+* Calling the plot kind as a method from `SpecArray.plot`, e.g. `SpecArray.plot.contourf`
+  is deprecated with the new plotting api. Now `kind` needs to be provided as an argument.
+* Arguments `show_radius_label` and `show_direction_label` are deprecated from `SpecArray.plot`.
+  Labels are no longer drawn as they fall on top of ticks. In order to show it the axes
+  properties now must be manually defined from the axis.
+* Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
+  api. Similar result can be achieved in the new api by manually converting efth before plotting.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
+
+
+3.9.0 (2021-05-29)
+__________________
+
+New Features
+------------
+* Funwave spectra reader `read_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+* Funwave spectra writer `to_funwave`_ (`PR36 <https://github.com/wavespectra/wavespectra/pull/36>`_).
+
+.. _`read_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/funwave.py
+.. _`to_funwave`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/funwave.py
+
 
 3.8.1 (2021-04-06)
 __________________

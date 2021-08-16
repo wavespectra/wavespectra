@@ -16,23 +16,11 @@ from itertools import product
 import inspect
 import warnings
 
-from wavespectra.plot import _PlotMethods
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import (
-    D2R,
-    R2D,
-    celerity,
-    wavenuma,
-    wavelen,
-    bins_from_frequency_grid,
-)
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, bins_from_frequency_grid
 from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
-
-
-# TODO: dimension renaming and sorting in __init__ are not producing intended effect.
-#       They correctly modify xarray_obj as defined in xarray.spec._obj but the actual
-#       xarray is not modified - and they loose their direct association
+from wavespectra.plot import polar_plot, CBAR_TICKS
 
 
 @xr.register_dataarray_accessor("spec")
@@ -110,17 +98,6 @@ class SpecArray(object):
         else:
             self._dd = 1.0
         return self._dd
-
-    def _strictly_increasing(self, arr):
-        """Check if array is sorted in increasing order."""
-        return all(x < y for x, y in zip(arr, arr[1:]))
-
-    def _collapse_array(self, arr, indices, axis):
-        """Collapse ndim array [arr] along [axis] using [indices]."""
-        magic_index = [np.arange(i) for i in indices.shape]
-        magic_index = np.ix_(*magic_index)
-        magic_index = magic_index[:axis] + (indices,) + magic_index[axis:]
-        return arr[magic_index]
 
     def _twod(self, darray, dim=attrs.DIRNAME):
         """Ensure dir,freq dims are present so moment calculations won't break."""
@@ -208,25 +185,6 @@ class SpecArray(object):
                 "Ensure it is defined in attributes.yml"
             )
             return ""
-
-    @property
-    def plot(self) -> _PlotMethods:
-        """Access plotting functions.
-
-        For convenience just call this directly:
-
-            * dset.efth.spec.plot()
-            * dset.spec.plot()
-
-        Or use it as a namespace to use wavespectra.plot functions as:
-
-            * dset.efth.spec.plot.contourf()
-            * dset.spec.plot.contourf()
-
-        Which is equivalent to wavespectra.plot.imshow(dset.efth)
-
-        """
-        return _PlotMethods(self._obj)
 
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
@@ -508,7 +466,7 @@ class SpecArray(object):
         # Condition over which scaling applies
         condition = True
         if hs_min != -np.inf or hs_max != np.inf:
-            condition *= (hs >= hs_min) & (hs <= hs_max)
+            condition *= ((hs >= hs_min) & (hs <= hs_max)).chunk()
         if tp_min != -np.inf or tp_max != np.inf:
             tp = self.tp()
             condition *= (tp >= tp_min) & (tp <= tp_max)
@@ -855,3 +813,107 @@ class SpecArray(object):
                 )
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
+
+    def interp(self, freq=None, dir=None, maintain_m0=True):
+        """Interpolate onto new spectral basis.
+
+        Args:
+            - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+            - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        Note:
+            - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+            - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+            - Only the 'linear' method is currently supported.
+
+        """
+        return regrid_spec(self._obj, freq, dir, maintain_m0=maintain_m0)
+
+    def interp_like(self, other, maintain_m0=True):
+        """Interpolate onto coordinates from other spectra.
+
+        Args:
+            - other (Dataset, DataArray): Spectra defining new spectral basis.
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        """
+        freq = getattr(other.spec, attrs.FREQNAME)
+        dir = getattr(other.spec, attrs.DIRNAME)
+        return self.interp(freq=freq, dir=dir, maintain_m0=maintain_m0)
+
+    def plot(
+        self,
+        kind="contourf",
+        normalised=True,
+        logradius=True,
+        as_period=False,
+        rmin=None,
+        rmax=None,
+        show_theta_labels=True,
+        show_radii_labels=True,
+        radii_ticks=None,
+        radii_labels_angle=22.5,
+        radii_labels_size=8,
+        cbar_ticks=CBAR_TICKS,
+        cmap="RdBu_r",
+        extend="neither",
+        efth_min=1e-3,
+        **kwargs
+    ):
+        """Plot spectra in polar axis.
+
+        Args:
+            - kind (str): Plot kind, one of (`contourf`, `contour`, `pcolormesh`).
+            - normalised (bool): Show efth normalised between 0 and 1.
+            - logradius (bool): Set log radii.
+            - as_period (bool): Set radii as wave period instead of frequency.
+            - rmin (float): Minimum value to clip the radius axis.
+            - rmax (float): Maximum value to clip the radius axis.
+            - show_theta_labels (bool): Show direction tick labels.
+            - show_radii_labels (bool): Show radii tick labels.
+            - radii_ticks (array): Tick values for radii.
+            - radii_labels_angle (float): Polar angle at which radii labels are positioned.
+            - radii_labels_size (float): Fontsize for radii labels.
+            - cbar_ticks (array): Tick values for colorbar.
+            - cmap (str, obj): Colormap to use.
+            - efth_min (float): Clip energy density below this value.
+            - kwargs: All extra kwargs are passed to the plotting method defined by `kind`.
+
+        Returns:
+            - pobj: The xarray object returned by calling `da.plot.{kind}(**kwargs)`.
+
+        Note:
+            - If normalised==True, contourf uses a logarithmic colour scale by default.
+            - Plot and axes can be redefined from the returned xarray object.
+            - Xarray uses the `sharex`, `sharey` args to control which panels receive axis
+              labels. In order to set labels for all panels, set these to `False`.
+            - Masking of low values can be done in contourf by setting `efth_min` larger
+              than the lowest contour level along with `extend` set to "neither" or "min".
+
+        """
+        return polar_plot(
+            darr=self._obj.copy(deep=True),
+            kind=kind,
+            normalised=normalised,
+            logradius=logradius,
+            as_period=as_period,
+            rmin=rmin,
+            rmax=rmax,
+            show_theta_labels=show_theta_labels,
+            show_radii_labels=show_radii_labels,
+            radii_ticks=radii_ticks,
+            radii_labels_angle=radii_labels_angle,
+            radii_labels_size=radii_labels_size,
+            cbar_ticks=cbar_ticks,
+            cmap=cmap,
+            extend=extend,
+            efth_min=efth_min,
+            **kwargs
+        )

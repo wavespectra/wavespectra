@@ -40,7 +40,6 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
-   SpecArray.dpw
    SpecArray.swe
    SpecArray.sw
 
@@ -68,6 +67,8 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.scale_by_hs
    SpecArray.oned
    SpecArray.to_energy
+   SpecArray.interp
+   SpecArray.interp_like
 
 
 SpecDataset
@@ -175,7 +176,7 @@ Internal core functions and objects
    :toctree: generated/
 
    core.watershed.partition
-   core.watershed.npart
+   core.watershed.nppart
    core.watershed.hs
    core.watershed.frequency_resolution
    core.watershed.inflection
@@ -195,7 +196,7 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs_gufunc
+   core.npstats.hs
    core.npstats.dpm_gufunc
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
@@ -235,12 +236,14 @@ Internal core functions and objects
    core.utils.celerity
    core.utils.dnum_to_datetime
    core.utils.to_nautical
+   core.utils.unique_indices
    core.utils.unique_times
    core.utils.to_datetime
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec
    core.utils.flatten_list
+   core.utils.regrid_spec
 
 **swan module**
 

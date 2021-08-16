@@ -7,6 +7,9 @@ import xarray as xr
 
 from scipy.interpolate import griddata
 
+from wavespectra.core.attributes import attrs
+
+
 GAMMA = (
     lambda x: np.sqrt(2.0 * np.pi / x)
     * ((x / np.exp(1)) * np.sqrt(x * np.sinh(1.0 / x))) ** x
@@ -73,10 +76,24 @@ def to_nautical(ang):
     return np.mod(270 - ang, 360)
 
 
+def unique_indices(ds, dim="time"):
+    """Remove duplicate indices from dataset.
+
+    Args:
+        - ds (Dataset, DataArray): Dataset to remove duplicate indices from.
+        - dim (str): Dimension to remove duplicate indices from.
+
+    Returns:
+        dsout (Dataset, DataArray): Dataset with duplicate indices along dim removed.
+
+    """
+    _, index = np.unique(ds[dim], return_index=True)
+    return ds.isel(**{dim: index})
+
+
 def unique_times(ds):
     """Remove duplicate times from dataset."""
-    _, index = np.unique(ds["time"], return_index=True)
-    return ds.isel(time=index)
+    return unique_indices(ds, "time")
 
 
 def to_datetime(np64):
@@ -91,6 +108,7 @@ def to_datetime(np64):
             % type(np64)
         )
     return dt
+
 
 
 def spddir_to_uv(spd, direc, coming_from=False):
@@ -157,6 +175,8 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
         If either outfreq or outdir is None or False this coordinate is not interpolated
         Choose indir=None if spectrum is 1D.
 
+    TODO: Deprecate in favour of new regrid_spec function.
+
     """
     outfreq = infreq if outfreq is None or outfreq is False else outfreq
     outdir = indir if outdir is None or outdir is False else outdir
@@ -195,6 +215,7 @@ def flatten_list(l, a):
         else:
             a.append(i)
     return a
+
 
 
 def bins_from_frequency_grid(bin_centers, absolute_tolerance=1e-3):
@@ -271,3 +292,69 @@ def bins_from_frequency_grid(bin_centers, absolute_tolerance=1e-3):
     raise ValueError(
         "The type of frequency grid can not be detected. Clean input data or increase tolerance?"
     )
+
+def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
+    """Regrid spectra onto new spectral basis.
+
+    Args:
+        - dset (Dataset, DataArray): Spectra to interpolate.
+        - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+        - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+        - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+    Returns:
+        - dsi (Dataset, DataArray): Regridded spectra.
+
+    Note:
+        - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+        - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+        - Only the 'linear' method is currently supported.
+        - Duplicate wrapped directions (e.g., 0 and 360) are removed when regridding
+          directions because indices must be unique to intepolate.
+
+    """
+    dsout = dset.copy()
+
+    if dir is not None:
+        dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
+
+        # Remove any duplicate direction index
+        dsout = unique_indices(dsout, attrs.DIRNAME)
+
+        # Interpolate heading
+        dsout = dsout.sortby('dir')
+        to_concat = [dsout]
+
+        # Repeat the first and last direction with 360 deg offset when required
+        if dir.min() < dsout.dir.min():
+            highest = dsout.isel(dir=-1)
+            highest['dir'] = highest.dir - 360
+            to_concat = [highest, dsout]
+        if dir.max() > dsout.dir.max():
+            lowest = dsout.isel(dir=0)
+            lowest['dir'] = lowest.dir + 360
+            to_concat.append(lowest)
+
+        if len(to_concat) > 1:
+            dsout = xr.concat(to_concat, dim='dir')
+
+        # Interpolate directions
+        dsout = dsout.interp(dir=dir, assume_sorted=True)
+
+    if freq is not None:
+
+        # If needed, add a new frequency at f=0 with zero energy
+        if freq.min() < dsout.freq.min():
+            fzero = 0 * dsout.isel(freq=0)
+            fzero['freq'] = 0
+            dsout = xr.concat([fzero, dsout], dim='freq')
+
+        # Interpolate frequencies
+        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={'fill_value': 0})
+
+    if maintain_m0:
+        scale = dset.spec.hs()**2 / dsout.spec.hs()**2
+        dsout = dsout * scale
+
+    return dsout
+

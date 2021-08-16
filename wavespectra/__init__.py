@@ -13,7 +13,7 @@ except ImportError:
     warnings.warn("Cannot import accessors at the main module level")
 
 
-__version__ = "3.8.1"
+__version__ = "3.10.0"
 __author__ = "Wavespectra Developers"
 __contact__ = "r.guedes@oceanum.science"
 __url__ = "http://github.com/wavespectra/wavespectra"
@@ -44,7 +44,7 @@ def _import_read_functions(pkgname="input"):
                 import_module(f"wavespectra.{pkgname}.{module}"), func_name
             )
         except Exception as exc:
-            print(f"Cannot import reading function {func_name}:\n{exc}")
+            print(f"Cannot import reading function {func_name} because:\n{exc}")
 
 
 _import_read_functions()

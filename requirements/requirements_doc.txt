@@ -17,7 +17,7 @@ pyyaml
 sortedcontainers
 scipy
 sphinx
-sphinx_gallery
+sphinx-gallery
 sphinx-autobuild
 sphinx_rtd_theme
 sphinx-autodoc-typehints
