@@ -39,6 +39,8 @@ def _bins_to_continuous_single_spectrum(efth, freq, MAXITER=100, TOLERANCE=1e-5)
     print('bin widths')
     print(width)
 
+    print(f'target Hs = {4*np.sqrt(np.sum(10*m0_bins))}')
+
     if np.sum(m0_bins.shape) <= 1:
         is_oned = True
     else:
@@ -410,7 +412,7 @@ class SpecArray(object):
         # TODO: if multiple one-d or two-d spectra are present, then this operation needs to be performed
         # on each of them
 
-        new_freq, new_efth = _bins_to_continuous_single_spectrum(copy.values, copy.freq)
+        new_freq, new_efth = _bins_to_continuous_single_spectrum(copy.values, copy.freq, TOLERANCE=tolerance, MAXITER=maxiter)
 
         copy['freq'] = new_freq
         copy.data = new_efth

@@ -80,11 +80,8 @@ def test_on_swan():
 
     ds = dset.spec.from_bins_to_continuous()
 
-    print(float(dset.spec.hs()))
-    print(float(ds.spec.hs()))
-
-    # dset.spec.oned().plot()
-    # ds.spec.oned().plot()
+    # dset.spec.oned().plot(marker ='.')
+    # ds.spec.oned().plot(marker ='.')
     # import matplotlib.pyplot as plt
     # plt.show()
 
@@ -93,13 +90,15 @@ def test_on_swan():
 
     continuous = np.trapz(efth, centers)
 
-    print(continuous)
+    print(f'original hs = {original_hs}')
 
     m0 = ds.spec.dd * np.sum(continuous)
 
+    print(f'hs of converted spectrum = {ds.spec.hs()}')
+
     continous_hs = 4*math.sqrt(m0)
 
-    print(continous_hs)
+    print(f'continuous hs = {continous_hs}')
 
 
 
