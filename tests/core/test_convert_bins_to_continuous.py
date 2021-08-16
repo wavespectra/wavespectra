@@ -7,7 +7,7 @@ import pytest
 
 # ------------ define datasets ---------
 
-from wavespectra import read_triaxys
+from wavespectra import read_triaxys, read_swan
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
@@ -44,15 +44,22 @@ def test_twod():
 
 def test_compare_1d_and_twod_squashed():
     test = give_test_spectrum
-    test1 = test.spec.from_bins_to_continuous().spec.oned()
-    test2 = test.spec.oned().spec.from_bins_to_continuous()
+    test1 = test.spec.from_bins_to_continuous().spec.oned()  # first convert, then squash to 1d
+    test2 = test.spec.oned().spec.from_bins_to_continuous()  # first squash to 1d, then convert
+
+    test1.plot()
+    test2.plot()
+    import matplotlib.pyplot as plt
+    plt.show()
 
     assert_allclose(test1.data, test2.data, atol=1e-2)
 
 
 def test_triaxis_single():
-    _ = triaxis_single.spec.from_bins_to_continuous()
+    _ = triaxis_single.isel(time=0).spec.from_bins_to_continuous()
 
+def test_triaxis_single_with_time_dim():
+    _ = triaxis_single.spec.from_bins_to_continuous()
 
 def test_triaxis_two_days():
     test1 = triaxis_two_days.spec.from_bins_to_continuous().spec.oned()
@@ -61,7 +68,39 @@ def test_triaxis_two_days():
     assert_allclose(test1.data, test2.data, atol=0.02)
 
 
-def test_no_convergence():
+def test_convergence():
+    give_test_spectrum.spec.from_bins_to_continuous(tolerance=1e-20)
 
-    with pytest.raises(ValueError):
-        give_test_spectrum.spec.from_bins_to_continuous(tolerance=1e-20)
+
+def test_on_swan():
+
+    import math
+    dset = read_swan("./../sample_files/swanfile.spec").isel(lon=0, lat=0, time=0, drop=True)
+    original_hs = float(dset.spec.hs())
+
+    ds = dset.spec.from_bins_to_continuous()
+
+    print(float(dset.spec.hs()))
+    print(float(ds.spec.hs()))
+
+    # dset.spec.oned().plot()
+    # ds.spec.oned().plot()
+    # import matplotlib.pyplot as plt
+    # plt.show()
+
+    centers = ds.freq.values
+    efth = ds.values
+
+    continuous = np.trapz(efth, centers)
+
+    print(continuous)
+
+    m0 = ds.spec.dd * np.sum(continuous)
+
+    continous_hs = 4*math.sqrt(m0)
+
+    print(continous_hs)
+
+
+
+
