@@ -190,8 +190,8 @@ class TestOctopus(object):
     def test_TP(self):
         assert self.example1.spec.tp().values == pytest.approx(EXAMPLE_TP, rel=0.01)
 
-    def test_read_example2(self):
-        example2 = read_octopus(os.path.join(FILES_DIR, "Argoss_example.csv"))
+    # def test_read_example2(self):
+    #     example2 = read_octopus(os.path.join(FILES_DIR, "Argoss_example.csv"))  # example omitted so save size
 
     def test_read_example3(self):
         example3 = read_octopus(os.path.join(FILES_DIR, "octopusfile.oct"))
