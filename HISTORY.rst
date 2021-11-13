@@ -12,6 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.10.1 (2021-MM-DD)
+__________________
+
+New Features
+------------
+
+Bug Fixes
+---------
+* Fix bug in direction calculation caused by changes in xr ufuncs (`PRXX <https://github.com/wavespectra/wavespectra/pull/XX>`_).
+
+
 3.10.0 (2021-08-21)
 __________________
 
