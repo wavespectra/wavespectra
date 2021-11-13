@@ -20,7 +20,7 @@ New Features
 
 Bug Fixes
 ---------
-* Fix bug in direction calculation caused by changes in xr ufuncs (`PRXX <https://github.com/wavespectra/wavespectra/pull/XX>`_).
+* Fix bug in direction calculation caused by changes in xr ufuncs (`PR59 <https://github.com/wavespectra/wavespectra/pull/59>`_).
 
 
 3.10.0 (2021-08-21)
