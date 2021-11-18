@@ -10,9 +10,10 @@ wavespectra
 Python library for wave spectra
 -------------------------------
 
-Wavespectra is an open source project for working with ocean wave spectral data.
-The library is built on top of `xarray`_, leveraging from xarray's labelled
-multi-dimensional arrays and making dealing with wave spectra simple and fast.
+Wavespectra is an open source project for working with ocean wave spectral data hosted
+on https://github.com/wavespectra/wavespectra. The library is built on top of
+`xarray`_, leveraging from xarray's labelled multi-dimensional arrays and making
+dealing with wave spectra simple and fast.
 
 .. _xarray: https://xarray.pydata.org/en/stable/
 
