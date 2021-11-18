@@ -24,7 +24,7 @@ Bug Fixes
 
 Internal Changes
 ----------------
-* Only interpolate with inverse distance weighting if 2 or more neighbour sites are found within tolerance (`PR60 <https://github.com/wavespectra/wavespectra/pull/60>`_).
+* Only interpolate with inverse distance weighting if 2 or more neighbour sites are found within tolerance (`PR62 <https://github.com/wavespectra/wavespectra/pull/62>`_).
 
 
 3.10.0 (2021-08-21)
