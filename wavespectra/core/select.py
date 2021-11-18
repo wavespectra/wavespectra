@@ -238,7 +238,7 @@ def sel_idw(
                 break
             factors.append(1.0 / dist)
         # Mask it if no neighbour is found
-        if len(indices) == 0:
+        if len(indices) < 2:
             dsout.append(mask)
         else:
             # Inverse distance weighting
