@@ -105,3 +105,9 @@ ATTRS:
     uss_y:
         standard_name: sea_surface_wave_stokes_drift_y_velocity
         units: "m s-1"
+    uss:
+        standard_name: sea_surface_wave_stokes_drift_speed
+        units: "m s-1"
+    mss:
+        standard_name: sea_surface_wave_mean_square_slope
+        units: ""
