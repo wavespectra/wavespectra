@@ -30,7 +30,7 @@ class TestNcSwan(object):
             ds.isel(site=[0]).spec.hs().values, rel=1e-2
         )
 
-    def test_read_swans(self):
+    def test_read_hotswan(self):
         ds = read_hotswan([self.filename])
         assert self.ds.spec.hs().values.ravel() == pytest.approx(
             ds.isel(lon=0, lat=0).spec.hs().values, rel=1e-2
