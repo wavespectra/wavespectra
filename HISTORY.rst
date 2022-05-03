@@ -30,6 +30,8 @@ Internal Changes
 * Only interpolate with inverse distance weighting if 2 or more neighbour sites are found within tolerance (`PR62 <https://github.com/wavespectra/wavespectra/pull/62>`_).
 * Allow pathlib objects in read_swan (`PR64 <https://github.com/wavespectra/wavespectra/pull/64>`_).
 * Increase float precision in Octopus writer.
+* Make zarr, fsspec and gcsfs extra dependencies instead of default.
+* Remove `get_mapper` call from zarr opener.
 
 
 3.10.0 (2021-08-21)
