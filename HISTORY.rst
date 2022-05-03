@@ -12,6 +12,22 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.10.1 (2022-05-DD)
+__________________
+
+New Features
+------------
+
+Bug Fixes
+---------
+* Allow pathlib objects in read_swan (`PR64 <https://github.com/wavespectra/wavespectra/pull/64>`_).
+* Fix bug in direction calculation caused by changes in xr ufuncs (`PR59 <https://github.com/wavespectra/wavespectra/pull/59>`_).
+
+Internal Changes
+----------------
+* Only interpolate with inverse distance weighting if 2 or more neighbour sites are found within tolerance (`PR62 <https://github.com/wavespectra/wavespectra/pull/62>`_).
+
+
 3.10.0 (2021-08-21)
 __________________
 
