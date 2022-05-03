@@ -10,7 +10,6 @@ imported at the module level
 
 """
 import xarray as xr
-from fsspec import get_mapper
 
 from wavespectra.core.attributes import attrs
 
@@ -72,8 +71,7 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping={}, chunks={}
             filename_or_fileglob, chunks=_chunks, combine="by_coords"
         )
     elif file_format == "zarr":
-        fsmap = get_mapper(filename_or_fileglob)
-        dset = xr.open_zarr(fsmap, consolidated=True, chunks=_chunks)
+        dset = xr.open_zarr(filename_or_fileglob, consolidated=True, chunks=_chunks)
     else:
         raise ValueError("file_format must be one of ('netcdf', 'zarr')")
     return dset
