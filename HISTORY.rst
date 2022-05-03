@@ -12,7 +12,7 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.11.0 (2022-05-DD)
+3.11.0 (2022-05-04)
 ___________________
 
 New Features
