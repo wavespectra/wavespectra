@@ -1,19 +1,15 @@
 """Read Octopus spectra files.
 
-This format is known to be used by
-- furgro
-- argoss
-
 Superfluous header-data is not read as the statistical properties can be obtained from the read spectral data.
 
 """
-from wavespectra.specdataset import SpecDataset
-from wavespectra.core.attributes import attrs, set_spec_attributes
-
+import warnings
 import datetime
 import numpy as np
 import xarray as xr
 
+from wavespectra.specdataset import SpecDataset
+from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import bins_from_frequency_grid
 
@@ -50,31 +46,18 @@ def read_record(f):
     Hsig_reported = []
 
     for i in range(nrecs):
-
         try:
-            headerdata = f.readline()  # fist line is empty
-            headerdata = (
-                f.readline()
-            )  # CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau,,,,,,,,,,,,,,,,,,
-            headerdata = f.readline()
-
-            parts = headerdata.split(",")
-
-            parts = [part.lstrip("'") for part in parts]
-
-            CC = int(parts[0][:2])
-            YY = int(parts[0][2:4])
-            MM = int(parts[0][4:])
-            DD = int(parts[1][:2])
-            HH = int(parts[1][2:4])
-            mm = int(parts[1][4:])
+            for __ in range(2):
+                next(f)
+            parts = [part.lstrip("'") for part in f.readline().split(",")]
         except Exception as E:
             if not headerdata:
                 if i > 1:
-                    import warnings
-
                     warnings.warn(
-                        f"End of file reached while reading {str(f)} the header of a datarecord, but have succesfully read {i} record(s) already. Not reading further but keeping the data already read.\nReported number of records in file-header {nrecs}\nLat"
+                        f"End of file reached while reading {str(f)} the header of a "
+                        "datarecord, but have succesfully read {i} record(s) already. "
+                        "Not reading further but keeping the data already read.\n"
+                        "Reported number of records in file-header {nrecs}\nLat"
                     )
                     break
             print(
@@ -82,9 +65,8 @@ def read_record(f):
             )
             raise E
 
-        timestamp = datetime.datetime(
-            year=100 * CC + YY, month=MM, day=DD, hour=HH, minute=mm
-        )
+        import ipdb; ipdb.set_trace()
+        timestamp = datetime.datetime.strptime("".join(parts[0:2]), "%Y%m%d%H%M")
 
         wind_direction.append(float(parts[3]))
         wind_speed.append(float(parts[4]))
