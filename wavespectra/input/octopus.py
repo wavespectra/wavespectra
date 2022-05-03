@@ -1,17 +1,10 @@
-"""Read Octopus spectra files.
-
-Superfluous header-data is not read as the statistical properties can be obtained from the read spectral data.
-
-"""
-import warnings
+"""Read Octopus spectra files."""
 import datetime
 import numpy as np
 import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import bins_from_frequency_grid
 
 
 def read_octopus(filename):
