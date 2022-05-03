@@ -1,8 +1,6 @@
 click
 cmocean
 dask
-gcsfs
-fsspec
 matplotlib
 numba
 numpy
@@ -13,4 +11,3 @@ sortedcontainers
 scipy
 toolz
 xarray
-zarr
