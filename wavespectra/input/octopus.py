@@ -46,24 +46,9 @@ def read_record(f):
     Hsig_reported = []
 
     for i in range(nrecs):
-        try:
-            for __ in range(2):
-                next(f)
-            parts = [part.lstrip("'") for part in f.readline().split(",")]
-        except Exception as E:
-            if not headerdata:
-                if i > 1:
-                    warnings.warn(
-                        f"End of file reached while reading {str(f)} the header of a "
-                        "datarecord, but have succesfully read {i} record(s) already. "
-                        "Not reading further but keeping the data already read.\n"
-                        "Reported number of records in file-header {nrecs}\nLat"
-                    )
-                    break
-            print(
-                f"Encountered an error while reading {str(f)}. Invalid table header. \nLatest line read {headerdata}"
-            )
-            raise E
+        for __ in range(2):
+            next(f)
+        parts = [part.lstrip("'") for part in f.readline().split(",")]
 
         import ipdb; ipdb.set_trace()
         timestamp = datetime.datetime.strptime("".join(parts[0:2]), "%Y%m%d%H%M")
