@@ -145,25 +145,10 @@ class TestOctopus(object):
 
     def test_write_octopus_and_read(self):
         ds = read_ncswan(self.filename)
-
         file = os.path.join(self.tmp_dir, "spectra.oct")
         ds.spec.to_octopus(file)
-
         read_back = read_octopus(file)
-
-        a0 = read_back.isel(time=0).spec.oned()
-        b0 = ds.isel(time=0).spec.oned()
-
-        import matplotlib.pyplot as plt
-
-        plt.plot(a0.freq, a0.data, label = 'original')
-        plt.plot(b0.freq, b0.data.flatten(), label = 'stored and read')
-        plt.legend()
-        plt.show()
-
-        assert_allclose(ds.spec.hs().oned, read_back.spec.hs())
-
-
+        assert ds.spec.hs().values == pytest.approx(read_back.spec.hs().values, rel=1e-3)
 
     def test_write_octopus_missing_winds_depth(self):
         ds = read_ncswan(self.filename)
@@ -184,14 +169,8 @@ class TestOctopus(object):
     def test_hs(self):
         assert self.example1.spec.hs().values == pytest.approx(EXAMPLE_HS, rel=0.01)
 
-    def test_hs_reported(self):
-        assert self.example1.Reported_Hs.values == pytest.approx(EXAMPLE_HS, abs=0.2)
-
     def test_TP(self):
         assert self.example1.spec.tp().values == pytest.approx(EXAMPLE_TP, rel=0.01)
-
-    # def test_read_example2(self):
-    #     example2 = read_octopus(os.path.join(FILES_DIR, "Argoss_example.csv"))  # example omitted so save size
 
     def test_read_example3(self):
         example3 = read_octopus(os.path.join(FILES_DIR, "octopusfile.oct"))
