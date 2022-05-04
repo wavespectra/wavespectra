@@ -28,6 +28,7 @@ Documentation
 * :doc:`conventions`
 * :doc:`plotting`
 * :doc:`selecting`
+* :doc:`spectral_energy_and_bins`
 
 .. toctree::
     :maxdepth: 1
@@ -40,6 +41,7 @@ Documentation
     conventions
     plotting
     selecting
+    spectral_energy_and_bins
 
 **Help & Reference**
 
