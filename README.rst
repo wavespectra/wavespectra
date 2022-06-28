@@ -13,6 +13,7 @@ Python library for ocean wave spectra.
 .. image:: https://img.shields.io/pypi/v/wavespectra.svg
     :target: https://pypi.org/project/wavespectra/
 .. image:: https://img.shields.io/pypi/dm/wavespectra
+    :target: https://pypistats.org/packages/wavespectra
     :alt: PyPI - Downloads
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/python/black
