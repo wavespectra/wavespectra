@@ -12,6 +12,22 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+
+X.Y.Z (yyyy-mm-dd)
+___________________
+
+New Features
+------------
+* Improve installation section in the docs to mention pre-install requirements of numpy and Fortran compiler.
+
+Bug Fixes
+---------
+
+Internal Changes
+----------------
+
+
+
 3.11.0 (2022-05-04)
 ___________________
 
