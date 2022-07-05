@@ -9,8 +9,8 @@ Installation
 Stable release
 --------------
 
-The wavespectra package can be installed using pip or conda.
-Installation from conda-forge includes pre-compiled versions of the non-python parts of the code. This means that no compiler is required on the target system.
+The latest stable release of wavespectra package
+can be installed using pip or conda.
 
 Install using pip
 ~~~~~~~~~~~~~~~~~~~
@@ -28,9 +28,6 @@ extra libraries run this command:
 
    $ pip install wavespectra[extra]
 
-These are the preferred method to install wavespectra, as they will always install the most
-recent stable release.
-
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
@@ -41,6 +38,13 @@ Install from conda
 
     $ conda install -c conda-forge wavespectra
 
+
+.. note::
+
+    Wavespectra requires numpy and a Fortran compiler such as `gfortran` available on
+    the system when installing with `pip` in order to build the watershed partitioning
+    module. Installation from conda-forge includes pre-compiled versions of the code so
+    the compiler is not required.
 
 
 From sources
@@ -77,6 +81,9 @@ For the full installation also install the extra requirements:
 .. code-block:: console
 
    $ pip install -r requirements/extra.txt
+
+Again, please make sure both numpy and a Fortran compiler are available before
+running any of the commands above to install from source.
 
 .. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
 .. _pip: https://pip.pypa.io
