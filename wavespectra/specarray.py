@@ -621,10 +621,11 @@ class SpecArray(object):
         return C
 
     def uss_x(self, depth=None, theta=90.0):
-        """Stokes drift - x component
+        """Stokes drift - x component, at sea surface. No high frequency tail.
 
         Args:
             - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
 
         """
         if self.dir is None:
@@ -642,10 +643,11 @@ class SpecArray(object):
         return uss_x.rename(self._my_name())
 
     def uss_y(self, depth=None, theta=90.0):
-        """Stokes drift - y component.
+        """Stokes drift - y component, at sea surface. No high frequency tail.
 
         Args:
             - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
 
         """
 
@@ -663,8 +665,8 @@ class SpecArray(object):
         uss_y.attrs.update(self._get_cf_attributes(self._my_name()))
         return uss_y.rename(self._my_name())
     
-    def uss(self, depth=None, theta=90.0):
-        """Stokes drift - speed.
+    def uss(self, depth=None):
+        """Stokes drift - speed, at sea surface. No high frequency tail.
 
         Args:
             - depth (float): Water depth, use deep water approximation by default.
