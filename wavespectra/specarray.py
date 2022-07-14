@@ -620,6 +620,89 @@ class SpecArray(object):
         C.name = "celerity"
         return C
 
+    def uss_x(self, depth=None, theta=90.0):
+        """Stokes drift - x component, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
+
+        """
+        if self.dir is None:
+            raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        cp = np.cos(D2R * (180 + theta - self.dir)) 
+        uss_x = (self.dd * fk * cp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss_x.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss_x.rename(self._my_name())
+
+    def uss_y(self, depth=None, theta=90.0):
+        """Stokes drift - y component, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
+
+        """
+
+        if self.dir is None:
+            raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        sp = np.sin(D2R * (180 + theta - self.dir)) 
+        uss_y = (self.dd * fk * sp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss_y.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss_y.rename(self._my_name())
+    
+    def uss(self, depth=None):
+        """Stokes drift - speed, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+
+        """
+
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        uss = (self.dd * fk * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss.rename(self._my_name())
+
+    def mss(self, depth=None):
+        """Mean squared slope of sea surface.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+
+        """
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        
+        Sf = self.oned(skipna=False)
+        mss = (k ** 2. * Sf * self.df).sum(dim=attrs.FREQNAME)
+
+        mss.attrs.update(self._get_cf_attributes(self._my_name()))
+        return mss.rename(self._my_name())
+
     def wavelen(self, depth=None):
         """Wavelength L from frequency coords.
 

@@ -78,6 +78,10 @@ def test_directional_methods_raise_on_oned_spec(dset):
         ds.spec.dpspr()
     with pytest.raises(ValueError):
         ds.spec.fdspr()
+    with pytest.raises(ValueError):
+        ds.spec.uss_x()
+    with pytest.raises(ValueError):
+        ds.spec.uss_y()
 
 
 def test_crsd(dset):
