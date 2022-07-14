@@ -20,8 +20,8 @@ def freq():
 def test_hs_fp(freq):
     """Test Hs, fp values are conserved."""
     ds = fit_jonswap(freq=freq, fp=0.1, gamma=1.5, hs=2.0)
-    assert pytest.approx(float(ds.spec.hs()), 2)
-    assert pytest.approx(float(ds.spec.tp()), 10)
+    assert float(ds.spec.hs()) == pytest.approx(2, rel=0.001)
+    assert float(ds.spec.tp()) == pytest.approx(10, rel=0.001)
 
 
 def test_gamma(freq):
