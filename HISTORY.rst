@@ -17,6 +17,7 @@ This major release brings spectra reconstruction capability based on the work fr
 
 New Features
 ------------
+* Methods to calculate stokes drift and the mean squared slope by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Parametric spectra functions in the `fit` module:
   * jonswap
   * tma
@@ -65,6 +66,8 @@ Deprecation
 * Remove `dfarr` attribute from SpecArray, replaced by `df`.
 * Remove unused functions `to_datetime` and `dnum_to_datetime`.
 * The "mask" argument has been removed from `SpecArray.sw` method.
+
+.. _`pbranson`: https://github.com/pbranson
 
 
 3.9.0 (2021-05-29)
