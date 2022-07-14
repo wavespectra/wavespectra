@@ -56,7 +56,7 @@ def test_flatten_list():
 
 def test_scaled(dset):
     dset2 = scaled(dset, hs=2)
-    assert pytest.approx(dset2.spec.hs().values, 2)
+    assert dset2.spec.hs().values == pytest.approx(2)
 
 
 def test_check_same_coordinates(dset):

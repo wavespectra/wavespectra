@@ -22,10 +22,10 @@ def test_hs_tp(freq):
     """Test Hs, Tp values are conserved."""
     ds1 = fit_tma(freq=freq, fp=0.1, dep=10, hs=2)
     ds2 = fit_tma(freq=freq, fp=0.1, dep=50, hs=2)
-    assert pytest.approx(float(ds1.spec.hs()), 2)
-    assert pytest.approx(float(ds1.spec.fp()), 0.1)
-    assert pytest.approx(float(ds2.spec.hs()), 2)
-    assert pytest.approx(float(ds2.spec.tp()), 10)
+    assert float(ds1.spec.hs()) == pytest.approx(2, rel=1e3)
+    assert float(ds1.spec.fp()) == pytest.approx(0.1, rel=1e3)
+    assert float(ds2.spec.hs()) == pytest.approx(2, rel=1e3)
+    assert float(ds2.spec.tp()) == pytest.approx(10, rel=1e3)
 
 
 def test_jonswap_tma_deepwater_equal(freq):
