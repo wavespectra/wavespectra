@@ -18,7 +18,6 @@ import warnings
 
 from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
-from wavespectra.core.watershed import partition
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
@@ -587,6 +586,8 @@ class SpecArray(object):
               numerical wave models." JTECH 26.8 (2009): 1614-1633.
 
         """
+        from wavespectra.core.watershed import partition
+
         # Assert expected dimensions are defined
         if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):
             raise ValueError(f"(freq, dir) dims required, only found {self._obj.dims}")
