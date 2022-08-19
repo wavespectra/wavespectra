@@ -95,7 +95,6 @@ install_requires = [
     "click",
     "cmocean",
     "dask",
-    "hypothesis",
     "matplotlib",
     "numba",
     "numpy",
