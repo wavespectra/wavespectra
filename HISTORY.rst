@@ -13,7 +13,7 @@ Releases
 ********
 
 
-X.Y.Z (yyyy-mm-dd)
+3.12.0 (2022-08-19)
 ___________________
 
 New Features
@@ -22,10 +22,12 @@ New Features
 
 Bug Fixes
 ---------
+* Fix bug caused by fixed numpy version (`PR72 <https://github.com/wavespectra/wavespectra/pull/72>`_).
 
 Internal Changes
 ----------------
-
+* Import Fortran partition code inside function so the library can still be imported if the module does not build.
+* Remove Hypothesis from requirements.
 
 
 3.11.0 (2022-05-04)
