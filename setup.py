@@ -98,7 +98,7 @@ install_requires = [
     "hypothesis",
     "matplotlib",
     "numba",
-    "numpy<=1.21",
+    "numpy",
     "pandas",
     "python-dateutil",
     "pyyaml",
