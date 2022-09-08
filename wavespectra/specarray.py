@@ -565,33 +565,43 @@ class SpecArray(object):
         gw.attrs.update(self._get_cf_attributes(self._my_name()))
         return gw.rename(self._my_name())
 
-    def gamma(self):
+    def gamma(self, smooth=True):
         """Jonswap peak enhancement factor gamma.
 
         Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
         associate Pierson-Moskowitz shape.
 
+         Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
         """
-        fp = self.fp()
-        b = (fp ** -1 / 1.057) ** -4
-        a = b * (self.hs() / 2) ** 2
-        pierson_moskowitz_max = a * fp ** -5 * np.exp(-b * fp ** -4)
-        gamma = self.oned().max(attrs.FREQNAME) / pierson_moskowitz_max
+        fp = self.fp(smooth=smooth)
+        pm_max = self.alpha(smooth=smooth) * g**2 / (2 * pi)**4 / fp**5 * np.exp(-1.25)
+        gamma = self.oned().max(attrs.FREQNAME) / pm_max
         gamma = gamma.where(gamma >= 1, 1)
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.rename(self._my_name())
 
-    def alpha(self):
+    def alpha(self, smooth=True):
         """Jonswap fetch dependant scaling coefficient alpha.
+
+        Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
 
         Reference:
             - Phillips (1957).
 
         """
-        sp = self.oned().max(attrs.FREQNAME)
-        a = sp / (self.gamma() * g**2 * (2 * pi)**-4 * self.fp()**-5 * np.exp(-5/4))
-        a.attrs.update(self._get_cf_attributes(self._my_name()))
-        return a.rename(self._my_name())
+        fp = self.fp(smooth=smooth)
+        pos = np.where((self.freq > 1.35 * fp) & (self.freq < 2.0 * fp))[0]
+        ds = self.oned().isel(freq=pos)
+        term1 = (2 * pi)**4 / g**2 / ((pos[-1] - pos[0]) + 1)
+        term2 = np.sum(ds * ds.freq**5 * np.exp(1.25 * (fp / ds.freq)**4))
+        alpha = term1 * term2
+        alpha.attrs.update(self._get_cf_attributes(self._my_name()))
+        return alpha.rename(self._my_name())
 
     def goda(self):
         """Goda peakedness parameter.
