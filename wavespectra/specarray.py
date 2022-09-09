@@ -354,7 +354,7 @@ class SpecArray(object):
               discrete peak of the frequency spectrum.
 
         """
-        return xrstats.peak_wave_period(self._obj, smooth=smooth)
+        return xrstats.peak_wave_period(self.oned(), smooth=smooth)
 
     def fp(self, smooth=True):
         """Peak wave frequency Fp.
@@ -565,6 +565,19 @@ class SpecArray(object):
         gw.attrs.update(self._get_cf_attributes(self._my_name()))
         return gw.rename(self._my_name())
 
+    def alpha(self, smooth=True):
+        """Jonswap fetch dependant scaling coefficient alpha.
+
+        Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        Reference:
+            - Phillips (1957).
+
+        """
+        return xrstats.alpha(self.oned(), smooth=smooth)
+
     def gamma(self, smooth=True):
         """Jonswap peak enhancement factor gamma.
 
@@ -582,26 +595,6 @@ class SpecArray(object):
         gamma = gamma.where(gamma >= 1, 1)
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.rename(self._my_name())
-
-    def alpha(self, smooth=True):
-        """Jonswap fetch dependant scaling coefficient alpha.
-
-        Args:
-            - smooth (bool): True for the smooth wave frequency, False for the discrete
-              frequency corresponding to the peak in the frequency spectrum.
-
-        Reference:
-            - Phillips (1957).
-
-        """
-        fp = self.fp(smooth=smooth)
-        pos = np.where((self.freq > 1.35 * fp) & (self.freq < 2.0 * fp))[0]
-        ds = self.oned().isel(freq=pos)
-        term1 = (2 * pi)**4 / g**2 / ((pos[-1] - pos[0]) + 1)
-        term2 = np.sum(ds * ds.freq**5 * np.exp(1.25 * (fp / ds.freq)**4))
-        alpha = term1 * term2
-        alpha.attrs.update(self._get_cf_attributes(self._my_name()))
-        return alpha.rename(self._my_name())
 
     def goda(self):
         """Goda peakedness parameter.
