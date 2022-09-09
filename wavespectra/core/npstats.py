@@ -1,6 +1,7 @@
 """Wave spectra stats on numpy arrays sourced by apply_ufuncs."""
 import numpy as np
 from numba import guvectorize
+from scipy.constants import g, pi
 
 from wavespectra.core.utils import D2R, R2D
 
@@ -75,6 +76,36 @@ def dp_gufunc(ipeak, dir, out):
 
     """
     out[0] = np.float32(dir[ipeak])
+
+
+@guvectorize(
+    "(float64[:], float32[:], float32, float32[:])",
+    "(n), (n), () -> ()",
+    nopython=True,
+    target="parallel",
+    cache=True,
+    forceobj=True,
+)
+def alpha_gufunc(spectrum, freq, fp, out):
+    """Phillips fetch dependant scaling coefficient.
+
+    Args:
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+
+    Returns:
+        - alpha (float): Phillips constant.
+
+    """
+    pos = np.where((freq > 1.35 * fp) & (freq < 2.0 * fp))[0]
+    if pos.size < 2:
+        out[0] = np.nan
+    else:
+        s = spectrum[pos]
+        f = freq[pos]
+        term1 = (2 * pi)**4 / g**2 / ((pos[-1] - pos[0]) + 1)
+        term2 = np.sum(s * f**5 * np.exp(1.25 * (fp / f)**4))
+        out[0] = np.float32(term1 * term2)
 
 
 @guvectorize(

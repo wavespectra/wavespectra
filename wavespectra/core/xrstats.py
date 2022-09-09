@@ -98,11 +98,51 @@ def mean_direction_at_peak_wave_period(dset):
     return darr  # .where((darr >= 0) & (darr <= 360))
 
 
+def alpha(dset, smooth=True):
+    """Jonswap fetch dependant scaling coefficient alpha.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - smooth (bool): Choose between the smooth or discrete peak frequency.
+
+    Returns:
+        - alpha (xr.DataArray): Peak wave period data array.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+
+    # Peak frequency
+    fp = 1 / peak_wave_period(dset, smooth=smooth)
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
+
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        npstats.alpha_gufunc,
+        dset.astype("float64"),
+        dset[attrs.FREQNAME].astype("float32"),
+        fp.astype("float32"),
+        input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], []],
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "alpha"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.alpha.standard_name,
+        "units": attrs.ATTRS.alpha.units,
+    }
+    return darr
+
+
 def peak_wave_period(dset, smooth=True):
     """Smooth Peak wave period Tp.
 
     Args:
-        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - dset (xr.DataArray, xr.Dataset): 1D spectra array or dataset in wavespectra convention.
         - smooth (bool): Choose between the smooth (tps) or the raw (tp) peak wave period type.
 
     Returns:
@@ -118,10 +158,6 @@ def peak_wave_period(dset, smooth=True):
         func = npstats.tps_gufunc
     else:
         func = npstats.tp_gufunc
-
-    # Integrate over directions
-    if attrs.DIRNAME in dset.dims:
-        dset = dset.sum(dim=attrs.DIRNAME)
 
     # Ensure single chunk along input core dimensions
     dset = dset.chunk({attrs.FREQNAME: None})
