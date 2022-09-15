@@ -180,6 +180,10 @@ class SpecArray(object):
         """Returns dict with standard_name and units for method defined by name."""
         return {"standard_name": self._standard_name(name), "units": self._units(name)}
 
+    def _is_circular(self):
+        """Check if directions cover 360 degrees."""
+        return (abs(self.dir.max() - self.dir.min() + self.dd - 360)) < (0.1 * self.dd)
+
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
@@ -833,6 +837,51 @@ class SpecArray(object):
                 )
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
+
+    def smooth(self, window=3):
+        """Smooth spectra based on a 3-point running average.
+
+        Args:
+            - window (int): Rolling window size.
+
+        Note:
+            - The window size should be an odd value to ensure symmetry.
+
+        TODO: Write testing.
+
+        """
+        if (window % 2) == 0:
+            raise ValueError(
+                f"Window size should be an odd value to ensure symmetry, got {window}"
+            )
+
+        dset = self._obj.copy(deep=True)
+
+        # Avoid problems when extending dirs with wrong data type
+        dset[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
+
+        # Extend circular directions to avoid edge effects
+        if self._is_circular():
+            n = int(np.ceil((window / 2)))
+            dset = dset.sortby(attrs.DIRNAME)
+            # Extend directions on both sides
+            left = dset.isel(**{attrs.DIRNAME: slice(-n, None)})
+            left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
+            right = dset.isel(**{attrs.DIRNAME: slice(0, n)})
+            right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
+            dset = xr.concat([left, dset, right], dim=attrs.DIRNAME)
+
+        # Smooth
+        dset = dset.rolling(**{attrs.FREQNAME: n, attrs.DIRNAME: n}).mean()
+
+        # Clip to original shape
+        if not dset[attrs.DIRNAME].equals(self._obj[attrs.DIRNAME]):
+            dset = dset.sel(**{attrs.DIRNAME: self._obj[attrs.DIRNAME]})
+
+        # Fill missing values at frequency boundaries from original spectra
+        dset = xr.where(dset.notnull(), dset, self._obj)
+
+        return dset.assign_coords(self._obj.coords)
 
     def plot(
         self,
