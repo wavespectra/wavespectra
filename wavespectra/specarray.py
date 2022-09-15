@@ -732,6 +732,7 @@ class SpecArray(object):
         swells=3,
         agefac=1.7,
         wscut=0.3333,
+        smooth_window=0,
     ):
         """Partition wave spectra using Hanson's watershed algorithm.
 
@@ -744,6 +745,8 @@ class SpecArray(object):
             - swells (int): Number of swell partitions to compute.
             - agefac (float): Age factor.
             - wscut (float): Wind speed cutoff.
+            - smooth_window (int): Size of running window for smoothing spectra before
+              running the watershed algorithm.
 
         Returns:
             - part_spec (SpecArray): partitioned spectra with one extra dimension
@@ -751,6 +754,9 @@ class SpecArray(object):
 
         Note:
             - Input DataArrays must have same non-spectral dims as SpecArray.
+            - If smooth_window is provided it is used to define smooth spectra to
+              run the watershed algorithm on but the boundaries are applied to
+              partition the original, unsmoothed spectra.
 
         Reference:
             - Hanson et al. (2009).
@@ -766,8 +772,15 @@ class SpecArray(object):
                     f"non-spectral dims in SpecArray {self._non_spec_dims}"
                 )
 
+        # Smooth spectra
+        if smooth_window:
+            dset_smooth = self.smooth(window=smooth_window)
+        else:
+            dset_smooth = self._obj
+
         return partition(
             dset=self._obj,
+            dset_smooth=dset_smooth,
             wspd=wsp_darr,
             wdir=wdir_darr,
             dpt=dep_darr,
@@ -844,6 +857,9 @@ class SpecArray(object):
         Args:
             - window (int): Rolling window size.
 
+        Returns:
+            - efth (DataArray): Smoothed spectra.
+
         Note:
             - The window size should be an odd value to ensure symmetry.
 
@@ -877,6 +893,7 @@ class SpecArray(object):
         # Clip to original shape
         if not dset[attrs.DIRNAME].equals(self._obj[attrs.DIRNAME]):
             dset = dset.sel(**{attrs.DIRNAME: self._obj[attrs.DIRNAME]})
+            dset = dset.chunk(**{attrs.DIRNAME: -1})
 
         # Fill missing values at frequency boundaries from original spectra
         dset = xr.where(dset.notnull(), dset, self._obj)

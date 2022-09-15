@@ -8,11 +8,12 @@ from wavespectra.core.utils import D2R, R2D, celerity
 from wavespectra.core.npstats import hs
 
 
-def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
+def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333):
     """Watershed partition on a numpy array.
 
     Args:
         - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - spectrum_smooth (2darray): Smoothed wave spectrum array with shape (nf, nd).
         - freq (1darray): Wave frequency array with shape (nf).
         - dir (1darray): Wave direction array with shape (nd).
         - wspd (float): Wind speed.
@@ -26,7 +27,7 @@ def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3
         - specpart (3darray): Wave spectrum partitions with shape (np, nf, nd).
 
     """
-    part_array = specpart.partition(spectrum)
+    part_array = specpart.partition(spectrum_smooth)
 
     Up = agefac * wspd * np.cos(D2R * (dir - wdir))
     windbool = np.tile(Up, (freq.size, 1)) > np.tile(
@@ -38,7 +39,7 @@ def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3
     # partitions_hs_swell = np.zeros(part_array_max + 1)  # zero is used for sea
     partitions_hs_swell = np.zeros(part_array_max + 1)  # zero is used for sea
     while ipeak <= part_array_max:
-        part_spec = np.where(part_array == ipeak, spectrum, 0.0)
+        part_spec = np.where(part_array == ipeak, spectrum_smooth, 0.0)
 
         # Assign new partition if multiple valleys and satisfying conditions
         __, imin = inflection(part_spec, freq, dfres=0.01, fmin=0.05)
@@ -63,6 +64,8 @@ def nppart(spectrum, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3
 
     sorted_swells = np.flipud(partitions_hs_swell[1:].argsort() + 1)
     parts = np.concatenate(([0], sorted_swells[:swells]))
+
+    # Assign spectra partitions
     all_parts = []
     for part in parts:
         all_parts.append(np.where(part_array == part, spectrum, 0.0))
@@ -82,6 +85,7 @@ def partition(
     wspd="wspd",
     wdir="wdir",
     dpt="dpt",
+    dset_smooth=None,
     swells=3,
     agefac=1.7,
     wscut=0.3333,
@@ -93,6 +97,7 @@ def partition(
         - wspd (xr.DataArray, str): Wind speed DataArray or variable name in dset.
         - wdir (xr.DataArray, str): Wind direction DataArray or variable name in dset.
         - dpt (xr.DataArray, str): Depth DataArray or the variable name in dset.
+        - dset_smooth (xr.DataArray, xr.Dataset): Smoothed spectra for defining watershed partitions.
         - swells (int): Number of swell partitions to compute.
         - agefac (float): Age factor.
         - wscut (float): Wind speed cutoff.
@@ -106,6 +111,8 @@ def partition(
 
     """
     # Sort out inputs
+    if dset_smooth is None:
+        dset_smooth = dset
     if isinstance(wspd, str):
         wspd = dset[wspd]
     if isinstance(wdir, str):
@@ -119,6 +126,7 @@ def partition(
     dsout = xr.apply_ufunc(
         nppart,
         dset,
+        dset_smooth,
         dset.freq,
         dset.dir,
         wspd,
@@ -127,7 +135,7 @@ def partition(
         swells,
         agefac,
         wscut,
-        input_core_dims=[["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
+        input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
         output_core_dims=[["part", "freq", "dir"]],
         vectorize=True,
         dask="parallelized",
