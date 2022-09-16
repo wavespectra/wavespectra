@@ -60,19 +60,15 @@ def from_ncswan(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    dset = dset.rename(MAPPING)
+    vars_and_dims = set(dset.data_vars) | set(dset.dims)
+    mapping = {k: v for k, v in MAPPING.items() if k in vars_and_dims}
+    dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
-    if attrs.TIMENAME in dset[attrs.LONNAME].dims:
-        dset = dset.assign(
-            {
-                attrs.LONNAME: dset[attrs.LONNAME].isel(
-                    drop=True, **{attrs.TIMENAME: 0}
-                ),
-                attrs.LATNAME: dset[attrs.LATNAME].isel(
-                    drop=True, **{attrs.TIMENAME: 0}
-                ),
-            }
-        )
+    if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:
+        dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+    if attrs.LATNAME in dset and attrs.TIMENAME in dset[attrs.LATNAME].dims:
+        dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+
     # Calculating wind speeds and directions
     if "xwnd" in dset and "ywnd" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
