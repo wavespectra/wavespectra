@@ -60,7 +60,8 @@ def from_ww3(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    mapping = {k: v for k, v in MAPPING.items() if k in dset.variables}
+    vars_and_dims = set(dset.data_vars) | set(dset.dims)
+    mapping = {k: v for k, v in MAPPING.items() if k in vars_and_dims}
     dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
     if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:
