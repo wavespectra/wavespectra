@@ -594,11 +594,11 @@ class SpecArray(object):
 
         """
         fp = self.fp(smooth=smooth)
-        pm_max = self.alpha(smooth=smooth) * g**2 / (2 * pi)**4 / fp**5 * np.exp(-1.25)
-        gamma = self.oned().max(attrs.FREQNAME) / pm_max
-        gamma = gamma.where(gamma >= 1, 1)
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
+        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
-        return gamma.rename(self._my_name())
+        return gamma.where(gamma >= 1, 1).rename(self._my_name())
 
     def goda(self):
         """Goda peakedness parameter.
