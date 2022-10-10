@@ -67,6 +67,11 @@ class SpecArray(object):
             return None
 
     @property
+    def _spec_dims(self):
+        """Return the set of spectral dimensions in underlying dataset."""
+        return [d for d in self._obj.dims if d in [attrs.FREQNAME, attrs.DIRNAME]]
+
+    @property
     def _non_spec_dims(self):
         """Return the set of non-spectral dimensions in underlying dataset."""
         return set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
@@ -969,3 +974,25 @@ class SpecArray(object):
             efth_min=efth_min,
             **kwargs,
         )
+
+    def rmse(self, other):
+        """Root-Mean-Square Error among spectral bins.
+
+        Args:
+            - other (SpecArray): Spectra to calculate binwise RMSE against.
+
+        Note:
+            - Spectral coordinates in self and other must be the same.
+            - Non-spectral coordinates in self and other should ideally be the same.
+              Coordinates are attempted to be broadcast if they are different.
+
+        Reference:
+            - Bunney et al. (2014).
+
+        """
+        e0 = self.to_energy()
+        e1 = other.spec.to_energy()
+        ediff = np.sqrt(((e0 - e1)**2).sum(dim=self._spec_dims))
+        e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
+        rmse =  ediff / e0sum
+        return rmse
