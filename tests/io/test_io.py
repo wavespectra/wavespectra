@@ -102,7 +102,7 @@ class TestIO(object):
         outfile = os.path.join(self.tmp_dir, "tmp.nc")
         dset.spec.to_netcdf(outfile)
         dset2 = read_netcdf(outfile)
-        dset.equals(dset2)
+        xr.testing.assert_allclose(dset, dset2, atol=5e-6)
 
     def _read(self):
         self.infile = os.path.join(FILES_DIR, self.filename)

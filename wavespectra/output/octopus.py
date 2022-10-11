@@ -35,8 +35,8 @@ def to_octopus(
     ntime = min(ntime or dset_stacked.time.size, dset_stacked.time.size)
 
     # Writing format definitions
-    fmt = ",".join(len(self.freq) * ["{:6.5f}"]) + ","
-    fmt2 = "{:0.0f}," + fmt + "{:6.5f}"
+    fmt = ",".join(len(self.freq) * ["{:8.7f}"]) + ","
+    fmt2 = "{:0.0f}," + fmt + "{:8.7f}"
     fmt2 = fmt2.replace("{", "").replace("}", "").replace(":", "%").split(",")
     fmt2[-1] += ","
 

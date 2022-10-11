@@ -133,7 +133,7 @@ class SpecDataset(metaclass=Plugin):
               (i.e., `sel_nearest`, `sel_idw`).
 
         Return:
-            - Stations Dataset selected at locations defined by zip(lons, lats).
+            - dset (SpecDataset): Stations Dataset selected at locations defined by zip(lons, lats).
 
         Note:
             - `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'

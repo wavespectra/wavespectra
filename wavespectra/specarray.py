@@ -32,8 +32,7 @@ import warnings
 from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
-from wavespectra.core.watershed import partition
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
@@ -767,6 +766,8 @@ class SpecArray(object):
             - Hanson et al. (2009).
 
         """
+        from wavespectra.core.watershed import partition
+
         # Assert expected dimensions are defined
         if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):
             raise ValueError(f"(freq, dir) dims required, only found {self._obj.dims}")
@@ -904,6 +905,40 @@ class SpecArray(object):
         dset = xr.where(dset.notnull(), dset, self._obj)
 
         return dset.assign_coords(self._obj.coords)
+
+    def interp(self, freq=None, dir=None, maintain_m0=True):
+        """Interpolate onto new spectral basis.
+
+        Args:
+            - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+            - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        Note:
+            - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+            - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+            - Only the 'linear' method is currently supported.
+
+        """
+        return regrid_spec(self._obj, freq, dir, maintain_m0=maintain_m0)
+
+    def interp_like(self, other, maintain_m0=True):
+        """Interpolate onto coordinates from other spectra.
+
+        Args:
+            - other (Dataset, DataArray): Spectra defining new spectral basis.
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        """
+        freq = getattr(other.spec, attrs.FREQNAME)
+        dir = getattr(other.spec, attrs.DIRNAME)
+        return self.interp(freq=freq, dir=dir, maintain_m0=maintain_m0)
 
     def plot(
         self,
