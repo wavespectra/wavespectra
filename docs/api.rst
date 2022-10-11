@@ -74,6 +74,8 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.scale_by_hs
    SpecArray.oned
    SpecArray.to_energy
+   SpecArray.interp
+   SpecArray.interp_like
 
 
 SpecDataset
@@ -201,6 +203,7 @@ Internal core functions and objects
 
    core.watershed.partition
    core.watershed.nppart
+   core.watershed.hs
    core.watershed.frequency_resolution
    core.watershed.inflection
 
@@ -260,11 +263,13 @@ Internal core functions and objects
    core.utils.wavenuma
    core.utils.celerity
    core.utils.to_nautical
+   core.utils.unique_indices
    core.utils.unique_times
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec
    core.utils.flatten_list
+   core.utils.regrid_spec
 
 **swan module**
 

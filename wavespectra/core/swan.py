@@ -1,5 +1,5 @@
 """Read and write swan spectra files"""
-import os
+from pathlib import Path
 import re
 import gzip
 import datetime
@@ -29,15 +29,14 @@ class SwanSpecFile(object):
         tabfile=None,
     ):
         self.times = False
-        self.filename = str(filename)
+        self.filename = Path(filename)
         self.tabfile = (
-            tabfile or os.path.splitext(self.filename.replace(".gz", ""))[0] + ".tab"
+            tabfile or Path(str(self.filename).replace(".gz", "")).with_suffix(".tab")
         )
         self.is_tab = False
         self.buf = None
 
-        extention = os.path.splitext(self.filename)[-1]
-        if extention == ".gz":
+        if self.filename.suffix == ".gz":
             fopen = gzip.open
         else:
             fopen = open
@@ -100,7 +99,7 @@ class SwanSpecFile(object):
         lons = np.unique(self.x)
         lats = np.unique(self.y)
         self.is_grid = len(lons) * len(lats) == len(self.x)
-        self.is_tab = (os.path.isfile(self.tabfile)) & (len(lons) * len(lats) == 1)
+        self.is_tab = self.tabfile.is_file() & (len(lons) * len(lats) == 1)
 
     def _read_header(self, keyword, numspec=False):
         if not self.buf:

@@ -118,3 +118,6 @@ ENV/
 
 # Mac
 .DS_Store
+
+# Coverall config
+.coveralls.yml

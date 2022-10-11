@@ -49,6 +49,27 @@ def test_uv_spddir(dset):
     dset.wdir.equals(wdir)
 
 
+def test_uv_to_dir():
+    # Going to
+    assert uv_to_spddir(0, 1, False)[1] == 0
+    assert uv_to_spddir(1, 1, False)[1] == 45
+    assert uv_to_spddir(1, 0, False)[1] == 90
+    assert uv_to_spddir(1, -1, False)[1] == 135
+    assert uv_to_spddir(0, -1, False)[1] == 180
+    assert uv_to_spddir(-1, -1, False)[1] == 225
+    assert uv_to_spddir(-1, 0, False)[1] == 270
+    assert uv_to_spddir(-1, 1, False)[1] == 315
+    # Coming from
+    assert uv_to_spddir(0, 1, True)[1] == 180
+    assert uv_to_spddir(1, 1, True)[1] == 225
+    assert uv_to_spddir(1, 0, True)[1] == 270
+    assert uv_to_spddir(1, -1, True)[1] == 315
+    assert uv_to_spddir(0, -1, True)[1] == 0
+    assert uv_to_spddir(-1, -1, True)[1] == 45
+    assert uv_to_spddir(-1, 0, True)[1] == 90
+    assert uv_to_spddir(-1, 1, True)[1] == 135
+
+
 def test_flatten_list():
     l = [1, [2, 3], [4], [5, 6, 7]]
     assert flatten_list(l, []) == list(range(1, 8))

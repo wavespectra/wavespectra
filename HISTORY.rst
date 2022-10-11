@@ -12,8 +12,11 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+
 4.0.0 (2021-MM-DD)
-This major release brings spectra reconstruction capability based on the work from Bunney's.
+___________________
+
+This major release brings new spectra reconstruction capability based on the work from Bunney's.
 
 New Features
 ------------
@@ -32,25 +35,84 @@ New Features
 * Peak directional spread method `dpspr` in SpecArray.
 * Peak frequency method `fp` in SpecArray.
 * Root-mean-square wave height method `hrms` in SpecArray
-* New Orcaflex export function by `RubendeBruin`_.
-* Refactored plotting api. The new wrapper no longer duplicates internal functions from xarray
-  and should better integrate any upstream changes. The new api also handles logarithmic axes
-  and masking in a more natural way (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
+* Spectra smoothing method.
+* New input function to read xwaves mat format.
+
 
 Internal Changes
 ----------------
 * Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
-* Fixed sphinx-gallery dependency by by `RubendeBruin`_.
-* Add new funwave function to docs.
-* Fixed sphinx-gallery dependency by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
+
+
+3.12.0 (2022-08-19)
+___________________
+
+New Features
+------------
+* Improve installation section in the docs to mention pre-install requirements of numpy and Fortran compiler.
+
+Bug Fixes
+---------
+* Fix bug caused by fixed numpy version (`PR72 <https://github.com/wavespectra/wavespectra/pull/72>`_).
+
+Internal Changes
+----------------
+* Import Fortran partition code inside function so the library can still be imported if the module does not build.
+* Remove Hypothesis from requirements.
+
+
+3.11.0 (2022-05-04)
+___________________
+
+New Features
+------------
+* New reader for Octopus file format by `RubendeBruin`_ (`PR65 <https://github.com/wavespectra/wavespectra/pull/65>`_).
+
+Bug Fixes
+---------
+* Fix bug in direction calculation caused by changes in xr ufuncs (`PR59 <https://github.com/wavespectra/wavespectra/pull/59>`_).
+* Fix nrecs in test octopus file.
+* Fix to zarr testing by `RubendeBruin`_ (`PR55 <https://github.com/wavespectra/wavespectra/pull/55>`_).
+
+Internal Changes
+----------------
+* Only interpolate with inverse distance weighting if 2 or more neighbour sites are found within tolerance (`PR62 <https://github.com/wavespectra/wavespectra/pull/62>`_).
+* Allow pathlib objects in read_swan (`PR64 <https://github.com/wavespectra/wavespectra/pull/64>`_).
+* Increase float precision in Octopus writer.
+* Make zarr, fsspec and gcsfs extra dependencies instead of default.
+* Remove `get_mapper` call from zarr opener.
+
+
+3.10.0 (2021-08-21)
+___________________
+
+New Features
+------------
+* New option in `read_triaxys` to allow providing the magnitic declination to correct.
+* New spectral regridding capability by `RubendeBruin`_. The function is wrapped in `SpecArray.interp`
+  and `SpecArray.interp_by` which mimic the behaviour in the respective counterparts from xarray.
+* Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
+  no longer duplicate internal functions from xarray and should better integrate any upstream
+  changes. The new api also handles logarithmic axes and masking in a more natural way 
+  (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
+* New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
+* New `wavespectra.core.utils.unique_indices` function (unique_times will be deprecated in future releases.
 
 
 Bug Fixes
 ---------
 * Fix plot bug with the new plot api (`GH44 <https://github.com/wavespectra/wavespectra/issues/44>`_).
 * Fix bug in `scale_by_hs` when run on dask datasets.
+
+
+Internal Changes
+----------------
+* Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
+* Add new funwave functiont to docs.
+* Update authors list.
+* Allow pathlib objects in read_triaxys.
 
 
 Deprecation
