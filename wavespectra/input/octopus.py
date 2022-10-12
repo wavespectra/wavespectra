@@ -77,7 +77,7 @@ def read_octopus(filename):
         dims=("time", "freq", "dir"),
         name="efth",
     ).to_dataset()
-    dset["efth"] = (ds.efth / (ds.spec.dfarr * ds.spec.dd)).expand_dims("site", axis=1)
+    dset["efth"] = (ds.efth / (ds.spec.df * ds.spec.dd)).expand_dims("site", axis=1)
     dset["wspd"] = xr.DataArray(wspds, dims=("time",)).expand_dims("site", axis=1)
     dset["wdir"] = xr.DataArray(wdirs, dims=("time",)).expand_dims("site", axis=1)
 
