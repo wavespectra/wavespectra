@@ -142,7 +142,7 @@ class WavePlot:
                 ax.set_xticks([])
 
         # Adjusting colorbar
-        if cbar is not None:
+        if cbar is not None and self.cbar_ticks is not None:
             cbar.set_ticks(self.cbar_ticks)
 
         return pobj
