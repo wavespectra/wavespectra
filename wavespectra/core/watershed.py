@@ -111,8 +111,6 @@ def partition(
 
     """
     # Sort out inputs
-    if dset_smooth is None:
-        dset_smooth = dset
     if isinstance(wspd, str):
         wspd = dset[wspd]
     if isinstance(wdir, str):
@@ -121,6 +119,10 @@ def partition(
         dpt = dset[dpt]
     if isinstance(dset, xr.Dataset):
         dset = dset[attrs.SPECNAME]
+    if dset_smooth is None:
+        dset_smooth = dset
+    elif isinstance(dset_smooth, xr.Dataset):
+        dset_smooth = dset_smooth[attrs.SPECNAME]
 
     # Partitioning full spectra
     dsout = xr.apply_ufunc(
