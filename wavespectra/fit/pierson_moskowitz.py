@@ -22,8 +22,8 @@ def fit_pierson_moskowitz(freq, fp, alpha=0.0081, hs=None, **kwargs):
         - efth (SpecArray): Pierson-Moskowitz frequency spectrum E(f) (m2s).
 
     Note:
-        - If `hs` is provided than the scaling parameter `alpha` becomes irrelevant.
-        - The spectra are scaled so that :math:`4\\sqrt{m_0} = hs`.
+        - If `hs` is provided the spectra are scaled so that :math:`4\\sqrt{m_0} = hs`
+          and the scaling parameter `alpha` becomes irrelevant.
         - If two or more input args other than `freq` are DataArrays,
           they must share the same coordinates.
 
