@@ -44,13 +44,13 @@ def combine_swells(swell_partitions, freq, dir, swells):
     tp = []
     dpm = []
     for spectrum in swell_partitions:
-        spec1d = spectrum.sum(axis=1)
-        ipeak = np.argmax(spec1d)
+        spec1d = spectrum.sum(axis=1).astype("float64")
+        ipeak = np.argmax(spec1d).astype("int64")
         if (ipeak == 0) or (ipeak == spec1d.size):
             tp.append(np.nan)
             dpm.append(np.nan)
         else:
-            tp.append(tps_gufunc(ipeak, spec1d, freq))
+            tp.append(tps_gufunc(ipeak, spec1d, freq.astype("float32")))
             dpm.append(dpm_gufunc(ipeak, *mom1(spectrum, dir)))
 
     # Indices of non-null partitions
