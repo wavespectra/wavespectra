@@ -20,6 +20,7 @@ This major release brings new spectra reconstruction capability based on the wor
 
 New Features
 ------------
+* Allow merging minour watershed swells.
 * Methods to calculate stokes drift and the mean squared slope by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Parametric spectra functions in the `fit` module:
   * jonswap
@@ -41,6 +42,7 @@ New Features
 
 Internal Changes
 ----------------
+* Allow reading WW3 and SWAN files with only spectral density available.
 * Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.

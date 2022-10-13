@@ -737,6 +737,7 @@ class SpecArray(object):
         agefac=1.7,
         wscut=0.3333,
         smooth_window=0,
+        merge_swells=False,
     ):
         """Partition wave spectra using Hanson's watershed algorithm.
 
@@ -751,6 +752,8 @@ class SpecArray(object):
             - wscut (float): Wind speed cutoff.
             - smooth_window (int): Size of running window for smoothing spectra before
               running the watershed algorithm.
+            - merge_swells (bool): Merge least energitic swell partitions onto
+              requested swells according to shortest distance between spectral peaks.
 
         Returns:
             - part_spec (SpecArray): partitioned spectra with one extra dimension
@@ -758,12 +761,16 @@ class SpecArray(object):
 
         Note:
             - Input DataArrays must have same non-spectral dims as SpecArray.
-            - If smooth_window is provided it is used to define smooth spectra to
+            - If `smooth_window` is provided it is used to define smooth spectra to
               run the watershed algorithm on but the boundaries are applied to
               partition the original, unsmoothed spectra.
+            - The `merge_swells` option ensures spectral variance is conserved but
+              could yields multiple peaks into single swell partitions.
+            - Swell partitions are merged iteratively starting from least energetic.
 
         Reference:
             - Hanson et al. (2009).
+            - Portilla et al. (2009).
 
         """
         from wavespectra.core.watershed import partition
@@ -793,6 +800,7 @@ class SpecArray(object):
             swells=swells,
             agefac=agefac,
             wscut=wscut,
+            merge_swells=merge_swells,
         )
 
     def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
