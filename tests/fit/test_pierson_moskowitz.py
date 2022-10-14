@@ -18,9 +18,9 @@ def freq():
     yield _dset.freq
 
 
-def test_hs_tp(freq):
+def test_hs_fp(freq):
     """Test Hs, Tp values are conserved."""
-    ds = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    ds = fit_pierson_moskowitz(freq=freq, fp=0.1, hs=2)
     assert float(ds.spec.hs()) == pytest.approx(2, rel=1e3)
     assert float(ds.spec.tp()) == pytest.approx(10, rel=1e3)
 
@@ -28,14 +28,14 @@ def test_hs_tp(freq):
 def test_jonswap_gamma_1_equal(freq):
     """Test Jonswap becomes Pierson-Moskowitz when gamma <= 1."""
     ds1 = fit_jonswap(freq=freq, fp=0.1, gamma=1.0, hs=2)
-    ds2 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    ds2 = fit_pierson_moskowitz(freq=freq, fp=0.1, hs=2)
     assert np.allclose(ds1.values, ds2.values, rtol=1e6)
 
 
 def test_freq_input_type(freq):
     """Test frequency input can also list, numpy or DataArray."""
-    ds1 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
-    ds2 = fit_pierson_moskowitz(freq=freq.values, hs=2, tp=10)
-    ds3 = fit_pierson_moskowitz(freq=list(freq.values), hs=2, tp=10)
+    ds1 = fit_pierson_moskowitz(freq=freq, fp=0.1, hs=2)
+    ds2 = fit_pierson_moskowitz(freq=freq.values, fp=0.1, hs=2)
+    ds3 = fit_pierson_moskowitz(freq=list(freq.values), fp=0.1, hs=2)
     assert ds1.identical(ds2)
     assert ds1.identical(ds3)

@@ -142,7 +142,7 @@ class WavePlot:
                 ax.set_xticks([])
 
         # Adjusting colorbar
-        if cbar is not None:
+        if cbar is not None and self.cbar_ticks is not None:
             cbar.set_ticks(self.cbar_ticks)
 
         return pobj
@@ -312,7 +312,9 @@ class WavePlot:
         fattrs = darr[self.fname].attrs
         dattrs = darr[self.dname].attrs
         sattrs = darr.attrs
-        darr = darr.assign_coords({self.fname: np.log10(darr[self.fname] * LOG_FACTOR)})
+        freqs = np.log10(darr.freq * LOG_FACTOR)
+        freqs = freqs.where(np.isfinite(freqs), 0)
+        darr = darr.assign_coords({self.fname: freqs})
         darr.attrs = sattrs
         darr[self.fname].attrs = fattrs
         darr[self.dname].attrs = dattrs
