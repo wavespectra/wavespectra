@@ -738,6 +738,7 @@ class SpecArray(object):
         wscut=0.3333,
         smooth_window=0,
         merge_swells=False,
+        combine_excluded=True,
     ):
         """Partition wave spectra using Hanson's watershed algorithm.
 
@@ -754,6 +755,9 @@ class SpecArray(object):
               running the watershed algorithm.
             - merge_swells (bool): Merge least energitic swell partitions onto
               requested swells according to shortest distance between spectral peaks.
+            - combine_excluded (bool): If True, allow combining two small partitions that
+              will both be subsequently combined onto another, if False allow only
+              combining onto one of the partitions that are going to be kept in the output.
 
         Returns:
             - part_spec (SpecArray): partitioned spectra with one extra dimension
@@ -801,6 +805,7 @@ class SpecArray(object):
             agefac=agefac,
             wscut=wscut,
             merge_swells=merge_swells,
+            combine_excluded=combine_excluded,
         )
 
     def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
