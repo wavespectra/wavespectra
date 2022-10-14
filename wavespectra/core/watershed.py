@@ -27,14 +27,17 @@ def mom1(spectrum, dir, theta=90.0):
     return msin, mcos
 
 
-def combine_swells(swell_partitions, freq, dir, swells):
+def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
     """Merge swell partitions with smallest variances.
 
     Args:
-        - swell_partitions (list): List of partitions to combine.
+        - swell_partitions (list): Partitions sorted in descending order by Hs.
         - freq (1darray): Frequency array.
         - dir (1darray): Direction array.
         - swells (int): Number of swells to keep.
+        - combine_excluded (bool): If True, allow combining two small partitions that
+          will both be subsequently combined onto another, if False allow only
+          combining onto one of the partitions that are going to be kept in the output.
 
     Returns:
         - combined_partitions (list): List of combined partitions.
@@ -67,14 +70,21 @@ def combine_swells(swell_partitions, freq, dir, swells):
     tp = tp[i0:i1]
     dpm = dpm[i0:i1]
 
+    # Recursively merge small partitions until we only have those defined by `swells`
     while i1 > swells:
         # Distances between current swell peak and all other peaks
         dx = tp[-1] - tp[:-1]
-        dy = dpm[-1] - dpm[:-1]
+        dy = (np.array(dpm[-1]) % 360) - (np.array(dpm[:-1]) % 360)
+        dy = np.minimum(dy, 360 - dy)
         dist = np.sqrt(dx ** 2 + dy ** 2)
 
-        # Join closest partition
+        # Define if merging onto closest partition from all or from the kept ones
+        if not combine_excluded:
+            dist = dist[:swells]
+
+        # merge onto selected partition
         ipart = np.argmin(dist)
+        # print(f"Merge partition {i1} onto partition {ipart}")
         swell_partitions[ipart] += swell_partitions[-1]
 
         # Drop last index
@@ -87,7 +97,7 @@ def combine_swells(swell_partitions, freq, dir, swells):
     return swell_partitions
 
 
-def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333, merge_swells=False):
+def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333, merge_swells=False, combine_excluded=True):
     """Watershed partition on a numpy array.
 
     Args:
@@ -103,6 +113,9 @@ def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agef
         - wscut (float): Wind speed cutoff.
         - merge_swells (bool): Merge less energitic swell partitions onto requested
           swells according to shortest distance between spectral peaks.
+        - combine_excluded (bool): If True, allow combining two small partitions that
+          will both be subsequently combined onto another, if False allow only
+          combining onto one of the partitions that are going to be kept in the output.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions with shape (np, nf, nd).
@@ -161,7 +174,7 @@ def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agef
     # Merge extra swells if requested
     if merge_swells:
         swell_parts = all_parts[1:]
-        swell_parts = combine_swells(swell_parts, freq, dir, swells)
+        swell_parts = combine_swells(swell_parts, freq, dir, swells, combine_excluded)
         all_parts = [all_parts[0]] + swell_parts
 
     # Extend partitions list if not enough swells
@@ -184,6 +197,7 @@ def partition(
     agefac=1.7,
     wscut=0.3333,
     merge_swells=False,
+    combine_excluded=True,
 ):
     """Watershed partitioning.
 
@@ -198,6 +212,9 @@ def partition(
         - wscut (float): Wind speed cutoff.
         - merge_swells (bool): Merge less energitic swell partitions onto requested
           swells according to shortest distance between spectral peaks.
+        - combine_excluded (bool): If True, allow combining two small partitions that
+          will both be subsequently combined onto another, if False allow only
+          combining onto one of the partitions that are going to be kept in the output.
 
     Returns:
         - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
@@ -235,7 +252,8 @@ def partition(
         agefac,
         wscut,
         merge_swells,
-        input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+        combine_excluded,
+        input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], [], []],
         output_core_dims=[["part", "freq", "dir"]],
         vectorize=True,
         dask="parallelized",
