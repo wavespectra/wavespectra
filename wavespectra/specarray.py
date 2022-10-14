@@ -32,8 +32,7 @@ import warnings
 from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen
-from wavespectra.core.watershed import partition
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
@@ -738,6 +737,8 @@ class SpecArray(object):
         agefac=1.7,
         wscut=0.3333,
         smooth_window=0,
+        merge_swells=False,
+        combine_excluded=True,
     ):
         """Partition wave spectra using Hanson's watershed algorithm.
 
@@ -752,6 +753,11 @@ class SpecArray(object):
             - wscut (float): Wind speed cutoff.
             - smooth_window (int): Size of running window for smoothing spectra before
               running the watershed algorithm.
+            - merge_swells (bool): Merge least energitic swell partitions onto
+              requested swells according to shortest distance between spectral peaks.
+            - combine_excluded (bool): If True, allow combining two small partitions that
+              will both be subsequently combined onto another, if False allow only
+              combining onto one of the partitions that are going to be kept in the output.
 
         Returns:
             - part_spec (SpecArray): partitioned spectra with one extra dimension
@@ -759,14 +765,20 @@ class SpecArray(object):
 
         Note:
             - Input DataArrays must have same non-spectral dims as SpecArray.
-            - If smooth_window is provided it is used to define smooth spectra to
+            - If `smooth_window` is provided it is used to define smooth spectra to
               run the watershed algorithm on but the boundaries are applied to
               partition the original, unsmoothed spectra.
+            - The `merge_swells` option ensures spectral variance is conserved but
+              could yields multiple peaks into single swell partitions.
+            - Swell partitions are merged iteratively starting from least energetic.
 
         Reference:
             - Hanson et al. (2009).
+            - Portilla et al. (2009).
 
         """
+        from wavespectra.core.watershed import partition
+
         # Assert expected dimensions are defined
         if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):
             raise ValueError(f"(freq, dir) dims required, only found {self._obj.dims}")
@@ -792,6 +804,8 @@ class SpecArray(object):
             swells=swells,
             agefac=agefac,
             wscut=wscut,
+            merge_swells=merge_swells,
+            combine_excluded=combine_excluded,
         )
 
     def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
@@ -904,6 +918,40 @@ class SpecArray(object):
         dset = xr.where(dset.notnull(), dset, self._obj)
 
         return dset.assign_coords(self._obj.coords)
+
+    def interp(self, freq=None, dir=None, maintain_m0=True):
+        """Interpolate onto new spectral basis.
+
+        Args:
+            - freq (DataArray, 1darray): Frequencies of interpolated spectra (Hz).
+            - dir (DataArray, 1darray): Directions of interpolated spectra (deg).
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        Note:
+            - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
+            - :math:`Ed(f)` is set to zero for new freq above the highest freq in dset.
+            - Only the 'linear' method is currently supported.
+
+        """
+        return regrid_spec(self._obj, freq, dir, maintain_m0=maintain_m0)
+
+    def interp_like(self, other, maintain_m0=True):
+        """Interpolate onto coordinates from other spectra.
+
+        Args:
+            - other (Dataset, DataArray): Spectra defining new spectral basis.
+            - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
+
+        Returns:
+            - dsi (DataArray): Regridded spectra.
+
+        """
+        freq = getattr(other.spec, attrs.FREQNAME)
+        dir = getattr(other.spec, attrs.DIRNAME)
+        return self.interp(freq=freq, dir=dir, maintain_m0=maintain_m0)
 
     def plot(
         self,

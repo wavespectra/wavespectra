@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 import shutil
 import numpy as np
@@ -9,7 +10,8 @@ from tempfile import mkdtemp
 from wavespectra.input.swan import read_swan, read_swans, read_hotswan, read_swanow
 from wavespectra.core.attributes import attrs
 
-FILENAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files", "swanfile.spec")
+
+FILENAME = Path(__file__).parent / "../sample_files/swanfile.spec"
 
 
 @pytest.fixture(scope="module")
@@ -65,7 +67,7 @@ def test_read_swan_inconsistent_times(dset, tmpdir):
     tabname = tmpdir / "swanfile.tab"
 
     # Create inconsistent pairs
-    shutil.copy(FILENAME.replace(".spec", ".tab"), tabname)
+    shutil.copy(str(FILENAME).replace(".spec", ".tab"), tabname)
     dset.isel(time=[0, 1]).spec.to_swan(specname)
 
     ds = read_swans([specname])
