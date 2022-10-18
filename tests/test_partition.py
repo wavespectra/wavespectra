@@ -5,6 +5,7 @@ import xarray as xr
 
 from wavespectra import read_ww3
 from wavespectra.partition.watershed import np_ptm3
+from wavespectra.partition.partition import Partition
 from wavespectra.core.npstats import hs
 
 
@@ -66,3 +67,12 @@ class TestPTM3:
         assert self.hs_full == pytest.approx(self.hs_from_partitions)
         assert len(self.out) == parts
         assert self.out[3:4].sum() == 0
+
+    def test_partition_class(self):
+        parts = 2
+        combine = False
+        self.out = self._exec(parts=parts, combine=combine)
+        pt = Partition()
+        dspart = pt.ptm3(dset=self.dset, parts=parts, smooth=False, combine=combine)
+        hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
+        assert hs_dspart == pytest.approx(self.hs_from_partitions)
