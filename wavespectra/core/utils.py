@@ -280,6 +280,8 @@ def to_coords(array, name):
     coords = xr.DataArray(array, coords={name: array}, dims=(name,))
     set_spec_attributes(coords)
     return coords
+
+
 def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
     """Regrid spectra onto new spectral basis.
 
@@ -301,6 +303,10 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
 
     """
     dsout = dset.copy()
+    if isinstance(freq, (list, tuple)):
+        freq = np.array(freq)
+    if isinstance(dir, (list, tuple)):
+        dir = np.array(dir)
 
     if dir is not None:
         dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
@@ -329,7 +335,6 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         dsout = dsout.interp(dir=dir, assume_sorted=True)
 
     if freq is not None:
-
         # If needed, add a new frequency at f=0 with zero energy
         if freq.min() < dsout.freq.min():
             fzero = 0 * dsout.isel(freq=0)
