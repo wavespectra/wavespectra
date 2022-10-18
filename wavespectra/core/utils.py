@@ -350,3 +350,56 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
 
     return dsout
 
+
+def smooth_spectra(dset, window=3):
+    """Smooth spectra with a running average.
+
+    Args:
+        - dset (Dataset, DataArray): Spectra to smooth.
+        - window (odd int): Rolling window size.
+
+    Returns:
+        - efth (DataArray): Smoothed spectra.
+
+    Note:
+        - The window size should be an odd value to ensure symmetry.
+
+    """
+    if (window % 2) == 0:
+        raise ValueError(
+            f"Window size should be an odd value to ensure symmetry, got {window}"
+        )
+
+    dsout = dset.sortby(attrs.DIRNAME)
+
+    # Avoid problems when extending dirs with wrong data type
+    dsout[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
+
+    # Extend circular directions to take care of edge effects
+    dirs = dsout[attrs.DIRNAME].values
+    dd = list(set(np.diff(dirs)))
+    if len(dd) == 1:
+        dd = float(dd[0])
+        is_circular = (abs(dirs.max() - dirs.min() + dd - 360)) < (0.1 * dd)
+    else:
+        is_circular = False
+    if is_circular:
+        # Extend directions on both sides
+        left = dsout.isel(**{attrs.DIRNAME: slice(-window, None)})
+        left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
+        right = dsout.isel(**{attrs.DIRNAME: slice(0, window)})
+        right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
+        dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
+
+    # Smooth
+    dsout = dsout.rolling(**{attrs.FREQNAME: window, attrs.DIRNAME: window}).mean()
+
+    # Clip to original shape
+    if not dsout[attrs.DIRNAME].equals(dset[attrs.DIRNAME]):
+        dsout = dsout.sel(**{attrs.DIRNAME: dset[attrs.DIRNAME]})
+        dsout = dsout.chunk(**{attrs.DIRNAME: -1})
+
+    # Fill missing values at boundaries using original spectra
+    dsout = xr.where(dsout.notnull(), dsout, dset)
+
+    return dsout.assign_coords(dset.coords)

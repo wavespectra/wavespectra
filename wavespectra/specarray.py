@@ -32,7 +32,7 @@ import warnings
 from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spectra
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
@@ -871,53 +871,16 @@ class SpecArray(object):
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
     def smooth(self, window=3):
-        """Smooth spectra based on a 3-point running average.
+        """Smooth spectra with a running average.
 
         Args:
-            - window (int): Rolling window size.
+            - window (int): Rolling window size, must be odd to ensure symmetry.
 
         Returns:
             - efth (DataArray): Smoothed spectra.
 
-        Note:
-            - The window size should be an odd value to ensure symmetry.
-
-        TODO: Write testing.
-
         """
-        if (window % 2) == 0:
-            raise ValueError(
-                f"Window size should be an odd value to ensure symmetry, got {window}"
-            )
-
-        dset = self._obj.copy(deep=True)
-
-        # Avoid problems when extending dirs with wrong data type
-        dset[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
-
-        # Extend circular directions to avoid edge effects
-        if self._is_circular():
-            n = int(np.ceil((window / 2)))
-            dset = dset.sortby(attrs.DIRNAME)
-            # Extend directions on both sides
-            left = dset.isel(**{attrs.DIRNAME: slice(-n, None)})
-            left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
-            right = dset.isel(**{attrs.DIRNAME: slice(0, n)})
-            right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
-            dset = xr.concat([left, dset, right], dim=attrs.DIRNAME)
-
-        # Smooth
-        dset = dset.rolling(**{attrs.FREQNAME: n, attrs.DIRNAME: n}).mean()
-
-        # Clip to original shape
-        if not dset[attrs.DIRNAME].equals(self._obj[attrs.DIRNAME]):
-            dset = dset.sel(**{attrs.DIRNAME: self._obj[attrs.DIRNAME]})
-            dset = dset.chunk(**{attrs.DIRNAME: -1})
-
-        # Fill missing values at frequency boundaries from original spectra
-        dset = xr.where(dset.notnull(), dset, self._obj)
-
-        return dset.assign_coords(self._obj.coords)
+        return smooth_spectra(self._obj, window=window)
 
     def interp(self, freq=None, dir=None, maintain_m0=True):
         """Interpolate onto new spectral basis.
