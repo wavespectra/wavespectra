@@ -72,7 +72,7 @@ class Partition:
         PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
 
         Note:
-            - Spectra are interpolated at `fcut` / `dcut` if they are not in freq.
+            - Spectra are interpolated at `fcut` if not in freq and `interpolate` is True.
 
         """
         dsout = efth.sortby("dir").sortby("freq")
