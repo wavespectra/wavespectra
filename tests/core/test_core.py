@@ -17,6 +17,7 @@ from wavespectra.core.utils import (
     celerity,
     interp_spec,
     load_function,
+    smooth_spectra,
 )
 from wavespectra import read_swan
 
@@ -28,6 +29,21 @@ def dset():
     filename = os.path.join(FILES_DIR, "swanfile.spec")
     _dset = read_swan(filename)
     yield _dset
+
+
+def test_smooth_spectra(dset):
+    ds = dset.isel(lon=0, lat=0, time=0, drop=True)
+    dsmooth3 = smooth_spectra(ds, window=3)
+    dsmooth5 = smooth_spectra(ds, window=5)
+    assert ds.coords.to_index().equals(dsmooth3.coords.to_index())
+    assert ds.efth.max() > dsmooth3.efth.max() > dsmooth5.efth.max()
+    # Non-circular directions
+    smooth_spectra(ds.isel(dir=slice(None, -3)))
+
+
+def test_smooth_window_odd(dset):
+    with pytest.raises(ValueError):
+        smooth_spectra(dset, window=2)
 
 
 def test_to_nautical():
