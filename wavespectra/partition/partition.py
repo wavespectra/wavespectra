@@ -1,7 +1,10 @@
 """Partitioning interface."""
+import numpy as np
 import xarray as xr
 
 from wavespectra.core.utils import set_spec_attributes, regrid_spec
+from wavespectra.core.attributes import attrs
+from wavespectra.partition.watershed import np_ptm3
 
 
 class Partition:
@@ -36,17 +39,54 @@ class Partition:
         """
         pass
 
-    def ptm3(self):
+    def ptm3(self, dset, parts=3, combine=False, smooth=False, window=3):
         """Watershed partitioning with no wind-sea or swell classification
 
-        PTM3 does not classify the topographic partitions into wind-sea or swell - it simply orders
-        them by wave height. This approach is useful for producing data for spectral reconstruction 
-        applications using a limited number of partitions (e.g. \cite{pro:BSP13}), where the 
-        classification of the partition as wind-sea or swell is less important than the proportion
-        of overall spectral energy each partition represents.
+        Args:
+            - dset (Dataset, DataArray): Spectra in Wavespectra convention.
+            - parts (int): Number of partitions to keep.
+            - combine (bool): Combine all extra partitions onto one of the keeping
+              ones based on shortest distance between spectral peaks.
+            - smooth (bool): compute watershed boundaries over smoothed spectra.
+            - window (int): Size of running window for smoothing spectra.
+
+        PTM3 does not classify the topographic partitions into wind-sea or swell - it simply orders them
+        by wave height. This approach is useful for producing data for spectral reconstruction applications
+        using a limited number of partitions, where the  classification of the partition as wind-sea or
+        swell is less important than the proportion of overall spectral energy each partition represents.
 
         """
-        pass
+        # Sort out inputs
+        if isinstance(dset, xr.Dataset):
+            dset = dset[attrs.SPECNAME]
+        if smooth:
+            dset_smooth = dset
+        else:
+            dset_smooth = dset
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_ptm3,
+            dset,
+            dset_smooth,
+            dset.freq,
+            dset.dir,
+            parts,
+            combine,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
+            output_core_dims=[["part", "freq", "dir"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=["float32"],
+            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": parts}},
+        )
+
+        # Finalise output
+        dsout.name = "efth"
+        dsout["part"] = np.arange(parts)
+        set_spec_attributes(dsout)
+
+        return dsout.transpose("part", ...)
 
     def ptm4(self):
         """WAM partitioning of sea and swell based on wave age creterion.
