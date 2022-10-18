@@ -1,4 +1,7 @@
+"""Partitioning interface."""
+import xarray as xr
 
+from wavespectra.core.utils import set_spec_attributes, regrid_spec
 
 
 class Partition:
@@ -57,46 +60,35 @@ class Partition:
         """
         pass
 
-    def ptm5(self, efth, fmin=None, fmax=None, dmin=None, dmax=None):
-        """SWAN partitioning of sea and swell based on user-defined thresholds.
+    def ptm5(self, efth, fcut, interpolate=True):
+        """SWAN partitioning of sea and swell based on user-defined threshold.
 
         Args:
             - efth (DataArray): Spectra DataArray in Wavespectra convention.
-            - fmin (float): lowest frequency to split spectra, by default the lowest.
-            - fmax (float): highest frequency to split spectra, by default the highest.
-            - dmin (float): lowest direction to split spectra at, by default min(dir).
-            - dmax (float): highest direction to split spectra at, by default max(dir).
+            - fcut (float): Frequency cutoff (Hz).
+            - interpolate (bool): Interpolate spectra at fcut if it is not an exact
+              frequency in the efth.
 
         PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
 
         Note:
-            - Spectra are interpolated at `fmin` / `fmax` if they are not in freq.
+            - Spectra are interpolated at `fcut` / `dcut` if they are not in freq.
 
         """
-        if fmax is not None and fmin is not None and fmax <= fmin:
-            raise ValueError("fmax needs to be greater than fmin")
-        if dmax is not None and dmin is not None and dmax <= dmin:
-            raise ValueError("dmax needs to be greater than dmin")
+        dsout = efth.sortby("dir").sortby("freq")
 
-        # Slice frequencies
-        other = efth.sel(freq=slice(fmin, fmax))
+        # Include cuttof if not in coordinates
+        if interpolate:
+            freqs = sorted(set(efth.freq.values).union([fcut]))     
+            if len(freqs) > efth.freq.size:
+                dsout = regrid_spec(efth, freq=freqs)
 
-        # Slice directions
-        if attrs.DIRNAME in other.dims and (dmin or dmax):
-            other = efth.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
+        # Zero data outside the domain of each partition
+        hf = dsout.where((dsout.freq >= fcut))
+        lf = dsout.where((dsout.freq <= fcut))
 
-        # Interpolate at fmin
-        if fmin is not None and (other.freq.min() > fmin) and (self.freq.min() <= fmin):
-            other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
+        # Combining into part index
+        dsout = xr.concat([hf, lf], dim="part")
+        set_spec_attributes(dsout)
 
-        # Interpolate at fmax
-        if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
-
-        other.freq.attrs = efth.freq.attrs
-        other.dir.attrs = self._obj.dir.attrs
-
-        if rechunk:
-            other = other.chunk({attrs.FREQNAME: None, attrs.DIRNAME: None})
-
-        return other
+        return dsout.fillna(0.)
