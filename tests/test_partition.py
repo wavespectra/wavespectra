@@ -36,6 +36,18 @@ class TestPTM5(BasePTM):
         pass
 
 
+class TestPTM4(BasePTM):
+
+    def test_partition_class(self):
+        pt = Partition()
+        dspart = pt.ptm4(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+        )
+
+
 class TestPTM1(BasePTM):
 
     def setup_class(self):

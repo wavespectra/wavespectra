@@ -2,7 +2,7 @@
 import numpy as np
 import xarray as xr
 
-from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates
+from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity
 from wavespectra.core.attributes import attrs
 from wavespectra.partition.watershed import np_ptm1, np_ptm3
 
@@ -25,7 +25,7 @@ class Partition:
         """PTM1 spectra partitioning.
 
         Args:
-            - dset (xr.DataArray, xr.Dataset): Spectra DataArray or Dataset in wavespectra convention.
+            - dset (SpecArray, SpecDataset): Spectra in wavespectra convention.
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
@@ -48,6 +48,8 @@ class Partition:
         References:
             - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
               numerical wave models." JTECH 26.8 (2009): 1614-1633.
+
+        TODO: Test if more efficient calculating windmask outside ufunc.
 
         """
         # Sort out inputs
@@ -156,8 +158,18 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm4(self):
-        """WAM partitioning of sea and swell based on wave age creterion.
+    def ptm4(self, dset, wspd, wdir, dpt, agefac=1.7):
+        """WAM partitioning of sea and swell based on wave age criterion..
+
+        Args:
+            - dset (SpecArray, SpecDataset): Spectra in wavespectra convention.
+            - wspd (xr.DataArray): Wind speed DataArray.
+            - wdir (xr.DataArray): Wind direction DataArray.
+            - dpt (xr.DataArray): Depth DataArray.
+            - agefac (float): Age factor.
+
+        Returns:
+            - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
 
         PTM4 uses the wave age criterion derived from the local wind speed to split the spectrum in
         to a wind-sea and single swell partition. In this case  waves with a celerity greater
@@ -165,17 +177,33 @@ class Partition:
         freely propogating swell (i.e. unforced by the wind). This is similar to the
         method commonly used to generate wind-sea and swell from the WAM model.
 
-        """
-        pass
+        TODO: Add testing.
 
-    def ptm5(self, efth, fcut, interpolate=True):
+        """
+        dsout = dset.sortby("dir").sortby("freq")
+
+        wind_speed_component = agefac * wspd * np.cos(D2R * (dsout.dir - wdir))
+        wave_celerity = celerity(dsout.freq, dpt)
+        windseamask = wave_celerity <= wind_speed_component
+
+        # Masking wind sea and swell regions
+        sea = dsout.where(windseamask)
+        swell = dsout.where(~windseamask)
+
+        # Combining into part index
+        dsout = xr.concat([sea, swell], dim="part")
+        set_spec_attributes(dsout)
+
+        return dsout.fillna(0.)
+
+    def ptm5(self, dset, fcut, interpolate=True):
         """SWAN partitioning of sea and swell based on user-defined threshold.
 
         Args:
-            - efth (DataArray): Spectra DataArray in Wavespectra convention.
+            - dset (SpecArray, SpecDataset): Spectra in wavespectra convention.
             - fcut (float): Frequency cutoff (Hz).
             - interpolate (bool): Interpolate spectra at fcut if it is not an exact
-              frequency in the efth.
+              frequency in the dset.
 
         PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
 
@@ -183,13 +211,13 @@ class Partition:
             - Spectra are interpolated at `fcut` if not in freq and `interpolate` is True.
 
         """
-        dsout = efth.sortby("dir").sortby("freq")
+        dsout = dset.sortby("dir").sortby("freq")
 
         # Include cuttof if not in coordinates
         if interpolate:
-            freqs = sorted(set(efth.freq.values).union([fcut]))     
-            if len(freqs) > efth.freq.size:
-                dsout = regrid_spec(efth, freq=freqs)
+            freqs = sorted(set(dset.freq.values).union([fcut]))     
+            if len(freqs) > dset.freq.size:
+                dsout = regrid_spec(dset, freq=freqs)
 
         # Zero data outside the domain of each partition
         hf = dsout.where((dsout.freq >= fcut))
