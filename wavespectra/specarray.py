@@ -32,7 +32,7 @@ import warnings
 from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spectra
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
@@ -880,7 +880,7 @@ class SpecArray(object):
             - efth (DataArray): Smoothed spectra.
 
         """
-        return smooth_spectra(self._obj, window=window)
+        return smooth_spec(self._obj, window=window)
 
     def interp(self, freq=None, dir=None, maintain_m0=True):
         """Interpolate onto new spectral basis.

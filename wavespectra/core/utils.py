@@ -351,7 +351,7 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
     return dsout
 
 
-def smooth_spectra(dset, window=3):
+def smooth_spec(dset, window=3):
     """Smooth spectra with a running average.
 
     Args:
