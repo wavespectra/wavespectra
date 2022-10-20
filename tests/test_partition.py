@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra import read_ww3
-from wavespectra.partition.watershed import np_ptm3
+from wavespectra.partition.watershed import np_ptm1, np_ptm3
 from wavespectra.partition.partition import Partition
 from wavespectra.core.npstats import hs
 
@@ -12,13 +12,8 @@ from wavespectra.core.npstats import hs
 HERE = Path(__file__).parent
 
 
-@pytest.fixture(scope="module")
-def dset():
-    _ds = read_ww3(HERE / "sample_files/ww3file.nc")
-    yield _ds
+class BasePTM:
 
-
-class TestPTM3:
     def setup_class(self):
         self.dset = read_ww3(HERE / "sample_files/ww3file.nc")
         self.efth = self.dset.isel(time=0, site=0).efth.values
@@ -33,6 +28,128 @@ class TestPTM3:
     def hs_from_partitions(self):
         hs_partitions = [hs(efth, self.freq, self.dir) for efth in self.out]
         return np.sqrt(np.sum(np.power(hs_partitions, 2)))
+
+
+class TestPTM5(BasePTM):
+
+    def test_partition_class(self):
+        pass
+
+
+class TestPTM1(BasePTM):
+
+    def setup_class(self):
+        super().setup_class(self)
+        self.wspd = self.dset.isel(time=0, site=0).wspd.values
+        self.wdir = self.dset.isel(time=0, site=0).wdir.values
+        self.dpt = self.dset.isel(time=0, site=0).dpt.values
+        self.agefac = 1.7
+        self.wscut = 0.3333
+        self.swells = 3
+
+    def _exec(self, **kwargs):
+        out = np_ptm1(
+            spectrum=self.efth,
+            spectrum_smooth=self.efth,
+            freq=self.freq,
+            dir=self.dir,
+            wspd=self.wspd,
+            wdir=self.wdir,
+            dpt=self.dpt,
+            agefac=kwargs.get("agefac", self.agefac),
+            wscut=kwargs.get("wscut", self.wscut),
+            swells=kwargs.get("swells", self.swells),
+            combine=kwargs.get("combine", False),
+        )
+        return out
+
+    def test_defaults(self):
+        self.out = self._exec()
+        assert self.out.shape[0] == self.swells + 1
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_request_all_partitions(self):
+        self.out = self._exec(swells=None)
+        assert self.out.shape[0] == 3
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_request_less_partitions(self):
+        swells = 2
+        self.out = self._exec(swells=swells, combine=False)
+        assert self.hs_from_partitions < self.hs_full
+        assert len(self.out) == swells + 1
+
+    def test_less_partitions_combined(self):
+        swells = 2
+        self.out = self._exec(swells=swells, combine=True)
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+        assert len(self.out) == swells + 1
+
+    def test_partition_class(self):
+        swells = 2
+        combine = False
+        self.out = self._exec(
+            swells=swells,
+            combine=combine,
+        )
+        pt = Partition()
+        dspart = pt.ptm1(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+            combine=combine,
+        )
+        hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
+        assert hs_dspart == pytest.approx(self.hs_from_partitions, rel=1e-2)
+
+    def test_smoothing(self):
+        swells = 2
+        combine = True
+        pt = Partition()
+        ds_nosmoothing = pt.ptm1(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+            combine=combine,
+        )
+        ds_smoothing = pt.ptm1(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+            combine=combine,
+            smooth=True,
+        )
+        hs_nosmoothing = np.sqrt((ds_nosmoothing.spec.hs() ** 2).sum("part")).values
+        hs_smoothing = np.sqrt((ds_smoothing.spec.hs() ** 2).sum("part")).values
+        assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
+        assert np.allclose(hs_nosmoothing, hs_smoothing, rtol=1e-5)
+
+    def test_compare_legacy(self):
+        kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
+        pt = Partition()
+        old = self.dset.spec.partition(
+            wsp_darr=self.dset.wspd,
+            wdir_darr=self.dset.wdir,
+            dep_darr=self.dset.dpt,
+            **kwargs,
+        )
+        new = pt.ptm1(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            **kwargs,
+        )
+        assert  np.array_equal(old.spec.hs().values, new.spec.hs().values)
+
+
+class TestPTM3(BasePTM):
 
     def _exec(self, parts, combine):
         out = np_ptm3(
@@ -76,3 +193,23 @@ class TestPTM3:
         dspart = pt.ptm3(dset=self.dset, parts=parts, smooth=False, combine=combine)
         hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
         assert hs_dspart == pytest.approx(self.hs_from_partitions)
+
+    def test_partition_class_smoothing(self):
+        parts = 3
+        combine = True
+        pt = Partition()
+        ds_nosmoothing = pt.ptm3(
+            dset=self.dset,
+            parts=parts,
+            combine=combine,
+        )
+        ds_smoothing = pt.ptm3(
+            dset=self.dset,
+            parts=parts,
+            combine=combine,
+            smooth=True,
+        )
+        hs_nosmoothing = np.sqrt((ds_nosmoothing.spec.hs() ** 2).sum("part")).values
+        hs_smoothing = np.sqrt((ds_smoothing.spec.hs() ** 2).sum("part")).values
+        assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
+        assert np.allclose(hs_nosmoothing, hs_smoothing, rtol=1e-5)

@@ -2,23 +2,91 @@
 import numpy as np
 import xarray as xr
 
-from wavespectra.core.utils import set_spec_attributes, regrid_spec
+from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates
 from wavespectra.core.attributes import attrs
-from wavespectra.partition.watershed import np_ptm3
+from wavespectra.partition.watershed import np_ptm1, np_ptm3
 
 
 class Partition:
 
-    def ptm1(self):
-        """Watershed partitioning with wind-sea defined from wind-sea fraction. 
+    def ptm1(
+        self,
+        dset,
+        wspd,
+        wdir,
+        dpt,
+        agefac=1.7,
+        wscut=0.3333,
+        swells=3,
+        combine=False,
+        smooth=False,
+        window=3,
+    ):
+        """PTM1 spectra partitioning.
+
+        Args:
+            - dset (xr.DataArray, xr.Dataset): Spectra DataArray or Dataset in wavespectra convention.
+            - wspd (xr.DataArray): Wind speed DataArray.
+            - wdir (xr.DataArray): Wind direction DataArray.
+            - dpt (xr.DataArray): Depth DataArray.
+            - swells (int): Number of swell partitions to compute.
+            - agefac (float): Age factor.
+            - wscut (float): Wind sea fraction cutoff.
+            - combine (bool): Combine less energitic partitions onto one of the keeping
+              ones according to shortest distance between spectral peaks.
+            - smooth (bool): compute watershed boundaries over smoothed spectra.
+            - window (int): Size of running window for smoothing spectra when smooth==True.
+
+        Returns:
+            - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
 
         In PTM1, topographic partitions for which the percentage of wind-sea energy exceeds a 
         defined fraction are aggregated and assigned to the wind-sea component (e.g., the first
         partition). The remaining partitions are assigned as swell components in order of 
         decreasing wave height.
 
+        References:
+            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
+              numerical wave models." JTECH 26.8 (2009): 1614-1633.
+
         """
-        pass
+        # Sort out inputs
+        check_same_coordinates(wspd, wdir, dpt)
+        if isinstance(dset, xr.Dataset):
+            dset = dset[attrs.SPECNAME]
+        if smooth:
+            dset_smooth = smooth_spec(dset, window)
+        else:
+            dset_smooth = dset
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_ptm1,
+            dset,
+            dset_smooth,
+            dset.freq,
+            dset.dir,
+            wspd,
+            wdir,
+            dpt,
+            agefac,
+            wscut,
+            swells,
+            combine,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            output_core_dims=[["part", "freq", "dir"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=["float32"],
+            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": swells + 1}},
+        )
+
+        # Finalise output
+        dsout.name = "efth"
+        dsout["part"] = np.arange(swells + 1)
+        dsout.part.attrs = {"standard_name": "spectral_partition_number", "units": ""}
+
+        return dsout.transpose("part", ...)
 
     def ptm2(self):
         """Watershed partitioning with secondary wind-sea assigned from individual spectral bins.
@@ -48,7 +116,7 @@ class Partition:
             - combine (bool): Combine all extra partitions onto one of the keeping
               ones based on shortest distance between spectral peaks.
             - smooth (bool): compute watershed boundaries over smoothed spectra.
-            - window (int): Size of running window for smoothing spectra.
+            - window (int): Size of running window for smoothing spectra when smooth==True.
 
         PTM3 does not classify the topographic partitions into wind-sea or swell - it simply orders them
         by wave height. This approach is useful for producing data for spectral reconstruction applications
@@ -60,7 +128,7 @@ class Partition:
         if isinstance(dset, xr.Dataset):
             dset = dset[attrs.SPECNAME]
         if smooth:
-            dset_smooth = dset
+            dset_smooth = smooth_spec(dset, window)
         else:
             dset_smooth = dset
 

@@ -36,7 +36,7 @@ New Features
 * Peak directional spread method `dpspr` in SpecArray.
 * Peak frequency method `fp` in SpecArray.
 * Root-mean-square wave height method `hrms` in SpecArray
-* Spectra smoothing method.
+* Spectra smoothing capability.
 * New input function to read xwaves mat format.
 
 
