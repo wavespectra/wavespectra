@@ -38,7 +38,7 @@ class Partition:
             - window (int): Size of running window for smoothing spectra when smooth==True.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
+            - dspart (xr.Dataset): Partitioned spectra dataset with extra `part` dimension.
 
         In PTM1, topographic partitions for which the percentage of wind-sea energy exceeds a 
         defined fraction are aggregated and assigned to the wind-sea component (e.g., the first
@@ -169,15 +169,14 @@ class Partition:
             - agefac (float): Age factor.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra dataset with extra dimension.
+            - dspart (xr.Dataset): Partitioned spectra dataset with extra `part`
+              dimension defining wind sea and swell.
 
         PTM4 uses the wave age criterion derived from the local wind speed to split the spectrum in
         to a wind-sea and single swell partition. In this case  waves with a celerity greater
         than the directional component of the local wind speed are considered to be
         freely propogating swell (i.e. unforced by the wind). This is similar to the
         method commonly used to generate wind-sea and swell from the WAM model.
-
-        TODO: Add testing.
 
         """
         dsout = dset.sortby("dir").sortby("freq")
@@ -204,6 +203,10 @@ class Partition:
             - fcut (float): Frequency cutoff (Hz).
             - interpolate (bool): Interpolate spectra at fcut if it is not an exact
               frequency in the dset.
+
+        Returns:
+            - dspart (xr.Dataset): Partitioned spectra dataset with extra `part`
+              dimension defining the high and low frequency components.
 
         PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
 

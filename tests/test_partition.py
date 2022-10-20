@@ -15,6 +15,7 @@ HERE = Path(__file__).parent
 class BasePTM:
 
     def setup_class(self):
+        self.pt = Partition()
         self.dset = read_ww3(HERE / "sample_files/ww3file.nc")
         self.efth = self.dset.isel(time=0, site=0).efth.values
         self.freq = self.dset.freq.values
@@ -28,24 +29,6 @@ class BasePTM:
     def hs_from_partitions(self):
         hs_partitions = [hs(efth, self.freq, self.dir) for efth in self.out]
         return np.sqrt(np.sum(np.power(hs_partitions, 2)))
-
-
-class TestPTM5(BasePTM):
-
-    def test_partition_class(self):
-        pass
-
-
-class TestPTM4(BasePTM):
-
-    def test_partition_class(self):
-        pt = Partition()
-        dspart = pt.ptm4(
-            dset=self.dset,
-            wspd=self.dset.wspd,
-            wdir=self.dset.wdir,
-            dpt=self.dset.dpt,
-        )
 
 
 class TestPTM1(BasePTM):
@@ -104,8 +87,7 @@ class TestPTM1(BasePTM):
             swells=swells,
             combine=combine,
         )
-        pt = Partition()
-        dspart = pt.ptm1(
+        dspart = self.pt.ptm1(
             dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
@@ -119,8 +101,7 @@ class TestPTM1(BasePTM):
     def test_smoothing(self):
         swells = 2
         combine = True
-        pt = Partition()
-        ds_nosmoothing = pt.ptm1(
+        ds_nosmoothing = self.pt.ptm1(
             dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
@@ -128,7 +109,7 @@ class TestPTM1(BasePTM):
             swells=swells,
             combine=combine,
         )
-        ds_smoothing = pt.ptm1(
+        ds_smoothing = self.pt.ptm1(
             dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
@@ -144,14 +125,13 @@ class TestPTM1(BasePTM):
 
     def test_compare_legacy(self):
         kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
-        pt = Partition()
         old = self.dset.spec.partition(
             wsp_darr=self.dset.wspd,
             wdir_darr=self.dset.wdir,
             dep_darr=self.dset.dpt,
             **kwargs,
         )
-        new = pt.ptm1(
+        new = self.pt.ptm1(
             dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
@@ -201,21 +181,19 @@ class TestPTM3(BasePTM):
         parts = 2
         combine = False
         self.out = self._exec(parts=parts, combine=combine)
-        pt = Partition()
-        dspart = pt.ptm3(dset=self.dset, parts=parts, smooth=False, combine=combine)
+        dspart = self.pt.ptm3(dset=self.dset, parts=parts, smooth=False, combine=combine)
         hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
         assert hs_dspart == pytest.approx(self.hs_from_partitions)
 
     def test_partition_class_smoothing(self):
         parts = 3
         combine = True
-        pt = Partition()
-        ds_nosmoothing = pt.ptm3(
+        ds_nosmoothing = self.pt.ptm3(
             dset=self.dset,
             parts=parts,
             combine=combine,
         )
-        ds_smoothing = pt.ptm3(
+        ds_smoothing = self.pt.ptm3(
             dset=self.dset,
             parts=parts,
             combine=combine,
@@ -225,3 +203,39 @@ class TestPTM3(BasePTM):
         hs_smoothing = np.sqrt((ds_smoothing.spec.hs() ** 2).sum("part")).values
         assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
         assert np.allclose(hs_nosmoothing, hs_smoothing, rtol=1e-5)
+
+
+class TestPTM4(BasePTM):
+
+    def test_agefac(self):
+        ds_agefac15 = self.pt.ptm4(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            agefac=1.5
+        )
+        ds_agefac17 = self.pt.ptm4(
+            dset=self.dset,
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+        )
+        sea_agefac15 = ds_agefac15.isel(part=0).spec.hs()
+        sea_agefac17 = ds_agefac17.isel(part=0).spec.hs()
+        assert np.all((sea_agefac17.values - sea_agefac15.values) > 0)
+
+
+class TestPTM5(BasePTM):
+
+    def test_default(self):
+        fcut = 0.1
+        ds = self.pt.ptm5( dset=self.dset, fcut=0.1)
+        assert fcut in ds.freq
+        assert ds.isel(part=0).sel(freq=slice(None, fcut - 0.001)).spec.hs().max() == 0
+        assert ds.isel(part=1).sel(freq=slice(fcut + 0.001, None)).spec.hs().max() == 0
+
+    def test_not_interpolate(self):
+        fcut = 0.1
+        ds = self.pt.ptm5( dset=self.dset, fcut=0.1, interpolate=False)
+        assert fcut not in ds.freq
