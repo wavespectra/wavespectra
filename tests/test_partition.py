@@ -4,8 +4,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra import read_ww3
-from wavespectra.partition.watershed import np_ptm1, np_ptm3
-from wavespectra.partition.partition import Partition
+from wavespectra.partition.partition import Partition, np_ptm1, np_ptm3
 from wavespectra.core.npstats import hs
 
 
