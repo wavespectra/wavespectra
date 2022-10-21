@@ -141,3 +141,14 @@ def test_one_frequency_bin(dset):
     ds = dset.isel(freq=[0])
     assert ds.spec.freq == dset.isel(freq=0).freq
     assert ds.spec.df.size == 1
+
+
+def test_new_partition(dset_full):
+    dset = dset_full
+    dset.sec.partition()
+    # import ipdb; ipdb.set_trace()
+    # wsp_darr = dset.wspd
+    # wdir_darr = dset.wdir
+    # dep_darr = dset.dpt.isel(time=0, drop=True)
+    # with pytest.raises(ValueError):
+    #     dset.spec.partition(wsp_darr=wsp_darr, wdir_darr=wdir_darr, dep_darr=dep_darr)
