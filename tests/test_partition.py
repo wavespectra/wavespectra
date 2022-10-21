@@ -14,11 +14,11 @@ HERE = Path(__file__).parent
 class BasePTM:
 
     def setup_class(self):
-        self.pt = Partition()
         self.dset = read_ww3(HERE / "sample_files/ww3file.nc")
         self.efth = self.dset.isel(time=0, site=0).efth.values
         self.freq = self.dset.freq.values
         self.dir = self.dset.dir.values
+        self.pt = Partition(self.dset)
 
     @property
     def hs_full(self):
@@ -82,12 +82,8 @@ class TestPTM1(BasePTM):
     def test_partition_class(self):
         swells = 2
         combine = False
-        self.out = self._exec(
-            swells=swells,
-            combine=combine,
-        )
+        self.out = self._exec(swells=swells, combine=combine)
         dspart = self.pt.ptm1(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -101,7 +97,6 @@ class TestPTM1(BasePTM):
         swells = 2
         combine = True
         ds_nosmoothing = self.pt.ptm1(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -109,7 +104,6 @@ class TestPTM1(BasePTM):
             combine=combine,
         )
         ds_smoothing = self.pt.ptm1(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -124,18 +118,14 @@ class TestPTM1(BasePTM):
 
     def test_compare_legacy(self):
         kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
-        old = self.dset.spec.partition_legacy(
+        old = self.dset.spec.partition_deprecated(
             wsp_darr=self.dset.wspd,
             wdir_darr=self.dset.wdir,
             dep_darr=self.dset.dpt,
             **kwargs,
         )
         new = self.pt.ptm1(
-            dset=self.dset,
-            wspd=self.dset.wspd,
-            wdir=self.dset.wdir,
-            dpt=self.dset.dpt,
-            **kwargs,
+            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, **kwargs,
         )
         assert  np.array_equal(old.spec.hs().values, new.spec.hs().values)
 
@@ -194,7 +184,6 @@ class TestPTM2(BasePTM):
         combine = False
         self.out = self._exec(swells=swells, combine=combine)
         dspart = self.pt.ptm2(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -208,7 +197,6 @@ class TestPTM2(BasePTM):
         swells = 2
         combine = True
         ds_nosmoothing = self.pt.ptm1(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -216,7 +204,6 @@ class TestPTM2(BasePTM):
             combine=combine,
         )
         ds_smoothing = self.pt.ptm1(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -270,24 +257,15 @@ class TestPTM3(BasePTM):
         parts = 2
         combine = False
         self.out = self._exec(parts=parts, combine=combine)
-        dspart = self.pt.ptm3(dset=self.dset, parts=parts, smooth=False, combine=combine)
+        dspart = self.pt.ptm3(parts=parts, smooth=False, combine=combine)
         hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
         assert hs_dspart == pytest.approx(self.hs_from_partitions)
 
     def test_partition_class_smoothing(self):
         parts = 3
         combine = True
-        ds_nosmoothing = self.pt.ptm3(
-            dset=self.dset,
-            parts=parts,
-            combine=combine,
-        )
-        ds_smoothing = self.pt.ptm3(
-            dset=self.dset,
-            parts=parts,
-            combine=combine,
-            smooth=True,
-        )
+        ds_nosmoothing = self.pt.ptm3(parts=parts, combine=combine)
+        ds_smoothing = self.pt.ptm3(parts=parts, combine=combine, smooth=True)
         hs_nosmoothing = np.sqrt((ds_nosmoothing.spec.hs() ** 2).sum("part")).values
         hs_smoothing = np.sqrt((ds_smoothing.spec.hs() ** 2).sum("part")).values
         assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
@@ -298,14 +276,12 @@ class TestPTM4(BasePTM):
 
     def test_agefac(self):
         ds_agefac15 = self.pt.ptm4(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
             agefac=1.5
         )
         ds_agefac17 = self.pt.ptm4(
-            dset=self.dset,
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
@@ -319,12 +295,12 @@ class TestPTM5(BasePTM):
 
     def test_default(self):
         fcut = 0.1
-        ds = self.pt.ptm5( dset=self.dset, fcut=0.1)
+        ds = self.pt.ptm5(fcut=0.1)
         assert fcut in ds.freq
         assert ds.isel(part=0).sel(freq=slice(None, fcut - 0.001)).spec.hs().max() == 0
         assert ds.isel(part=1).sel(freq=slice(fcut + 0.001, None)).spec.hs().max() == 0
 
     def test_not_interpolate(self):
         fcut = 0.1
-        ds = self.pt.ptm5( dset=self.dset, fcut=0.1, interpolate=False)
+        ds = self.pt.ptm5(fcut=0.1, interpolate=False)
         assert fcut not in ds.freq

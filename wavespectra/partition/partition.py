@@ -27,6 +27,14 @@ class Partition:
         - WW3 wave model documentation, https://github.com/NOAA-EMC/WW3.
 
     """
+    def __init__(self, dset):
+        if isinstance(dset, xr.DataArray):
+            self.dset = dset
+        elif isinstance(dset, xr.Dataset):
+            self.dset = dset[attrs.SPECNAME]
+        else:
+            raise ValueError("dset needs to be either SpecArray or SpecDataset")
+
     def _set_metadata(self, dsout):
         """Define metadata attributes in output."""
         dsout.name = "efth"
@@ -37,7 +45,6 @@ class Partition:
 
     def ptm1(
         self,
-        dset,
         wspd,
         wdir,
         dpt,
@@ -51,7 +58,6 @@ class Partition:
         """PTM1 spectra partitioning.
 
         Args:
-            - dset (xr.DataArray): Spectra in wavespectra convention.
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
@@ -87,20 +93,18 @@ class Partition:
         """
         # Sort out inputs
         check_same_coordinates(wspd, wdir, dpt)
-        if isinstance(dset, xr.Dataset):
-            dset = dset[attrs.SPECNAME]
         if smooth:
-            dset_smooth = smooth_spec(dset, window)
+            dset_smooth = smooth_spec(self.dset, window)
         else:
-            dset_smooth = dset
+            dset_smooth = self.dset
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
             np_ptm1,
-            dset,
+            self.dset,
             dset_smooth,
-            dset.freq,
-            dset.dir,
+            self.dset.freq,
+            self.dset.dir,
             wspd,
             wdir,
             dpt,
@@ -127,7 +131,6 @@ class Partition:
 
     def ptm2(
         self,
-        dset,
         wspd,
         wdir,
         dpt,
@@ -141,7 +144,6 @@ class Partition:
         """Watershed partitioning with secondary wind-sea assigned from individual spectral bins.
 
         Args:
-            - dset (xr.DataArray): Spectra in wavespectra convention.
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
@@ -183,20 +185,18 @@ class Partition:
         """
         # Sort out inputs
         check_same_coordinates(wspd, wdir, dpt)
-        if isinstance(dset, xr.Dataset):
-            dset = dset[attrs.SPECNAME]
         if smooth:
-            dset_smooth = smooth_spec(dset, window)
+            dset_smooth = smooth_spec(self.dset, window)
         else:
-            dset_smooth = dset
+            dset_smooth = self.dset
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
             np_ptm2,
-            dset,
+            self.dset,
             dset_smooth,
-            dset.freq,
-            dset.dir,
+            self.dset.freq,
+            self.dset.dir,
             wspd,
             wdir,
             dpt,
@@ -223,11 +223,10 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm3(self, dset, parts=3, combine=False, smooth=False, window=3):
+    def ptm3(self, parts=3, combine=False, smooth=False, window=3):
         """Watershed partitioning with no wind-sea or swell classification
 
         Args:
-            - dset (xr.DataArray): Spectra in Wavespectra convention.
             - parts (int): Number of partitions to keep.
             - combine (bool): Combine adjacent swell partitions based on the distances
               between spectral peaks (Hanson at al., 2001).
@@ -254,20 +253,18 @@ class Partition:
 
         """
         # Sort out inputs
-        if isinstance(dset, xr.Dataset):
-            dset = dset[attrs.SPECNAME]
         if smooth:
-            dset_smooth = smooth_spec(dset, window)
+            dset_smooth = smooth_spec(self.dset, window)
         else:
-            dset_smooth = dset
+            dset_smooth = self.dset
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
             np_ptm3,
-            dset,
+            self.dset,
             dset_smooth,
-            dset.freq,
-            dset.dir,
+            self.dset.freq,
+            self.dset.dir,
             parts,
             combine,
             input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
@@ -284,11 +281,10 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm4(self, dset, wspd, wdir, dpt, agefac=1.7):
+    def ptm4(self, wspd, wdir, dpt, agefac=1.7):
         """WAM partitioning of sea and swell based on wave age criterion..
 
         Args:
-            - dset (xr.DataArray): Spectra in wavespectra convention.
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
@@ -308,10 +304,7 @@ class Partition:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
-        if isinstance(dset, xr.Dataset):
-            dset = dset[attrs.SPECNAME]
-
-        dsout = dset.sortby("dir").sortby("freq")
+        dsout = self.dset.sortby("dir").sortby("freq")
 
         wind_speed_component = agefac * wspd * np.cos(D2R * (dsout.dir - wdir))
         wave_celerity = celerity(dsout.freq, dpt)
@@ -330,11 +323,10 @@ class Partition:
 
         return dsout.fillna(0.)
 
-    def ptm5(self, dset, fcut, interpolate=True):
+    def ptm5(self, fcut, interpolate=True):
         """SWAN partitioning of sea and swell based on user-defined threshold.
 
         Args:
-            - dset (xr.DataArray): Spectra in wavespectra convention.
             - fcut (float): Frequency cutoff (Hz).
             - interpolate (bool): Interpolate spectra at fcut if it is not an exact
               frequency in the dset.
@@ -354,16 +346,13 @@ class Partition:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
-        if isinstance(dset, xr.Dataset):
-            dset = dset[attrs.SPECNAME]
-
-        dsout = dset.sortby("dir").sortby("freq")
+        dsout = self.dset.sortby("dir").sortby("freq")
 
         # Include cuttof if not in coordinates
         if interpolate:
-            freqs = sorted(set(dset.freq.values).union([fcut]))     
-            if len(freqs) > dset.freq.size:
-                dsout = regrid_spec(dset, freq=freqs)
+            freqs = sorted(set(self.dset.freq.values).union([fcut]))     
+            if len(freqs) > self.dset.freq.size:
+                dsout = regrid_spec(self.dset, freq=freqs)
 
         # Zero data outside the domain of each partition
         hf = dsout.where((dsout.freq >= fcut))

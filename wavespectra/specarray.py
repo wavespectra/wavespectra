@@ -103,7 +103,7 @@ class SpecArray(object):
 
     @property
     def partition(self):
-        return Partition()
+        return Partition(self._obj)
 
     def _interp_freq(self, fint):
         """Linearly interpolate spectra at frequency fint.
