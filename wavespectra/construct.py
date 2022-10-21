@@ -61,7 +61,7 @@ def construct_partition(
 
 def partition_and_reconstruct(
     dset,
-    swells=4,
+    parts=4,
     fit_name="fit_jonswap",
     dir_name="cartwright",
     method_combine="max",
@@ -70,39 +70,40 @@ def partition_and_reconstruct(
 
     Args:
         - dset (SpecDataset): Spectra object to partition and reconstruct.
-        - swells (int): Number of swell partitions to use in reconstruction.
+        - parts (int): Number of partitions to use in reconstruction.
         - fit_name (str, list): Name of a valid fit function, e.g. `fit_jonswap`, or a
-          list of names with len=`swells`+1 to define one fit function for the wind sea
-          and each swell partition.
+          list of names with len=`parts` to define one fit function for each partition.
         - dir_name (str, list): Name of a valid directional spread function, e.g.
-          `cartwright`, or a list of names with len=`swells`+1 to define one
-          directional spread for the wind sea and each swell partition.
-        - method_combine (str): Method to combine partitions.
+          `cartwright`, or a list of names with len=`parts` to define one directional
+          spread function for each partition.
+        - method_combine (str): Method to combine partitions when reconstructing.
 
     Returns:
         - dsout (SpecArray): Reconstructed spectra with same coordinates as dset.
 
     Note:
+        - The PTM3 partitioning method is used in which wind sea and swell systems
+          are not distiguished or merged together.
         - If `fit_name` or `dir_name` are str, the functions specified by these
           arguments are applied to all sea and swell partitions.
 
     """
     # Parameter checking
     if isinstance(fit_name, str):
-        fit_name = (swells + 1) * [fit_name]
+        fit_name = (parts) * [fit_name]
     if isinstance(dir_name, str):
-        dir_name = (swells + 1) * [dir_name]
+        dir_name = (parts) * [dir_name]
     for name in [fit_name, dir_name]:
-        if len(name) != swells + 1:
+        if len(name) != parts:
             raise ValueError(
                 f"Len of '{name}' must correspond to the "
-                f"number of wave systems '{swells + 1}'"
+                f"number of wave systems '{parts}'"
             )
 
     coords = {attrs.FREQNAME: dset[attrs.FREQNAME], attrs.DIRNAME: dset[attrs.DIRNAME]}
 
     # Partitioning
-    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt, swells=swells)
+    dspart = dset.spec.partition.ptm3(parts=parts)
 
     # Calculating parameters
     dparam = dspart.spec.stats(STATS)
@@ -139,7 +140,7 @@ def partition_and_reconstruct(
     reconstructed.attrs = {
         "title": "Spectra Reconstruction",
         "source": "wavespectra <https://github.com/wavespectra/wavespectra>",
-        "partitions": swells + 1,
+        "partitions": parts,
         "spectral_shapes": fit_name,
         "directional_spread": dir_name,
     }
