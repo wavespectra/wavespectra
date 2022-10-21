@@ -35,6 +35,7 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
+from wavespectra.partition.partition import Partition
 
 
 @xr.register_dataarray_accessor("spec")
@@ -99,6 +100,10 @@ class SpecArray(object):
         else:
             self._dd = 1.0
         return self._dd
+
+    @property
+    def partition(self):
+        return Partition()
 
     def _interp_freq(self, fint):
         """Linearly interpolate spectra at frequency fint.
@@ -728,7 +733,7 @@ class SpecArray(object):
         L.name = "wavelength"
         return L
 
-    def partition(
+    def partition_deprecated(
         self,
         wsp_darr,
         wdir_darr,

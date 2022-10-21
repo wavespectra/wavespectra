@@ -124,7 +124,7 @@ class TestPTM1(BasePTM):
 
     def test_compare_legacy(self):
         kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
-        old = self.dset.spec.partition(
+        old = self.dset.spec.partition_legacy(
             wsp_darr=self.dset.wspd,
             wdir_darr=self.dset.wdir,
             dep_darr=self.dset.dpt,
