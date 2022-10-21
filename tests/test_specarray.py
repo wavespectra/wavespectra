@@ -100,21 +100,6 @@ def test_wavelen(dset):
     assert all(deep - shallow) > 0
 
 
-def test_partition_has_spectral_coords(dset):
-    ds = dset.isel(freq=0, dir=0, drop=True)
-    with pytest.raises(ValueError):
-        ds.spec.partition(None, None, None)
-
-
-def test_partition_efth_wind_depth_have_same_nonspectral_coords(dset_full):
-    dset = dset_full
-    wsp_darr = dset.wspd
-    wdir_darr = dset.wdir
-    dep_darr = dset.dpt.isel(time=0, drop=True)
-    with pytest.raises(ValueError):
-        dset.spec.partition(wsp_darr=wsp_darr, wdir_darr=wdir_darr, dep_darr=dep_darr)
-
-
 def test_stats(dset):
     hs1 = dset.spec.hs()
     hs2 = dset.spec.stats(["hs"]).hs
@@ -143,12 +128,9 @@ def test_one_frequency_bin(dset):
     assert ds.spec.df.size == 1
 
 
-def test_new_partition(dset_full):
+def test_partition_interface(dset_full):
     dset = dset_full
-    dset.sec.partition()
-    # import ipdb; ipdb.set_trace()
-    # wsp_darr = dset.wspd
-    # wdir_darr = dset.wdir
-    # dep_darr = dset.dpt.isel(time=0, drop=True)
-    # with pytest.raises(ValueError):
-    #     dset.spec.partition(wsp_darr=wsp_darr, wdir_darr=wdir_darr, dep_darr=dep_darr)
+    dset.spec.partition
+    methods = ["ptm1", "ptm2", "ptm3", "ptm4", "ptm5"]
+    for method in methods:
+        assert(method in dir(dset.spec.partition))

@@ -27,10 +27,10 @@ def reconstruct():
 @click.option("-f", "--fit_name", default="fit_jonswap", help="Fit function", show_default=True)
 @click.option("-d", "--dir_name", default="cartwright", help="Spread function", show_default=True)
 @click.option("-m", "--method_combine", default="max", help="Method to combine partitions", show_default=True)
-@click.option("-s", "--swells", type=int, default=4, help="Swell partitions to keep", show_default=True)
+@click.option("-p", "--parts", type=int, default=4, help="Number of partitions to keep", show_default=True)
 @click.option("-r", "--reader", default="read_ww3", help="Spectra file reader", show_default=True)
 @click.option("-c", "--chunks", default="{}", help="chunks dictionary to chunk dataset", show_default=True)
-def spectra(infile, outfile, fit_name, dir_name, method_combine, swells, reader, chunks):
+def spectra(infile, outfile, fit_name, dir_name, method_combine, parts, reader, chunks):
     """Partition and reconstruct spectra from file."""
 
     if os.path.realpath(infile) == os.path.realpath(outfile):
@@ -50,7 +50,7 @@ def spectra(infile, outfile, fit_name, dir_name, method_combine, swells, reader,
     # Run
     reconstructed = partition_and_reconstruct(
         dset,
-        swells=swells,
+        parts=parts,
         fit_name=fit_name,
         dir_name=dir_name,
         method_combine=method_combine,
