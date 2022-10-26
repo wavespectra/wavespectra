@@ -23,7 +23,7 @@ def mom1(spectrum, dir, theta=90.0):
 
 
 def combine_partitions(partitions, freq, dir, keep, combine_excluded=True):
-    """Merge partitions with smallest variances.
+    """Combine least energetic partitions according to distance between peaks.
 
     Args:
         - partitions (list): Partitions sorted in descending order by Hs.

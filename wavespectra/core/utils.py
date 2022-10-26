@@ -403,3 +403,23 @@ def smooth_spec(dset, window=3):
     dsout = xr.where(dsout.notnull(), dsout, dset)
 
     return dsout.assign_coords(dset.coords)
+
+
+def is_overlap(rect1, rect2):
+    """Check if rectangles overlap.
+
+    Args:
+        - rect1 (list): Bounding box of the 1st rectangle [l1, b1, r1, t1].
+        - rect2 (list): Bounding box of the 2nd rectangle [l2, b2, r2, t2].
+
+    Returns:
+        - True if the two rectangles overlap, False otherwise.
+
+    """
+    l1, b1, r1, t1 = rect1
+    l2, b2, r2, t2 = rect2
+    if (r1 <= l2) or (r2 <= l1):
+        return False
+    if (t1 <= b2) or (t2 <= b1):
+        return False
+    return True

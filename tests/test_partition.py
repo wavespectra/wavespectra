@@ -304,3 +304,27 @@ class TestPTM5(BasePTM):
         fcut = 0.1
         ds = self.pt.ptm5(fcut=0.1, interpolate=False)
         assert fcut not in ds.freq
+
+
+class TestBbox(BasePTM):
+
+    def test_default(self):
+        bboxes = [
+            dict(fmin=0.1, fmax=0.2, dmin=None, dmax=None),
+            dict(fmin=0.2, fmax=0.3, dmin=None, dmax=None)
+        ]
+        ds = self.pt.bbox(bboxes=bboxes)
+        assert ds.part.size == 3
+
+    def test_overlap(self):
+        bboxes = [
+            dict(fmin=0.1, fmax=0.2, dmin=None, dmax=None),
+            dict(fmin=0.15, fmax=0.3, dmin=None, dmax=None)
+        ]
+        with pytest.raises(ValueError):
+            ds = self.pt.bbox(bboxes=bboxes)
+
+    def test_freq_increasing(self):
+        bboxes = [dict(fmin=0.2, fmax=0.1, dmin=None, dmax=None)]
+        with pytest.raises(ValueError):
+            ds = self.pt.bbox(bboxes=bboxes)

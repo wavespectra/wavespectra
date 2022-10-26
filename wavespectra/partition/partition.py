@@ -1,9 +1,10 @@
 """Partitioning interface."""
+from itertools import combinations
 import numpy as np
 import xarray as xr
 
 from wavespectra.specpart import specpart
-from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity
+from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs, dpm_gufunc, tps_gufunc
 from wavespectra.partition.utils import combine_partitions
@@ -355,6 +356,74 @@ class Partition:
          # Finalise output
         dsout = self._set_metadata(dsout)
         dsout.attrs.update( {"part0": "sea", "part1": "swell"})
+
+        return dsout.fillna(0.)
+
+    def bbox(self, bboxes):
+        """Partition based on user-defined bounding boxes in frequency-direction space.
+
+        Args:
+            - bboxes (list(dict)): List of dictionaries with keys `fmin`, `fmax`,
+              `dmin` and `dmax` specifying the boundaries of each bounding box.
+
+        Returns:
+            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+              with indices ordered as in the list of dictionaries.
+
+        Note:
+            - Non-specified bounds in each bbox dict are defined from the bounds of the
+              freq / dir bounds in the spectrum, e.g., `fmin=min(freq)`.
+            - Bounding boxes must not overlap.
+            - Last part index is defined by spectral bins not covered by any bboxes.
+
+        """
+        ds = self.dset.sortby("dir").sortby("freq")
+
+        # Chec inputs and define rectangles
+        rectangles = []
+        for bbox in bboxes:
+            fmin = bbox.get("fmin", float(ds.freq.min())) or float(ds.freq.min())
+            fmax = bbox.get("fmax", float(ds.freq.max())) or float(ds.freq.max())
+            dmin = bbox.get("dmin", float(ds.dir.min())) or float(ds.dir.min())
+            dmax = bbox.get("dmax", float(ds.dir.min())) or float(ds.dir.max())
+
+            if fmin >= fmax:
+                raise ValueError(f"fmin {fmin} Hz >= fmax {fmax} Hz")
+
+            rectangles.append([fmin, dmin, fmax, dmax])
+
+        # Ensure there is no overlapping among bboxes
+        for rect1, rect2 in combinations(rectangles, 2):
+            if is_overlap(rect1, rect2):
+                l1, b1, r1, t1 = rect1
+                l2, b2, r2, t2 = rect2
+                raise ValueError(
+                    f"bboxes [fmin={l1:g}, dmin={b1:g}, fmax={r1:g}, dmax={t1:g}] and "
+                    f"[fmin={l2:g}, dmin={b2:g}, fmax={r2:g}, dmax={t2:g}] overlap"
+                )
+
+        # Define partitions
+        partitions = []
+        masks = False
+        for rect in rectangles:
+            fmin, dmin, fmax, dmax = rect
+            mask = (ds.freq >= fmin) & (ds.freq <= fmax) & (ds.dir >= dmin) & (ds.dir <= dmax)
+            partitions.append(ds.where(mask))
+            masks = masks | mask
+        # Last partition
+        partitions.append(ds.where(~masks))
+
+        # Combining into part index
+        dsout = xr.concat(partitions, dim="part")
+
+         # Finalise output
+        dsout = self._set_metadata(dsout)
+        for ind, rect in enumerate(rectangles):
+            fmin, dmin, fmax, dmax = rect
+            dsout.attrs.update(
+                {f"part{ind}": f"fmin={fmin}, fmax={fmax}, dmin={dmin}, dmax={dmax}"}
+            )
+        dsout.attrs.update({f"part{ind + 1}": "complement"})
 
         return dsout.fillna(0.)
 
