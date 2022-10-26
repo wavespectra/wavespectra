@@ -6,7 +6,7 @@ import xarray as xr
 from wavespectra.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import hs, dpm_gufunc, tps_gufunc
+from wavespectra.core.npstats import hs
 from wavespectra.partition.utils import combine_partitions
 
 
@@ -251,6 +251,8 @@ class Partition:
             - Vincent et al. (1991).
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
+        TODO: Can we allow arbitrary size part output with parts=None?
+
         """
         # Sort out inputs
         if smooth:
@@ -426,6 +428,13 @@ class Partition:
         dsout.attrs.update({f"part{ind + 1}": "complement"})
 
         return dsout.fillna(0.)
+
+
+def waveage(dset, wspd, wdir, agefac):
+    """Wave age criterion."""
+    wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
+    wave_celerity = celerity(dset.freq, dpt)
+    return wave_celerity <= wind_speed_component
 
 
 def np_ptm1(

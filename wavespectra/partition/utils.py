@@ -79,6 +79,82 @@ def spread_hp01(partitions, freq, dir):
     return sf2
 
 
+def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4):
+    """Combine least energetic partitions according to distance between peaks.
+
+    Args:
+        - partitions (list): Partitions sorted in descending order by Hs.
+        - freq (1darray): Frequency array.
+        - dir (1darray): Direction array.
+        - keep (int): Number of swells to keep.
+        - k (float): Spread factor in Hanson and Phillips (2001), eq 9.
+
+    Returns:
+        - combined_partitions (list): List of combined partitions.
+
+    """
+    # Peak coordinates
+    fp = []
+    dpm = []
+    for spectrum in partitions:
+        spec1d = spectrum.sum(axis=1).astype("float64")
+        ipeak = np.argmax(spec1d).astype("int64")
+        if (ipeak == 0) or (ipeak == spec1d.size):
+            fp.append(np.nan)
+            dpm.append(np.nan)
+        else:
+            fp.append(1 / tps_gufunc(ipeak, spec1d, freq.astype("float32")))
+            dpm.append(dpm_gufunc(ipeak, *mom1(spectrum, dir)))
+
+    # Indices of non-null partitions
+    iswell = np.where(~np.isnan(fp))[0]
+
+    # Avoid error if all partitions are null
+    if iswell.size == 0:
+        return partitions[:keep + 1]
+
+    # Drop null partitions
+    i0 = iswell[0]
+    i1 = iswell[-1] + 1
+    partitions = partitions[i0:i1]
+    fp = fp[i0:i1]
+    dpm = dpm[i0:i1]
+
+    # Spread parameter
+    sf2 = spread_hp01(partitions, freq, dir)
+
+    # Peak distance parameters
+    fpx = list(np.array(fp) * np.cos(D2R * np.array(dpm)))
+    fpy = list(np.array(fp) * np.sin(D2R * np.array(dpm)))
+    # Recursively merge partitions satisfying H&P criterion
+    while i1 > keep:
+        # Distances between current and all other peaks
+        fpx1 = fpx[-1]
+        fpy1 = fpy[-1]
+        fpx2 = np.array(fpx[:-1])
+        fpy2 = np.array(fpy[:-1])
+        df2 = (fpx1 - fpx2) ** 2 + (fpy1 - fpy2) ** 2
+
+        iclosest = df2.argsort()
+        # Iterate over partitions based distances until merging criteria is met
+        for ipart in iclosest:
+            dist = df2[ipart]
+            spread = max(sf2[ipart], sf2[-1])
+            if dist <= (k * spread):
+                partitions[ipart] += partitions[-1]
+                print("merged")
+                break
+
+        # Drop last index
+        for l in [partitions, sf2, fpx, fpy]:
+            l.pop(-1)
+
+        # Update counter
+        i1 -= 1
+
+    return partitions
+
+
 def combine_partitions(partitions, freq, dir, keep, combine_excluded=True):
     """Combine least energetic partitions according to distance between peaks.
 
