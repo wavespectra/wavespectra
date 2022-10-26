@@ -1,6 +1,7 @@
 import numpy as np
 
 from wavespectra.core.npstats import tps_gufunc, dpm_gufunc
+from wavespectra.core.utils import D2R
 
 
 def mom1(spectrum, dir, theta=90.0):
@@ -20,6 +21,62 @@ def mom1(spectrum, dir, theta=90.0):
     msin = (dd * spectrum * sp).sum(axis=1)
     mcos = (dd * spectrum * cp).sum(axis=1)
     return msin, mcos
+
+
+def frequency_resolution(freq):
+    """Frequency resolution.
+
+    Args:
+        - freq (1darray): Frequency array (Hz).
+
+    Returns:
+        - df (1darray): Frequency resolution with same size as freq.
+
+    """
+    if freq.size > 1:
+        fact = np.hstack((1.0, np.full(freq.size - 2, 0.5), 1.0))
+        ldif = np.hstack((0.0, np.diff(freq)))
+        rdif = np.hstack((np.diff(freq), 0.0))
+        return fact * (ldif + rdif)
+    else:
+        return np.array(1.0,)
+
+
+def spread_hp01(partitions, freq, dir):
+    """Spread parameter of Hanson and Phillips (2001).
+
+    Args:
+        - partitions (list): List of spectra partitions (m2/Hz/deg).
+        - freq (1darray): Frequency array (Hz).
+        - dir (1darray): Direction array (deg).
+
+    Returns:
+        - spread (list): Spread parameter for each partition.
+
+    """
+    nf, nd = partitions[0].shape
+    # Frequency resolution broadcast into spectrum shape
+    DF = np.tile(frequency_resolution(freq), (nd, 1)).T
+    # Direction resolution
+    DD = abs(float(dir[1] - dir[0]))
+    # Frequency and direction parameters broadcast into spectrum shape
+    F = np.tile(freq, (nd, 1)).T
+    F2 = F ** 2
+    D = D2R * np.tile(dir, (nf, 1))
+    COSD = np.cos(D)
+    SIND = np.sin(D)
+    COS2D = np.cos(D) ** 2
+    SIN2D = np.sin(D) ** 2
+    # Calculate spread for each partition
+    sf2 = []
+    for spectrum in partitions:
+        e = (spectrum * DF * DD).sum()
+        fx = (1 / e) * (spectrum * F * COSD * DF * DD).sum()
+        fy = (1 / e) * (spectrum * F * SIND * DF * DD).sum()
+        f2x = (1 / e) * (spectrum * F2 * COS2D * DF * DD).sum()
+        f2y = (1 / e) * (spectrum * F2 * SIN2D * DF * DD).sum()
+        sf2.append(f2x - (fx ** 2) + f2y - (fy ** 2))
+    return sf2
 
 
 def combine_partitions(partitions, freq, dir, keep, combine_excluded=True):
