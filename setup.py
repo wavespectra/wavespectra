@@ -2,6 +2,9 @@
 import os
 from setuptools import find_packages
 from codecs import open
+
+from setuptools import dist
+dist.Distribution().fetch_build_eggs(['numpy'])
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
