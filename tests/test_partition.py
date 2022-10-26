@@ -316,6 +316,11 @@ class TestBbox(BasePTM):
         ds = self.pt.bbox(bboxes=bboxes)
         assert ds.part.size == 3
 
+    def test_ignore_dlimits(self):
+        bboxes = [dict(fmin=0.1, fmax=0.2), dict(fmin=0.2, fmax=0.3)]
+        ds = self.pt.bbox(bboxes=bboxes)
+        assert ds.part.size == 3
+
     def test_overlap(self):
         bboxes = [
             dict(fmin=0.1, fmax=0.2, dmin=None, dmax=None),
