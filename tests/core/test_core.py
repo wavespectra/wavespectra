@@ -18,6 +18,7 @@ from wavespectra.core.utils import (
     interp_spec,
     load_function,
     smooth_spec,
+    is_overlap,
 )
 from wavespectra import read_swan
 
@@ -29,6 +30,14 @@ def dset():
     filename = os.path.join(FILES_DIR, "swanfile.spec")
     _dset = read_swan(filename)
     yield _dset
+
+
+def test_is_overlap():
+    rect1 = [0.1, 0, 0.2, 345]
+    assert is_overlap(rect1, [0.15, 0, 0.3, 345])
+    assert is_overlap(rect1, [0.0, 50, 0.11, 60])
+    assert not is_overlap(rect1, [0.2, 0, 0.3, 345])
+    assert not is_overlap(rect1, [0.1, 345, 0.2, 360])
 
 
 def test_smooth_spectra(dset):
