@@ -7,7 +7,7 @@ from wavespectra.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs
-from wavespectra.partition.utils import combine_partitions
+from wavespectra.partition.utils import combine_partitions_hp01
 
 
 class Partition:
@@ -74,7 +74,6 @@ class Partition:
         agefac=1.7,
         wscut=0.3333,
         swells=3,
-        combine=False,
         smooth=False,
         window=3,
     ):
@@ -87,8 +86,6 @@ class Partition:
             - swells (int): Number of swell partitions to compute.
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
-            - combine (bool): Combine adjacent swell partitions based on the distances
-              between spectral peaks (Hanson at al., 2001).
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
@@ -129,8 +126,7 @@ class Partition:
             agefac,
             wscut,
             swells,
-            combine,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -155,7 +151,6 @@ class Partition:
         agefac=1.7,
         wscut=0.3333,
         swells=3,
-        combine=False,
         smooth=False,
         window=3,
     ):
@@ -168,8 +163,6 @@ class Partition:
             - swells (int): Number of swell partitions to compute.
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
-            - combine (bool): Combine adjacent swell partitions based on the distances
-              between spectral peaks (Hanson at al., 2001).
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
@@ -208,8 +201,7 @@ class Partition:
             agefac,
             wscut,
             swells,
-            combine,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -228,13 +220,11 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm3(self, parts=3, combine=False, smooth=False, window=3):
+    def ptm3(self, parts=3, smooth=False, window=3):
         """Watershed partitioning with no wind-sea or swell classification
 
         Args:
             - parts (int): Number of partitions to keep.
-            - combine (bool): Combine adjacent swell partitions based on the distances
-              between spectral peaks (Hanson at al., 2001).
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
@@ -244,8 +234,6 @@ class Partition:
               defining watershed partitions sorted by descending order of Hs.
 
         References:
-            - Hanson and Phillips (2001).
-            - Hanson et al. (2009).
             - Portilla et al. (2009).
             - Tracy et al. (2007).
             - Vincent et al. (1991).
@@ -268,8 +256,7 @@ class Partition:
             self.dset.freq,
             self.dset.dir,
             parts,
-            combine,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -361,6 +348,84 @@ class Partition:
 
         return dsout.fillna(0.)
 
+    def hp01(
+        self,
+        wspd=None,
+        wdir=None,
+        dpt=None,
+        agefac=1.7,
+        wscut=0.3333,
+        swells=3,
+        smooth=False,
+        window=3,
+    ):
+        """Hanson and Phillips 2001 spectra partitioning.
+
+        Args:
+            - wspd (xr.DataArray): Wind speed DataArray.
+            - wdir (xr.DataArray): Wind direction DataArray.
+            - dpt (xr.DataArray): Depth DataArray.
+            - swells (int): Number of swell partitions to compute.
+            - agefac (float): Age factor.
+            - wscut (float): Wind sea fraction cutoff.
+            - smooth (bool): Compute watershed boundaries from smoothed spectra
+              as described in Portilla et al., 2009.
+            - window (int): Size of running window for smoothing spectra when smooth==True.
+
+        Returns:
+            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+              where the 0th index are the wind sea and remaining indices are the swells
+              sorted by descending order of Hs.
+
+        Note:
+            - If wspd, wdir or dpt are not provided no wind sea classification is performed.
+
+        References:
+            - Hanson and Phillips (2001).
+            - Hanson et al. (2009).
+            - Portilla et al. (2009).
+            - Tracy et al. (2007).
+            - Vincent et al. (1991).
+            - WW3 documentation (https://github.com/NOAA-EMC/WW3).
+
+        TODO: Test if more efficient calculating windmask outside ufunc.
+
+        """
+        # Sort out inputs
+        check_same_coordinates(wspd, wdir, dpt)
+        if smooth:
+            dset_smooth = smooth_spec(self.dset, window)
+        else:
+            dset_smooth = self.dset
+        windseamask = waveage(self.dset, wspd, wdir, dpt, agefac)
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_hp01,
+            self.dset,
+            dset_smooth,
+            windseamask,
+            self.dset.freq,
+            self.dset.dir,
+            wscut,
+            swells,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], []],
+            output_core_dims=[["part", "freq", "dir"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=["float32"],
+            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": swells + 1}},
+        )
+
+        # Finalise output
+        dsout = self._set_metadata(dsout)
+        parts_description = {
+            "part0": "wind sea", "part2-n": "swells in descending order of hs",
+        }
+        dsout.attrs.update(parts_description)
+
+        return dsout.transpose("part", ...)
+
     def bbox(self, bboxes):
         """Partition based on user-defined bounding boxes in frequency-direction space.
 
@@ -430,8 +495,16 @@ class Partition:
         return dsout.fillna(0.)
 
 
-def waveage(dset, wspd, wdir, agefac):
-    """Wave age criterion."""
+def waveage(dset, wspd, wdir, dpt, agefac):
+    """Wave age criterion.
+
+    Args:
+        - wspd (xr.DataArray): Wind speed.
+        - wdir (xr.DataArray): Wind direction.
+        - dpt (xr.DataArray): Water depth.
+        - agefac (float): Age factor.
+
+    """
     wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
     wave_celerity = celerity(dset.freq, dpt)
     return wave_celerity <= wind_speed_component
@@ -448,7 +521,6 @@ def np_ptm1(
     agefac=1.7,
     wscut=0.3333,
     swells=None,
-    combine=False
 ):
     """PTM1 spectra partitioning on numpy arrays.
 
@@ -463,8 +535,6 @@ def np_ptm1(
         - agefac (float): Age factor.
         - wscut (float): Wind sea fraction cutoff.
         - swells (int): Number of swell partitions to compute, all detected by default.
-        - combine (bool): Combine less energitic partitions onto one of the keeping
-          ones according to shortest distance between spectral peaks.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -473,8 +543,6 @@ def np_ptm1(
     Note:
         - The smooth spectrum `spectrum_smooth` is used to define the watershed
           boundaries which are applied to the original spectrum.
-        - The `combine` option ensures spectral variance is conserved but
-          could yields multiple peaks into single partitions.
 
     """
     # Use smooth spectrum to define morphological boundaries
@@ -505,10 +573,7 @@ def np_ptm1(
         # Exclude null swell partitions if the number of output swells is undefined
         swell_partitions = [swell for swell in swell_partitions if swell.sum() > 0]
     else:
-        if nparts > swells and combine:
-            # Combine extra swell partitions into main ones
-            swell_partitions = combine_partitions(swell_partitions, freq, dir, swells)
-        elif nparts > swells and not combine:
+        if nparts > swells:
             # Discard extra partitions
             swell_partitions = swell_partitions[:swells]
         elif nparts < swells:
@@ -531,7 +596,6 @@ def np_ptm2(
     agefac=1.7,
     wscut=0.3333,
     swells=None,
-    combine=False,
 ):
     """PTM2 spectra partitioning on numpy arrays.
 
@@ -546,8 +610,6 @@ def np_ptm2(
         - agefac (float): Age factor.
         - wscut (float): Wind sea fraction cutoff.
         - swells (int): Number of swell partitions to compute, all detected by default.
-        - combine (bool): Combine less energitic partitions onto one of the keeping
-          ones according to shortest distance between spectral peaks.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -557,8 +619,6 @@ def np_ptm2(
     Note:
         - The smooth spectrum `spectrum_smooth` is used to define the watershed
           boundaries which are applied to the original spectrum.
-        - The `combine` option ensures spectral variance is conserved but
-          could yields multiple peaks into single partitions.
         - The option in WW3 to leave secondary wind seas as separate partitions is not
           available as it makes it harder to distinguish them from swells in the output.
 
@@ -593,10 +653,7 @@ def np_ptm2(
         # Exclude null swell partitions if the number of output swells is undefined
         swell_partitions = [swell for swell in swell_partitions if swell.sum() > 0]
     else:
-        if nparts > swells and combine:
-            # Combine extra swell partitions into main ones
-            swell_partitions = combine_partitions(swell_partitions, freq, dir, swells)
-        elif nparts > swells and not combine:
+        if nparts > swells:
             # Discard extra partitions
             swell_partitions = swell_partitions[:swells]
         elif nparts < swells:
@@ -609,7 +666,7 @@ def np_ptm2(
     return np.array(wsea_partitions + swell_partitions)
 
 
-def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None, combine=False):
+def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None):
     """PTM3 spectra partitioning on numpy arrays.
 
     Args:
@@ -618,8 +675,62 @@ def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None, combine=False):
         - freq (1darray): Wave frequency array with shape (nf).
         - dir (1darray): Wave direction array with shape (nd).
         - parts (int): Number of partitions to compute, all detected by default.
-        - combine (bool): Combine less energitic partitions onto one of the keeping
-          ones according to shortest distance between spectral peaks.
+
+    Returns:
+        - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
+          with shape (np, nf, nd).
+
+    Note:
+        - The smooth spectrum `spectrum_smooth` is used to define the watershed
+          boundaries which are applied to the original spectrum.
+
+    """
+    # Use smooth spectrum to define morphological boundaries
+    watershed_map = specpart.partition(spectrum_smooth)
+    nparts = watershed_map.max()
+
+    # Assign partitioned arrays from raw spectrum and morphological boundaries
+    partitions = []
+    for npart in range(1, nparts + 1):
+        partitions.append(np.where(watershed_map == npart, spectrum, 0.0))
+
+    # Sort partitions by Hs
+    hs_partitions = [hs(partition, freq, dir) for partition in partitions]
+    partitions = [p for _, p in sorted(zip(hs_partitions, partitions), reverse=True)]
+
+    if parts is not None:
+        if nparts > parts:
+            # Discard extra partitions
+            partitions = partitions[:parts]
+        elif nparts < parts:
+            # Extend partitions list with zero arrays
+            template = np.zeros_like(spectrum)
+            n = parts - len(partitions)
+            for i in range(n):
+                partitions.append(template)
+
+    return np.array(partitions)
+
+
+def np_hp01(
+    spectrum,
+    spectrum_smooth,
+    windseamask,
+    freq,
+    dir,
+    wscut=0.3333,
+    swells=None,
+):
+    """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
+
+    Args:
+        - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - spectrum_smooth (2darray): Smoothed wave spectrum array with shape (nf, nd).
+        - windseamask (2darray): Wind-sea mask array with shape (nf, nd).
+        - freq (1darray): Wave frequency array with shape (nf).
+        - dir (1darray): Wave direction array with shape (nd).
+        - wscut (float): Wind sea fraction cutoff.
+        - swells (int): Number of swell partitions to compute, all detected by default.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -637,26 +748,21 @@ def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None, combine=False):
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
-    partitions = []
-    for npart in range(1, nparts + 1):
-        partitions.append(np.where(watershed_map == npart, spectrum, 0.0))
+    wsea_partition = np.zeros_like(spectrum)
+    swell_partitions = [np.zeros_like(spectrum) for n in range(nparts)]
+    for ipart in range(nparts):
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        wsfrac = part[windseamask].sum() / part.sum()
+        if wsfrac > wscut:
+            wsea_partition += part
+        else:
+            swell_partitions[ipart] += part
 
-    # Sort partitions by Hs
-    hs_partitions = [hs(partition, freq, dir) for partition in partitions]
-    partitions = [p for _, p in sorted(zip(hs_partitions, partitions), reverse=True)]
+    # Sort swells by Hs
+    isort = np.argsort([-hs(swell, freq, dir) for swell in swell_partitions])
+    swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
 
-    if parts is not None:
-        if nparts > parts and combine:
-            # Combine extra partitions into main ones
-            partitions = combine_partitions(partitions, freq, dir, parts)
-        elif nparts > parts and not combine:
-            # Discard extra partitions
-            partitions = partitions[:parts]
-        elif nparts < parts:
-            # Extend partitions list with zero arrays
-            template = np.zeros_like(spectrum)
-            n = parts - len(partitions)
-            for i in range(n):
-                partitions.append(template)
+    # Combine extra swell partitions
+    swell_partitions = combine_partitions_hp01(swell_partitions, freq, dir, swells)
 
-    return np.array(partitions)
+    return np.array([wsea_partition] + swell_partitions)
