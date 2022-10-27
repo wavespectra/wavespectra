@@ -41,10 +41,10 @@ Install from conda
 
 .. note::
 
-    Wavespectra requires numpy and a Fortran compiler such as `gfortran` available on
-    the system when installing with `pip` in order to build the watershed partitioning
-    module. Installation from conda-forge includes pre-compiled versions of the code so
-    the compiler is not required.
+    Wavespectra requires a Fortran compiler such as `gfortran` available on the system
+    when installing with `pip` in order to build the watershed partitioning module.
+    Installation from conda-forge includes pre-compiled versions of the code so the
+    compiler is not required.
 
 
 From sources
@@ -82,8 +82,8 @@ For the full installation also install the extra requirements:
 
    $ pip install -r requirements/extra.txt
 
-Again, please make sure both numpy and a Fortran compiler are available before
-running any of the commands above to install from source.
+Again, please make sure a Fortran compiler are available before running any of the
+commands above to install from source.
 
 .. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
 .. _pip: https://pip.pypa.io
