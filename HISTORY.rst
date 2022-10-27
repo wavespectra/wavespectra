@@ -13,6 +13,16 @@ Releases
 ********
 
 
+3.12.1 (2022-10-27)
+___________________
+
+Internal Changes
+-----------------
+* Fix numpy pre-install requirement by `cmichelenstrofer`_  (`PR75 <https://github.com/wavespectra/wavespectra/pull/75>`_)
+
+.. _`cmichelenstrofer`: https://github.com/cmichelenstrofer
+
+
 3.12.0 (2022-08-19)
 ___________________
 
