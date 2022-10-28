@@ -130,8 +130,8 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
     sf2 = spread_hp01(partitions, freq, dir)
 
     # Peak distance parameters
-    fpx = fp * np.cos(D2R * dpm)
-    fpy = fp * np.sin(D2R * dpm)
+    fpx = fp * np.cos(D2R * dp)
+    fpy = fp * np.sin(D2R * dp)
 
     # Recursively merge partitions satisfying HP01 criteria
     merged_partitions = partitions.copy()
@@ -179,8 +179,8 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                     merged_partitions[imerge], freq, dir
                 )
                 sf2[imerge] = spread_hp01([merged_partitions[imerge]], freq, dir)[0]
-                fpx[imerge] = fp[imerge] * np.cos(D2R * dpm[imerge])
-                fpy[imerge] = fp[imerge] * np.sin(D2R * dpm[imerge])
+                fpx[imerge] = fp[imerge] * np.cos(D2R * dp[imerge])
+                fpy[imerge] = fp[imerge] * np.sin(D2R * dp[imerge])
             else:
                 logger.info(f"{ind}: not merged")
 
