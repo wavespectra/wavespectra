@@ -6,7 +6,7 @@ import xarray as xr
 from wavespectra.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import hs
+from wavespectra.core.npstats import hs_numpy
 from wavespectra.partition.utils import combine_partitions_hp01
 
 
@@ -570,7 +570,7 @@ def np_ptm1(
             swell_partitions[ipart] += part
 
     # Sort swells by Hs
-    isort = np.argsort([-hs(swell, freq, dir) for swell in swell_partitions])
+    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
 
     # Dealing with the number of swells
@@ -650,7 +650,7 @@ def np_ptm2(
             swell_partitions[ipart] += np.where(windseamask, 0.0, part)
 
     # Sort swells by Hs
-    isort = np.argsort([-hs(swell, freq, dir) for swell in swell_partitions])
+    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
 
     # Dealing with the number of swells
@@ -700,7 +700,7 @@ def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None):
         partitions.append(np.where(watershed_map == npart, spectrum, 0.0))
 
     # Sort partitions by Hs
-    hs_partitions = [hs(partition, freq, dir) for partition in partitions]
+    hs_partitions = [hs_numpy(partition, freq, dir) for partition in partitions]
     partitions = [p for _, p in sorted(zip(hs_partitions, partitions), reverse=True)]
 
     if parts is not None:
@@ -764,7 +764,7 @@ def np_hp01(
             swell_partitions.append(part)
 
     # Sort swells by Hs
-    isort = np.argsort([-hs(swell, freq, dir) for swell in swell_partitions])
+    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
 
     # Combine extra swell partitions
