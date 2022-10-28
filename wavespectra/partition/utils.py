@@ -128,20 +128,17 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
     fpx = fp * np.cos(D2R * dpm)
     fpy = fp * np.sin(D2R * dpm)
 
-    # Recursively merge partitions satisfying HP01 criterion
+    # Recursively merge partitions satisfying HP01 criteria
     merged_partitions = partitions.copy()
     merged = True
     while merged:
-        # Leave while loop if no merge done after iterating over all left partitions
+        # Leave while loop if this remains zero
         merged = 0
+
         logger.info("Entering loop to merge partitions")
         for ind in reversed(range(1, len(merged_partitions))):
             # Distances between current and all other peaks
-            fpx1 = fpx[ind]
-            fpy1 = fpy[ind]
-            fpx2 = fpx[:ind]
-            fpy2 = fpy[:ind]
-            df2 = (fpx1 - fpx2) ** 2 + (fpy1 - fpy2) ** 2
+            df2 = (fpx[ind] - fpx[:ind]) ** 2 + (fpy[ind] - fpy[:ind]) ** 2
             isort = df2.argsort()
 
             imerge = None
@@ -155,14 +152,14 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                 # Combine with nearest partition that satisfy all of the following:
                 #  - Contiguous in frequency space
                 #  - Relative angle under threshold
-                #  - Small relative distance (dist <= k * spread)
+                #  - Small relative distance between peaks (dist <= k * spread)
                 for ipart in isort:
-                    touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
                     dist = df2[ipart]
                     spread = max(sf2[ind], sf2[ipart])
-                    close = dist <= (k * spread)
-                    small_angle = angle(dpm[ind], dpm[ipart]) < angle_threshold
-                    if touch and small_angle and (small_hs or close):
+                    is_close = dist <= (k * spread)
+                    is_small_angle = angle(dpm[ind], dpm[ipart]) < angle_threshold
+                    is_touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
+                    if is_touch and is_small_angle and is_close:
                         logger.info(f"{ind}: merged contiguous partition with distance < spread")
                         imerge = ipart
                         break
@@ -171,10 +168,11 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                 merged += 1
                 merged_partitions[imerge] += merged_partitions[ind]
                 merged_partitions[ind] *= 0
-                # Update stats for merged partition
-                spectrum = merged_partitions[imerge]
-                hs[imerge], fp[imerge], dpm[imerge], dm[imerge] = _partition_stats(spectrum, freq, dir)
-                sf2[imerge] = spread_hp01([spectrum], freq, dir)[0]
+                # Update stats of combined partition
+                hs[imerge], fp[imerge], dpm[imerge], dm[imerge] = _partition_stats(
+                    merged_partitions[imerge], freq, dir
+                )
+                sf2[imerge] = spread_hp01([merged_partitions[imerge]], freq, dir)[0]
                 fpx[imerge] = fp[imerge] * np.cos(D2R * dpm[imerge])
                 fpy[imerge] = fp[imerge] * np.sin(D2R * dpm[imerge])
             else:
