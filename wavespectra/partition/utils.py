@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from wavespectra.core.npstats import tps_gufunc, dpm_gufunc, hs_numpy, dm_numpy, mom1_numpy
+from wavespectra.core.npstats import tps_gufunc, dpm_gufunc, dp_gufunc, dm_numpy, hs_numpy, mom1_numpy
 from wavespectra.core.utils import D2R, angle
 
 
@@ -11,12 +11,14 @@ logger = logging.getLogger(__name__)
 def _partition_stats(spectrum, freq, dir):
     """Wave stats from partition."""
     spec1d = spectrum.sum(axis=1).astype("float64")
-    ipeak = np.argmax(spec1d).astype("int64")
+    ifpeak = np.argmax(spec1d).astype("int64")
     hs = hs_numpy(spectrum, freq, dir)
-    fp = 1 / tps_gufunc(ipeak, spec1d, freq.astype("float32"))
-    dpm = dpm_gufunc(ipeak, *mom1_numpy(spectrum, dir))
+    fp = 1 / tps_gufunc(ifpeak, spec1d, freq.astype("float32"))
+    dpm = dpm_gufunc(ifpeak, *mom1_numpy(spectrum, dir))
     dm = dm_numpy(spectrum, dir)
-    return hs, fp, dpm, dm
+    idpeak = np.argmax((spectrum * frequency_resolution(freq, dir.size)).sum(axis=0))
+    dp = dp_gufunc(idpeak.astype("int64"), dir.astype("float32"))
+    return hs, fp, dpm, dm, dp
 
 
 def _is_contiguous(part0, part1):
@@ -28,24 +30,24 @@ def _is_contiguous(part0, part1):
     return right0 >= left1 and right1 >= left0
 
 
-def frequency_resolution(freq):
+def frequency_resolution(freq, ndir=None):
     """Frequency resolution.
 
     Args:
         - freq (1darray): Frequency array (Hz).
+        - ndir (int): Number of directions if broadcasting output onto 2darray.
 
     Returns:
         - df (1darray): Frequency resolution with same size as freq.
 
     """
-    if freq.size > 1:
-        fact = np.hstack((1.0, np.full(freq.size - 2, 0.5), 1.0))
-        ldif = np.hstack((0.0, np.diff(freq)))
-        rdif = np.hstack((np.diff(freq), 0.0))
-        return fact * (ldif + rdif)
-    else:
-        return np.array(1.0,)
-
+    fact = np.hstack((1.0, np.full(freq.size - 2, 0.5), 1.0))
+    ldif = np.hstack((0.0, np.diff(freq)))
+    rdif = np.hstack((np.diff(freq), 0.0))
+    df = fact * (ldif + rdif)
+    if ndir is not None:
+        df = np.tile(freq, (ndir, 1)).T
+    return df
 
 def spread_hp01(partitions, freq, dir):
     """Spread parameter of Hanson and Phillips (2001).
@@ -63,7 +65,7 @@ def spread_hp01(partitions, freq, dir):
     dd = abs(float(dir[1] - dir[0]))
 
     # Frequency resolution broadcast into spectrum shape
-    DF = np.tile(frequency_resolution(freq), (ndir, 1)).T
+    DF = frequency_resolution(freq, ndir=ndir)
 
     # Frequency and direction parameters broadcast into spectrum shape
     F = np.tile(freq, (ndir, 1)).T
@@ -118,8 +120,11 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
     fp = np.zeros(npart)
     dpm = np.zeros(npart)
     dm = np.zeros(npart)
+    dp = np.zeros(npart)
     for ipart, spectrum in enumerate(partitions):
-        hs[ipart], fp[ipart], dpm[ipart], dm[ipart] = _partition_stats(spectrum, freq, dir)
+        hs[ipart], fp[ipart], dpm[ipart], dm[ipart], dp[ipart] = _partition_stats(
+            spectrum, freq, dir
+        )
 
     # Spread parameter
     sf2 = spread_hp01(partitions, freq, dir)
@@ -137,11 +142,12 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
 
         logger.info("Entering loop to merge partitions")
         for ind in reversed(range(1, len(merged_partitions))):
+            imerge = None
+
             # Distances between current and all other peaks
             df2 = (fpx[ind] - fpx[:ind]) ** 2 + (fpy[ind] - fpy[:ind]) ** 2
             isort = df2.argsort()
 
-            imerge = None
             small_hs = hs[ind] < 0.2
             if small_hs:
                 # Combine small partition onto nearest neighbour if they are contiguous
@@ -169,7 +175,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                 merged_partitions[imerge] += merged_partitions[ind]
                 merged_partitions[ind] *= 0
                 # Update stats of combined partition
-                hs[imerge], fp[imerge], dpm[imerge], dm[imerge] = _partition_stats(
+                hs[imerge], fp[imerge], dpm[imerge], dm[imerge], dp[imerge] = _partition_stats(
                     merged_partitions[imerge], freq, dir
                 )
                 sf2[imerge] = spread_hp01([merged_partitions[imerge]], freq, dir)[0]
