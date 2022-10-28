@@ -20,6 +20,21 @@ D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
 
+def angle(dir1, dir2):
+    """Relative angle between two directions.
+
+    Args:
+        - dir1 (array): First direction (degree).
+        - dir2 (array): Second direction (degree).
+
+    Returns:
+        - angle (array): Angle difference between dir1 and dir2 (degree).
+
+    """
+    dif = np.absolute(dir1 % 360 - dir2 % 360)
+    return np.minimum(dif, 360 - dif)
+
+
 def wavelen(freq, depth=None):
     """Wavelength L.
 

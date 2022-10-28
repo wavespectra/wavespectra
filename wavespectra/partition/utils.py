@@ -2,11 +2,30 @@ import logging
 import numpy as np
 
 from wavespectra.core.npstats import tps_gufunc, dpm_gufunc, hs_numpy, dm_numpy, mom1_numpy
-from wavespectra.core.utils import D2R
+from wavespectra.core.utils import D2R, angle
 
 
 logger = logging.getLogger(__name__)
 
+
+def _partition_stats(spectrum, freq, dir):
+    """Wave stats from partition."""
+    spec1d = spectrum.sum(axis=1).astype("float64")
+    ipeak = np.argmax(spec1d).astype("int64")
+    hs = hs_numpy(spectrum, freq, dir)
+    fp = 1 / tps_gufunc(ipeak, spec1d, freq.astype("float32"))
+    dpm = dpm_gufunc(ipeak, *mom1_numpy(spectrum, dir))
+    dm = dm_numpy(spectrum, dir)
+    return hs, fp, dpm, dm
+
+
+def _is_contiguous(part0, part1):
+    """Check if 1d partitions overlap in frequency space."""
+    spec1d_0 = part0.sum(axis=1)
+    spec1d_1 = part1.sum(axis=1)
+    left0, right0 = np.nonzero(spec1d_0)[0][[0, -1]]
+    left1, right1 = np.nonzero(spec1d_1)[0][[0, -1]]
+    return right0 >= left1 and right1 >= left0
 
 
 def frequency_resolution(freq):
@@ -93,29 +112,6 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
         - Use Dm instead of Dpm to test for angle distance.
 
     """
-    def partition_stats(spectrum, freq, dir):
-        """Wave stats from partition."""
-        spec1d = spectrum.sum(axis=1).astype("float64")
-        ipeak = np.argmax(spec1d).astype("int64")
-        hs = hs_numpy(spectrum, freq, dir)
-        fp = 1 / tps_gufunc(ipeak, spec1d, freq.astype("float32"))
-        dpm = dpm_gufunc(ipeak, *mom1_numpy(spectrum, dir))
-        dm = dm_numpy(spectrum, dir)
-        return hs, fp, dpm, dm
-
-    def is_contiguous(part0, part1):
-        """Check if 1d partitions overlap in frequency space."""
-        spec1d_0 = part0.sum(axis=1)
-        spec1d_1 = part1.sum(axis=1)
-        left0, right0 = np.nonzero(spec1d_0)[0][[0, -1]]
-        left1, right1 = np.nonzero(spec1d_1)[0][[0, -1]]
-        return right0 >= left1 and right1 >= left0
-
-    def angle(dir1, dir2):
-        """Angle between two directions."""
-        dif = np.absolute(dir1 % 360 - dir2 % 360)
-        return np.minimum(dif, 360 - dif)
-
     # Partition stats
     npart = len(partitions)
     hs = np.zeros(npart)
@@ -123,7 +119,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
     dpm = np.zeros(npart)
     dm = np.zeros(npart)
     for ipart, spectrum in enumerate(partitions):
-        hs[ipart], fp[ipart], dpm[ipart], dm[ipart] = partition_stats(spectrum, freq, dir)
+        hs[ipart], fp[ipart], dpm[ipart], dm[ipart] = _partition_stats(spectrum, freq, dir)
 
     # Spread parameter
     sf2 = spread_hp01(partitions, freq, dir)
@@ -152,18 +148,16 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
             small_hs = hs[ind] < 0.2
             if small_hs:
                 # Combine small partition onto nearest neighbour if they are contiguous
-                if is_contiguous(merged_partitions[ind], merged_partitions[isort[0]]):
+                if _is_contiguous(merged_partitions[ind], merged_partitions[isort[0]]):
                     logger.debug(f" Part {ind} - hs < threshold, merged onto nearest neighbour")
                     imerge = isort[0]
             else:
-                """
-                Combine with nearest partition that satisfy all of the following:
-                  - Contiguous in frequency space
-                  - Relative angle under threshold
-                  - Small relative distance (dist <= k * spread)
-                """
+                # Combine with nearest partition that satisfy all of the following:
+                #  - Contiguous in frequency space
+                #  - Relative angle under threshold
+                #  - Small relative distance (dist <= k * spread)
                 for ipart in isort:
-                    touch = is_contiguous(merged_partitions[ind], merged_partitions[ipart])
+                    touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
                     dist = df2[ipart]
                     spread = max(sf2[ind], sf2[ipart])
                     close = dist <= (k * spread)
@@ -179,7 +173,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                 merged_partitions[ind] *= 0
                 # Update stats for merged partition
                 spectrum = merged_partitions[imerge]
-                hs[imerge], fp[imerge], dpm[imerge], dm[imerge] = partition_stats(spectrum, freq, dir)
+                hs[imerge], fp[imerge], dpm[imerge], dm[imerge] = _partition_stats(spectrum, freq, dir)
                 sf2[imerge] = spread_hp01([spectrum], freq, dir)[0]
                 fpx[imerge] = fp[imerge] * np.cos(D2R * dpm[imerge])
                 fpy[imerge] = fp[imerge] * np.sin(D2R * dpm[imerge])
