@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.utils import (
+    angle,
     to_nautical,
     unique_times,
     spddir_to_uv,
@@ -30,6 +31,14 @@ def dset():
     filename = os.path.join(FILES_DIR, "swanfile.spec")
     _dset = read_swan(filename)
     yield _dset
+
+
+def test_angle():
+    assert angle(0, 10) == 10
+    assert angle(10, 0) == 10
+    assert angle(0, 190) == 170
+    assert angle(170, 361) == 169
+    assert angle(10, 350) == 20
 
 
 def test_is_overlap():
