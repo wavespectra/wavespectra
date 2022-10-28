@@ -388,16 +388,21 @@ class Partition:
             - Vincent et al. (1991).
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
-        TODO: Test if more efficient calculating windmask outside ufunc.
+        TODO:
+            - handle size of output from ufunc.
 
         """
-        # Sort out inputs
         check_same_coordinates(wspd, wdir, dpt)
+        # Smooth spectra for defining watershed boundaries
         if smooth:
             dset_smooth = smooth_spec(self.dset, window)
         else:
             dset_smooth = self.dset
-        windseamask = waveage(self.dset, wspd, wdir, dpt, agefac)
+        # Wind sea mask
+        if wspd is None or wdir is None or dpt is None:
+            windseamask = xr.zeros_like(self.dset).astype(bool)
+        else:
+            windseamask = waveage(self.dset, wspd, wdir, dpt, agefac)
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
@@ -409,7 +414,7 @@ class Partition:
             self.dset.dir,
             wscut,
             swells,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], []],
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -749,20 +754,29 @@ def np_hp01(
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
     wsea_partition = np.zeros_like(spectrum)
-    swell_partitions = [np.zeros_like(spectrum) for n in range(nparts)]
+    swell_partitions = []
     for ipart in range(nparts):
         part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
         wsfrac = part[windseamask].sum() / part.sum()
         if wsfrac > wscut:
             wsea_partition += part
         else:
-            swell_partitions[ipart] += part
+            swell_partitions.append(part)
 
     # Sort swells by Hs
     isort = np.argsort([-hs(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
 
     # Combine extra swell partitions
-    swell_partitions = combine_partitions_hp01(swell_partitions, freq, dir, swells)
+    if len(swell_partitions) > 1:
+        swell_partitions = combine_partitions_hp01(swell_partitions, freq, dir, swells)
+
+    # Extend list to ensure the correct number of partitions is returned
+    nswells = len(swell_partitions)
+    if swells is not None and nswells < swells:
+        nullspec = np.zeros_like(spectrum)
+        n = swells - nswells
+        for i in range(n):
+            swell_partitions.append(nullspec)
 
     return np.array([wsea_partition] + swell_partitions)
