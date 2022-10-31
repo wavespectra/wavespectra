@@ -111,7 +111,7 @@ class TestPTM1(BasePTM):
             **kwargs,
         )
         new = self.pt.ptm1(
-            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, **kwargs,
+            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, ihmax=200, **kwargs,
         )
         assert  np.array_equal(old.spec.hs().values, new.spec.hs().values)
 
