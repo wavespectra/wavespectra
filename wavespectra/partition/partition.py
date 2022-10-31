@@ -10,7 +10,12 @@ from wavespectra.core.npstats import hs_numpy
 from wavespectra.partition.utils import combine_partitions_hp01
 
 
-IHMAX = 200
+DEFAULTS = {
+    "ihmax": 100,
+    "angle_max": 30,
+    "hs_min": 0.2,
+    "k": 0.5,
+}
 
 
 class Partition:
@@ -361,9 +366,10 @@ class Partition:
         swells=3,
         smooth=False,
         window=3,
-        hs_min=0.2,
-        angle_max=30,
-        ihmax=IHMAX,
+        k=DEFAULTS["k"],
+        angle_max=DEFAULTS["angle_max"],
+        hs_min=DEFAULTS["hs_min"],
+        ihmax=DEFAULTS["ihmax"],
     ):
         """Hanson and Phillips 2001 spectra partitioning.
 
@@ -378,6 +384,7 @@ class Partition:
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when
               smooth==True.
+            - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
             - angle_max (float): Maximum relative angle for combining partitions.
             - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
               combined with closest ones regardless of minimum distance and angle criteria.
@@ -425,10 +432,11 @@ class Partition:
             self.dset.dir,
             wscut,
             swells,
+            k,
             angle_max,
             hs_min,
             ihmax,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], []],
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -739,9 +747,10 @@ def np_hp01(
     dir,
     wscut=0.3333,
     swells=None,
-    angle_max=30,
-    hs_min=0.2,
-    ihmax=IHMAX,
+    k=DEFAULTS["k"],
+    angle_max=DEFAULTS["angle_max"],
+    hs_min=DEFAULTS["hs_min"],
+    ihmax=DEFAULTS["ihmax"],
 ):
     """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
 
@@ -753,6 +762,7 @@ def np_hp01(
         - dir (1darray): Wave direction array with shape (nd).
         - wscut (float): Wind sea fraction cutoff.
         - swells (int): Number of swell partitions to compute, all detected by default.
+        - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
         - angle_max (float): Maximum relative angle for combining partitions.
         - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
           combined with closest ones regardless of minimum distance and angle criteria.
@@ -771,7 +781,7 @@ def np_hp01(
     # Use smooth spectrum to define morphological boundaries
     specpart.ihmax = ihmax
     watershed_map = specpart.partition(spectrum_smooth)
-    specpart.ihmax = IHMAX
+    specpart.ihmax = DEFAULTS["ihmax"]
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
@@ -795,12 +805,13 @@ def np_hp01(
     # Combine extra swell partitions
     if len(swell_partitions) > 1:
         swell_partitions = combine_partitions_hp01(
-            swell_partitions,
-            freq,
-            dir,
-            swells,
-            hs_min,
-            angle_max,
+            partitions=swell_partitions,
+            freq=freq,
+            dir=dir,
+            keep=swells,
+            k=k,
+            angle_max=angle_max,
+            hs_min=hs_min,
         )
 
     # Extend list to ensure the correct number of partitions is returned
