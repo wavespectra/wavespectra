@@ -92,6 +92,7 @@ class Partition:
         swells=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
         window=DEFAULTS["window"],
+        ihmax=DEFAULTS["ihmax"],
     ):
         """PTM1 spectra partitioning.
 
@@ -105,6 +106,7 @@ class Partition:
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
+            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -142,7 +144,8 @@ class Partition:
             agefac,
             wscut,
             swells,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
+            ihmax,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -169,6 +172,7 @@ class Partition:
         swells=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
         window=DEFAULTS["window"],
+        ihmax=DEFAULTS["ihmax"],
     ):
         """Watershed partitioning with secondary wind-sea assigned from individual spectral bins.
 
@@ -182,6 +186,7 @@ class Partition:
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
+            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -217,7 +222,8 @@ class Partition:
             agefac,
             wscut,
             swells,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
+            ihmax,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -241,6 +247,7 @@ class Partition:
         parts=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
         window=DEFAULTS["window"],
+        ihmax=DEFAULTS["ihmax"],
     ):
         """Watershed partitioning with no wind-sea or swell classification
 
@@ -249,6 +256,7 @@ class Partition:
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - window (int): Size of running window for smoothing spectra when smooth==True.
+            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -277,7 +285,8 @@ class Partition:
             self.dset.freq,
             self.dset.dir,
             parts,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], []],
+            ihmax,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -549,9 +558,10 @@ def np_ptm1(
     wspd,
     wdir,
     dpt,
-    agefac=1.7,
-    wscut=0.3333,
-    swells=None,
+    agefac=DEFAULTS["agefac"],
+    wscut=DEFAULTS["wscut"],
+    swells=DEFAULTS["swells"],
+    ihmax=DEFAULTS["ihmax"],
 ):
     """PTM1 spectra partitioning on numpy arrays.
 
@@ -565,7 +575,8 @@ def np_ptm1(
         - dpt (float): Water depth.
         - agefac (float): Age factor.
         - wscut (float): Wind sea fraction cutoff.
-        - swells (int): Number of swell partitions to compute, all detected by default.
+        - swells (int): Number of swell partitions to compute, all detected if None.
+        - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -577,7 +588,9 @@ def np_ptm1(
 
     """
     # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
     watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = DEFAULTS["ihmax"]
     nparts = watershed_map.max()
 
     # Wind sea mask
@@ -624,9 +637,10 @@ def np_ptm2(
     wspd,
     wdir,
     dpt,
-    agefac=1.7,
-    wscut=0.3333,
-    swells=None,
+    agefac=DEFAULTS["agefac"],
+    wscut=DEFAULTS["wscut"],
+    swells=DEFAULTS["swells"],
+    ihmax=DEFAULTS["ihmax"],
 ):
     """PTM2 spectra partitioning on numpy arrays.
 
@@ -640,7 +654,8 @@ def np_ptm2(
         - dpt (float): Water depth.
         - agefac (float): Age factor.
         - wscut (float): Wind sea fraction cutoff.
-        - swells (int): Number of swell partitions to compute, all detected by default.
+        - swells (int): Number of swell partitions to compute, all detected if None.
+        - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -655,7 +670,9 @@ def np_ptm2(
 
     """
     # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
     watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = DEFAULTS["ihmax"]
     nparts = watershed_map.max()
 
     # Wind sea mask
@@ -697,7 +714,14 @@ def np_ptm2(
     return np.array(wsea_partitions + swell_partitions)
 
 
-def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None):
+def np_ptm3(
+    spectrum,
+    spectrum_smooth,
+    freq,
+    dir,
+    parts=DEFAULTS["swells"],
+    ihmax=DEFAULTS["ihmax"],
+):
     """PTM3 spectra partitioning on numpy arrays.
 
     Args:
@@ -706,6 +730,7 @@ def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None):
         - freq (1darray): Wave frequency array with shape (nf).
         - dir (1darray): Wave direction array with shape (nd).
         - parts (int): Number of partitions to compute, all detected by default.
+        - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -717,7 +742,9 @@ def np_ptm3(spectrum, spectrum_smooth, freq, dir, parts=None):
 
     """
     # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
     watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = DEFAULTS["ihmax"]
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
