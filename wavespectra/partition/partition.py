@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.specpart import specpart
-from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
+from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap, waveage
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy
 from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
@@ -47,6 +47,9 @@ class Partition:
           freely propogating swell (i.e. unforced by the wind). This is similar to the
           method commonly used to generate wind-sea and swell from the WAM model.
         - ptm5: PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
+        - hp01: HP01 partitions the spectra and merges wind-sea components as in the PTM1 method, then it merges
+          adjacent swells following the criteria outlined in Hanson and Phillips (2001) and Hanson et al. (2009).
+        - bbox: BBOX partitions the spectra based on user-defined bounding boxes in frequency-direction space.
 
     References:
         - Hanson and Phillips (2001), Automated Analysis of Ocean Surface Directional Wave Spectra,
@@ -84,11 +87,11 @@ class Partition:
         wspd,
         wdir,
         dpt,
-        agefac=1.7,
-        wscut=0.3333,
-        swells=3,
-        smooth=False,
-        window=3,
+        agefac=DEFAULTS["agefac"],
+        wscut=DEFAULTS["wscut"],
+        swells=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        window=DEFAULTS["window"],
     ):
         """PTM1 spectra partitioning.
 
@@ -161,11 +164,11 @@ class Partition:
         wspd,
         wdir,
         dpt,
-        agefac=1.7,
-        wscut=0.3333,
-        swells=3,
-        smooth=False,
-        window=3,
+        agefac=DEFAULTS["agefac"],
+        wscut=DEFAULTS["wscut"],
+        swells=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        window=DEFAULTS["window"],
     ):
         """Watershed partitioning with secondary wind-sea assigned from individual spectral bins.
 
@@ -233,7 +236,12 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm3(self, parts=3, smooth=False, window=3):
+    def ptm3(
+        self,
+        parts=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        window=DEFAULTS["window"],
+    ):
         """Watershed partitioning with no wind-sea or swell classification
 
         Args:
@@ -283,7 +291,7 @@ class Partition:
 
         return dsout.transpose("part", ...)
 
-    def ptm4(self, wspd, wdir, dpt, agefac=1.7):
+    def ptm4(self, wspd, wdir, dpt, agefac=DEFAULTS["agefac"]):
         """WAM partitioning of sea and swell based on wave age criterion..
 
         Args:
@@ -479,6 +487,8 @@ class Partition:
             - Bounding boxes must not overlap.
             - Last part index is defined by spectral bins not covered by any bboxes.
 
+        TODO: Deal with directions crossing 360.
+
         """
         ds = self.dset.sortby("dir").sortby("freq")
 
@@ -529,21 +539,6 @@ class Partition:
         dsout.attrs.update({f"part{ind + 1}": "complement"})
 
         return dsout.fillna(0.)
-
-
-def waveage(dset, wspd, wdir, dpt, agefac):
-    """Wave age criterion.
-
-    Args:
-        - wspd (xr.DataArray): Wind speed.
-        - wdir (xr.DataArray): Wind direction.
-        - dpt (xr.DataArray): Water depth.
-        - agefac (float): Age factor.
-
-    """
-    wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
-    wave_celerity = celerity(dset.freq, dpt)
-    return wave_celerity <= wind_speed_component
 
 
 def np_ptm1(
