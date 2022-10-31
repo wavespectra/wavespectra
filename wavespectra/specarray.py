@@ -782,7 +782,7 @@ class SpecArray(object):
             - Portilla et al. (2009).
 
         """
-        from wavespectra.core.watershed import partition
+        from wavespectra.partition.watershed_depracate import partition
 
         # Assert expected dimensions are defined
         if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):

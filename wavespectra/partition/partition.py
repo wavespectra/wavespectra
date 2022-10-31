@@ -3,7 +3,7 @@ from itertools import combinations
 import numpy as np
 import xarray as xr
 
-from wavespectra.partition.specpart import specpart as watershed
+from wavespectra.partition.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap, waveage
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy
