@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.specpart import specpart
+from wavespectra.partition.specpart import specpart
 from wavespectra.core.utils import D2R, R2D, celerity
 from wavespectra.core.npstats import hs_numpy, dpm_gufunc, tps_gufunc
 

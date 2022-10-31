@@ -76,10 +76,10 @@ def read(fname):
 def ext_configuration(parent_package="", top_path=None):
     config = Configuration("", "", "")
     config.add_extension(
-        "wavespectra.specpart",
+        "wavespectra.partition.specpart",
         sources=[
-            "wavespectra/specpart/specpart.pyf",
-            "wavespectra/specpart/specpart.f90",
+            "wavespectra/partition/specpart/specpart.pyf",
+            "wavespectra/partition/specpart/specpart.f90",
         ],
     )
     config.add_data_files(
