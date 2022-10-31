@@ -15,6 +15,11 @@ DEFAULTS = {
     "angle_max": 30,
     "hs_min": 0.2,
     "k": 0.5,
+    "swells": 3,
+    "smooth": False,
+    "window": 3,
+    "wscut": 0.3333,
+    "agefac": 1.7,
 }
 
 
@@ -361,15 +366,16 @@ class Partition:
         wspd=None,
         wdir=None,
         dpt=None,
-        agefac=1.7,
-        wscut=0.3333,
-        swells=3,
-        smooth=False,
-        window=3,
+        agefac=DEFAULTS["agefac"],
+        wscut=DEFAULTS["wscut"],
+        swells=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        window=DEFAULTS["window"],
         k=DEFAULTS["k"],
         angle_max=DEFAULTS["angle_max"],
         hs_min=DEFAULTS["hs_min"],
         ihmax=DEFAULTS["ihmax"],
+        combine_extra_swells=True,
     ):
         """Hanson and Phillips 2001 spectra partitioning.
 
@@ -386,9 +392,14 @@ class Partition:
               smooth==True.
             - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
             - angle_max (float): Maximum relative angle for combining partitions.
-            - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
-              combined with closest ones regardless of minimum distance and angle criteria.
+            - hs_min (float): Minimum Hs of swell partitions, smaller ones are always
+              combined with closest ones regardless of other criteria being satisfied.
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
+            - combine_extra_swells (bool): If True and the number of swells partitions
+              from the Hanson and Phillips 2001 algorithm is greater than the requested
+              number given in the `swells` argument, merge each extra swell with its
+              closest neighbour until the requested number is achieved. If False, extra
+              swells are ignored from the output.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -405,9 +416,6 @@ class Partition:
             - Tracy et al. (2007).
             - Vincent et al. (1991).
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
-
-        TODO:
-            - handle size of output from ufunc.
 
         """
         check_same_coordinates(wspd, wdir, dpt)
@@ -436,7 +444,8 @@ class Partition:
             angle_max,
             hs_min,
             ihmax,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], []],
+            combine_extra_swells,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -745,12 +754,13 @@ def np_hp01(
     windseamask,
     freq,
     dir,
-    wscut=0.3333,
-    swells=None,
+    wscut=DEFAULTS["wscut"],
+    swells=DEFAULTS["swells"],
     k=DEFAULTS["k"],
     angle_max=DEFAULTS["angle_max"],
     hs_min=DEFAULTS["hs_min"],
     ihmax=DEFAULTS["ihmax"],
+    combine_extra_swells=True,
 ):
     """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
 
@@ -766,6 +776,11 @@ def np_hp01(
         - angle_max (float): Maximum relative angle for combining partitions.
         - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
           combined with closest ones regardless of minimum distance and angle criteria.
+        - combine_extra_swells (bool): If True and the number of swells partitions
+          from the Hanson and Phillips 2001 algorithm is greater than the requested
+          number given in the `swells` argument, merge each extra swell with its
+          closest neighbour until the requested number is achieved. If False, extra
+          swells are ignored from the output.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -808,10 +823,11 @@ def np_hp01(
             partitions=swell_partitions,
             freq=freq,
             dir=dir,
-            keep=swells,
+            swells=swells,
             k=k,
             angle_max=angle_max,
             hs_min=hs_min,
+            combine_extra_swells=combine_extra_swells,
         )
 
     # Extend list to ensure the correct number of partitions is returned

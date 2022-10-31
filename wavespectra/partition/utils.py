@@ -59,6 +59,33 @@ def _frequency_resolution(freq, ndir=None):
     return df
 
 
+def _plot_partitions(partitions, hs, fp, dp, show=False):
+    import matplotlib.pyplot as plt
+    # vmin = np.log10(min([spectrum.min() for spectrum in partitions]))
+    # vmax = np.log10(max([spectrum.max() for spectrum in partitions]))
+    # nplots = len(partitions)
+    ncol = 6 # min(5, nplots)
+    nrow = 10 #int(np.ceil(nplots / ncol))
+    fig = plt.figure(figsize=(12, 15))
+    iplot = 1
+    for spectrum, h, f, d in zip(partitions, hs, fp, dp):
+        if h > hs_threshold:
+            alpha = 1
+        else:
+            alpha = 0.5
+        # if imerge == iplot - 1
+        ax = fig.add_subplot(nrow, ncol, iplot)
+        p = ax.pcolormesh(dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha)
+        ax.plot(d, f, "o", markerfacecolor="w", markeredgecolor="k")
+        # plt.colorbar(p)
+        ax.set_xticklabels("")
+        ax.set_yticklabels("")
+        iplot += 1
+        ax.set_title(f"Hs={float(h):0.2f}m, Dp={float(d):0.0f}deg", fontsize=8)
+    if show:
+        plt.show()
+
+
 def spread_hp01(partitions, freq, dir):
     """Spread parameter of Hanson and Phillips (2001).
 
@@ -98,18 +125,20 @@ def spread_hp01(partitions, freq, dir):
     return sf2
 
 
-def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs_min=0.2):
+def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max=30, hs_min=0.2, combine_extra_swells=True):
     """Combine swell partitions according Hanson and Phillips (2001).
 
     Args:
         - partitions (list): Partitions sorted in descending order by Hs.
         - freq (1darray): Frequency array.
         - dir (1darray): Direction array.
-        - keep (int): Number of swells to keep.
+        - swells (int): Number of swells to keep after auto-merging is performed.
         - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
         - hs_min (float): Minimum Hs of individual partitions, any components
           that fall below this value is merged onto closest partition.
         - angle_max (float): Maximum relative angle for combining partitions.
+        - combine_extra_swells (bool): Combine extra swells with nearest neighbours if
+          if more than the number defined by `swells` remain after auto-merging.
 
     Returns:
         - combined_partitions (list): List of combined partitions.
@@ -126,37 +155,6 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
     """
     #TODO: Remove below
     plot = False
-    if plot:
-        from pathlib import Path
-        import matplotlib
-        # matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        outdir = Path("./combine_partitions_hp01")
-        outdir.mkdir(exist_ok=True)
-
-    def plot_partitions(partitions, hs, fp, dp, imerge=None):
-        # vmin = np.log10(min([spectrum.min() for spectrum in partitions]))
-        # vmax = np.log10(max([spectrum.max() for spectrum in partitions]))
-        # nplots = len(partitions)
-        ncol = 6 # min(5, nplots)
-        nrow = 10 #int(np.ceil(nplots / ncol))
-        fig = plt.figure(figsize=(12, 15))
-        iplot = 1
-        for spectrum, h, f, d in zip(partitions, hs, fp, dp):
-            if h > hs_threshold:
-                alpha = 1
-            else:
-                alpha = 0.5
-            # if imerge == iplot - 1
-            ax = fig.add_subplot(nrow, ncol, iplot)
-            p = ax.pcolormesh(dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha)
-            ax.plot(d, f, "o", markerfacecolor="w", markeredgecolor="k")
-            # plt.colorbar(p)
-            ax.set_xticklabels("")
-            ax.set_yticklabels("")
-            iplot += 1
-            ax.set_title(f"Hs={float(h):0.2f}m, Dp={float(d):0.0f}deg", fontsize=8)
-        # plt.savefig(outdir / "partitions_0.png", bbox_inches="tight")
 
     # Partition stats
     npart = len(partitions)
@@ -172,7 +170,8 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
             hs[ipart], fp[ipart], dpm[ipart], dm[ipart], dp[ipart] = hsi, fpi, dpmi, dmi, dpi
             merged_partitions.append(spectrum)
         else:
-            logger.warning(f"Ignoring partition {ipart} with hs={hsi}")
+            logger.debug(f"Ignoring partition {ipart} with hs={hsi}")
+    merged_partitions = np.array(merged_partitions)
 
     # Spread parameter
     sf2 = spread_hp01(merged_partitions, freq, dir)
@@ -182,7 +181,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
     fpy = fp * np.sin(D2R * dp)
 
     if plot:
-        plot_partitions(merged_partitions, hs, fp, dp)
+        _plot_partitions(merged_partitions, hs, fp, dp)
 
     # Recursively merge partitions satisfying HP01 criteria
     merged = True
@@ -190,13 +189,13 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
         # Leave while loop if this remains zero
         merged = 0
 
-        logger.info("Entering loop to merge partitions")
+        logger.debug("Entering loop to merge partitions")
         for ind in reversed(range(1, len(merged_partitions))):
             imerge = None
 
             # Skip null partitions
             if hs[ind] == 0:
-                logger.info(f"Skipping null partition: {ind}")
+                logger.debug(f"Skipping null partition: {ind}")
                 continue
 
             # Distances between current and all other peaks
@@ -217,7 +216,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
                 is_touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
                 is_touch = True
                 if (is_touch and is_small_angle and is_close) or (is_touch and is_small_hs):
-                    logger.info(f"{ind}: merged contiguous partition")
+                    logger.debug(f"{ind}: merged contiguous partition")
                     imerge = ipart
                     break
             if imerge is not None:
@@ -236,20 +235,43 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs
                 hs[ind], fp[ind], dpm[ind], dm[ind], dp[ind] = 0, np.nan, np.nan, np.nan, np.nan
                 sf2[ind] = 0 # This ensures zeroed partition won't be merged onto again
             else:
-                logger.info(f"{ind}: not merged")
-
-
-        # Remove null partitions
-        # merged_partitions = [spectrum for spectrum in merged_partitions if spectrum.sum() > 0]
+                logger.debug(f"{ind}: not merged")
 
         if plot:
-            plot_partitions(merged_partitions, hs, fp, dp)
-            plt.show()
+            _plot_partitions(merged_partitions, hs, fp, dp, show=True)
 
-    # Dealing with small partitions that have not been merged
+    # Sort remaining merged partitions by descending order of Hs
+    isort = np.argsort(-hs)
+    merged_partitions = merged_partitions[isort]
+    hs = hs[isort]
+    fpx = fpx[isort]
+    fpy = fpy[isort]
 
+    # Remove null partitions
+    ikeep = hs > 0
+    merged_partitions = merged_partitions[ikeep]
+    hs = hs[ikeep]
+    fpx = fpx[ikeep]
+    fpy = fpy[ikeep]
 
-    if plot:
-        plt.show()
+    # If the number of swell is specified, merge with closest partitions
+    if swells is not None:
+        if combine_extra_swells:
+            while merged_partitions.shape[0] > swells:
+                df2 = (fpx[-1] - fpx[:-1]) ** 2 + (fpy[-1] - fpy[:-1]) ** 2
+                imerge = df2.argmin()
+                logger.info(imerge)
+                merged_partitions[imerge] += merged_partitions[-1]
+                merged_partitions = merged_partitions[:-1]
+                hs = hs[:-1]
+                fpx = fpx[:-1]
+                fpy = fpy[:-1]
+        else:
+            merged_partitions = merged_partitions[:swells]
+            hs = hs[:swells]
 
-    return merged_partitions
+    # Sort output one last time
+    isort = np.argsort(-hs)
+    merged_partitions = merged_partitions[isort]
+
+    return list(merged_partitions)
