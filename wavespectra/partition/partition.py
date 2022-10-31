@@ -10,6 +10,9 @@ from wavespectra.core.npstats import hs_numpy
 from wavespectra.partition.utils import combine_partitions_hp01
 
 
+IHMAX = 200
+
+
 class Partition:
     """Spectra partition methods.
 
@@ -358,6 +361,9 @@ class Partition:
         swells=3,
         smooth=False,
         window=3,
+        hs_min=0.2,
+        angle_max=30,
+        ihmax=IHMAX,
     ):
         """Hanson and Phillips 2001 spectra partitioning.
 
@@ -370,7 +376,12 @@ class Partition:
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
-            - window (int): Size of running window for smoothing spectra when smooth==True.
+            - window (int): Size of running window for smoothing spectra when
+              smooth==True.
+            - angle_max (float): Maximum relative angle for combining partitions.
+            - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
+              combined with closest ones regardless of minimum distance and angle criteria.
+            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -414,7 +425,10 @@ class Partition:
             self.dset.dir,
             wscut,
             swells,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
+            angle_max,
+            hs_min,
+            ihmax,
+            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], []],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -425,7 +439,7 @@ class Partition:
         # Finalise output
         dsout = self._set_metadata(dsout)
         parts_description = {
-            "part0": "wind sea", "part2-n": "swells in descending order of hs",
+            "part0": "wind sea", "part2-n": "merged swells in descending order of hs",
         }
         dsout.attrs.update(parts_description)
 
@@ -725,6 +739,9 @@ def np_hp01(
     dir,
     wscut=0.3333,
     swells=None,
+    angle_max=30,
+    hs_min=0.2,
+    ihmax=IHMAX,
 ):
     """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
 
@@ -736,6 +753,9 @@ def np_hp01(
         - dir (1darray): Wave direction array with shape (nd).
         - wscut (float): Wind sea fraction cutoff.
         - swells (int): Number of swell partitions to compute, all detected by default.
+        - angle_max (float): Maximum relative angle for combining partitions.
+        - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
+          combined with closest ones regardless of minimum distance and angle criteria.
 
     Returns:
         - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
@@ -749,7 +769,9 @@ def np_hp01(
 
     """
     # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
     watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = IHMAX
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
@@ -762,14 +784,24 @@ def np_hp01(
             wsea_partition += part
         else:
             swell_partitions.append(part)
+    # Convert to numpy array for easy sorting
+    swell_partitions = np.array(swell_partitions)
 
     # Sort swells by Hs
-    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
-    swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
+    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    isort = np.argsort(hs_swells_neg)
+    swell_partitions = list(swell_partitions[isort])
 
     # Combine extra swell partitions
     if len(swell_partitions) > 1:
-        swell_partitions = combine_partitions_hp01(swell_partitions, freq, dir, swells)
+        swell_partitions = combine_partitions_hp01(
+            swell_partitions,
+            freq,
+            dir,
+            swells,
+            hs_min,
+            angle_max,
+        )
 
     # Extend list to ensure the correct number of partitions is returned
     nswells = len(swell_partitions)
