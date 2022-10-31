@@ -19,7 +19,7 @@ def _partition_stats(spectrum, freq, dir):
         fp = 1 / tps_gufunc(ifpeak, spec1d, freq.astype("float32"))
         dpm = dpm_gufunc(ifpeak, *mom1_numpy(spectrum, dir))
         dm = dm_numpy(spectrum, dir)
-        idpeak = np.argmax((spectrum * frequency_resolution(freq, dir.size)).sum(axis=0))
+        idpeak = np.argmax((spectrum * _frequency_resolution(freq, dir.size)).sum(axis=0))
         dp = dp_gufunc(idpeak.astype("int64"), dir.astype("float32"))
     return hs, fp, dpm, dm, dp
 
@@ -39,7 +39,7 @@ def _is_contiguous(part0, part1):
     return right0 >= left1 and right1 >= left0
 
 
-def frequency_resolution(freq, ndir=None):
+def _frequency_resolution(freq, ndir=None):
     """Frequency resolution.
 
     Args:
@@ -75,7 +75,7 @@ def spread_hp01(partitions, freq, dir):
     dd = abs(float(dir[1] - dir[0]))
 
     # Frequency resolution broadcast into spectrum shape
-    DF = frequency_resolution(freq, ndir=ndir)
+    DF = _frequency_resolution(freq, ndir=ndir)
 
     # Frequency and direction parameters broadcast into spectrum shape
     F = np.tile(freq, (ndir, 1)).T
@@ -98,7 +98,7 @@ def spread_hp01(partitions, freq, dir):
     return sf2
 
 
-def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, angle_max=30, hs_min=0.2):
+def combine_partitions_hp01(partitions, freq, dir, keep, k=0.5, angle_max=30, hs_min=0.2):
     """Combine swell partitions according Hanson and Phillips (2001).
 
     Args:
@@ -106,7 +106,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, angle_max=30, hs
         - freq (1darray): Frequency array.
         - dir (1darray): Direction array.
         - keep (int): Number of swells to keep.
-        - k (float): Spread factor in Hanson and Phillips (2001), eq 9.
+        - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
         - hs_min (float): Minimum Hs of individual partitions, any components
           that fall below this value is merged onto closest partition.
         - angle_max (float): Maximum relative angle for combining partitions.
@@ -238,6 +238,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, angle_max=30, hs
             else:
                 logger.info(f"{ind}: not merged")
 
+
         # Remove null partitions
         # merged_partitions = [spectrum for spectrum in merged_partitions if spectrum.sum() > 0]
 
@@ -246,6 +247,7 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, angle_max=30, hs
             plt.show()
 
     # Dealing with small partitions that have not been merged
+
 
     if plot:
         plt.show()
