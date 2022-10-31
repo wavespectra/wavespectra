@@ -13,11 +13,14 @@ def _partition_stats(spectrum, freq, dir):
     spec1d = spectrum.sum(axis=1).astype("float64")
     ifpeak = np.argmax(spec1d).astype("int64")
     hs = hs_numpy(spectrum, freq, dir)
-    fp = 1 / tps_gufunc(ifpeak, spec1d, freq.astype("float32"))
-    dpm = dpm_gufunc(ifpeak, *mom1_numpy(spectrum, dir))
-    dm = dm_numpy(spectrum, dir)
-    idpeak = np.argmax((spectrum * frequency_resolution(freq, dir.size)).sum(axis=0))
-    dp = dp_gufunc(idpeak.astype("int64"), dir.astype("float32"))
+    if (ifpeak == 0) or (ifpeak == freq.size - 1):
+        fp = dpm = dm = dp = np.nan
+    else:
+        fp = 1 / tps_gufunc(ifpeak, spec1d, freq.astype("float32"))
+        dpm = dpm_gufunc(ifpeak, *mom1_numpy(spectrum, dir))
+        dm = dm_numpy(spectrum, dir)
+        idpeak = np.argmax((spectrum * frequency_resolution(freq, dir.size)).sum(axis=0))
+        dp = dp_gufunc(idpeak.astype("int64"), dir.astype("float32"))
     return hs, fp, dpm, dm, dp
 
 
@@ -25,7 +28,13 @@ def _is_contiguous(part0, part1):
     """Check if 1d partitions overlap in frequency space."""
     spec1d_0 = part0.sum(axis=1)
     spec1d_1 = part1.sum(axis=1)
-    left0, right0 = np.nonzero(spec1d_0)[0][[0, -1]]
+    bounds0 = np.nonzero(spec1d_0)[0]
+    bounds1 = np.nonzero(spec1d_1)[0]
+    if bounds0.size == 0 or bounds1.size == 0:
+        # If any partition is null they won't touch
+        return False
+    left0, right0 = bounds0[[0, -1]]
+    left1, right1 = bounds1[[0, -1]]
     left1, right1 = np.nonzero(spec1d_1)[0][[0, -1]]
     return right0 >= left1 and right1 >= left0
 
@@ -48,6 +57,7 @@ def frequency_resolution(freq, ndir=None):
     if ndir is not None:
         df = np.tile(freq, (ndir, 1)).T
     return df
+
 
 def spread_hp01(partitions, freq, dir):
     """Spread parameter of Hanson and Phillips (2001).
@@ -88,7 +98,7 @@ def spread_hp01(partitions, freq, dir):
     return sf2
 
 
-def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2, angle_threshold=30):
+def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, angle_max=30, hs_min=0.2):
     """Combine swell partitions according Hanson and Phillips (2001).
 
     Args:
@@ -97,23 +107,57 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
         - dir (1darray): Direction array.
         - keep (int): Number of swells to keep.
         - k (float): Spread factor in Hanson and Phillips (2001), eq 9.
-        - hs_threshold (float): Maximum Hs of individual partitions, any components
+        - hs_min (float): Minimum Hs of individual partitions, any components
           that fall below this value is merged onto closest partition.
-        - angle_threshold (float): Maximum relative angle for combining partitions.
+        - angle_max (float): Maximum relative angle for combining partitions.
 
     Returns:
         - combined_partitions (list): List of combined partitions.
 
     Merging criteria:
-        - hs < hs_threshold, merge with nerest neighbour.
+        - hs < hs_min, merge with nerest neighbour.
 
     TODO:
-        - When merging based on hs_threshold, do we update Hs after each merging?
+        - When merging based on hs_min, do we update Hs after each merging?
         - Update spread parameter after each merging?
         - Do we consider frequency touching / direction limit to merge based on Hs threshold?
         - Use Dm instead of Dpm to test for angle distance.
 
     """
+    #TODO: Remove below
+    plot = False
+    if plot:
+        from pathlib import Path
+        import matplotlib
+        # matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        outdir = Path("./combine_partitions_hp01")
+        outdir.mkdir(exist_ok=True)
+
+    def plot_partitions(partitions, hs, fp, dp, imerge=None):
+        # vmin = np.log10(min([spectrum.min() for spectrum in partitions]))
+        # vmax = np.log10(max([spectrum.max() for spectrum in partitions]))
+        # nplots = len(partitions)
+        ncol = 6 # min(5, nplots)
+        nrow = 10 #int(np.ceil(nplots / ncol))
+        fig = plt.figure(figsize=(12, 15))
+        iplot = 1
+        for spectrum, h, f, d in zip(partitions, hs, fp, dp):
+            if h > hs_threshold:
+                alpha = 1
+            else:
+                alpha = 0.5
+            # if imerge == iplot - 1
+            ax = fig.add_subplot(nrow, ncol, iplot)
+            p = ax.pcolormesh(dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha)
+            ax.plot(d, f, "o", markerfacecolor="w", markeredgecolor="k")
+            # plt.colorbar(p)
+            ax.set_xticklabels("")
+            ax.set_yticklabels("")
+            iplot += 1
+            ax.set_title(f"Hs={float(h):0.2f}m, Dp={float(d):0.0f}deg", fontsize=8)
+        # plt.savefig(outdir / "partitions_0.png", bbox_inches="tight")
+
     # Partition stats
     npart = len(partitions)
     hs = np.zeros(npart)
@@ -121,20 +165,26 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
     dpm = np.zeros(npart)
     dm = np.zeros(npart)
     dp = np.zeros(npart)
+    merged_partitions = []
     for ipart, spectrum in enumerate(partitions):
-        hs[ipart], fp[ipart], dpm[ipart], dm[ipart], dp[ipart] = _partition_stats(
-            spectrum, freq, dir
-        )
+        hsi, fpi, dpmi, dmi, dpi =  _partition_stats(spectrum, freq, dir)
+        if not np.isnan(fpi):
+            hs[ipart], fp[ipart], dpm[ipart], dm[ipart], dp[ipart] = hsi, fpi, dpmi, dmi, dpi
+            merged_partitions.append(spectrum)
+        else:
+            logger.warning(f"Ignoring partition {ipart} with hs={hsi}")
 
     # Spread parameter
-    sf2 = spread_hp01(partitions, freq, dir)
+    sf2 = spread_hp01(merged_partitions, freq, dir)
 
     # Peak distance parameters
     fpx = fp * np.cos(D2R * dp)
     fpy = fp * np.sin(D2R * dp)
 
+    if plot:
+        plot_partitions(merged_partitions, hs, fp, dp)
+
     # Recursively merge partitions satisfying HP01 criteria
-    merged_partitions = partitions.copy()
     merged = True
     while merged:
         # Leave while loop if this remains zero
@@ -144,31 +194,32 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
         for ind in reversed(range(1, len(merged_partitions))):
             imerge = None
 
+            # Skip null partitions
+            if hs[ind] == 0:
+                logger.info(f"Skipping null partition: {ind}")
+                continue
+
             # Distances between current and all other peaks
             df2 = (fpx[ind] - fpx[:ind]) ** 2 + (fpy[ind] - fpy[:ind]) ** 2
             isort = df2.argsort()
 
-            small_hs = hs[ind] < 0.2
-            if small_hs:
-                # Combine small partition onto nearest neighbour if they are contiguous
-                if _is_contiguous(merged_partitions[ind], merged_partitions[isort[0]]):
-                    logger.debug(f" Part {ind} - hs < threshold, merged onto nearest neighbour")
-                    imerge = isort[0]
-            else:
-                # Combine with nearest partition that satisfy all of the following:
-                #  - Contiguous in frequency space
-                #  - Relative angle under threshold
-                #  - Small relative distance between peaks (dist <= k * spread)
-                for ipart in isort:
-                    dist = df2[ipart]
-                    spread = max(sf2[ind], sf2[ipart])
-                    is_close = dist <= (k * spread)
-                    is_small_angle = angle(dpm[ind], dpm[ipart]) < angle_threshold
-                    is_touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
-                    if is_touch and is_small_angle and is_close:
-                        logger.info(f"{ind}: merged contiguous partition with distance < spread")
-                        imerge = ipart
-                        break
+            # Combine with nearest partition that satisfy all of the following:
+            #  - Contiguous in frequency space
+            #  - Relative angle under threshold
+            #  - Small relative distance between peaks (dist <= k * spread)
+            #  - For small partitions, the distance and angle tests are ignored
+            is_small_hs = hs[ind] < hs_min
+            for ipart in isort:
+                dist = df2[ipart]
+                spread = max(sf2[ind], sf2[ipart])
+                is_close = dist <= (k * spread)
+                is_small_angle = angle(dm[ind], dm[ipart]) <= angle_max
+                is_touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
+                is_touch = True
+                if (is_touch and is_small_angle and is_close) or (is_touch and is_small_hs):
+                    logger.info(f"{ind}: merged contiguous partition")
+                    imerge = ipart
+                    break
             if imerge is not None:
                 # Combining
                 merged += 1
@@ -181,10 +232,22 @@ def combine_partitions_hp01(partitions, freq, dir, keep, k=0.4, hs_threshold=0.2
                 sf2[imerge] = spread_hp01([merged_partitions[imerge]], freq, dir)[0]
                 fpx[imerge] = fp[imerge] * np.cos(D2R * dp[imerge])
                 fpy[imerge] = fp[imerge] * np.sin(D2R * dp[imerge])
+                # Update stats of removed partition
+                hs[ind], fp[ind], dpm[ind], dm[ind], dp[ind] = 0, np.nan, np.nan, np.nan, np.nan
+                sf2[ind] = 0 # This ensures zeroed partition won't be merged onto again
             else:
                 logger.info(f"{ind}: not merged")
 
         # Remove null partitions
-        merged_partitions = [spectrum for spectrum in merged_partitions if spectrum.sum() > 0]
+        # merged_partitions = [spectrum for spectrum in merged_partitions if spectrum.sum() > 0]
+
+        if plot:
+            plot_partitions(merged_partitions, hs, fp, dp)
+            plt.show()
+
+    # Dealing with small partitions that have not been merged
+
+    if plot:
+        plt.show()
 
     return merged_partitions
