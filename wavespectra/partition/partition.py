@@ -7,7 +7,7 @@ from wavespectra.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy
-from wavespectra.partition.utils import combine_partitions_hp01
+from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
 
 
 DEFAULTS = {
