@@ -134,23 +134,27 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
         - dir (1darray): Direction array.
         - swells (int): Number of swells to keep after auto-merging is performed.
         - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
+        - angle_max (float): Maximum relative angle for combining partitions.
         - hs_min (float): Minimum Hs of individual partitions, any components
           that fall below this value is merged onto closest partition.
-        - angle_max (float): Maximum relative angle for combining partitions.
         - combine_extra_swells (bool): Combine extra swells with nearest neighbours if
-          if more than the number defined by `swells` remain after auto-merging.
+          more than the number defined by `swells` remain after auto-merging.
 
     Returns:
         - combined_partitions (list): List of combined partitions.
 
-    Merging criteria:
-        - hs < hs_min, merge with nerest neighbour.
+    Criteria for merging any 2 partitions:
+        - Integrated partitions E(f) must be contiguous in frequency.
+        - Mean directions are separated by less than `angle_max`.
+        - Polar distance between partitions is small compared to their spread.
+        - Partitions < `hs_min` are always combined with closest neighbours.
 
     TODO:
         - When merging based on hs_min, do we update Hs after each merging?
         - Update spread parameter after each merging?
         - Do we consider frequency touching / direction limit to merge based on Hs threshold?
         - Use Dm instead of Dpm to test for angle distance.
+        - More partitions than `swells` and `combine_extra_swells` is True.
 
     """
     #TODO: Remove below
