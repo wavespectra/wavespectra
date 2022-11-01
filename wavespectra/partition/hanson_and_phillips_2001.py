@@ -264,7 +264,7 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
             while merged_partitions.shape[0] > swells:
                 df2 = (fpx[-1] - fpx[:-1]) ** 2 + (fpy[-1] - fpy[:-1]) ** 2
                 imerge = df2.argmin()
-                logger.info(imerge)
+                logger.debug(imerge)
                 merged_partitions[imerge] += merged_partitions[-1]
                 merged_partitions = merged_partitions[:-1]
                 hs = hs[:-1]
