@@ -610,7 +610,7 @@ def np_ptm1(
 
     # Sort swells by Hs
     isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
-    swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
+    swell_partitions = list(np.array(swell_partitions)[isort])
 
     # Dealing with the number of swells
     if swells is None:
@@ -694,7 +694,7 @@ def np_ptm2(
 
     # Sort swells by Hs
     isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
-    swell_partitions = [swell for _, swell in sorted(zip(isort, swell_partitions))]
+    swell_partitions = list(np.array(swell_partitions)[isort])
 
     # Dealing with the number of swells
     if swells is None:
@@ -753,8 +753,8 @@ def np_ptm3(
         partitions.append(np.where(watershed_map == npart, spectrum, 0.0))
 
     # Sort partitions by Hs
-    hs_partitions = [hs_numpy(partition, freq, dir) for partition in partitions]
-    partitions = [p for _, p in sorted(zip(hs_partitions, partitions), reverse=True)]
+    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in partitions])
+    partitions = list(np.array(partitions)[isort])
 
     if parts is not None:
         if nparts > parts:
