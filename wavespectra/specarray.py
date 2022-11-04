@@ -34,6 +34,7 @@ from scipy.constants import g, pi
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_params
 from wavespectra.plot import polar_plot, CBAR_TICKS
 from wavespectra.partition.partition import Partition
 
@@ -1020,3 +1021,46 @@ class SpecArray(object):
         e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
         rmse =  ediff / e0sum
         return rmse
+
+    def fit_jonswap(self):
+        """Nonlinear fit Jonswap spectra."""
+        hs = self.hs()
+        tp = self.tp()
+        gamma = xr.ones_like(hs)
+        dsout = xr.apply_ufunc(
+            fit_jonswap_spectra,
+            self.oned(),
+            self.freq,
+            hs,
+            tp,
+            gamma,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gamma(self):
+        """Nonlinear fit Jonswap gamma."""
+        hs = self.hs()
+        tp = self.tp()
+        gamma0 = xr.ones_like(hs)
+        gamma = xr.apply_ufunc(
+            fit_jonswap_params,
+            self.oned(),
+            self.freq,
+            hs,
+            tp,
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gamma.attrs.update(self._get_cf_attributes("gamma"))
+        return gamma.rename("gamma")
