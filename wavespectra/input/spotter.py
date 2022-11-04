@@ -6,14 +6,204 @@ Functions:
 
 """
 import glob
+import getpass
 import datetime
 import json
 import numpy as np
 import xarray as xr
+import pandas as pd
 from dateutil.parser import parse
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
+
+
+def read_spotter_csv(filename):
+    
+    date_parser = lambda epoch: pd.to_datetime(epoch, unit='s')
+    
+    # Read bulk parameters
+    dat_bulk = pd.read_csv(filename,
+        index_col=3,
+        usecols=np.insert(np.arange(13),-1,[364,365,366]),
+        parse_dates=[3],
+        date_parser=date_parser,
+        )
+    dat_bulk.columns = dat_bulk.columns.str.strip()
+    dat_bulk.index.name = dat_bulk.index.name.strip()
+    b = dat_bulk.to_xarray()
+
+    # Frequency array
+    dat_f = pd.read_csv(filename,
+                    index_col=[],
+                    usecols=np.arange(13,13+38+1),
+                    )
+    dat_f.columns = dat_f.columns.str.strip()
+    freq_array = dat_f.iloc[0].to_xarray()
+    freq_array.name = 'Frequency'
+
+    # Frequency spacing
+    dat_df = pd.read_csv(filename,
+                    index_col=[],
+                    usecols=np.arange(13+38+1,13+2*(38+1)),
+                    )
+    dat_df.columns = dat_df.columns.str.strip()
+    df_array = dat_df.iloc[0].to_xarray().assign_coords(dict(index=freq_array.values)).rename(dict(index='Frequency'))
+    df_array.name = 'df'
+    df_array.attrs['long_name'] = 'Frequency spacing'
+    df_array.attrs['units'] = 'Hz'
+
+    # a and b parameters
+    names = ['a1','b1','a2','b2']
+    tmp_list = []
+    for idx, name in enumerate(names):
+        dat_tmp = pd.read_csv(filename,
+                        index_col=[0],
+                        usecols=np.insert(np.arange(13+(2+idx)*(38+1),13+(3+idx)*(38+1)),0,3),
+                        date_parser=date_parser,
+                        )
+        dat_tmp.columns = dat_tmp.columns.str.strip()
+        tmp_da = dat_tmp.to_xarray().to_array(dim='Frequency', name=name)
+        tmp_da = tmp_da.assign_coords({'Frequency':freq_array.values})
+        tmp_list.append(tmp_da)
+
+    ab_ds = xr.merge(tmp_list)
+
+    # Spectral density, spreading, etc.
+    dat_S = pd.read_csv(filename,
+                    index_col=[0],
+                    usecols=np.insert(np.arange(13+6*(38+1),13+7*(38+1)),0,3),
+                    date_parser=date_parser,
+                    )
+    dat_S.columns = dat_S.columns.str.strip()
+    S = dat_S.to_xarray().to_array(dim='Frequency', name='Variance density')
+    S = S.assign_coords({'Frequency':freq_array.values})
+
+    dat_dir = pd.read_csv(filename,
+                    index_col=[0],
+                    usecols=np.insert(np.arange(13+7*(38+1),13+8*(38+1)),0,3),
+                    date_parser=date_parser,
+                    )
+    dat_dir.columns = dat_dir.columns.str.strip()
+    Dir = dat_dir.to_xarray().to_array(dim='Frequency', name='Direction')
+    Dir = Dir.assign_coords({'Frequency':freq_array.values})
+
+    dat_spread = pd.read_csv(filename,
+                    index_col=[0],
+                    usecols=np.insert(np.arange(13+8*(38+1),13+9*(38+1)),0,3),
+                    date_parser=date_parser,
+                    )
+    dat_spread.columns = dat_spread.columns.str.strip()
+    spread = dat_spread.to_xarray().to_array(dim='Frequency', name='Directional spread')
+    spread = spread.assign_coords({'Frequency':freq_array.values})
+    
+    ds = xr.merge([b,ab_ds,S,Dir,spread,df_array])
+    
+    ds['Epoch Time'].attrs['long_name'] = 'Epoch time'
+    
+    ds['Battery Voltage (V)'].attrs['units'] = 'V'
+    ds['Battery Voltage (V)'].attrs['long_name'] = 'Battery voltage'
+
+    ds['Power (W)'].attrs['units'] = 'W'
+    ds['Power (W)'].attrs['long_name'] = 'Battery power'
+
+    ds['Humidity (%rel)'].attrs['units'] = '1'
+    ds['Humidity (%rel)'].attrs['standard_name'] = 'relative_humidity'
+    ds['Humidity (%rel)'].attrs['long_name'] = 'Relative humidity'
+
+    ds['Significant Wave Height (m)'].attrs['units'] = 'm'
+    ds['Significant Wave Height (m)'].attrs['standard_name'] = 'sea_surface_wave_significant_height'
+    ds['Significant Wave Height (m)'].attrs['long_name'] = 'Significant wave height'
+
+    ds['Direction'].attrs['units'] = 'degree'
+    ds['Direction'].attrs['long_name'] = ''
+
+    ds['Peak Period (s)'].attrs['units'] = 's'
+    ds['Peak Period (s)'].attrs['standard_name'] = 'sea_surface_wave_period_at_variance_spectral_density_maximum'
+    ds['Peak Period (s)'].attrs['long_name'] = 'Peak period'
+
+    ds['Mean Period (s)'].attrs['units'] = 's'
+    ds['Mean Period (s)'].attrs['standard_name'] = 'sea_surface_wave_zero_upcrossing_period'
+    ds['Mean Period (s)'].attrs['long_name'] = 'Mean period'
+
+    ds['Peak Direction (deg)'].attrs['units'] = 'degree'
+    ds['Peak Direction (deg)'].attrs['standard_name'] = 'sea_surface_wave_from_direction_at_variance_spectral_density_maximum'
+    ds['Peak Direction (deg)'].attrs['long_name'] = 'Peak direction'
+
+    ds['Peak Directional Spread (deg)'].attrs['units'] = 'degree'
+    ds['Peak Directional Spread (deg)'].attrs['standard_name'] = 'sea_surface_wave_directional_spread_at_variance_spectral_density_maximum'
+    ds['Peak Directional Spread (deg)'].attrs['long_name'] = 'Peak directional spread'
+
+    ds['Mean Direction (deg)'].attrs['units'] = 'degree'
+    ds['Mean Direction (deg)'].attrs['standard_name'] = 'sea_surface_wave_from_direction'
+    ds['Mean Direction (deg)'].attrs['long_name'] = 'Mean direction'
+
+    ds['Mean Directional Spread (deg)'].attrs['units'] = 'degree'
+    ds['Mean Directional Spread (deg)'].attrs['long_name'] = 'Mean directional spread'
+
+    ds['Latitude (deg)'].attrs['units'] = 'degree_north'
+    ds['Latitude (deg)'].attrs['standard_name'] = 'latitude'
+    ds['Latitude (deg)'].attrs['long_name'] = 'Latitude'
+
+    ds['Longitude (deg)'].attrs['units'] = 'degree_east'
+    ds['Longitude (deg)'].attrs['standard_name'] = 'longitude'
+    ds['Longitude (deg)'].attrs['long_name'] = 'Longitude'
+
+    ds['Wind Speed (m/s)'].attrs['units'] = 'm/s'
+    ds['Wind Speed (m/s)'].attrs['standard_name'] = 'wind_speed'
+    ds['Wind Speed (m/s)'].attrs['long_name'] = 'Wind speed'
+
+    ds['Wind Direction (deg)'].attrs['units'] = 'degree'
+    ds['Wind Direction (deg)'].attrs['standard_name'] = 'wind_from_direction'
+    ds['Wind Direction (deg)'].attrs['long_name'] = 'Wind direction'
+
+    ds['Surface Temperature (°C)'] = 274.15*ds['Surface Temperature (°C)']
+    ds['Surface Temperature (°C)'].attrs['units'] = 'K'
+    ds['Surface Temperature (°C)'].attrs['standard_name'] = 'sea_surface_temperature'
+    ds['Surface Temperature (°C)'].attrs['long_name'] = 'Surface temperature'
+
+    ds['Frequency'].attrs['units'] = 'Hz'
+    ds['Frequency'].attrs['standard_name'] = 'wave_frequency'
+    ds['Frequency'].attrs['long_name'] = 'Frequency'
+
+    ds['Variance density'].attrs['units'] = 'm^2/Hz'
+    ds['Variance density'].attrs['standard_name'] = 'sea_surface_wave_variance_spectral_density'
+    ds['Variance density'].attrs['long_name'] = 'Spectral density'
+
+    ds['Directional spread'].attrs['units'] = 'degree'
+    ds['Directional spread'].attrs['standard_name'] = 'sea_surface_wave_directional_spread'
+    ds['Directional spread'].attrs['long_name'] = 'Directional spreading'
+    
+    ds.attrs['Conventions'] = 'CF-1.8'
+    ds.attrs['source'] = f"Sofar Spotter buoy, {filename}"
+    ds.attrs['history'] = f"generated {datetime.datetime.now().strftime('%Y-%m-%d @ %H:%M:%S')} by {getpass.getuser()}"
+    ds.attrs['references'] = 'https://content.sofarocean.com/hubfs/Technical_Reference_Manual.pdf'
+
+
+    ds = ds.rename({'Epoch Time':'time',
+                    'Frequency':'freq',
+                    'Battery Voltage (V)':'batter_voltage',
+                    'Variance density':'etfh',
+                    'Direction':'dir',
+                'Power (W)':'battery_power',
+                'Humidity (%rel)':'humidity',
+                'Significant Wave Height (m)':'Hm0',
+                'Peak Period (s)':'Tp',
+                'Mean Period (s)':'Tm',
+                'Peak Direction (deg)':'peak_dir',
+                'Peak Directional Spread (deg)':'peak_spread',
+                'Mean Direction (deg)':'mean_dir',
+                'Mean Directional Spread (deg)':'mean_spread',
+                'Directional spread':'spread',
+                'Latitude (deg)':'lat',
+                'Longitude (deg)':'lon',
+                'Wind Speed (m/s)':'wspd',
+                'Wind Direction (deg)':'wdir',
+                'Surface Temperature (°C)':'temperature'})
+    
+    ds = ds.sortby('time')
+    
+    return ds
 
 
 def read_spotter(filename):
