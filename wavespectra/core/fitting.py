@@ -23,7 +23,6 @@ def _fit_jonswap(ef, freq, param_active, param_start=PARAM_JONSWAP_START):
     """Fit Jonswap for sea and swell partitions.
 
     Args:
-        - ds (DataArray): Spectrum to fit in wavespectra conventions.
         - ef (1darray): Frequency spectrum array E(f) (m2/Hz).
         - freq (1darray): Frequency array (Hz).
         - param_active (list): Jonswap fixed parameters for the sea and swell parts
@@ -32,7 +31,7 @@ def _fit_jonswap(ef, freq, param_active, param_start=PARAM_JONSWAP_START):
           [hs1, tp1, gamma1, hs2, tp2, gamma2].
 
     Returns:
-        - dsout (DataArray): Fitted Jonswap spectrum.
+        - dsout (1darray): Fitted Jonswap spectrum.
         - params (list): Fitted Jonswap parameters for the sea and swell parts
           [hs1, tp1, gamma1, hs2, tp2, gamma2].
 
@@ -102,57 +101,3 @@ def _fit_jonswap(ef, freq, param_active, param_start=PARAM_JONSWAP_START):
     ef_out = ef1 + ef2
 
     return ef_out, res.x
-
-
-# def fit_jonswap(ds, param_start=PARAM_JONSWAP_START):
-#     """Nonlinear fit Jonswap spectra.
-
-#     Args:
-#         - ds (DataArray): Spectrum to fit in wavespectra conventions.
-#         - param_start (list): Jonswap start parameters for the sea and swell parts
-#         [hs1, tp1, gamma1, hs2, tp2, gamma2].
-
-#     Returns:
-#         - dsout (DataArray): Fitted Jonswap spectrum.
-#         - param (list): Fitted Jonswap parameters for the sea and swell parts
-#         [hs1, tp1, gamma1, hs2, tp2, gamma2].
-
-#     """
-#     # Fit sea & swell separately
-#     fcut = 0.1
-#     dswell = ds.spec.split(fmax=fcut)
-#     dsea = ds.spec.split(fmin=fcut)
-
-#     sSwell, pSwell = _fit_jonswap(dswell, [True, True, True, 0, 3, 2], param_start)
-#     sSea, pSea = _fit_jonswap(dsea, [pSwell[0], pSwell[1], pSwell[2], True, True, True], param_start)
-
-#     # Fit both together Hs, gamma
-#     param_start = [pSwell[0], pSwell[1], pSwell[2], pSea[3], pSea[4], pSea[5]]
-#     dsout, parm = _fit_jonswap(ds, [True, True, True, True, True, True], param_start)
-
-#     # Rescale final combined spectrum
-#     dsout = dsout * (ds.spec.hs() / dsout.spec.hs())**2
-
-#     return dsout, parm
-
-
-if __name__ == "__main__":
-    from wavespectra import fit_jonswap as make_jonswap
-
-    hs = 1.0
-    fp = 1 / 12.0
-    gamma = 1.1
-    sigma_a = 0.07
-    sigma_b = 0.09
-
-    f = np.arange(0.01, 0.51, 0.01)
-    ds = make_jonswap(freq=f, fp=fp, gamma=gamma, sigma_a=sigma_a, sigma_b=sigma_b, hs=hs)
-
-    # s, p = fit_jonswap_spectrum_auto()
-
-    # dsout, params = fit_jonswap(ds)
-    dsout, params = fit_jonswap(ds.values, ds.freq.values, [True, True, True, hs, (1/fp)-1, 1.0], param_start=PARAM_JONSWAP_START)
-
-    print([p for p in params])
-
-    import ipdb; ipdb.set_trace()
