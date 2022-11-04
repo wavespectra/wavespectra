@@ -7,6 +7,11 @@ from wavespectra.fit.jonswap import np_jonswap
 PARAM_JONSWAP_START = [0.1, 12.0, 1.0, 0.1, 5.0, 1.0]
 
 
+def rmse(prediction, target):
+    """Root mean square error between prediction and taget."""
+    return np.sqrt(np.sum(np.power(prediction - target, 2)))
+
+
 def fit_jonswap_spectra(ef, freq, hs, tp, gamma, param_start=PARAM_JONSWAP_START):
     """Wrapper to return only spectrum from _fit_jonswap to run as ufunc."""
     param_active = [True, True, True, hs, tp, gamma]
@@ -63,7 +68,7 @@ def _fit_jonswap(ef, freq, param_active, param_start=PARAM_JONSWAP_START):
         ef2 = np_jonswap(freq=freq, hs=hs2, fp=1/tp2, gamma=gamma2)
 
         # Calculate error
-        err = np.sqrt(np.sum(np.power(ef1 + ef2 - ef, 2)))
+        err = rmse(ef1 + ef2, ef)
 
         if x0[0] < 0:
             err += 10
