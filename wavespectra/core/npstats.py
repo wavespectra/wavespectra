@@ -44,7 +44,7 @@ def dm_numpy(spectrum, dir):
     return dm
 
 
-def hs_numpy(spectrum, freq, dir, tail=True):
+def hs_numpy(spectrum, freq, dir=None, tail=True):
     """Significant wave height Hmo.
 
     Args:
@@ -58,7 +58,7 @@ def hs_numpy(spectrum, freq, dir, tail=True):
 
     """
     df = abs(freq[1:] - freq[:-1])
-    if len(dir) > 1:
+    if dir is not None and len(dir) > 1:
         ddir = abs(dir[1] - dir[0])
         E = ddir * spectrum.sum(1)
     else:
@@ -108,7 +108,7 @@ def dp_gufunc(ipeak, dir, out):
     """Peak wave direction Dp.
 
     Args:
-        - ipeak (int): Index of the maximum energy density in the frequency spectrum E(f).
+        - ipeak (int): Index of the maximum energy density in the direction spectrum E(d).
         - dir (1darray): Wave direction array.
 
     Returns:
