@@ -34,7 +34,7 @@ from scipy.constants import g, pi
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
-from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_params
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma
 from wavespectra.plot import polar_plot, CBAR_TICKS
 from wavespectra.partition.partition import Partition
 
@@ -252,11 +252,12 @@ class SpecArray(object):
 
         return other
 
-    def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
-        """Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)."""
-        E = self._obj * self.df * self.dd
-        E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
-        return E.rename("energy")
+    def to_energy(self):
+        """Convert spectra from energy density (m2/Hz/degree) into wave energy (m2)."""
+        energy = self._obj * self.df * self.dd
+        set_spec_attributes(energy)
+        energy.attrs.update(self._get_cf_attributes(attrs.ESPECNAME))
+        return energy.rename(attrs.ESPECNAME)
 
     def hs(self, tail=True):
         """Spectral significant wave height Hm0.
@@ -1013,18 +1014,22 @@ class SpecArray(object):
         rmse =  ediff / e0sum
         return rmse
 
-    def fit_jonswap(self):
-        """Nonlinear fit Jonswap spectra."""
-        hs = self.hs()
-        tp = self.tp()
-        gamma = xr.ones_like(hs)
+    def fit_jonswap(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
         dsout = xr.apply_ufunc(
             fit_jonswap_spectra,
             self.oned(),
             self.freq,
-            hs,
-            tp,
-            gamma,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gamma0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
             output_core_dims=[[attrs.FREQNAME]],
             dask="parallelized",
@@ -1035,17 +1040,21 @@ class SpecArray(object):
         dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
         return dsout.rename(attrs.SPEC1DNAME)
 
-    def fit_gamma(self):
-        """Nonlinear fit Jonswap gamma."""
-        hs = self.hs()
-        tp = self.tp()
-        gamma0 = xr.ones_like(hs)
+    def fit_gamma(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap peak enhancement factor gamma.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
         gamma = xr.apply_ufunc(
-            fit_jonswap_params,
+            fit_jonswap_gamma,
             self.oned(),
             self.freq,
-            hs,
-            tp,
+            self.fp(smooth=smooth),
+            self.hs(),
             gamma0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
             exclude_dims=set((attrs.FREQNAME,)),
