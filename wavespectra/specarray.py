@@ -31,9 +31,10 @@ import inspect
 import warnings
 from scipy.constants import g, pi
 
-from wavespectra.core.attributes import attrs
+from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_params
 from wavespectra.plot import polar_plot, CBAR_TICKS
 from wavespectra.partition.partition import Partition
 
@@ -196,11 +197,14 @@ class SpecArray(object):
 
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
+            dsout = self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
         else:
-            return self._obj.copy(deep=True)
+            dsout = self._obj.copy(deep=True)
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
 
-    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, rechunk=True):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True):
         """Split spectra over freq and/or dir dims.
 
         Args:
@@ -208,11 +212,9 @@ class SpecArray(object):
             - fmax (float): highest frequency to split spectra, by default the highest.
             - dmin (float): lowest direction to split spectra at, by default min(dir).
             - dmax (float): highest direction to split spectra at, by default max(dir).
+            - interpolate (bool): Interpolate spectra at frequency cutoffs they
+              are not available in coordinates of input spectra.
             - rechunk (bool): Rechunk split dims so there is one single chunk.
-
-        Note:
-            - Spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
-            - Recommended rechunk==True so ufuncs with freq/dir as core dims will work.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -227,19 +229,26 @@ class SpecArray(object):
         if attrs.DIRNAME in other.dims and (dmin or dmax):
             other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
+        tol = 1e-10
+
         # Interpolate at fmin
-        if fmin is not None and (other.freq.min() > fmin) and (self.freq.min() <= fmin):
-            other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
+        if interpolate and fmin is not None:
+            if abs(float(other.freq[0]) - fmin) > tol:
+                other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
-        if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
+        if interpolate and fmax is not None:
+            if abs(float(other.freq[-1]) - fmax) > tol:
+                other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
         other.freq.attrs = self._obj.freq.attrs
-        other.dir.attrs = self._obj.dir.attrs
+        chunks = {attrs.FREQNAME: -1}
+        if attrs.DIRNAME in other.dims:
+            other.dir.attrs = self._obj.dir.attrs
+            chunks.update({attrs.DIRNAME: -1})
 
         if rechunk:
-            other = other.chunk({attrs.FREQNAME: None, attrs.DIRNAME: None})
+            other = other.chunk(chunks)
 
         return other
 
@@ -1003,3 +1012,46 @@ class SpecArray(object):
         e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
         rmse =  ediff / e0sum
         return rmse
+
+    def fit_jonswap(self):
+        """Nonlinear fit Jonswap spectra."""
+        hs = self.hs()
+        tp = self.tp()
+        gamma = xr.ones_like(hs)
+        dsout = xr.apply_ufunc(
+            fit_jonswap_spectra,
+            self.oned(),
+            self.freq,
+            hs,
+            tp,
+            gamma,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gamma(self):
+        """Nonlinear fit Jonswap gamma."""
+        hs = self.hs()
+        tp = self.tp()
+        gamma0 = xr.ones_like(hs)
+        gamma = xr.apply_ufunc(
+            fit_jonswap_params,
+            self.oned(),
+            self.freq,
+            hs,
+            tp,
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gamma.attrs.update(self._get_cf_attributes("gamma"))
+        return gamma.rename("gamma")
