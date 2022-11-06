@@ -79,16 +79,7 @@ class SpecArray(object):
     @property
     def df(self):
         """Frequency resolution DataArray."""
-        if self._df is not None:
-            return self._df
-        if len(self.freq) > 1:
-            fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
-            ldif = np.hstack((0.0, np.diff(self.freq)))
-            rdif = np.hstack((np.diff(self.freq), 0.0))
-            self._df = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
-        else:
-            self._df = xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
-        return self._df
+        return xr.DataArray(np.gradient(self.freq), coords=self.freq.coords)
 
     @property
     def dd(self):
