@@ -122,6 +122,45 @@ def spread_hp01(partitions, freq, dir):
     return sf2
 
 
+def _combine_last(parts, index, freq, dir, hs, fp, dpm, dm, dp, sf2, fpx, fpy):
+    """Combine, update and reorder parts and stats.
+
+    Args:
+        - parts (3darray): """
+    # Combine parts
+    parts[index] += parts[-1]
+    # Update stats
+    hs[index], fp[index], dpm[index], dm[index], dp[index] = _partition_stats(
+        parts[index], freq, dir
+    )
+    sf2[index] = spread_hp01([parts[index]], freq, dir)[0]
+    fpx[index] = fp[index] * np.cos(D2R * dp[index])
+    fpy[index] = fp[index] * np.sin(D2R * dp[index])
+    # Remove merged last index
+    parts = parts[:-1]
+    hs = hs[:-1]
+    fp = fp[:-1]
+    dpm = dpm[:-1]
+    dm = dm[:-1]
+    dp = dp[:-1]
+    sf2 = sf2[:-1]
+    fpx = fpx[:-1]
+    fpy = fpy[:-1]
+    # Reorder if Hs order changes
+    isort = np.argsort(-hs)
+    if len(set(np.diff(isort))) != 1:
+        parts = parts[isort]
+        hs = hs[isort]
+        fp = fp[isort]
+        dpm = dpm[isort]
+        dm = dm[isort]
+        dp = dp[isort]
+        sf2 = sf2[isort]
+        fpx = fpx[isort]
+        fpy = fpy[isort]
+    return parts, hs, fp, dpm, dm, dp, sf2, fpx, fpy
+
+
 def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max=30, hs_min=0.2, combine_extra_swells=True):
     """Combine swell partitions according Hanson and Phillips (2001).
 
@@ -147,9 +186,6 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
         - Partitions < `hs_min` are always combined with closest neighbours.
 
     """
-    #TODO: Remove below
-    plot = False
-
     # Partition stats
     hs = []
     fp = []
@@ -182,88 +218,59 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
     fpx = fp * np.cos(D2R * dp)
     fpy = fp * np.sin(D2R * dp)
 
-    if plot:
-        _plot_partitions(merged_partitions, hs, fp, dp)
-
     # Recursively merge partitions satisfying HP01 criteria
+    logger.debug("Entering while loop to merge partitions")
     merged = True
     while merged:
-        # Leave while loop if this remains zero
-        merged = 0
 
-        logger.debug("Entering loop to merge partitions")
-        for ind in reversed(range(1, len(merged_partitions))):
-            imerge = None
+        merged = False
 
-            # Skip null partitions
-            if hs[ind] == 0:
-                logger.debug(f"Skipping null partition: {ind}")
-                continue
+        # Distances between last and all other peaks
+        df2 = (fpx[-1] - fpx[:-1]) ** 2 + (fpy[-1] - fpy[:-1]) ** 2
 
-            # Distances between current and all other peaks
-            df2 = (fpx[ind] - fpx[:ind]) ** 2 + (fpy[ind] - fpy[:ind]) ** 2
-            isort = df2.argsort()
+        # Iterate through nearest neighbours until combining criteria met
+        for inext in df2.argsort():
+            # Only proceed if partitions are contiguous in space
+            if _is_contiguous(merged_partitions[-1], merged_partitions[inext]):
+                # Only proceed if angle between partitions is small enough
+                if angle(dm[-1], dm[inext]) <= angle_max:
+                    dist = df2[inext]
+                    spread = max(sf2[-1], sf2[inext])
+                    # Only proceed if distance between peaks is small enough
+                    if dist <= (k * spread):
+                        logger.debug(
+                            f"Partitions {-1} and {inext} fullfill "
+                            "combining criteria and will be merged"
+                        )
+                        merged = True
+                        break
+        # Combine small partitions regardless of angle and distance criteria
+        if not merged and (hs[-1] < hs_min):
+            inext = df2.argsort()[0]
+            logger.debug(
+                f"Partitions {-1} and {inext} do not fullfill all combining criteria "
+                "but Hs is smaller than threshold so they will be merged"
+            )
+            merged = True
 
-            # Combine with nearest partition that satisfy all of the following:
-            #  - Contiguous in frequency space
-            #  - Relative angle under threshold
-            #  - Small relative distance between peaks (dist <= k * spread)
-            #  - For small partitions, the distance and angle tests are ignored
-            is_small_hs = hs[ind] < hs_min
-            for ipart in isort:
-                dist = df2[ipart]
-                spread = max(sf2[ind], sf2[ipart])
-                is_close = dist <= (k * spread)
-                is_small_angle = angle(dm[ind], dm[ipart]) <= angle_max
-                is_touch = _is_contiguous(merged_partitions[ind], merged_partitions[ipart])
-                is_touch = True
-                if (is_touch and is_small_angle and is_close) or (is_touch and is_small_hs):
-                    logger.debug(f"{ind}: merged contiguous partition")
-                    imerge = ipart
-                    break
-            if imerge is not None:
-                # Combining
-                merged += 1
-                merged_partitions[imerge] += merged_partitions[ind]
-                merged_partitions[ind] *= 0
-                # Update stats of combined partition
-                hs[imerge], fp[imerge], dpm[imerge], dm[imerge], dp[imerge] = _partition_stats(
-                    merged_partitions[imerge], freq, dir
-                )
-                sf2[imerge] = spread_hp01([merged_partitions[imerge]], freq, dir)[0]
-                fpx[imerge] = fp[imerge] * np.cos(D2R * dp[imerge])
-                fpy[imerge] = fp[imerge] * np.sin(D2R * dp[imerge])
-                # Update stats of removed partition
-                hs[ind], fp[ind], dpm[ind], dm[ind], dp[ind] = 0, np.nan, np.nan, np.nan, np.nan
-                sf2[ind] = 0 # This ensures zeroed partition won't be merged onto again
-            else:
-                logger.debug(f"{ind}: not merged")
+        # Merge partitions and update all stats
+        if merged:
+            merged_partitions, hs, fp, dpm, dm, dp, sf2, fpx, fpy = _combine_last(
+                merged_partitions, inext, freq, dir, hs, fp, dpm, dm, dp, sf2, fpx, fpy
+            )
 
-        if plot:
-            _plot_partitions(merged_partitions, hs, fp, dp, show=True)
-
-    # Sort remaining merged partitions by descending order of Hs
+    # Sort output one last time
     isort = np.argsort(-hs)
     merged_partitions = merged_partitions[isort]
-    hs = hs[isort]
-    fpx = fpx[isort]
-    fpy = fpy[isort]
 
-    # Remove null partitions
-    ikeep = hs > 0
-    merged_partitions = merged_partitions[ikeep]
-    hs = hs[ikeep]
-    fpx = fpx[ikeep]
-    fpy = fpy[ikeep]
-
-    # If the number of swell is specified, merge with closest partitions
+    # If the number of swell is specified, merge all exceeding ones with closest
     if swells is not None:
         if combine_extra_swells:
             while merged_partitions.shape[0] > swells:
                 df2 = (fpx[-1] - fpx[:-1]) ** 2 + (fpy[-1] - fpy[:-1]) ** 2
-                imerge = df2.argmin()
-                logger.debug(imerge)
-                merged_partitions[imerge] += merged_partitions[-1]
+                inext = df2.argmin()
+                logger.debug(inext)
+                merged_partitions[inext] += merged_partitions[-1]
                 merged_partitions = merged_partitions[:-1]
                 hs = hs[:-1]
                 fpx = fpx[:-1]
@@ -272,8 +279,8 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
             merged_partitions = merged_partitions[:swells]
             hs = hs[:swells]
 
-    # Sort output one last time
-    isort = np.argsort(-hs)
-    merged_partitions = merged_partitions[isort]
+        # Sort output one last time
+        isort = np.argsort(-hs)
+        merged_partitions = merged_partitions[isort]
 
     return list(merged_partitions)
