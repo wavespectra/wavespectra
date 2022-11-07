@@ -228,9 +228,9 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
         # Distances between last and all other peaks
         df2 = (fpx[-1] - fpx[:-1]) ** 2 + (fpy[-1] - fpy[:-1]) ** 2
 
-        # Iterate through nearest neighbours until combining criteria met
+        # Iterate through nearest neighbours until combining criteria are met
         for inext in df2.argsort():
-            # Only proceed if partitions are contiguous in space
+            # Only proceed if partitions are contiguous in frequency space
             if _is_contiguous(merged_partitions[-1], merged_partitions[inext]):
                 # Only proceed if angle between partitions is small enough
                 if angle(dm[-1], dm[inext]) <= angle_max:
@@ -259,11 +259,7 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
                 merged_partitions, inext, freq, dir, hs, fp, dpm, dm, dp, sf2, fpx, fpy
             )
 
-    # Sort output one last time
-    isort = np.argsort(-hs)
-    merged_partitions = merged_partitions[isort]
-
-    # If the number of swell is specified, merge all exceeding ones with closest
+    # Merge extra swells If `swell` is specified and `combine_extra_swells` is True
     if swells is not None:
         if combine_extra_swells:
             while merged_partitions.shape[0] > swells:
