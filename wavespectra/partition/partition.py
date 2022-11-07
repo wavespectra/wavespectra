@@ -393,6 +393,7 @@ class Partition:
         hs_min=DEFAULTS["hs_min"],
         ihmax=DEFAULTS["ihmax"],
         combine_extra_swells=True,
+        wstype=0,
     ):
         """Hanson and Phillips 2001 spectra partitioning.
 
@@ -417,6 +418,14 @@ class Partition:
               number given in the `swells` argument, merge each extra swell with its
               closest neighbour until the requested number is achieved. If False, extra
               swells are ignored from the output.
+            - wstype (int):
+                - 0: Wind partition defined by all full partitions whose wind sea
+                  fraction exceed wscut.
+                - 1: Wind partition defined only by spectral bins falling within
+                  the wave age parabola, from all partitions available.
+                - 2: Combination of [0] and [1], wind partition defined by all full
+                  partitions whose wind sea fraction exceed wscut plus bins from all
+                  other swell partitions falling witing wave age parabola.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -435,6 +444,16 @@ class Partition:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
+        # Temporary: allow choosing how wind sea partition is defined
+        if wstype == 0:
+            func = np_hp01
+        elif wstype == 1:
+            func = np_hp01_wseabins
+        elif wstype == 2:
+            func = np_hp01_wseafrac_wseabins
+        else:
+            raise ValueError(f"wstype must be 0, 1 or 2, got {wstype}")
+
         check_same_coordinates(wspd, wdir, dpt)
         # Smooth spectra for defining watershed boundaries
         if smooth:
@@ -449,7 +468,7 @@ class Partition:
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
-            np_hp01,
+            func,
             self.dset,
             dset_smooth,
             windseamask,
@@ -831,6 +850,202 @@ def np_hp01(
             wsea_partition += part
         else:
             swell_partitions.append(part)
+    # Convert to numpy array for easy sorting
+    swell_partitions = np.array(swell_partitions)
+
+    # Sort swells by Hs
+    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    isort = np.argsort(hs_swells_neg)
+    swell_partitions = list(swell_partitions[isort])
+
+    # Combine extra swell partitions
+    if len(swell_partitions) > 1:
+        swell_partitions = combine_partitions_hp01(
+            partitions=swell_partitions,
+            freq=freq,
+            dir=dir,
+            swells=swells,
+            k=k,
+            angle_max=angle_max,
+            hs_min=hs_min,
+            combine_extra_swells=combine_extra_swells,
+        )
+
+    # Extend list to ensure the correct number of partitions is returned
+    nswells = len(swell_partitions)
+    if swells is not None and nswells < swells:
+        nullspec = np.zeros_like(spectrum)
+        n = swells - nswells
+        for i in range(n):
+            swell_partitions.append(nullspec)
+
+    return np.array([wsea_partition] + swell_partitions)
+
+
+def np_hp01_wseabins(
+    spectrum,
+    spectrum_smooth,
+    windseamask,
+    freq,
+    dir,
+    wscut=DEFAULTS["wscut"],
+    swells=DEFAULTS["swells"],
+    k=DEFAULTS["k"],
+    angle_max=DEFAULTS["angle_max"],
+    hs_min=DEFAULTS["hs_min"],
+    ihmax=DEFAULTS["ihmax"],
+    combine_extra_swells=True,
+):
+    """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
+
+    Modified from np_hp01 to set all wsea bins from all partition as part0.
+
+    Args:
+        - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - spectrum_smooth (2darray): Smoothed wave spectrum array with shape (nf, nd).
+        - windseamask (2darray): Wind-sea mask array with shape (nf, nd).
+        - freq (1darray): Wave frequency array with shape (nf).
+        - dir (1darray): Wave direction array with shape (nd).
+        - wscut (float): Wind sea fraction cutoff.
+        - swells (int): Number of swell partitions to compute, all detected by default.
+        - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
+        - angle_max (float): Maximum relative angle for combining partitions.
+        - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
+          combined with closest ones regardless of minimum distance and angle criteria.
+        - combine_extra_swells (bool): If True and the number of swells partitions
+          from the Hanson and Phillips 2001 algorithm is greater than the requested
+          number given in the `swells` argument, merge each extra swell with its
+          closest neighbour until the requested number is achieved. If False, extra
+          swells are ignored from the output.
+
+    Returns:
+        - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
+          with shape (np, nf, nd).
+
+    Note:
+        - The smooth spectrum `spectrum_smooth` is used to define the watershed
+          boundaries which are applied to the original spectrum.
+        - The `combine` option ensures spectral variance is conserved but
+          could yields multiple peaks into single partitions.
+
+    """
+    # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
+    watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = DEFAULTS["ihmax"]
+    nparts = watershed_map.max()
+
+    # Assign partitioned arrays from raw spectrum and morphological boundaries
+    wsea_partition = np.zeros_like(spectrum)
+    swell_partitions = []
+    for ipart in range(nparts):
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        # wsfrac = part[windseamask].sum() / part.sum()
+        wsea_partition += np.where(windseamask, part, 0.0)
+        swell_partitions.append(np.where(windseamask, 0.0, part))
+        # if wsfrac > wscut:
+        #     wsea_partition += part
+        # else:
+        #     swell_partitions.append(part)
+    # Convert to numpy array for easy sorting
+    swell_partitions = np.array(swell_partitions)
+
+    # Sort swells by Hs
+    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    isort = np.argsort(hs_swells_neg)
+    swell_partitions = list(swell_partitions[isort])
+
+    # Combine extra swell partitions
+    if len(swell_partitions) > 1:
+        swell_partitions = combine_partitions_hp01(
+            partitions=swell_partitions,
+            freq=freq,
+            dir=dir,
+            swells=swells,
+            k=k,
+            angle_max=angle_max,
+            hs_min=hs_min,
+            combine_extra_swells=combine_extra_swells,
+        )
+
+    # Extend list to ensure the correct number of partitions is returned
+    nswells = len(swell_partitions)
+    if swells is not None and nswells < swells:
+        nullspec = np.zeros_like(spectrum)
+        n = swells - nswells
+        for i in range(n):
+            swell_partitions.append(nullspec)
+
+    return np.array([wsea_partition] + swell_partitions)
+
+
+def np_hp01_wseafrac_wseabins(
+    spectrum,
+    spectrum_smooth,
+    windseamask,
+    freq,
+    dir,
+    wscut=DEFAULTS["wscut"],
+    swells=DEFAULTS["swells"],
+    k=DEFAULTS["k"],
+    angle_max=DEFAULTS["angle_max"],
+    hs_min=DEFAULTS["hs_min"],
+    ihmax=DEFAULTS["ihmax"],
+    combine_extra_swells=True,
+):
+    """Hanson and Phillips 2001 spectra partitioning on numpy arrays.
+
+    Modified from np_hp01 to set as wsea partitions exceeding the wscut condition
+    plus all wsea bins from all partition.
+
+    Args:
+        - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - spectrum_smooth (2darray): Smoothed wave spectrum array with shape (nf, nd).
+        - windseamask (2darray): Wind-sea mask array with shape (nf, nd).
+        - freq (1darray): Wave frequency array with shape (nf).
+        - dir (1darray): Wave direction array with shape (nd).
+        - wscut (float): Wind sea fraction cutoff.
+        - swells (int): Number of swell partitions to compute, all detected by default.
+        - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
+        - angle_max (float): Maximum relative angle for combining partitions.
+        - hs_min (float): Minimum Hs of swell partitions, smaller partitions are always
+          combined with closest ones regardless of minimum distance and angle criteria.
+        - combine_extra_swells (bool): If True and the number of swells partitions
+          from the Hanson and Phillips 2001 algorithm is greater than the requested
+          number given in the `swells` argument, merge each extra swell with its
+          closest neighbour until the requested number is achieved. If False, extra
+          swells are ignored from the output.
+
+    Returns:
+        - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
+          with shape (np, nf, nd).
+
+    Note:
+        - The smooth spectrum `spectrum_smooth` is used to define the watershed
+          boundaries which are applied to the original spectrum.
+        - The `combine` option ensures spectral variance is conserved but
+          could yields multiple peaks into single partitions.
+
+    """
+    # Use smooth spectrum to define morphological boundaries
+    specpart.ihmax = ihmax
+    watershed_map = specpart.partition(spectrum_smooth)
+    specpart.ihmax = DEFAULTS["ihmax"]
+    nparts = watershed_map.max()
+
+    # Assign partitioned arrays from raw spectrum and morphological boundaries
+    wsea_partition = np.zeros_like(spectrum)
+    swell_partitions = []
+    for ipart in range(nparts):
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        wsfrac = part[windseamask].sum() / part.sum()
+        # wsea_partition += np.where(windseamask, part, 0.0)
+        # swell_partitions.append(np.where(windseamask, 0.0, part))
+        if wsfrac > wscut:
+            wsea_partition += part
+        else:
+            wsea_partition += np.where(windseamask, part, 0.0)
+            swell_partitions.append(np.where(windseamask, 0.0, part))
     # Convert to numpy array for easy sorting
     swell_partitions = np.array(swell_partitions)
 
