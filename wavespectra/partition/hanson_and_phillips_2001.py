@@ -50,10 +50,7 @@ def _frequency_resolution(freq, ndir=None):
         - df (1darray): Frequency resolution with same size as freq.
 
     """
-    fact = np.hstack((1.0, np.full(freq.size - 2, 0.5), 1.0))
-    ldif = np.hstack((0.0, np.diff(freq)))
-    rdif = np.hstack((np.diff(freq), 0.0))
-    df = fact * (ldif + rdif)
+    df = np.gradient(freq)
     if ndir is not None:
         df = np.tile(freq, (ndir, 1)).T
     return df
@@ -149,33 +146,34 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
         - Polar distance between partitions is small compared to their spread.
         - Partitions < `hs_min` are always combined with closest neighbours.
 
-    TODO:
-        - When merging based on hs_min, do we update Hs after each merging?
-        - Update spread parameter after each merging?
-        - Do we consider frequency touching / direction limit to merge based on Hs threshold?
-        - Use Dm instead of Dpm to test for angle distance.
-        - More partitions than `swells` and `combine_extra_swells` is True.
-
     """
     #TODO: Remove below
     plot = False
 
     # Partition stats
-    npart = len(partitions)
-    hs = np.zeros(npart)
-    fp = np.zeros(npart)
-    dpm = np.zeros(npart)
-    dm = np.zeros(npart)
-    dp = np.zeros(npart)
+    hs = []
+    fp = []
+    dpm = []
+    dm = []
+    dp = []
     merged_partitions = []
     for ipart, spectrum in enumerate(partitions):
         hsi, fpi, dpmi, dmi, dpi =  _partition_stats(spectrum, freq, dir)
         if not np.isnan(fpi):
-            hs[ipart], fp[ipart], dpm[ipart], dm[ipart], dp[ipart] = hsi, fpi, dpmi, dmi, dpi
+            hs.append(hsi)
+            fp.append(fpi)
+            dpm.append(dpmi)
+            dm.append(dmi)
+            dp.append(dpi)
             merged_partitions.append(spectrum)
         else:
             logger.debug(f"Ignoring partition {ipart} with hs={hsi}")
     merged_partitions = np.array(merged_partitions)
+    hs = np.array(hs)
+    fp = np.array(fp)
+    dpm = np.array(dpm)
+    dm = np.array(dm)
+    dp = np.array(dp)
 
     # Spread parameter
     sf2 = spread_hp01(merged_partitions, freq, dir)
