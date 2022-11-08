@@ -422,7 +422,8 @@ def smooth_spec(dset, window=3):
         dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
 
     # Smooth
-    dsout = dsout.rolling(**{attrs.FREQNAME: window, attrs.DIRNAME: window}).mean()
+    dim = {attrs.FREQNAME: window, attrs.DIRNAME: window}
+    dsout = dsout.rolling(dim=dim, center=True).mean()
 
     # Clip to original shape
     if not dsout[attrs.DIRNAME].equals(dset[attrs.DIRNAME]):
