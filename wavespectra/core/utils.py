@@ -381,12 +381,13 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
     return dsout
 
 
-def smooth_spec(dset, window=3):
+def smooth_spec(dset, freq_window=3, dir_window=3):
     """Smooth spectra with a running average.
 
     Args:
         - dset (Dataset, DataArray): Spectra to smooth.
-        - window (odd int): Rolling window size.
+        - freq_window (int): Rolling window size along `freq` dim.
+        - dir_window (int): Rolling window size along `dir` dim.
 
     Returns:
         - efth (DataArray): Smoothed spectra.
@@ -395,10 +396,11 @@ def smooth_spec(dset, window=3):
         - The window size should be an odd value to ensure symmetry.
 
     """
-    if (window % 2) == 0:
-        raise ValueError(
-            f"Window size should be an odd value to ensure symmetry, got {window}"
-        )
+    for window in [freq_window, dir_window]:
+        if (window % 2) == 0:
+            raise ValueError(
+                f"Window size must be an odd value to ensure symmetry, got {window}"
+            )
 
     dsout = dset.sortby(attrs.DIRNAME)
 
@@ -422,7 +424,7 @@ def smooth_spec(dset, window=3):
         dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
 
     # Smooth
-    dim = {attrs.FREQNAME: window, attrs.DIRNAME: window}
+    dim = {attrs.FREQNAME: freq_window, attrs.DIRNAME: dir_window}
     dsout = dsout.rolling(dim=dim, center=True).mean()
 
     # Clip to original shape
