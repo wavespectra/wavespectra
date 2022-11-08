@@ -876,17 +876,21 @@ class SpecArray(object):
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
-    def smooth(self, window=3):
+    def smooth(self, freq_window=3, dir_window=3):
         """Smooth spectra with a running average.
 
         Args:
-            - window (int): Rolling window size, must be odd to ensure symmetry.
+            - freq_window (int): Rolling window size along `freq` dim.
+            - dir_window (int): Rolling window size along `dir` dim.
 
         Returns:
             - efth (DataArray): Smoothed spectra.
 
+        Note:
+            - Window sizes must be odd to ensure symmetry.
+
         """
-        return smooth_spec(self._obj, window=window)
+        return smooth_spec(self._obj, freq_window=freq_window, dir_window=dir_window)
 
     def interp(self, freq=None, dir=None, maintain_m0=True):
         """Interpolate onto new spectral basis.

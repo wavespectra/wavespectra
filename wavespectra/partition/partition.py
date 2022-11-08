@@ -91,7 +91,8 @@ class Partition:
         wscut=DEFAULTS["wscut"],
         swells=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
-        window=DEFAULTS["window"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
         ihmax=DEFAULTS["ihmax"],
     ):
         """PTM1 spectra partitioning.
@@ -105,7 +106,8 @@ class Partition:
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
-            - window (int): Size of running window for smoothing spectra when smooth==True.
+            - freq_window (int): Size of running window for smoothing spectra.
+            - dir_window (int): Size of running window for smoothing spectra.
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
@@ -127,7 +129,7 @@ class Partition:
         # Sort out inputs
         check_same_coordinates(wspd, wdir, dpt)
         if smooth:
-            dset_smooth = smooth_spec(self.dset, window)
+            dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
         else:
             dset_smooth = self.dset
 
@@ -171,7 +173,8 @@ class Partition:
         wscut=DEFAULTS["wscut"],
         swells=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
-        window=DEFAULTS["window"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
         ihmax=DEFAULTS["ihmax"],
     ):
         """Watershed partitioning with secondary wind-sea assigned from individual spectral bins.
@@ -185,7 +188,8 @@ class Partition:
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
-            - window (int): Size of running window for smoothing spectra when smooth==True.
+            - freq_window (int): Size of running window along `freq` for smoothing spectra.
+            - dir_window (int): Size of running window along `dir` for smoothing spectra.
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
@@ -205,7 +209,7 @@ class Partition:
         # Sort out inputs
         check_same_coordinates(wspd, wdir, dpt)
         if smooth:
-            dset_smooth = smooth_spec(self.dset, window)
+            dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
         else:
             dset_smooth = self.dset
 
@@ -246,7 +250,8 @@ class Partition:
         self,
         parts=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
-        window=DEFAULTS["window"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
         ihmax=DEFAULTS["ihmax"],
     ):
         """Watershed partitioning with no wind-sea or swell classification
@@ -255,7 +260,8 @@ class Partition:
             - parts (int): Number of partitions to keep.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
-            - window (int): Size of running window for smoothing spectra when smooth==True.
+            - freq_window (int): Size of running window along `freq` for smoothing spectra.
+            - dir_window (int): Size of running window along `dir` for smoothing spectra.
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
@@ -268,12 +274,10 @@ class Partition:
             - Vincent et al. (1991).
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
-        TODO: Can we allow arbitrary size part output with parts=None?
-
         """
         # Sort out inputs
         if smooth:
-            dset_smooth = smooth_spec(self.dset, window)
+            dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
         else:
             dset_smooth = self.dset
 
@@ -387,7 +391,8 @@ class Partition:
         wscut=DEFAULTS["wscut"],
         swells=DEFAULTS["swells"],
         smooth=DEFAULTS["smooth"],
-        window=DEFAULTS["window"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
         k=DEFAULTS["k"],
         angle_max=DEFAULTS["angle_max"],
         hs_min=DEFAULTS["hs_min"],
@@ -406,8 +411,8 @@ class Partition:
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
-            - window (int): Size of running window for smoothing spectra when
-              smooth==True.
+            - freq_window (int): Size of running window along `freq` for smoothing spectra.
+            - dir_window (int): Size of running window along `dir` for smoothing spectra.
             - k (float): Spread factor in Hanson and Phillips (2001)'s eq 9.
             - angle_max (float): Maximum relative angle for combining partitions.
             - hs_min (float): Minimum Hs of swell partitions, smaller ones are always
@@ -457,7 +462,7 @@ class Partition:
         check_same_coordinates(wspd, wdir, dpt)
         # Smooth spectra for defining watershed boundaries
         if smooth:
-            dset_smooth = smooth_spec(self.dset, window)
+            dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
         else:
             dset_smooth = self.dset
         # Wind sea mask
