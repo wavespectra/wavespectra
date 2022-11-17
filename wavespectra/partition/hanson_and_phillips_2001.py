@@ -245,7 +245,7 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
                         merged = True
                         break
         # Combine small partitions regardless of angle and distance criteria
-        if not merged and (hs[-1] < hs_min):
+        if not merged and df2.size > 0 and (hs[-1] < hs_min):
             inext = df2.argsort()[0]
             logger.debug(
                 f"Partitions {-1} and {inext} do not fullfill all combining criteria "
