@@ -34,7 +34,7 @@ from scipy.constants import g, pi
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
-from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma, fit_gaussian_spectra, fit_gaussian_gw
 from wavespectra.plot import polar_plot, CBAR_TICKS
 from wavespectra.partition.partition import Partition
 
@@ -610,6 +610,31 @@ class SpecArray(object):
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.where(gamma >= 1, 1).rename(self._my_name())
 
+
+    def gamma_scaled(self, smooth=True):
+        """Jonswap peak enhancement factor gamma.
+
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
+        associate Pierson-Moskowitz shape.
+
+         Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        """
+        fp = self.fp(smooth=smooth)
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
+        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        
+        p = [ 0.0378375 , -0.13543292,  0.64087366,  0.32524949,  0.12974958] # polynomial approximation for gamma
+        gamma_scaled = 0
+        for pow,c in enumerate(p[::-1]):
+            gamma_scaled += c*gamma**pow
+
+        gamma_scaled.attrs.update(self._get_cf_attributes(self._my_name()))
+        return gamma_scaled.where(gamma_scaled >= 1, 1).rename(self._my_name())
+
     def goda(self):
         """Goda peakedness parameter.
 
@@ -1066,5 +1091,56 @@ class SpecArray(object):
             vectorize=True,
             output_dtypes=["float32"],
         )
-        gamma.attrs.update(self._get_cf_attributes("gamma"))
-        return gamma.rename("gamma")
+        gamma.attrs.update(self._get_cf_attributes("fit_gamma"))
+        return gamma.rename("fit_gamma")
+
+    def fit_gaussian(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        dsout = xr.apply_ufunc(
+            fit_gaussian_spectra,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gw(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Gaussian width.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gw0 (float): Initial guess for gw.
+
+        """
+        gw = xr.apply_ufunc(
+            fit_gaussian_gw,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gw.attrs.update(self._get_cf_attributes("fit_gw"))
+        return gw.rename("fit_gw")
