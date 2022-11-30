@@ -7,8 +7,7 @@ from wavespectra import read_spotter
 from wavespectra.input.spotter import Spotter
 from wavespectra.core.attributes import attrs
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                         "../sample_files")
+FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
 class TestSpotterJson:
@@ -39,16 +38,17 @@ class TestSpotterJson:
 
 @pytest.fixture
 def dset():
-    return read_spotter(os.path.join(FILES_DIR,'spotter_20210929.csv'))
+    return read_spotter(os.path.join(FILES_DIR, "spotter_20210929.csv"))
+
 
 @pytest.mark.parametrize(
-        "wavespectra_name, spotter_name, kwargs",
-        [
-            ("hs", "Hm0", {}),
-            ("tp", "Tp", {"smooth": False}),
-            ("tm01", "Tm", {}),
-        ],
-    )
+    "wavespectra_name, spotter_name, kwargs",
+    [
+        ("hs", "Hm0", {}),
+        ("tp", "Tp", {"smooth": False}),
+        ("tm01", "Tm", {}),
+    ],
+)
 def test_read_spotter_csv(dset, wavespectra_name, spotter_name, kwargs):
     wavespectra = getattr(dset.spec, wavespectra_name)(**kwargs).values
     spotter = getattr(dset, spotter_name)
