@@ -1,4 +1,5 @@
 import os
+import glob
 import shutil
 import pytest
 from tempfile import mkdtemp
@@ -36,10 +37,11 @@ class TestSpotterJson:
         assert wavespectra == pytest.approx(spotter, rel=1e-1)
 
 
-@pytest.fixture
-def dset():
-    return read_spotter(os.path.join(FILES_DIR, "spotter_20210929.csv"))
-
+@pytest.fixture(scope="module", 
+                params=[os.path.join(FILES_DIR,"spotter_20210929.csv"),
+                        glob.glob(os.path.join(FILES_DIR,"spotter*.csv"))[0]])
+def dset(request):
+    return read_spotter(request.param)
 
 @pytest.mark.parametrize(
     "wavespectra_name, spotter_name, kwargs",
