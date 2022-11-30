@@ -31,7 +31,7 @@ def read_spotter(filename, filetype=None):
 
     """
 
-    if filename is not isinstance(filename,list):
+    if filename is not isinstance(filename, list):
         filename = [filename]
 
     if filetype is None:
@@ -45,7 +45,7 @@ def read_spotter(filename, filetype=None):
         dslist = []
         for fn in filename:
             dslist.append(_read_spotter_csv(fn))
-        return xr.concat(dslist, dim='time')
+        return xr.concat(dslist, dim="time")
     else:
         raise ValueError(f"filetype='{filetype}', must be either 'json' or 'csv' ")
 
