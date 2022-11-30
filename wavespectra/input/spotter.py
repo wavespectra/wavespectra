@@ -6,6 +6,7 @@ Functions:
 
 """
 import glob
+import os
 import getpass
 import datetime
 import json
@@ -18,7 +19,40 @@ from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-def read_spotter_csv(filename):
+def read_spotter(filename, filetype=None):
+    """Read Spectra from Spotter file.
+
+    Args:
+        - filename (list, str): File name or file glob specifying spotter files to read.
+        - filetype (str): 'json' or 'csv', if not passed inferred from filename.
+
+    Returns:
+        - dset (SpecDataset): spectra dataset object read from file.
+
+    """
+    
+    if filetype is None:
+        filetype = os.path.splitext(filename)[1]
+        
+    filetype = filetype.removeprefix('.').lower()
+        
+    if filetype == 'json':
+        return _read_spotter_json(filename)
+    elif filetype == 'csv':
+        return _read_spotter_csv(filename)
+    else:
+        raise ValueError(f"filetype='{filetype}', must be either 'json' or 'csv' ")
+
+def _read_spotter_csv(filename):
+    """Read Spectra from Spotter CSV file.
+
+    Args:
+        - filename (str): File name specifying spotter file to read.
+
+    Returns:
+        - dset (SpecDataset): spectra dataset object read from file.
+
+    """
     
     date_parser = lambda epoch: pd.to_datetime(epoch, unit='s')
     
@@ -63,6 +97,7 @@ def read_spotter_csv(filename):
                         date_parser=date_parser,
                         )
         dat_tmp.columns = dat_tmp.columns.str.strip()
+        dat_tmp.index.name = dat_tmp.index.name.strip()
         tmp_da = dat_tmp.to_xarray().to_array(dim='Frequency', name=name)
         tmp_da = tmp_da.assign_coords({'Frequency':freq_array.values})
         tmp_list.append(tmp_da)
@@ -76,6 +111,7 @@ def read_spotter_csv(filename):
                     date_parser=date_parser,
                     )
     dat_S.columns = dat_S.columns.str.strip()
+    dat_S.index.name = dat_S.index.name.strip()
     S = dat_S.to_xarray().to_array(dim='Frequency', name='Variance density')
     S = S.assign_coords({'Frequency':freq_array.values})
 
@@ -85,6 +121,7 @@ def read_spotter_csv(filename):
                     date_parser=date_parser,
                     )
     dat_dir.columns = dat_dir.columns.str.strip()
+    dat_dir.index.name = dat_dir.index.name.strip()
     Dir = dat_dir.to_xarray().to_array(dim='Frequency', name='Direction')
     Dir = Dir.assign_coords({'Frequency':freq_array.values})
 
@@ -93,6 +130,7 @@ def read_spotter_csv(filename):
                     usecols=np.insert(np.arange(13+8*(38+1),13+9*(38+1)),0,3),
                     date_parser=date_parser,
                     )
+    dat_spread.index.name = dat_spread.index.name.strip()
     dat_spread.columns = dat_spread.columns.str.strip()
     spread = dat_spread.to_xarray().to_array(dim='Frequency', name='Directional spread')
     spread = spread.assign_coords({'Frequency':freq_array.values})
@@ -166,7 +204,7 @@ def read_spotter_csv(filename):
     ds['Frequency'].attrs['standard_name'] = 'wave_frequency'
     ds['Frequency'].attrs['long_name'] = 'Frequency'
 
-    ds['Variance density'].attrs['units'] = 'm^2/Hz'
+    ds['Variance density'].attrs['units'] = 'm2 s'
     ds['Variance density'].attrs['standard_name'] = 'sea_surface_wave_variance_spectral_density'
     ds['Variance density'].attrs['long_name'] = 'Spectral density'
 
@@ -183,7 +221,7 @@ def read_spotter_csv(filename):
     ds = ds.rename({'Epoch Time':'time',
                     'Frequency':'freq',
                     'Battery Voltage (V)':'batter_voltage',
-                    'Variance density':'etfh',
+                    'Variance density':'efth',
                     'Direction':'dir',
                 'Power (W)':'battery_power',
                 'Humidity (%rel)':'humidity',
@@ -206,8 +244,8 @@ def read_spotter_csv(filename):
     return ds
 
 
-def read_spotter(filename):
-    """Read Spectra from spotter JSON file.
+def _read_spotter_json(filename):
+    """Read Spectra from Spotter JSON file.
 
     Args:
         - filename (list, str): File name or file glob specifying spotter files to read.
