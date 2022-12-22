@@ -51,8 +51,8 @@ def test_is_overlap():
 
 def test_smooth_spectra(dset):
     ds = dset.isel(lon=0, lat=0, time=0, drop=True)
-    dsmooth3 = smooth_spec(ds, window=3)
-    dsmooth5 = smooth_spec(ds, window=5)
+    dsmooth3 = smooth_spec(ds, freq_window=3, dir_window=3)
+    dsmooth5 = smooth_spec(ds, freq_window=5, dir_window=5)
     assert ds.coords.to_index().equals(dsmooth3.coords.to_index())
     assert ds.efth.max() > dsmooth3.efth.max() > dsmooth5.efth.max()
     # Non-circular directions
@@ -61,7 +61,7 @@ def test_smooth_spectra(dset):
 
 def test_smooth_window_odd(dset):
     with pytest.raises(ValueError):
-        smooth_spec(dset, window=2)
+        smooth_spec(dset, freq_window=2)
 
 
 def test_to_nautical():

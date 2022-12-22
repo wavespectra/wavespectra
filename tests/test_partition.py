@@ -102,19 +102,6 @@ class TestPTM1(BasePTM):
         )
         assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
 
-    def test_compare_legacy(self):
-        kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
-        old = self.dset.spec.partition_deprecated(
-            wsp_darr=self.dset.wspd,
-            wdir_darr=self.dset.wdir,
-            dep_darr=self.dset.dpt,
-            **kwargs,
-        )
-        new = self.pt.ptm1(
-            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, ihmax=200, **kwargs,
-        )
-        assert  np.array_equal(old.spec.hs().values, new.spec.hs().values)
-
 
 class TestPTM2(BasePTM):
 
