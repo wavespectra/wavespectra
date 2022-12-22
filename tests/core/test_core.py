@@ -6,6 +6,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.utils import (
+    angle,
     to_nautical,
     unique_times,
     spddir_to_uv,
@@ -17,6 +18,8 @@ from wavespectra.core.utils import (
     celerity,
     interp_spec,
     load_function,
+    smooth_spec,
+    is_overlap,
 )
 from wavespectra import read_swan
 
@@ -28,6 +31,37 @@ def dset():
     filename = os.path.join(FILES_DIR, "swanfile.spec")
     _dset = read_swan(filename)
     yield _dset
+
+
+def test_angle():
+    assert angle(0, 10) == 10
+    assert angle(10, 0) == 10
+    assert angle(0, 190) == 170
+    assert angle(170, 361) == 169
+    assert angle(10, 350) == 20
+
+
+def test_is_overlap():
+    rect1 = [0.1, 0, 0.2, 345]
+    assert is_overlap(rect1, [0.15, 0, 0.3, 345])
+    assert is_overlap(rect1, [0.0, 50, 0.11, 60])
+    assert not is_overlap(rect1, [0.2, 0, 0.3, 345])
+    assert not is_overlap(rect1, [0.1, 345, 0.2, 360])
+
+
+def test_smooth_spectra(dset):
+    ds = dset.isel(lon=0, lat=0, time=0, drop=True)
+    dsmooth3 = smooth_spec(ds, freq_window=3, dir_window=3)
+    dsmooth5 = smooth_spec(ds, freq_window=5, dir_window=5)
+    assert ds.coords.to_index().equals(dsmooth3.coords.to_index())
+    assert ds.efth.max() > dsmooth3.efth.max() > dsmooth5.efth.max()
+    # Non-circular directions
+    smooth_spec(ds.isel(dir=slice(None, -3)))
+
+
+def test_smooth_window_odd(dset):
+    with pytest.raises(ValueError):
+        smooth_spec(dset, freq_window=2)
 
 
 def test_to_nautical():

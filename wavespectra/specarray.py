@@ -31,10 +31,12 @@ import inspect
 import warnings
 from scipy.constants import g, pi
 
-from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
+from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma, fit_gaussian_spectra, fit_gaussian_gw
 from wavespectra.plot import polar_plot, CBAR_TICKS
+from wavespectra.partition.partition import Partition
 
 
 @xr.register_dataarray_accessor("spec")
@@ -78,16 +80,10 @@ class SpecArray(object):
     @property
     def df(self):
         """Frequency resolution DataArray."""
-        if self._df is not None:
-            return self._df
-        if len(self.freq) > 1:
-            fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
-            ldif = np.hstack((0.0, np.diff(self.freq)))
-            rdif = np.hstack((np.diff(self.freq), 0.0))
-            self._df = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
+        if self.freq.size > 1:
+            return xr.DataArray(np.gradient(self.freq), coords=self.freq.coords)
         else:
-            self._df = xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
-        return self._df
+            return xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
 
     @property
     def dd(self):
@@ -99,6 +95,10 @@ class SpecArray(object):
         else:
             self._dd = 1.0
         return self._dd
+
+    @property
+    def partition(self):
+        return Partition(self._obj)
 
     def _interp_freq(self, fint):
         """Linearly interpolate spectra at frequency fint.
@@ -200,11 +200,13 @@ class SpecArray(object):
 
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
+            dsout = self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
         else:
-            return self._obj.copy(deep=True)
+            dsout = self._obj.copy(deep=True)
+        set_spec_attributes(dsout)
+        return dsout
 
-    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, rechunk=True):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True):
         """Split spectra over freq and/or dir dims.
 
         Args:
@@ -212,11 +214,9 @@ class SpecArray(object):
             - fmax (float): highest frequency to split spectra, by default the highest.
             - dmin (float): lowest direction to split spectra at, by default min(dir).
             - dmax (float): highest direction to split spectra at, by default max(dir).
+            - interpolate (bool): Interpolate spectra at frequency cutoffs they
+              are not available in coordinates of input spectra.
             - rechunk (bool): Rechunk split dims so there is one single chunk.
-
-        Note:
-            - Spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
-            - Recommended rechunk==True so ufuncs with freq/dir as core dims will work.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -231,27 +231,35 @@ class SpecArray(object):
         if attrs.DIRNAME in other.dims and (dmin or dmax):
             other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
+        tol = 1e-10
+
         # Interpolate at fmin
-        if fmin is not None and (other.freq.min() > fmin) and (self.freq.min() <= fmin):
-            other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
+        if interpolate and fmin is not None:
+            if abs(float(other.freq[0]) - fmin) > tol:
+                other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
-        if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
+        if interpolate and fmax is not None:
+            if abs(float(other.freq[-1]) - fmax) > tol:
+                other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
         other.freq.attrs = self._obj.freq.attrs
-        other.dir.attrs = self._obj.dir.attrs
+        chunks = {attrs.FREQNAME: -1}
+        if attrs.DIRNAME in other.dims:
+            other.dir.attrs = self._obj.dir.attrs
+            chunks.update({attrs.DIRNAME: -1})
 
         if rechunk:
-            other = other.chunk({attrs.FREQNAME: None, attrs.DIRNAME: None})
+            other = other.chunk(chunks)
 
         return other
 
-    def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
-        """Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)."""
-        E = self._obj * self.df * self.dd
-        E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
-        return E.rename("energy")
+    def to_energy(self):
+        """Convert spectra from energy density (m2/Hz/degree) into wave energy (m2)."""
+        energy = self._obj * self.df * self.dd
+        set_spec_attributes(energy)
+        energy.attrs.update(self._get_cf_attributes(attrs.ESPECNAME))
+        return energy.rename(attrs.ESPECNAME)
 
     def hs(self, tail=True):
         """Spectral significant wave height Hm0.
@@ -604,6 +612,31 @@ class SpecArray(object):
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.where(gamma >= 1, 1).rename(self._my_name())
 
+
+    def gamma_scaled(self, smooth=True):
+        """Jonswap peak enhancement factor gamma.
+
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
+        associate Pierson-Moskowitz shape.
+
+         Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        """
+        fp = self.fp(smooth=smooth)
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
+        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        
+        p = [ 0.0378375 , -0.13543292,  0.64087366,  0.32524949,  0.12974958] # polynomial approximation for gamma
+        gamma_scaled = 0
+        for pow,c in enumerate(p[::-1]):
+            gamma_scaled += c*gamma**pow
+
+        gamma_scaled.attrs.update(self._get_cf_attributes(self._my_name()))
+        return gamma_scaled.where(gamma_scaled >= 1, 1).rename(self._my_name())
+
     def goda(self):
         """Goda peakedness parameter.
 
@@ -728,7 +761,7 @@ class SpecArray(object):
         L.name = "wavelength"
         return L
 
-    def partition(
+    def partition_deprecated(
         self,
         wsp_darr,
         wdir_darr,
@@ -777,7 +810,7 @@ class SpecArray(object):
             - Portilla et al. (2009).
 
         """
-        from wavespectra.core.watershed import partition
+        from wavespectra.partition.watershed_depracate import partition
 
         # Assert expected dimensions are defined
         if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):
@@ -870,54 +903,21 @@ class SpecArray(object):
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
-    def smooth(self, window=3):
-        """Smooth spectra based on a 3-point running average.
+    def smooth(self, freq_window=3, dir_window=3):
+        """Smooth spectra with a running average.
 
         Args:
-            - window (int): Rolling window size.
+            - freq_window (int): Rolling window size along `freq` dim.
+            - dir_window (int): Rolling window size along `dir` dim.
 
         Returns:
             - efth (DataArray): Smoothed spectra.
 
         Note:
-            - The window size should be an odd value to ensure symmetry.
-
-        TODO: Write testing.
+            - Window sizes must be odd to ensure symmetry.
 
         """
-        if (window % 2) == 0:
-            raise ValueError(
-                f"Window size should be an odd value to ensure symmetry, got {window}"
-            )
-
-        dset = self._obj.copy(deep=True)
-
-        # Avoid problems when extending dirs with wrong data type
-        dset[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
-
-        # Extend circular directions to avoid edge effects
-        if self._is_circular():
-            n = int(np.ceil((window / 2)))
-            dset = dset.sortby(attrs.DIRNAME)
-            # Extend directions on both sides
-            left = dset.isel(**{attrs.DIRNAME: slice(-n, None)})
-            left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
-            right = dset.isel(**{attrs.DIRNAME: slice(0, n)})
-            right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
-            dset = xr.concat([left, dset, right], dim=attrs.DIRNAME)
-
-        # Smooth
-        dset = dset.rolling(**{attrs.FREQNAME: n, attrs.DIRNAME: n}).mean()
-
-        # Clip to original shape
-        if not dset[attrs.DIRNAME].equals(self._obj[attrs.DIRNAME]):
-            dset = dset.sel(**{attrs.DIRNAME: self._obj[attrs.DIRNAME]})
-            dset = dset.chunk(**{attrs.DIRNAME: -1})
-
-        # Fill missing values at frequency boundaries from original spectra
-        dset = xr.where(dset.notnull(), dset, self._obj)
-
-        return dset.assign_coords(self._obj.coords)
+        return smooth_spec(self._obj, freq_window=freq_window, dir_window=dir_window)
 
     def interp(self, freq=None, dir=None, maintain_m0=True):
         """Interpolate onto new spectral basis.
@@ -1044,3 +1044,105 @@ class SpecArray(object):
         e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
         rmse =  ediff / e0sum
         return rmse
+
+    def fit_jonswap(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        dsout = xr.apply_ufunc(
+            fit_jonswap_spectra,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gamma(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap peak enhancement factor gamma.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        gamma = xr.apply_ufunc(
+            fit_jonswap_gamma,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gamma.attrs.update(self._get_cf_attributes("fit_gamma"))
+        return gamma.rename("fit_gamma")
+
+    def fit_gaussian(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        dsout = xr.apply_ufunc(
+            fit_gaussian_spectra,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gw(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Gaussian width.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gw0 (float): Initial guess for gw.
+
+        """
+        gw = xr.apply_ufunc(
+            fit_gaussian_gw,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gw.attrs.update(self._get_cf_attributes("fit_gw"))
+        return gw.rename("fit_gw")

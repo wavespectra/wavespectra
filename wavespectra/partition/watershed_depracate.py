@@ -3,9 +3,9 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.specpart import specpart
+from wavespectra.partition.specpart import specpart
 from wavespectra.core.utils import D2R, R2D, celerity
-from wavespectra.core.npstats import hs, dpm_gufunc, tps_gufunc
+from wavespectra.core.npstats import hs_numpy, dpm_gufunc, tps_gufunc
 
 
 def mom1(spectrum, dir, theta=90.0):
@@ -157,7 +157,7 @@ def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agef
         if W > wscut:
             part_array[part_array == ipeak] = 0
         else:
-            partitions_hs_swell[ipeak] = hs(part_spec, freq, dir)
+            partitions_hs_swell[ipeak] = hs_numpy(part_spec, freq, dir)
 
         ipeak += 1
 

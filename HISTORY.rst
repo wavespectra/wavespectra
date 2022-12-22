@@ -20,6 +20,15 @@ This major release brings new spectra reconstruction capability based on the wor
 
 New Features
 ------------
+
+* New partition api with several new methods:
+  * ptm1
+  * ptm2
+  * ptm3
+  * ptm4
+  * ptm5
+  * hp01
+  * bbox
 * Allow merging minour watershed swells.
 * Methods to calculate stokes drift and the mean squared slope by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Parametric spectra functions in the `fit` module:
@@ -30,18 +39,20 @@ New Features
 * Directional distribution module with the following options:
   * Cartwright (1986) cosine-square distribution.
   * Bunney (2014) skewed distribution for turning wind sea.
+* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Gaussian frequency width method `gw` in SpecArray.
 * Jonswap peak enhancement factor method `gamma` in SpecArray.
 * Jonswap fetch scaling coefficient method `alpha` in SpecArray.
 * Peak directional spread method `dpspr` in SpecArray.
 * Peak frequency method `fp` in SpecArray.
 * Root-mean-square wave height method `hrms` in SpecArray
-* Spectra smoothing method.
+* Spectra smoothing capability.
 * New input function to read xwaves mat format.
 
 
 Internal Changes
 ----------------
+* Change ihmax default from 200 to 100 in specpart, options to redefine in partition methods.
 * Allow reading WW3 and SWAN files with only spectral density available.
 * Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
@@ -63,6 +74,11 @@ Internal Changes
 ----------------
 * Import Fortran partition code inside function so the library can still be imported if the module does not build.
 * Remove Hypothesis from requirements.
+
+Deprecation
+-----------
+* The `SpecArray.partition` method now became a new namespace to access the different partitioning options.
+  The legacy `partition` method is now equivalent to `spec.partition.ptm1`.
 
 
 3.11.0 (2022-05-04)

@@ -61,7 +61,7 @@ def from_ww3(dset):
 
     """
     vars_and_dims = set(dset.data_vars) | set(dset.dims)
-    mapping = {k: v for k, v in MAPPING.items() if k in vars_and_dims}
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in vars_and_dims}
     dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
     if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:

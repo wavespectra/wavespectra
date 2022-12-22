@@ -39,8 +39,8 @@ def test_main_reconstruct_spectra(runner, tmpdir):
     result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, INFILE])
     assert isinstance(result.exception, ValueError)
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-s", "2", "-d", "cartwright,cartwright,cartwright"])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-d", "cartwright,cartwright,cartwright"])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-s", "2", "-f", "fit_jonswap,fit_jonswap,fit_jonswap"])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-f", "fit_jonswap,fit_jonswap,fit_jonswap"])
     assert result.exit_code == 0
