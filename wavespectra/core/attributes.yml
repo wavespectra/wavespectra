@@ -88,7 +88,10 @@ ATTRS:
         units: ""
     gw:
         standard_name: sea_surface_wave_gaussian_spread
-        units: ""
+        units: "m2s"
+    fit_gw:
+        standard_name: sea_surface_wave_gaussian_spread
+        units: "m2s"
     tm01:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment
         units: s
@@ -96,6 +99,12 @@ ATTRS:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment
         units: s
     gamma:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    gamma_scaled:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    fit_gamma:
         standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
         units: ""
     alpha:
