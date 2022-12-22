@@ -3,7 +3,6 @@ import numpy as np
 import xarray as xr
 from scipy.constants import pi
 
-from wavespectra import SpecArray
 from wavespectra.core.utils import scaled, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs
 
@@ -15,7 +14,7 @@ def fit_gaussian(freq, hs, fp, gw, **kwargs):
         - freq (DataArray): Frequency array (Hz).
         - hs (DataArray, float): Significant wave height (m).
         - fp (DataArray, float): Peak wave frequency (Hz).
-        - gw (DataArray, float): Gaussian width parameter :math:`\sigma`.
+        - gw (DataArray, float): Gaussian width parameter :math:`\sigma` (m2s).
 
     Returns:
         - efth (SpecArray): Gaussian frequency spectrum E(f) (m2s).
@@ -32,10 +31,19 @@ def fit_gaussian(freq, hs, fp, gw, **kwargs):
 
     mo = (hs / 4) ** 2
     term1 = mo / (gw * np.sqrt(2 * pi))
-    term2 = np.exp(-((2 * pi * freq - 2 * pi * fp) ** 2 / (2 * (gw) ** 2)))
+    term2 = np.exp(-0.5*((freq - fp) / gw) ** 2)
     dsout = term1 * term2
 
     dsout = scaled(dsout, hs)
     dsout.name = attrs.SPECNAME
+
+    return dsout
+
+def np_gaussian(freq, fp, hs, gw):
+
+    mo = (hs / 4) ** 2
+    term1 = mo / (gw * np.sqrt(2 * pi))
+    term2 = np.exp(-0.5*((freq - fp) / gw) ** 2)
+    dsout = term1 * term2
 
     return dsout

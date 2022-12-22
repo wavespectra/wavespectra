@@ -3,10 +3,48 @@ import numpy as np
 from numba import guvectorize
 from scipy.constants import g, pi
 
-from wavespectra.core.utils import D2R, R2D
+from wavespectra.core.utils import R2D
 
 
-def hs(spectrum, freq, dir, tail=True):
+def mom1_numpy(spectrum, dir, theta=90.0):
+    """First directional moment.
+
+    Args:
+        - spectrum (2darray): wave spectrum array.
+        - dir (1darray): wave direction array.
+        - theta (float): angle offset.
+
+    Returns:
+        - msin (float): Sin component of the 1st directional moment.
+        - mcos (float): Cosine component of the 1st directional moment.
+
+    """
+    dd = dir[1] - dir[0]
+    cp = np.cos(np.radians(180 + theta - dir))
+    sp = np.sin(np.radians(180 + theta - dir))
+    msin = (dd * spectrum * sp).sum(axis=1)
+    mcos = (dd * spectrum * cp).sum(axis=1)
+    return msin, mcos
+
+
+def dm_numpy(spectrum, dir):
+    """Mean wave direction Dm.
+
+    Args:
+        - spectrum (2darray): wave spectrum array.
+        - dir (1darray): wave direction array.
+
+    Returns:
+        - dm (float): Mean spectral period.
+
+    """
+    moms, momc = mom1_numpy(spectrum, dir)
+    dm = np.arctan2(moms.sum(axis=0), momc.sum(axis=0))
+    dm = (270 - R2D * dm) % 360.0
+    return dm
+
+
+def hs_numpy(spectrum, freq, dir=None, tail=True):
     """Significant wave height Hmo.
 
     Args:
@@ -15,9 +53,12 @@ def hs(spectrum, freq, dir, tail=True):
         - dir (1darray): wave direction array.
         - tail (bool): if True fit high-frequency tail before integrating spectra.
 
+    Returns:
+        - hs (float): Significant wave height.
+
     """
     df = abs(freq[1:] - freq[:-1])
-    if len(dir) > 1:
+    if dir is not None and len(dir) > 1:
         ddir = abs(dir[1] - dir[0])
         E = ddir * spectrum.sum(1)
     else:
@@ -67,7 +108,7 @@ def dp_gufunc(ipeak, dir, out):
     """Peak wave direction Dp.
 
     Args:
-        - ipeak (int): Index of the maximum energy density in the frequency spectrum E(f).
+        - ipeak (int): Index of the maximum energy density in the direction spectrum E(d).
         - dir (1darray): Wave direction array.
 
     Returns:

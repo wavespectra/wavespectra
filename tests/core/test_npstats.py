@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from wavespectra import read_swan
-from wavespectra.core.npstats import hs, dpm_gufunc, dp_gufunc, tps_gufunc, tp_gufunc, dpspr_gufunc
+from wavespectra.core.npstats import hs_numpy, dpm_gufunc, dp_gufunc, tps_gufunc, tp_gufunc, dpspr_gufunc
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -19,10 +19,10 @@ def dset():
 
 def test_hs(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=True)
-    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=False)
+    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=True)
+    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=False)
     ds = ds.isel(dir=[0])
-    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values)
+    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values)
 
 
 def test_dpm_gufunc(dset):

@@ -20,6 +20,36 @@ D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
 
+def angle(dir1, dir2):
+    """Relative angle between two directions.
+
+    Args:
+        - dir1 (array): First direction (degree).
+        - dir2 (array): Second direction (degree).
+
+    Returns:
+        - angle (array): Angle difference between dir1 and dir2 (degree).
+
+    """
+    dif = np.absolute(dir1 % 360 - dir2 % 360)
+    return np.minimum(dif, 360 - dif)
+
+
+def waveage(dset, wspd, wdir, dpt, agefac):
+    """Wave age criterion for partitioning wind-sea.
+
+    Args:
+        - wspd (xr.DataArray): Wind speed.
+        - wdir (xr.DataArray): Wind direction.
+        - dpt (xr.DataArray): Water depth.
+        - agefac (float): Age factor.
+
+    """
+    wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
+    wave_celerity = celerity(dset.freq, dpt)
+    return wave_celerity <= wind_speed_component
+
+
 def wavelen(freq, depth=None):
     """Wavelength L.
 
@@ -280,6 +310,8 @@ def to_coords(array, name):
     coords = xr.DataArray(array, coords={name: array}, dims=(name,))
     set_spec_attributes(coords)
     return coords
+
+
 def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
     """Regrid spectra onto new spectral basis.
 
@@ -301,6 +333,10 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
 
     """
     dsout = dset.copy()
+    if isinstance(freq, (list, tuple)):
+        freq = np.array(freq)
+    if isinstance(dir, (list, tuple)):
+        dir = np.array(dir)
 
     if dir is not None:
         dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
@@ -329,7 +365,6 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         dsout = dsout.interp(dir=dir, assume_sorted=True)
 
     if freq is not None:
-
         # If needed, add a new frequency at f=0 with zero energy
         if freq.min() < dsout.freq.min():
             fzero = 0 * dsout.isel(freq=0)
@@ -345,3 +380,79 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
 
     return dsout
 
+
+def smooth_spec(dset, freq_window=3, dir_window=3):
+    """Smooth spectra with a running average.
+
+    Args:
+        - dset (Dataset, DataArray): Spectra to smooth.
+        - freq_window (int): Rolling window size along `freq` dim.
+        - dir_window (int): Rolling window size along `dir` dim.
+
+    Returns:
+        - efth (DataArray): Smoothed spectra.
+
+    Note:
+        - The window size should be an odd value to ensure symmetry.
+
+    """
+    for window in [freq_window, dir_window]:
+        if (window % 2) == 0:
+            raise ValueError(
+                f"Window size must be an odd value to ensure symmetry, got {window}"
+            )
+
+    dsout = dset.sortby(attrs.DIRNAME)
+
+    # Avoid problems when extending dirs with wrong data type
+    dsout[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
+
+    # Extend circular directions to take care of edge effects
+    dirs = dsout[attrs.DIRNAME].values
+    dd = list(set(np.diff(dirs)))
+    if len(dd) == 1:
+        dd = float(dd[0])
+        is_circular = (abs(dirs.max() - dirs.min() + dd - 360)) < (0.1 * dd)
+    else:
+        is_circular = False
+    if is_circular:
+        # Extend directions on both sides
+        left = dsout.isel(**{attrs.DIRNAME: slice(-window, None)})
+        left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
+        right = dsout.isel(**{attrs.DIRNAME: slice(0, window)})
+        right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
+        dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
+
+    # Smooth
+    dim = {attrs.FREQNAME: freq_window, attrs.DIRNAME: dir_window}
+    dsout = dsout.rolling(dim=dim, center=True).mean()
+
+    # Clip to original shape
+    if not dsout[attrs.DIRNAME].equals(dset[attrs.DIRNAME]):
+        dsout = dsout.sel(**{attrs.DIRNAME: dset[attrs.DIRNAME]})
+        dsout = dsout.chunk(**{attrs.DIRNAME: -1})
+
+    # Fill missing values at boundaries using original spectra
+    dsout = xr.where(dsout.notnull(), dsout, dset)
+
+    return dsout.assign_coords(dset.coords)
+
+
+def is_overlap(rect1, rect2):
+    """Check if rectangles overlap.
+
+    Args:
+        - rect1 (list): Bounding box of the 1st rectangle [l1, b1, r1, t1].
+        - rect2 (list): Bounding box of the 2nd rectangle [l2, b2, r2, t2].
+
+    Returns:
+        - True if the two rectangles overlap, False otherwise.
+
+    """
+    l1, b1, r1, t1 = rect1
+    l2, b2, r2, t2 = rect2
+    if (r1 <= l2) or (r2 <= l1):
+        return False
+    if (t1 <= b2) or (t2 <= b1):
+        return False
+    return True
