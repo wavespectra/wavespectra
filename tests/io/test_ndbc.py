@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import datetime
 import shutil
@@ -6,12 +5,15 @@ import pytest
 import pandas as pd
 from tempfile import mkdtemp
 
-from wavespectra import read_ndbc_ascii
+from wavespectra import read_ndbc, read_ndbc_ascii
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files/ndbc"
 
 
+def test_ndbc_netcdf():
+    dset = read_ndbc("https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc")
+    assert hasattr(dset, "spec")
 
 
 class TestNDBCASCII(object):
