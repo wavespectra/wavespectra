@@ -11,7 +11,6 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import uv_to_spddir, R2D
 from wavespectra.input import open_netcdf_or_zarr, to_keep
 
-R2D = 180 / np.pi
 
 MAPPING = {
     "time": attrs.TIMENAME,
@@ -24,31 +23,24 @@ MAPPING = {
 }
 
 
-def read_ndbc(url, mapping=MAPPING, chunks={}):
+def read_ndbc(url, chunks={}):
     """Read Spectra from NDBC netCDF format.
 
     Args:
         - url (str): Thredds URL or local path of file to read.
         - mapping (dict): Coordinates mapping from original dataset to wavespectra.
         - chunks (dict): Chunk sizes for dimensions in dataset. By default
-          dataset is loaded using single chunk for all dimensions (see
-          xr.open_mfdataset documentation).
+          dataset is loaded using single chunk for all dimensions.
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from ww3 file.
+        - dset (SpecDataset): spectra dataset object read from NDBC file.
 
     Note:
         - If file is large to fit in memory, consider specifying chunks for
           'time' or other non-spectral dims.
 
     """
-    dset = xr.open_dataset(url)
-    # dset = open_netcdf_or_zarr(
-    #     filename_or_fileglob=filename_or_fileglob,
-    #     file_format=file_format,
-    #     mapping=mapping,
-    #     chunks=chunks,
-    # )
+    dset = xr.open_dataset(url).chunk(chunks)
     return from_ndbc(dset)
 
 
@@ -56,7 +48,7 @@ def from_ndbc(dset):
     """Format NDBC netcdf dataset to implement the wavespectra accessor.
 
     Args:
-        dset (xr.Dataset): Dataset created from a SWAN netcdf file.
+        dset (xr.Dataset): Dataset created from a NDBC netcdf file.
 
     Returns:
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
