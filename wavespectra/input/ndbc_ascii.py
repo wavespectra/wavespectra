@@ -145,11 +145,8 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
             specdens,
             df_swdir.values.reshape(spshape),
             df_swdir2.values.reshape(spshape),
-            0.01
-            * df_swr1.values.reshape(
-                spshape
-            ),  # these values are stored with a factor of 100
-            0.01 * df_swr2.values.reshape(spshape),
+            df_swr1.values.reshape(spshape),
+            df_swr2.values.reshape(spshape),
             dirs,
         )
     coords = OrderedDict(
