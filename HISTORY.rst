@@ -12,13 +12,28 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.13.0 (2023-01-09)
+___________________
+
+New Features
+------------
+* New reader `read_ndbc` for NDBC netcdf datasets (`PR80 <https://github.com/wavespectra/wavespectra/pull/80>`_).
+
+Bug Fixes
+---------
+* Ensure directions are continuous when reading from Funwave file with split directions.
+
+Deprecation
+-----------
+* Replace previous NDBC ASCII reader `read_ndbc` by `read_ndbc_ascii`.
+
 
 3.12.1 (2022-10-27)
 ___________________
 
 Internal Changes
 -----------------
-* Fix numpy pre-install requirement by `cmichelenstrofer`_  (`PR75 <https://github.com/wavespectra/wavespectra/pull/75>`_)
+* Fix numpy pre-install requirement by `cmichelenstrofer`_  (`PR75 <https://github.com/wavespectra/wavespectra/pull/75>`_).
 
 .. _`cmichelenstrofer`: https://github.com/cmichelenstrofer
 
