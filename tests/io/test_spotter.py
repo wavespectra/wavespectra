@@ -1,4 +1,5 @@
 import os
+import glob
 import shutil
 import pytest
 from tempfile import mkdtemp
@@ -10,14 +11,16 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
-class TestSpotter:
-    """Test parameters spotter reader."""
+class TestSpotterJson:
+    """Test parameters Spotter JSON reader."""
 
     @classmethod
     def setup_class(self):
         """Setup class."""
-        self.spot = Spotter(os.path.join(FILES_DIR, "spotter_20180214.json"))
-        self.dset = self.spot.run()
+        infile = os.path.join(FILES_DIR, "spotter_20180214.json")
+        self.spot = Spotter(infile)
+        self.spot.run()
+        self.dset = read_spotter(infile)
 
     @pytest.mark.parametrize(
         "wavespectra_name, spotter_name, kwargs",
@@ -32,3 +35,28 @@ class TestSpotter:
         wavespectra = getattr(self.dset.spec, wavespectra_name)(**kwargs).values
         spotter = getattr(self.spot, spotter_name)
         assert wavespectra == pytest.approx(spotter, rel=1e-1)
+
+
+@pytest.fixture(
+    scope="module",
+    params=[
+        os.path.join(FILES_DIR, "spotter_20210929.csv"),
+        glob.glob(os.path.join(FILES_DIR, "spotter*.csv"))[0],
+    ],
+)
+def dset(request):
+    return read_spotter(request.param)
+
+
+@pytest.mark.parametrize(
+    "wavespectra_name, spotter_name, kwargs",
+    [
+        ("hs", "Hm0", {}),
+        ("tp", "Tp", {"smooth": False}),
+        ("tm01", "Tm", {}),
+    ],
+)
+def test_read_spotter_csv(dset, wavespectra_name, spotter_name, kwargs):
+    wavespectra = getattr(dset.spec, wavespectra_name)(**kwargs).values
+    spotter = getattr(dset, spotter_name)
+    assert wavespectra == pytest.approx(spotter, rel=1e-1)
