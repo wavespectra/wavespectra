@@ -28,10 +28,10 @@ These output functions are currently available as methods of :py:class:`~wavespe
     :nosignatures:
     :toctree: generated/
 
-    SpecDataset.to_netcdf
-    SpecDataset.to_ww3
-    SpecDataset.to_swan
-    SpecDataset.to_octopus
-    SpecDataset.to_json
     SpecDataset.to_funwave
+    SpecDataset.to_json
+    SpecDataset.to_netcdf
+    SpecDataset.to_octopus
     SpecDataset.to_orcaflex
+    SpecDataset.to_swan
+    SpecDataset.to_ww3

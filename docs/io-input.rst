@@ -63,19 +63,20 @@ These input functions are currently available from the main module level:
     :nosignatures:
     :toctree: generated/
 
-    read_ww3
-    read_ncswan
-    read_wwm
-    read_netcdf
+    read_dataset
     read_era5
+    read_funwave
+    read_json
+    read_ncswan
+    read_netcdf
+    read_ndbc
+    read_ndbc_ascii
+    read_octopus
+    read_spotter
     read_swan
     read_triaxys
-    read_ndbc
-    read_spotter
-    read_octopus
-    read_dataset
-    read_json
-    read_funwave
+    read_wwm
+    read_ww3
 
 
 These functions are not accessible from the main module level and need to be

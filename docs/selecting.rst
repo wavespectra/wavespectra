@@ -16,6 +16,7 @@ Nearest neighbour
 Select from nearest sites.
 
 .. ipython:: python
+    :okwarning:
 
     from wavespectra import read_ww3
     dset = read_ww3("_static/ww3file.nc")
@@ -32,6 +33,7 @@ Inverse distance weighting
 Interpolate at exact locations via inverse distance weighting algorithm.
 
 .. ipython:: python
+    :okwarning:
 
     ds = dset.spec.sel(
         lons=[92.01, 92.05, 92.09],
@@ -45,6 +47,7 @@ Bounding box
 Select all sites withing bounding box.
 
 .. ipython:: python
+    :okwarning:
 
     ds = dset.spec.sel(
         lons=[91, 93],
@@ -64,6 +67,7 @@ Select all sites withing bounding box.
     `chunks` options, and using them as arguments in ``sel``, e.g.
 
 .. ipython:: python
+    :okwarning:
 
     coords = read_ww3("_static/ww3file.nc")[["lon", "lat"]]
     dset = read_ww3("_static/ww3file.nc", chunks={"site": 1})
