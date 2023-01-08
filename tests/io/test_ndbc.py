@@ -11,9 +11,22 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = Path(__file__).parent.parent / "sample_files/ndbc"
 
 
-def test_ndbc_netcdf():
-    dset = read_ndbc("https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc")
-    assert hasattr(dset, "spec")
+def test_ndbc_netcdf_2d():
+    dd = 5
+    dset = read_ndbc(
+        url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
+        directional=True,
+        dd=dd,
+    )
+    assert dset.spec.dd == dd
+
+
+def test_ndbc_netcdf_1d():
+    dset = read_ndbc(
+        url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
+        directional=False,
+    )
+    assert dset.spec.dir is None
 
 
 class TestNDBCASCII(object):
