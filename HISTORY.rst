@@ -17,15 +17,25 @@ ___________________
 
 New Features
 ------------
+* Support for CSV Spotter files in `read_spotter`_ by by `ryancoe`_  (`PR77 <https://github.com/wavespectra/wavespectra/pull/77>`_).
 * New reader `read_ndbc` for NDBC netcdf datasets (`PR80 <https://github.com/wavespectra/wavespectra/pull/80>`_).
 
 Bug Fixes
 ---------
+* Fix bug in 2D spectra construction in `read_ndbc_ascii`_ due to wrong scaling (`GH70 <https://github.com/wavespectra/wavespectra/issues/70>`_).
 * Ensure directions are continuous when reading from Funwave file with split directions.
+
+Internal Changes
+----------------
+* New github action to publish package on new releases (currently publishing to the test.pypi index).
 
 Deprecation
 -----------
 * Replace previous NDBC ASCII reader `read_ndbc` by `read_ndbc_ascii`.
+
+.. _`ryancoe`: https://github.com/ryancoe
+.. _`read_spotter`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/spotter.py
+.. _`read_ndbc_ascii`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/ndbc_ascii.py
 
 
 3.12.1 (2022-10-27)
@@ -33,7 +43,7 @@ ___________________
 
 Internal Changes
 -----------------
-* Fix numpy pre-install requirement by `cmichelenstrofer`_  (`PR75 <https://github.com/wavespectra/wavespectra/pull/75>`_).
+* Fix numpy pre-install requirement by `cmichelenstrofer`_ (`PR75 <https://github.com/wavespectra/wavespectra/pull/75>`_).
 
 .. _`cmichelenstrofer`: https://github.com/cmichelenstrofer
 
