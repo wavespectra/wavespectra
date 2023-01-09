@@ -27,7 +27,7 @@ Bug Fixes
 
 Internal Changes
 ----------------
-* New github action to publish package on new releases (currently publishing to the test.pypi index).
+* New github action to test and publish package on new releases.
 
 Deprecation
 -----------
