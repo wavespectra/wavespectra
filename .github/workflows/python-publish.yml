@@ -3,12 +3,6 @@ name: Upload Python Package
 on:
   release:
     types: [created]
-    # types: [published]
-  push:
-    paths:
-      - .github/**
-    branches:
-      - gha
 
 permissions:
   contents: read
@@ -37,6 +31,5 @@ jobs:
       name: Publish package
       uses: pypa/gh-action-pypi-publish@v1.6.4
       with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        password: ${{ secrets.PYPI_API_TOKEN }}
         verbose: true
-        repository_url: https://test.pypi.org/manage/projects/
