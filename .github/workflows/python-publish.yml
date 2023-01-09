@@ -18,12 +18,17 @@ jobs:
       name: Set up Python
       uses: actions/setup-python@v3
       with:
-        python-version: '3.x'
+        python-version: '3.10'
     -
       name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy
+        pip install numpy pytest
+        pip install -r requirements/extra.txt
+        pip install -e .
+    -
+      name: Test wavespectra
+      run: py.test -s -v tests
     -
       name: Build package
       run: python setup.py sdist
