@@ -3,6 +3,10 @@ version: 2
 formats:
   - pdf
 
+python:
+  install:
+    - requirements: requirements/requirements_doc.txt
+
 build:
   os: ubuntu-22.04
   tools:
