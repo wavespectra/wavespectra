@@ -13,3 +13,6 @@ build:
     python: "3.10"
   apt_packages:
     - gfortran
+
+sphinx:
+  fail_on_warning: true
