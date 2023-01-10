@@ -5,6 +5,10 @@ formats:
 
 python:
   install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - extra
     - requirements: requirements/requirements_doc.txt
 
 build:
