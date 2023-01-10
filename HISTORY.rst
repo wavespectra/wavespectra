@@ -12,6 +12,20 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.X.Y (yyyy-mm-dd)
+___________________
+
+New Features
+------------
+
+Bug Fixes
+---------
+
+Internal Changes
+----------------
+* Add readthedocs config
+
+
 3.13.0 (2023-01-09)
 ___________________
 
