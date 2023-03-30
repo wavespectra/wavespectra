@@ -17,6 +17,7 @@ ___________________
 
 New Features
 ------------
+* Support for writing funwave spectra for the new wavemaker format.
 
 Bug Fixes
 ---------
