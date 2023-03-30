@@ -15,12 +15,14 @@ def to_funwave(
     self,
     filename,
     clip=True,
+    new=False,
 ):
     """Write spectra in Funwave format.
 
     Args:
         - filename (str): Name for output Funwave file.
         - clip (bool): Clip directions outside [-90, 90] range in cartesian convention.
+        - new (bool): True for the new funwave wavemaker 2D data format, False for old.
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
@@ -30,9 +32,16 @@ def to_funwave(
         - Both 2D E(f,d) and 1d E(f) spectra are supported.
         - If the SpecArray has more than one spectrum, multiple files are created in a
           zip archive defined by replacing the extension of `filename` by ".zip".
+        - New format description: https://fengyanshi.github.io/build/html/wavemaker_coherence.html?highlight=wk_new_irr#wk-new-data2d
 
     """
     darr = self.efth.copy(deep=True)
+
+    # Define format
+    if new:
+        funwave_fmt = funwave_spectrum_new
+    else:
+        funwave_fmt = funwave_spectrum
 
     # Convert directions to Cartesian, going-to convention
     if attrs.DIRNAME in self.efth.dims:
@@ -49,7 +58,7 @@ def to_funwave(
 
     if not stack_dims or dimsizes == {1}:
         # Single spectrum in object, write directly to txt file
-        funwave_spectrum(darr, filename)
+        funwave_fmt(darr, filename)
 
     else:
         # Multiple spectra in object, write each txt file in a zip archive
@@ -70,7 +79,7 @@ def to_funwave(
                 # Write spectrum to zip archive
                 fname = os.path.basename(fpath) + "-" + prefix + fext
                 logger.debug(f"Write {fname} to {zipname}")
-                spectrum = funwave_spectrum(darr, None).getvalue()
+                spectrum = funwave_fmt(darr, None).getvalue()
                 zstream.writestr(fname, spectrum)
 
 
@@ -112,6 +121,54 @@ def funwave_spectrum(darr, filename):
     else:
         np.savetxt(s, amp, fmt="%12.8f", delimiter="")
         np.savetxt(s, phi, fmt="%12.3f", delimiter="")
+
+    # Save to file
+    if filename is not None:
+        with open(filename, "w") as fid:
+            fid.write(s.getvalue())
+
+    return s
+
+
+def funwave_spectrum_new(darr, filename):
+    """New Funwave spectrum memory buffer.
+
+    Args:
+        darr (SpecArray): Spectrum to write (only `freq`, `dir` dims are allowed).
+        filename (str): Name of file to save spectrum to, choose `None` if you don't
+            want to save it to file but only return the memory buffer.
+
+    Returns:
+        StringIO memory buffer with spectrum object.
+
+    """
+    # Ensure direction dim exists for 1D spectrum and has value 0
+    if attrs.DIRNAME not in darr.dims:
+        darr = darr.expand_dims({attrs.DIRNAME: [0]}, axis=-1)
+    elif darr[attrs.DIRNAME].size == 1:
+        darr = darr.assign_coords({attrs.DIRNAME: [0]})
+
+    # Stacking
+    amp = darr.stack(fd=["freq", "dir"])
+    nrow = amp.size
+
+    # Amplitudes and phases
+    amp = np.sqrt(amp * amp.spec.dfarr * amp.spec.dd * 8) / 2
+    phi = np.random.uniform(0, 1, (nrow)) * 360.0
+    dirs = amp.dir.values
+    freqs = amp.freq.values
+
+    # Peak wave period
+    tp = float(darr.spec.tp())
+
+    # Create spectrum in memory buffer
+    s = StringIO()
+    s.write(f"{nrow:>10d}   - NumFreq\n")
+    s.write(f"{tp:>10.3f}   - PeakPeriod\n")
+    s.write(nrow * "%10.5f   - Freq\n" % tuple(amp[attrs.FREQNAME].values))
+    s.write(nrow * "%10.3f   - Dire\n" % tuple(amp[attrs.DIRNAME].values))
+    s.write(nrow * "%10.8f   - Amp\n" % tuple(amp.values))
+    s.write(nrow * "%10.3f   - Phase\n" % tuple(phi))
 
     # Save to file
     if filename is not None:

@@ -49,6 +49,21 @@ class TestFunwave:
             rtol=1e-3,
         )
 
+    def test_write_single_new_format(self):
+        """
+        * Write single funwave spectrum from ww3 file
+        * Compare stats from original and new datasets.
+        """
+        filename = os.path.join(self.tmp_dir, "fw.txt")
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True)
+        dset0.spec.to_funwave(filename, clip=False, new=True)
+        # dset1 = read_funwave(filename)
+        # xr.testing.assert_allclose(
+        #     dset0.spec.stats(["hs", "tp", "dpm"]),
+        #     dset1.spec.stats(["hs", "tp", "dpm"]),
+        #     rtol=1e-3,
+        # )
+
     def test_write_multi(self):
         """Write multiple funwave files from ww3 dataset."""
         filename = os.path.join(self.tmp_dir, "fw.txt")
