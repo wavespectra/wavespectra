@@ -148,15 +148,11 @@ def funwave_spectrum_new(darr, filename):
     elif darr[attrs.DIRNAME].size == 1:
         darr = darr.assign_coords({attrs.DIRNAME: [0]})
 
-    # Stacking
-    amp = darr.stack(fd=["freq", "dir"])
+    # Calculate and stack amplitudes and phases
+    amp = np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2
+    amp = amp.stack(fd=["freq", "dir"])
     nrow = amp.size
-
-    # Amplitudes and phases
-    amp = np.sqrt(amp * amp.spec.dfarr * amp.spec.dd * 8) / 2
     phi = np.random.uniform(0, 1, (nrow)) * 360.0
-    dirs = amp.dir.values
-    freqs = amp.freq.values
 
     # Peak wave period
     tp = float(darr.spec.tp())
