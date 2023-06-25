@@ -39,11 +39,16 @@ def read_funwave(filename):
     dir = np.array([float(data.pop(0).split()[0]) for count in range(nd)])
     dir = (270 - dir) % 360
 
+    # Turn zero dir into 360 for continuity
+    i0 = np.where(dir==0)[0]
+    if i0.size > 0:
+        dir[i0] = 360.0
+
     # Amplitude spectrum
     if nd == 1:
         amp = np.genfromtxt(data)
         coords = {attrs.FREQNAME: freq}
-        dims = attrs.FREQNAME
+        dims = (attrs.FREQNAME,)
     else:
         amp = np.genfromtxt(data[:nd])
         coords = {attrs.FREQNAME: freq, attrs.DIRNAME: dir}

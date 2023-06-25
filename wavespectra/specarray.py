@@ -80,7 +80,10 @@ class SpecArray(object):
     @property
     def df(self):
         """Frequency resolution DataArray."""
-        return xr.DataArray(np.gradient(self.freq), coords=self.freq.coords)
+        if self.freq.size > 1:
+            return xr.DataArray(np.gradient(self.freq), coords=self.freq.coords)
+        else:
+            return xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
 
     @property
     def dd(self):
@@ -201,8 +204,7 @@ class SpecArray(object):
         else:
             dsout = self._obj.copy(deep=True)
         set_spec_attributes(dsout)
-        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
-        return dsout.rename(attrs.SPEC1DNAME)
+        return dsout
 
     def split(self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True):
         """Split spectra over freq and/or dir dims.
