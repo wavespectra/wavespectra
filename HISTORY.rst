@@ -39,7 +39,8 @@ New Features
 * Directional distribution module with the following options:
   * Cartwright (1986) cosine-square distribution.
   * Bunney (2014) skewed distribution for turning wind sea.
-* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+* Method for non-linear gaussian fit in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Gaussian frequency width method `gw` in SpecArray.
 * Jonswap peak enhancement factor method `gamma` in SpecArray.
 * Jonswap fetch scaling coefficient method `alpha` in SpecArray.
