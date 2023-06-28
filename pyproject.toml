@@ -1,0 +1,67 @@
+[build-system]
+requires = ["numpy", "setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wavespectra"
+description = "Library for ocean wave spectra"
+readme = "README.rst"
+license = { file = "LICENSE.txt" }
+keywords = ["wave", "spectra", "ocean", "xarray", "statistics", "analysis"]
+authors = [
+  { name = "Wavespectra Developers", email="r.guedes@oceanum.science" },
+]
+maintainers = [
+  {name = "Rafael Guedes", email = "r.guedes@oceanum.science"},
+  {name = "Tom Durrant", email = "t.durrant@oceanum.science"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "click",
+    "cmocean",
+    "dask",
+    "matplotlib",
+    "numba",
+    "numpy",
+    "pandas",
+    "python-dateutil",
+    "pyyaml",
+    "sortedcontainers",
+    "scipy",
+    "toolz",
+    "xarray",
+]
+dynamic = ["version"]
+
+[project.urls]
+"Documentation" = "https://wavespectra.readthedocs.io/en/latest/"
+"Source" = "https://github.com/wavespectra/wavespectra"
+"Tracker" = "https://github.com/wavespectra/wavespectra/issues"
+"Changelog" = "https://github.com/wavespectra/wavespectra/blob/master/HISTORY.rst"
+
+[project.scripts]
+wavespectra = "wavespectra.cli:main"
+
+[project.optional-dependencies]
+extra = ["fsspec", "gcsfs", "netCDF4<1.6.0", "zarr"]
+
+[tool.setuptools.package-data]
+"wavespectra.core" = ["*.yml"]
+"wavespectra.output" = ["*.yml"]
+
+[tool.setuptools.dynamic]
+version = {attr = "wavespectra.__version__"}
