@@ -13,12 +13,7 @@ except ImportError:
     warnings.warn("Cannot import accessors at the main module level")
 
 
-__version__ = "3.13.0"
-__author__ = "Wavespectra Developers"
-__contact__ = "r.guedes@oceanum.science"
-__url__ = "http://github.com/wavespectra/wavespectra"
-__description__ = "Library for ocean wave spectra"
-__keywords__ = "wave spectra ocean xarray statistics analysis"
+__version__ = "3.14.0"
 
 
 def _import_read_functions(pkgname="input"):
