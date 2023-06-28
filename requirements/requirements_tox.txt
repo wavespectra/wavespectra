@@ -1,3 +1,0 @@
-click
-netcdf4
-numpy
