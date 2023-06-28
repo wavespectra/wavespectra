@@ -62,6 +62,7 @@ extra = ["fsspec", "gcsfs", "netCDF4<1.6.0", "zarr"]
 [tool.setuptools.package-data]
 "wavespectra.core" = ["*.yml"]
 "wavespectra.output" = ["*.yml"]
+"wavespectra.specpart" = ["specpart.f90", "specpart.pyf"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
