@@ -12,17 +12,12 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.X.Y (yyyy-mm-dd)
+3.14.0 (2023-06-28)
 ___________________
-
-New Features
-------------
-
-Bug Fixes
----------
 
 Internal Changes
 ----------------
+* Redefine packaging via pyproject.toml to conform to PEP517/518.
 * Add readthedocs config
 
 
