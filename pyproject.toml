@@ -33,7 +33,7 @@ requires-python = ">=3.8"
 dependencies = [
     "click",
     "cmocean",
-    "dask[complete]",
+    "dask",
     "matplotlib",
     "numba",
     "numpy",
