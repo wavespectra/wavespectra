@@ -9,7 +9,6 @@ python:
       path: .
       extra_requirements:
         - extra
-    - requirements: requirements/requirements_doc.txt
 
 build:
   os: ubuntu-22.04
