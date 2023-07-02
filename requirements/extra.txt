@@ -1,4 +1,0 @@
-fsspec
-gcsfs
-netCDF4<1.6.0
-zarr

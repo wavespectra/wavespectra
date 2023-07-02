@@ -12,17 +12,18 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-3.X.Y (yyyy-mm-dd)
+3.14.0 (2023-06-28)
 ___________________
-
-New Features
-------------
-
-Bug Fixes
----------
 
 Internal Changes
 ----------------
+* Redefine packaging via pyproject.toml to conform to PEP517/518.
+* All packaging metadata removed from setup.py and moved to pyproject.toml. The
+  setup.py file is now only used to build the Fortran module.
+* Removed the MANIFEST.in file, package data now handled in pyproject.toml.
+* Removed the requirements folder, requirements now handled in pyproject.toml.
+* Removed some packaging attributes from wavespectra.__init__.py, now handled in
+  pyproject.toml.
 * Add readthedocs config
 
 
