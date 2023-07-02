@@ -67,7 +67,7 @@ extra = [
 docs = [
     "autodoc",
     "ipython",
-    "sphinx",
+    "sphinx<7",
     "sphinx-gallery",
     "sphinx-autobuild",
     "sphinx_rtd_theme",
