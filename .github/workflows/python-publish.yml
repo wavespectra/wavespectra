@@ -26,7 +26,9 @@ jobs:
         pip install . 'wavespectra[extra]'
     -
       name: Test wavespectra
-      run: py.test -s -v tests
+      run: |
+        pip install pytest
+        py.test -s -v tests
     -
       name: Build package
       run: |
