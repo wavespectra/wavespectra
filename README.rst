@@ -4,8 +4,9 @@ Python library for ocean wave spectra.
 
 .. image:: https://zenodo.org/badge/205463939.svg
    :target: https://zenodo.org/badge/latestdoi/205463939
-.. image:: https://travis-ci.org/wavespectra/wavespectra.svg?branch=master
-    :target: https://travis-ci.org/wavespectra/wavespectra
+.. image:: https://img.shields.io/github/actions/workflow/status/wavespectra/wavespectra/python-publish.yml
+    :target: https://github.com/wavespectra/wavespectra/actions
+    :alt: GitHub Workflow Status (with event)
 .. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg
     :target: https://coveralls.io/github/wavespectra/wavespectra
 .. image:: https://readthedocs.org/projects/wavespectra/badge/?version=latest
