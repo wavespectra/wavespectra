@@ -67,11 +67,11 @@ extra = [
 docs = [
     "autodoc",
     "ipython",
-    "sphinx<7",
-    "sphinx-gallery",
+    "pydata_sphinx_theme",
+    "sphinx",
     "sphinx-autobuild",
-    "sphinx_rtd_theme",
     "sphinx-autodoc-typehints",
+    "sphinx-gallery",
 ]
 
 [tool.setuptools.package-data]

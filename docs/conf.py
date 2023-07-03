@@ -109,36 +109,38 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "pydata_sphinx_theme"
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {
-# "style_nav_header_background": "#d3d3d3",
-# "logo_only": True,
-# }
+html_theme_options = {
+    "collapse_navigation": True,
+    "show_nav_level": 4,
+    "navbar_align": "content",
+    "navbar_center": ["navbar-nav"],
+    # "navbar_end": ["navbar-icon-links.html"],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/wavespectra/wavespectra",
+            "icon": "fab fa-github",
+            "type": "fontawesome",
+        }
+   ]
+}
+
+html_sidebars = {
+  "**": ["globaltoc.html"],
+#   "**": ["sidebar-nav-bs.html", "globaltoc.html"],
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-# Custom sidebar templates, must be a dictionary that maps document names
-# to template names.
-#
-# This is required for the alabaster theme
-# refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-# html_sidebars = {
-#     "**": [
-#         "relations.html",  # needs 'show_related': True theme option to display
-#         "searchbox.html",
-#     ]
-# }
 
 # The name of an image file to place at the top of the sidebar.
-# html_logo = "_static/SpectraPlot3.png"
+html_logo = "_static/wavespectra_logo.png"
 
 # The name of an image file to use as favicon
 html_favicon = "_static/wavespectra_logo.png"
