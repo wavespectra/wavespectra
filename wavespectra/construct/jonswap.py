@@ -1,4 +1,6 @@
 import numpy as np
+from deprecated.sphinx import deprecated
+
 from wavespectra.construct.helpers import (
     spread,
     check_coordinates,
@@ -7,6 +9,10 @@ from wavespectra.construct.helpers import (
 )
 
 
+@deprecated(
+    reason="All functions and classes in `wavespectra.construct` will be replaced in **4.0.0** by a new spectral reconstruction api.",
+    version="3.14.1"
+)
 def jonswap(
     tp,
     dp,
