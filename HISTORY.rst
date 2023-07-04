@@ -60,6 +60,12 @@ Internal Changes
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
 
 
+Deprecation
+-----------
+* The `SpecArray.partition()` method now became a new namespace to access the different
+  partitioning options. The legacy `partition` method is now equivalent to `spec.partition.ptm1()`.
+
+
 3.12.0 (2022-08-19)
 ___________________
 
@@ -75,11 +81,6 @@ Internal Changes
 ----------------
 * Import Fortran partition code inside function so the library can still be imported if the module does not build.
 * Remove Hypothesis from requirements.
-
-Deprecation
------------
-* The `SpecArray.partition` method now became a new namespace to access the different partitioning options.
-  The legacy `partition` method is now equivalent to `spec.partition.ptm1`.
 
 
 3.11.0 (2022-05-04)
