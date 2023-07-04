@@ -34,6 +34,7 @@ dependencies = [
     "click",
     "cmocean",
     "dask",
+    "deprecated",
     "matplotlib",
     "numba",
     "numpy",
