@@ -22,9 +22,9 @@ Internal Changes
   setup.py file is now only used to build the Fortran module.
 * Removed the MANIFEST.in file, package data now handled in pyproject.toml.
 * Removed the requirements folder, requirements now handled in pyproject.toml.
-* Removed some packaging attributes from wavespectra.__init__.py, now handled in
+* Removed some packaging attributes from `wavespectra.__init__.py`, now handled in
   pyproject.toml.
-* New docs theme: sphinx_rtd_theme by pydata_sphinx_theme, fixes issue with rtd not working with sphinx>=7.0.
+* Replace docs the RTD by the PYDATA docs theme, this fixes issue with rtd not working with sphinx>=7.0.
 * Add readthedocs config.
 
 
@@ -615,7 +615,7 @@ Internal Changes
 3.0 (2018-03-05)
 __________________
 
-**This major release marks the migration from the predecessor** `pyspectra` **library,
+**This major release marks the migration from the predecessor** `pyspectra`** library,
 as well as the open-sourcing of wavespectra and first PyPI release.**
 
 New Features
