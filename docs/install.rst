@@ -62,13 +62,14 @@ Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OL https://github.com/wavespectra/wavespectra/tarball/master
+    $ curl -o wavespectra.tar.gz -L https://github.com/wavespectra/wavespectra/tarball/master
+    $ tar xzf wavespectra.tar.gz
 
-Once you have a copy of the source, you can install it with:
+Once you have a copy of the source, you can install it from the base project directory with:
 
 .. code-block:: console
 
-    $ python setup.py install
+    $ pip install .
 
 or alternatively in `development mode`_ with:
 
@@ -76,14 +77,13 @@ or alternatively in `development mode`_ with:
 
    $ pip install -e .
 
-For the full installation also install the extra requirements:
+Again, include the [extra] tag for the full install:
 
 .. code-block:: console
 
-   $ pip install -r requirements/extra.txt
+   $ pip install ./[extra]
 
-Again, please make sure a Fortran compiler are available before running any of the
-commands above to install from source.
+please make sure a Fortran compiler is available when installing from source.
 
 .. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
 .. _pip: https://pip.pypa.io
