@@ -73,6 +73,7 @@ instance/
 docs/_build/
 docs/auto_gallery
 docs/savefig
+docs/generated
 
 # PyBuilder
 target/
