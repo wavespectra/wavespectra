@@ -16,7 +16,7 @@ python-dateutil
 pyyaml
 sortedcontainers
 scipy
-sphinx
+sphinx<7.0
 sphinx-gallery
 sphinx-autobuild
 sphinx_rtd_theme
