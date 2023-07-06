@@ -70,7 +70,7 @@ def reqs(*f):
 
 def extras_require():
     """Get map of all extra requirements."""
-    return {"extra": reqs("extra.txt")}
+    return {"extra": reqs("extra.txt"), "docs": reqs("requirements_doc.txt")}
 
 
 def read(fname):
