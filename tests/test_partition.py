@@ -376,14 +376,6 @@ class TestParitionAndTrack(BasePTM):
 
     def setup_class(self):
         super().setup_class(self)
-        self.dset = self.dset.isel(site=0)
-        self.pt = Partition(self.dset)
-        self.wspd = self.dset.isel(time=0).wspd.values
-        self.wdir = self.dset.isel(time=0).wdir.values
-        self.dpt = self.dset.isel(time=0).dpt.values
-        self.agefac = 1.7
-        self.wscut = 0.3333
-        self.swells = 3
 
     def test_partition_class(self):
         swells = 2
@@ -394,7 +386,7 @@ class TestParitionAndTrack(BasePTM):
             swells=swells,
         )
         stats = dspart.spec.stats(["fp", "dpm"]).load()
-        part_ids, part_id = track_partitions(stats, wspd=self.dset.wspd)
+        part_ids = track_partitions(stats, wspd=self.dset.wspd)
 
     def test_class(self):
         swells = 2
@@ -405,3 +397,4 @@ class TestParitionAndTrack(BasePTM):
             swells=swells,
         )
         assert 'part_id' in dspart
+        assert 'n_part_id' in dspart

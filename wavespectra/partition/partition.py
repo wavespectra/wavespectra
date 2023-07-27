@@ -658,7 +658,7 @@ class Partition:
         stats = dspart.spec.stats(["fp", "dpm"]).load()
 
         # Track partitions
-        part_ids, n_part_ids =\
+        part_ids =\
             track_partitions(stats,
                              wspd=wspd,
                              ddpm_sea_max=ddpm_sea_max,
@@ -666,22 +666,8 @@ class Partition:
                              dfp_sea_scaling=dfp_sea_scaling,
                              dfp_swell_source_distance=dfp_swell_source_distance)
 
-        # Add partition ids to partition data
-        dspart =\
-            dspart.to_dataset()\
-                  .assign({'part_id': ( ('part', 'it'), part_ids ) })\
-                  .assign_coords({'n_part_id': (('n_part_id', np.arange(n_part_ids)) )})
-
-        # Add metadata
-        dspart.part_id.attrs = {'long_name': 'Partition ID',
-                                'units': '1',
-                                'description': 'ID of tracked partition',
-                                '_FillValue': -999}
-        dspart.n_part_id.attrs = {'long_name': 'Number of partitions',
-                                    'units': '1',
-                                    'description': 'Number of partitions in the dataset'}
-
-        return dspart
+        # Add partition ids to partition data and return
+        return xr.merge([dspart, part_ids])
 
 
 def np_ptm1(
