@@ -5,7 +5,7 @@ import xarray as xr
 
 from wavespectra import read_ww3
 from wavespectra.partition.partition import Partition, np_ptm1, np_ptm2, np_ptm3, np_hp01
-from wavespectra.core.utils import waveage
+from wavespectra.core.utils import waveage, track_partitions
 from wavespectra.core.npstats import hs_numpy
 
 
@@ -370,3 +370,38 @@ class TestBbox(BasePTM):
         bboxes = [dict(fmin=0.2, fmax=0.1, dmin=None, dmax=None)]
         with pytest.raises(ValueError):
             ds = self.pt.bbox(bboxes=bboxes)
+
+
+class TestParitionAndTrack(BasePTM):
+
+    def setup_class(self):
+        super().setup_class(self)
+        self.dset = self.dset.isel(site=0)
+        self.pt = Partition(self.dset)
+        self.wspd = self.dset.isel(time=0).wspd.values
+        self.wdir = self.dset.isel(time=0).wdir.values
+        self.dpt = self.dset.isel(time=0).dpt.values
+        self.agefac = 1.7
+        self.wscut = 0.3333
+        self.swells = 3
+
+    def test_partition_class(self):
+        swells = 2
+        dspart = self.pt.ptm1(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+        )
+        stats = dspart.spec.stats(["fp", "dpm"]).load()
+        part_ids, part_id = track_partitions(stats, wspd=self.dset.wspd)
+
+    def test_class(self):
+        swells = 2
+        dspart = self.pt.partition_and_track(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+        )
+        assert 'part_id' in dspart
