@@ -2,6 +2,7 @@
 from itertools import combinations
 import numpy as np
 import xarray as xr
+from scipy.constants import pi, g
 
 from wavespectra.partition.specpart import specpart
 from wavespectra.core.utils import set_spec_attributes, regrid_spec, smooth_spec, check_same_coordinates, D2R, celerity, is_overlap, waveage
@@ -1081,3 +1082,258 @@ def np_hp01_wseafrac_wseabins(
             swell_partitions.append(nullspec)
 
     return np.array([wsea_partition] + swell_partitions)
+
+
+def dfp_wsea(wspd: xr.DataArray, fp: xr.DataArray, dt: float, scaling: float = 1.0) -> xr.DataArray:
+    """Rate of change of the wind-sea peak wave frequency.
+    Based on fetch-limited relationships, (Ewans & Kibblewhite, 1986).
+
+    Ewans, K.C., and A.C. Kibblewhite (1988).
+    Spectral characteristics of ocean waves undergoing generation in New Zealand waters.
+    9th Australian Fluid Mechanics Conference, Auckland, 8-12 December, 1986.
+
+    Parameters
+    ----------
+    wspd: xr.DataArray
+        Wind speed (m/s)
+    t: float
+        Time duration (s)
+    scaling: float
+        Scaling parameter
+
+    """
+
+    tmp = (15.8*(g/wspd)**0.57)
+
+    t0 = ( fp / tmp ) ** (-1/0.43)
+    return scaling * tmp * (t0+dt)**(-0.43) - fp
+
+
+def dfp_swell(dt: xr.DataArray, distance: xr.DataArray = 1e6) -> xr.DataArray:
+    """Rate of change of the swell peak wave frequency.
+    Based on the swell dispersion relationship derived by Snodgrass et al (1966).
+
+    Snodgrass, F. E., G. W. Groves, K. F. Hasselmann, G. R. Miller, and W. H. Munk (1966).
+    Propagation of Ocean Swell across the Pacific.
+    Philosophical Transactions of the Royal Society of London.
+    Series A, Mathematical and Physical Sciences, Vol. 259, No. 1103 (May 5, 1966), pp. 431-497
+
+    Parameters
+    ----------
+    dt: xr.DataArray
+        Time difference
+    distance: xr.DataArray
+        Distance to the swell source (m)
+
+    """
+    return dt * g / (4 * pi * distance)
+
+
+def partition_distance(curr_stats,
+                       prev_stats,
+                       dfp_sea_max,
+                       dfp_swell_max,
+                       ddpm_sea_max,
+                       ddpm_swell_max,
+                       idt=1):
+    """Calculate the distance between two partitions based
+    on normalized peak frequency and mean peak direction deltas.
+
+    Parameters
+    ----------
+    curr_stats: xr.Dataset
+        Statistics of the current partition
+    prev_stats: xr.Dataset
+        Statistics of the previous partition
+    dfp_sea_max: xr.DataArray
+        Maximum delta fp for sea partitions
+    dfp_swell_max: float
+        Maximum delta fp for swell partitions
+    ddpm_sea_max: float
+        Maximum delta dpm for sea partitions
+    ddpm_swell_max: float
+        Maximum delta dpm for swell partitions
+    idt: int
+        Number of time steps between current and previous partition
+
+    """
+
+    # Caculate angle difference between current and previous partition
+    ddpm = np.abs(((curr_stats.dpm.values-prev_stats.dpm.values)+180)%360-180)
+
+    # Pick angle threshold based on partition type
+    ddpm_max = ddpm_sea_max if prev_stats.part.values == 0 else ddpm_swell_max
+    # If angle threshold is exceeded return 999, else carry on
+    if ddpm > ddpm_max:
+        return 999
+
+    # Calculate peak frequency difference between current and previous partition
+    dfp = curr_stats.fp.values-prev_stats.fp.values
+
+    # If the partition was a sea partition we expect a negative delta
+    # hence we use the swell partition maximum delta as a maximum threshold
+    dfp_max = dfp_swell_max*idt
+    if dfp > dfp_max:
+        return 999
+
+    # Minimum threshold is based on the sea/swell partition maximum delta
+    #  depending on the partition type
+    if prev_stats.part.values == 0: # Sea partition we expect a negative delta
+        dfp_min = dfp_sea_max*idt
+    else: # Swell partition we expect a positive delta
+        dfp_min = -dfp_swell_max*idt
+    if dfp < dfp_min:
+        return 999
+
+    # Return distance between current and previous partition
+    # as a weighted sum of normalized dfp and ddpm
+    return (np.abs(dfp)/max(dfp_max, np.abs(dfp_min))*idt + ddpm/ddpm_max)
+
+
+def match_consecutive_partitions(stats,
+                                 dfp_sea_max,
+                                 dfp_swell_max,
+                                 ddpm_sea_max,
+                                 ddpm_swell_max):
+    """
+    Match partitions of consecutive spectra based on evolution of peak frequency
+    and peak direction.
+
+    Parameters
+    ----------
+    stats: xr.Dataset
+        Statistics of the spectral partitions.
+    dfp_sea_max: float
+        Maximum delta fp for sea partitions.
+    dfp_swell_max: float
+        Maximum delta fp for swell partitions.
+    ddpm_sea_max: float
+        Maximum delta dpm for sea partitions.
+    ddpm_swell_max: float
+        Maximum delta dpm for swell partitions.
+
+    Returns
+    -------
+    matches: np.ndarray
+        Array of matches between partitions of consecutive spectra.
+        Array contains value in nth position contains the partition number in
+        the previous time step that matches the partition number n in the
+        current time step.
+        -999 is for nans and -888 is for partitions that have no match.
+
+    """
+
+    # Initialise matches to -999
+    matches = np.ones_like(stats.part.values, dtype='int16')*-999
+
+    # Those are all the partitions in the previous time step that have energy
+    available =\
+        [ip for ip, tp_is_not_nan in enumerate(~np.isnan(stats.isel(time=0).tp.values)) if tp_is_not_nan]
+
+    # Loop over all partitions in the current time step
+    for ip_curr in range(stats.part.size):
+
+        if ~np.isnan(stats.isel(part=ip_curr, time=1).tp.values):
+
+            # Find all possible matches for the current partition sorted by increasing distance
+            part_matches =\
+                [v[0] for v in sorted([(ip_prev,
+                                        partition_distance(curr_stats=stats.isel(time=1,
+                                                                                 part=ip_curr),
+                                                           prev_stats=stats.isel(time=0,
+                                                                                 part=ip_prev),
+                                                           dfp_sea_max=dfp_sea_max,
+                                                           dfp_swell_max=dfp_swell_max,
+                                                           ddpm_sea_max=ddpm_sea_max,
+                                                           ddpm_swell_max=ddpm_swell_max))
+                                       for ip_prev in available],
+                                      key=lambda x: x[-1])
+                            if v[-1] != 999]
+
+            # If no match found, create new partition to track
+            if len(part_matches) == 0:
+                matches[ip_curr] = -888
+            else: # If match found mark it and remove it from the available list
+                matches[ip_curr] = part_matches[0]
+                available.remove(part_matches[0])
+
+    return matches
+
+
+def track_partitions(stats,
+                     wspd,
+                     ddpm_sea_max=30,
+                     ddpm_swell_max=20):
+    """
+    Track partitions in a series of consecutive spectra based on
+    the evolution of peak frequency and peak direction.
+
+    Parameters
+    ----------
+    stats: xr.Dataset
+        Statistics of the spectral partitions.
+    wspd: xr.DataArray
+        Wind speed (m/s).
+    ddpm_sea_max: float
+        Maximum delta dpm for sea partitions.
+    ddpm_swell_max: float
+        Maximum delta dpm for swell partitions.
+
+    Returns
+    -------
+    part_ids: np.ndarray
+        Array containing the partition ids for each partition and each time step.
+        -999 is for nans.
+    n_parts: int
+        Number of partitions tracked.
+
+    """
+
+    # Assuming that the time step is constant across the dataset
+    # calculate dt in seconds
+    dt = float(stats.time[:2].diff("time") / np.timedelta64(1, 's') )
+
+    # Calculate maximum delta fp for sea partitions
+    # as it is a function of wind speed this is a data array
+    dfp_sea_max = dfp_wsea(wspd=wspd,
+                           fp=stats.isel(part=0).fp,
+                           dt=dt,
+                           scaling=1.)
+
+    # Calculate maximum delta fp for swell partitions
+    # it is a scalar
+    dfp_swell_max = dfp_swell(dt=dt,
+                             distance=1e6)
+
+
+    # Calculate local matches (match partitions between consecutive time steps)
+    # -999 is for nans and -888 is for partitions that have no match
+    part_ids =\
+        np.hstack([np.ones((stats.part.size,1), dtype='int16')*-999]\
+                  +[match_consecutive_partitions(stats.isel(time=slice(it-1, it+1)).copy(),
+                                                 dfp_sea_max.isel(time=it-1).values,
+                                                 dfp_swell_max,
+                                                 ddpm_sea_max,
+                                                 ddpm_swell_max).reshape((-1,1))
+                   for it in range(1, stats.time.size)])
+
+
+    # Turn the local matches into global matches
+    part_id = 0 # Partitions are numbered from 0
+
+    # Number the partitions in the first time step
+    for ip, tp in enumerate(stats.isel(time=0).tp.values):
+        if ~np.isnan(tp):
+            part_ids[ip, 0] = part_id
+            part_id += 1
+
+    # Propagate the partition ids through time
+    for it in range(1, stats.time.size):
+        for ip in range(stats.part.size):
+            if part_ids[ip, it] == -888:
+                part_ids[ip, it] = part_id
+                part_id += 1
+            elif part_ids[ip, it] != -999:
+                part_ids[ip, it] = part_ids[part_ids[ip, it], it-1]
+
+    return part_ids, part_id
