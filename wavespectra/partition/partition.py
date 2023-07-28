@@ -599,7 +599,7 @@ class Partition:
                             ddpm_sea_max=30,
                             ddpm_swell_max=20,
                             dfp_sea_scaling=1,
-                            dfp_swell_source_distance=1):
+                            dfp_swell_source_distance=1e6):
         """Partition spectra using the PTM1 method and track the partitions
         and track the partitions using the evolution of peak frequency and peak direction.
         Partitions are matched with the closest partition in the frequency-direction
