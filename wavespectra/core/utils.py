@@ -767,7 +767,7 @@ def track_partitions(
     """
 
     # Track partitions
-    part_ids, n_part_ids = xr.apply_ufunc(
+    part_ids, npart = xr.apply_ufunc(
         np_track_partitions,
         stats.time,
         stats.fp,
@@ -795,9 +795,8 @@ def track_partitions(
     )
 
     # Finalise output
-    part_ids = part_ids.to_dataset(name="part_id").assign_coords(
-        {"n_part_id": n_part_ids.rename("n_part_id")}
-    )
+    part_ids = part_ids.to_dataset(name="part_id")
+    part_ids["npart"] = npart
 
     # Add metadata
     part_ids.part_id.attrs = {
@@ -806,10 +805,10 @@ def track_partitions(
         "description": "ID of tracked partition",
         "_FillValue": -999,
     }
-    part_ids.n_part_id.attrs = {
+    part_ids.npart.attrs = {
         "long_name": "Number of partitions",
         "units": "1",
-        "description": "Number of partitions tracked for a given site",
+        "description": "Number of partitions tracked for a given non-spectral dim",
     }
 
     return part_ids
