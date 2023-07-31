@@ -13,7 +13,7 @@ from wavespectra.core.utils import (
     celerity,
     is_overlap,
     waveage,
-    track_partitions
+    track_partitions,
 )
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy
@@ -76,6 +76,7 @@ class Partition:
         - WW3 wave model documentation, https://github.com/NOAA-EMC/WW3.
 
     """
+
     def __init__(self, dset):
         if isinstance(dset, xr.DataArray):
             self.dset = dset
@@ -157,23 +158,38 @@ class Partition:
             wscut,
             swells,
             ihmax,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            input_core_dims=[
+                ["freq", "dir"],
+                ["freq", "dir"],
+                ["freq"],
+                ["dir"],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            ],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=["float32"],
-            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": swells + 1}},
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"part": swells + 1},
+            },
         )
 
         # Finalise output
         dsout = self._set_metadata(dsout)
         parts_description = {
-            "part0": "wind sea", "part2-n": "swells in descending order of hs",
+            "part0": "wind sea",
+            "part2-n": "swells in descending order of hs",
         }
         dsout.attrs.update(parts_description)
 
         return dsout.transpose("part", ...)
-
 
     def ptm2(
         self,
@@ -238,12 +254,27 @@ class Partition:
             wscut,
             swells,
             ihmax,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            input_core_dims=[
+                ["freq", "dir"],
+                ["freq", "dir"],
+                ["freq"],
+                ["dir"],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            ],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=["float32"],
-            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": swells + 2}},
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"part": swells + 2},
+            },
         )
 
         # Finalise output
@@ -301,7 +332,14 @@ class Partition:
             self.dset.dir,
             parts,
             ihmax,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], []],
+            input_core_dims=[
+                ["freq", "dir"],
+                ["freq", "dir"],
+                ["freq"],
+                ["dir"],
+                [],
+                [],
+            ],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -347,9 +385,9 @@ class Partition:
 
         # Finalise output
         dsout = self._set_metadata(dsout)
-        dsout.attrs.update( {"part0": "wind sea", "part1": "swell"})
+        dsout.attrs.update({"part0": "wind sea", "part1": "swell"})
 
-        return dsout.fillna(0.)
+        return dsout.fillna(0.0)
 
     def ptm5(self, fcut, interpolate=True):
         """SWAN partitioning of sea and swell based on user-defined threshold.
@@ -376,7 +414,7 @@ class Partition:
 
         # Include cuttof if not in coordinates
         if interpolate:
-            freqs = sorted(set(self.dset.freq.values).union([fcut]))     
+            freqs = sorted(set(self.dset.freq.values).union([fcut]))
             if len(freqs) > self.dset.freq.size:
                 dsout = regrid_spec(self.dset, freq=freqs)
 
@@ -387,11 +425,11 @@ class Partition:
         # Combining into part index
         dsout = xr.concat([hf, lf], dim="part")
 
-         # Finalise output
+        # Finalise output
         dsout = self._set_metadata(dsout)
-        dsout.attrs.update( {"part0": "sea", "part1": "swell"})
+        dsout.attrs.update({"part0": "sea", "part1": "swell"})
 
-        return dsout.fillna(0.)
+        return dsout.fillna(0.0)
 
     def hp01(
         self,
@@ -497,18 +535,35 @@ class Partition:
             hs_min,
             ihmax,
             combine_extra_swells,
-            input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], []],
+            input_core_dims=[
+                ["freq", "dir"],
+                ["freq", "dir"],
+                ["freq", "dir"],
+                ["freq"],
+                ["dir"],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            ],
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=["float32"],
-            dask_gufunc_kwargs={"allow_rechunk": True, "output_sizes": {"part": swells + 1}},
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"part": swells + 1},
+            },
         )
 
         # Finalise output
         dsout = self._set_metadata(dsout)
         parts_description = {
-            "part0": "wind sea", "part2-n": "merged swells in descending order of hs",
+            "part0": "wind sea",
+            "part2-n": "merged swells in descending order of hs",
         }
         dsout.attrs.update(parts_description)
 
@@ -564,7 +619,12 @@ class Partition:
         masks = False
         for rect in rectangles:
             fmin, dmin, fmax, dmax = rect
-            mask = (ds.freq >= fmin) & (ds.freq <= fmax) & (ds.dir >= dmin) & (ds.dir <= dmax)
+            mask = (
+                (ds.freq >= fmin)
+                & (ds.freq <= fmax)
+                & (ds.dir >= dmin)
+                & (ds.dir <= dmax)
+            )
             partitions.append(ds.where(mask))
             masks = masks | mask
         # Last partition
@@ -573,7 +633,7 @@ class Partition:
         # Combining into part index
         dsout = xr.concat(partitions, dim="part")
 
-         # Finalise output
+        # Finalise output
         dsout = self._set_metadata(dsout)
         for ind, rect in enumerate(rectangles):
             fmin, dmin, fmax, dmax = rect
@@ -582,24 +642,25 @@ class Partition:
             )
         dsout.attrs.update({f"part{ind + 1}": "complement"})
 
-        return dsout.fillna(0.)
+        return dsout.fillna(0.0)
 
-
-    def partition_and_track(self,
-                            wspd,
-                            wdir,
-                            dpt,
-                            agefac=DEFAULTS["agefac"],
-                            wscut=DEFAULTS["wscut"],
-                            swells=DEFAULTS["swells"],
-                            smooth=DEFAULTS["smooth"],
-                            freq_window=DEFAULTS["window"],
-                            dir_window=DEFAULTS["window"],
-                            ihmax=DEFAULTS["ihmax"],
-                            ddpm_sea_max=30,
-                            ddpm_swell_max=20,
-                            dfp_sea_scaling=1,
-                            dfp_swell_source_distance=1e6):
+    def partition_and_track(
+        self,
+        wspd,
+        wdir,
+        dpt,
+        agefac=DEFAULTS["agefac"],
+        wscut=DEFAULTS["wscut"],
+        swells=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
+        ihmax=DEFAULTS["ihmax"],
+        ddpm_sea_max=30,
+        ddpm_swell_max=20,
+        dfp_sea_scaling=1,
+        dfp_swell_source_distance=1e6,
+    ):
         """Partition spectra using the PTM1 method and track the partitions
         and track the partitions using the evolution of peak frequency and peak direction.
         Partitions are matched with the closest partition in the frequency-direction
@@ -643,28 +704,31 @@ class Partition:
         """
 
         # Do the partitioning
-        dspart = self.ptm1(wspd=wspd,
-                           wdir=wdir,
-                           dpt=dpt,
-                           agefac=agefac,
-                           wscut=wscut,
-                           swells=swells,
-                           smooth=smooth,
-                           freq_window=freq_window,
-                           dir_window=dir_window,
-                           ihmax=ihmax)
+        dspart = self.ptm1(
+            wspd=wspd,
+            wdir=wdir,
+            dpt=dpt,
+            agefac=agefac,
+            wscut=wscut,
+            swells=swells,
+            smooth=smooth,
+            freq_window=freq_window,
+            dir_window=dir_window,
+            ihmax=ihmax,
+        )
 
         # Calculate peak frequency and peak direction
         stats = dspart.spec.stats(["fp", "dpm"]).load()
 
         # Track partitions
-        part_ids =\
-            track_partitions(stats,
-                             wspd=wspd,
-                             ddpm_sea_max=ddpm_sea_max,
-                             ddpm_swell_max=ddpm_swell_max,
-                             dfp_sea_scaling=dfp_sea_scaling,
-                             dfp_swell_source_distance=dfp_swell_source_distance)
+        part_ids = track_partitions(
+            stats,
+            wspd=wspd,
+            ddpm_sea_max=ddpm_sea_max,
+            ddpm_swell_max=ddpm_swell_max,
+            dfp_sea_scaling=dfp_sea_scaling,
+            dfp_swell_source_distance=dfp_swell_source_distance,
+        )
 
         # Add partition ids to partition data and return
         return xr.merge([dspart, part_ids])
@@ -721,7 +785,7 @@ def np_ptm1(
     wsea_partition = np.zeros_like(spectrum)
     swell_partitions = [np.zeros_like(spectrum) for n in range(nparts)]
     for ipart in range(nparts):
-        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         wsfrac = part[windseamask].sum() / part.sum()
         if wsfrac > wscut:
             wsea_partition += part
@@ -804,7 +868,7 @@ def np_ptm2(
     wsea_secondary_partition = np.zeros_like(spectrum)
     swell_partitions = [np.zeros_like(spectrum) for n in range(nparts)]
     for ipart in range(nparts):
-        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         wsfrac = part[windseamask].sum() / part.sum()
         if wsfrac > wscut:
             wsea_primary_partition += part
@@ -945,7 +1009,7 @@ def np_hp01(
     wsea_partition = np.zeros_like(spectrum)
     swell_partitions = []
     for ipart in range(nparts):
-        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         wsfrac = part[windseamask].sum() / part.sum()
         if wsfrac > wscut:
             wsea_partition += part
@@ -1040,7 +1104,7 @@ def np_hp01_wseabins(
     wsea_partition = np.zeros_like(spectrum)
     swell_partitions = []
     for ipart in range(nparts):
-        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         # wsfrac = part[windseamask].sum() / part.sum()
         wsea_partition += np.where(windseamask, part, 0.0)
         swell_partitions.append(np.where(windseamask, 0.0, part))
@@ -1138,7 +1202,7 @@ def np_hp01_wseafrac_wseabins(
     wsea_partition = np.zeros_like(spectrum)
     swell_partitions = []
     for ipart in range(nparts):
-        part = np.where(watershed_map == ipart + 1, spectrum, 0.0) # start at 1
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         wsfrac = part[windseamask].sum() / part.sum()
         # wsea_partition += np.where(windseamask, part, 0.0)
         # swell_partitions.append(np.where(windseamask, 0.0, part))
