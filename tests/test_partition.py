@@ -367,7 +367,7 @@ class TestBbox(BasePTM):
             ds = self.pt.bbox(bboxes=bboxes)
 
 
-class TestParitionAndTrack(BasePTM):
+class TestPartitionAndTrack(BasePTM):
     def setup_class(self):
         super().setup_class(self)
 
@@ -384,11 +384,11 @@ class TestParitionAndTrack(BasePTM):
 
     def test_class(self):
         swells = 2
-        dspart = self.pt.partition_and_track(
+        dspart = self.pt.ptm1_track(
             wspd=self.dset.wspd,
             wdir=self.dset.wdir,
             dpt=self.dset.dpt,
             swells=swells,
         )
         assert "part_id" in dspart
-        assert "n_part_id" in dspart
+        assert "npart" in dspart
