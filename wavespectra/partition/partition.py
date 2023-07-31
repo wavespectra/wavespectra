@@ -718,7 +718,7 @@ class Partition:
         )
 
         # Calculate peak frequency and peak direction
-        stats = dspart.spec.stats(["fp", "dpm"]).load()
+        stats = dspart.spec.stats(["fp", "dpm"])
 
         # Track partitions
         part_ids = track_partitions(
