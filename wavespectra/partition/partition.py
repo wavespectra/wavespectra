@@ -185,7 +185,7 @@ class Partition:
         dsout = self._set_metadata(dsout)
         parts_description = {
             "part0": "wind sea",
-            "part2-n": "swells in descending order of hs",
+            "part1-n": "swells in descending order of hs",
         }
         dsout.attrs.update(parts_description)
 
@@ -563,7 +563,7 @@ class Partition:
         dsout = self._set_metadata(dsout)
         parts_description = {
             "part0": "wind sea",
-            "part2-n": "merged swells in descending order of hs",
+            "part1-n": "merged swells in descending order of hs",
         }
         dsout.attrs.update(parts_description)
 
