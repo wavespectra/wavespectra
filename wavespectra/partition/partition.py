@@ -700,7 +700,7 @@ class Partition:
                 where the 0th index are the wind sea and remaining indices are the swells
                 sorted by descending order of Hs. Plus array `part_id` containing an integer
                 representing the partition id for each time step and partition. Plus array
-                `n_part_id` containing the existing partition ids.
+                `npart_id` containing the existing partition ids.
         """
 
         # Do the partitioning

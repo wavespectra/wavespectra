@@ -392,4 +392,4 @@ class TestPartitionAndTrack(BasePTM):
             swells=swells,
         )
         assert "part_id" in dspart
-        assert "npart" in dspart
+        assert "npart_id" in dspart
