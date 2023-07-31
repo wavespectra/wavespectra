@@ -12,12 +12,12 @@ from wavespectra.core.utils import (
     D2R,
     celerity,
     is_overlap,
-    waveage,
-    track_partitions,
+    waveage
 )
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy
 from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
+from wavespectra.partition.tracking import track_partitions
 
 
 DEFAULTS = {
