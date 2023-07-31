@@ -11,8 +11,9 @@ from wavespectra.partition.partition import (
     np_ptm3,
     np_hp01,
 )
-from wavespectra.core.utils import waveage, track_partitions
+from wavespectra.core.utils import waveage
 from wavespectra.core.npstats import hs_numpy
+from wavespectra.partition.tracking import track_partitions
 
 
 HERE = Path(__file__).parent
