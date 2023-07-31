@@ -4,16 +4,22 @@ import numpy as np
 import xarray as xr
 
 from wavespectra import read_ww3
-from wavespectra.partition.partition import Partition, np_ptm1, np_ptm2, np_ptm3, np_hp01
+from wavespectra.partition.partition import (
+    Partition,
+    np_ptm1,
+    np_ptm2,
+    np_ptm3,
+    np_hp01,
+)
 from wavespectra.core.utils import waveage
 from wavespectra.core.npstats import hs_numpy
+from wavespectra.partition.tracking import track_partitions
 
 
 HERE = Path(__file__).parent
 
 
 class BasePTM:
-
     def setup_class(self):
         self.dset = read_ww3(HERE / "sample_files/ww3file.nc")
         self.efth = self.dset.isel(time=0, site=0).efth.values
@@ -32,7 +38,6 @@ class BasePTM:
 
 
 class TestPTM1(BasePTM):
-
     def setup_class(self):
         super().setup_class(self)
         self.wspd = self.dset.isel(time=0, site=0).wspd.values
@@ -104,7 +109,6 @@ class TestPTM1(BasePTM):
 
 
 class TestPTM2(BasePTM):
-
     def setup_class(self):
         super().setup_class(self)
         self.wspd = self.dset.isel(time=0, site=0).wspd.values
@@ -183,7 +187,6 @@ class TestPTM2(BasePTM):
 
 
 class TestPTM3(BasePTM):
-
     def _exec(self, parts):
         out = np_ptm3(
             spectrum=self.dset.efth.isel(time=0, site=0).values,
@@ -226,13 +229,9 @@ class TestPTM3(BasePTM):
 
 
 class TestPTM4(BasePTM):
-
     def test_agefac(self):
         ds_agefac15 = self.pt.ptm4(
-            wspd=self.dset.wspd,
-            wdir=self.dset.wdir,
-            dpt=self.dset.dpt,
-            agefac=1.5
+            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, agefac=1.5
         )
         ds_agefac17 = self.pt.ptm4(
             wspd=self.dset.wspd,
@@ -245,7 +244,6 @@ class TestPTM4(BasePTM):
 
 
 class TestPTM5(BasePTM):
-
     def test_default(self):
         fcut = 0.1
         ds = self.pt.ptm5(fcut=0.1)
@@ -260,7 +258,6 @@ class TestPTM5(BasePTM):
 
 
 class TestHP01(BasePTM):
-
     def setup_class(self):
         super().setup_class(self)
         self.agefac = 1.7
@@ -344,11 +341,10 @@ class TestHP01(BasePTM):
 
 
 class TestBbox(BasePTM):
-
     def test_default(self):
         bboxes = [
             dict(fmin=0.1, fmax=0.2, dmin=None, dmax=None),
-            dict(fmin=0.2, fmax=0.3, dmin=None, dmax=None)
+            dict(fmin=0.2, fmax=0.3, dmin=None, dmax=None),
         ]
         ds = self.pt.bbox(bboxes=bboxes)
         assert ds.part.size == 3
@@ -361,7 +357,7 @@ class TestBbox(BasePTM):
     def test_overlap(self):
         bboxes = [
             dict(fmin=0.1, fmax=0.2, dmin=None, dmax=None),
-            dict(fmin=0.15, fmax=0.3, dmin=None, dmax=None)
+            dict(fmin=0.15, fmax=0.3, dmin=None, dmax=None),
         ]
         with pytest.raises(ValueError):
             ds = self.pt.bbox(bboxes=bboxes)
@@ -370,3 +366,30 @@ class TestBbox(BasePTM):
         bboxes = [dict(fmin=0.2, fmax=0.1, dmin=None, dmax=None)]
         with pytest.raises(ValueError):
             ds = self.pt.bbox(bboxes=bboxes)
+
+
+class TestPartitionAndTrack(BasePTM):
+    def setup_class(self):
+        super().setup_class(self)
+
+    def test_partition_class(self):
+        swells = 2
+        dspart = self.pt.ptm1(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+        )
+        stats = dspart.spec.stats(["fp", "dpm"]).load()
+        part_ids = track_partitions(stats, wspd=self.dset.wspd)
+
+    def test_class(self):
+        swells = 2
+        dspart = self.pt.ptm1_track(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=swells,
+        )
+        assert "part_id" in dspart
+        assert "npart_id" in dspart
