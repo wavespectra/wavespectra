@@ -644,7 +644,7 @@ class Partition:
 
         return dsout.fillna(0.0)
 
-    def partition_and_track(
+    def ptm1_track(
         self,
         wspd,
         wdir,
