@@ -29,8 +29,10 @@ New Features
   * ptm5
   * hp01
   * bbox
+  * ptm1_track
+* New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_ (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
 * Allow merging minour watershed swells.
-* Methods to calculate stokes drift and the mean squared slope by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
+* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Parametric spectra functions in the `fit` module:
   * jonswap
   * tma
@@ -39,8 +41,8 @@ New Features
 * Directional distribution module with the following options:
   * Cartwright (1986) cosine-square distribution.
   * Bunney (2014) skewed distribution for turning wind sea.
-* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
-* Method for non-linear gaussian fit in SpecArray by `pbranson`_ (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Gaussian frequency width method `gw` in SpecArray.
 * Jonswap peak enhancement factor method `gamma` in SpecArray.
 * Jonswap fetch scaling coefficient method `alpha` in SpecArray.
@@ -64,6 +66,9 @@ Deprecation
 -----------
 * The `SpecArray.partition()` method now became a new namespace to access the different
   partitioning options. The legacy `partition` method is now equivalent to `spec.partition.ptm1()`.
+
+
+.. _`Sebastien Dealaux`: https://github.com/seboceanum
 
 
 3.12.0 (2022-08-19)
@@ -149,7 +154,7 @@ Deprecation
 * Remove unused functions `to_datetime` and `dnum_to_datetime`.
 * The "mask" argument has been removed from `SpecArray.sw` method.
 
-.. _`pbranson`: https://github.com/pbranson
+.. _`Paul Branson`: https://github.com/pbranson
 
 
 3.9.0 (2021-05-29)
