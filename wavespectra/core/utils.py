@@ -64,7 +64,7 @@ def wavelen(freq, depth=None):
     if depth is not None:
         return 2 * np.pi / wavenuma(freq, depth)
     else:
-        return 1.56 / freq ** 2
+        return 1.56 / freq**2
 
 
 def wavenuma(freq, water_depth):
@@ -83,7 +83,7 @@ def wavenuma(freq, water_depth):
     D = [0, 0.6522, 0.4622, 0, 0.0864, 0.0675]
     a = 1.0
     for i in range(1, 6):
-        a += D[i] * k0h ** i
+        a += D[i] * k0h**i
     return (k0h * (1 + 1.0 / (k0h * a)) ** 0.5) / water_depth
 
 
@@ -166,7 +166,7 @@ def uv_to_spddir(u, v, coming_from=False):
 
     """
     to_nautical = 270 if coming_from else 90
-    mag = np.sqrt(u ** 2 + v ** 2)
+    mag = np.sqrt(u**2 + v**2)
     direc = np.rad2deg(np.arctan2(v, u))
     direc = (to_nautical - direc) % 360
     return mag, direc
@@ -345,21 +345,21 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         dsout = unique_indices(dsout, attrs.DIRNAME)
 
         # Interpolate heading
-        dsout = dsout.sortby('dir')
+        dsout = dsout.sortby("dir")
         to_concat = [dsout]
 
         # Repeat the first and last direction with 360 deg offset when required
         if dir.min() < dsout.dir.min():
             highest = dsout.isel(dir=-1)
-            highest['dir'] = highest.dir - 360
+            highest["dir"] = highest.dir - 360
             to_concat = [highest, dsout]
         if dir.max() > dsout.dir.max():
             lowest = dsout.isel(dir=0)
-            lowest['dir'] = lowest.dir + 360
+            lowest["dir"] = lowest.dir + 360
             to_concat.append(lowest)
 
         if len(to_concat) > 1:
-            dsout = xr.concat(to_concat, dim='dir')
+            dsout = xr.concat(to_concat, dim="dir")
 
         # Interpolate directions
         dsout = dsout.interp(dir=dir, assume_sorted=True)
@@ -368,14 +368,14 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         # If needed, add a new frequency at f=0 with zero energy
         if freq.min() < dsout.freq.min():
             fzero = 0 * dsout.isel(freq=0)
-            fzero['freq'] = 0
-            dsout = xr.concat([fzero, dsout], dim='freq')
+            fzero["freq"] = 0
+            dsout = xr.concat([fzero, dsout], dim="freq")
 
         # Interpolate frequencies
-        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={'fill_value': 0})
+        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={"fill_value": 0})
 
     if maintain_m0:
-        scale = dset.spec.hs()**2 / dsout.spec.hs()**2
+        scale = dset.spec.hs() ** 2 / dsout.spec.hs() ** 2
         dsout = dsout * scale
 
     return dsout
