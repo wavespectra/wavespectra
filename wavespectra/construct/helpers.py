@@ -1,13 +1,13 @@
 import numpy as np
 import xarray as xr
-from deprecated.sphinx import deprecated
+from typing_extensions import deprecated
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
 @deprecated(
-    reason="All functions and classes in `wavespectra.construct` will be replaced in **4.0.0** by a new spectral reconstruction api.",
-    version="3.14.1"
+    "All functions and classes in `wavespectra.construct` will be replaced in "
+    "**4.0.0** by a new spectral reconstruction api.",
 )
 def spread(dp_matrix, dspr_matrix, dirs):
     """Generic spreading function.
@@ -35,8 +35,8 @@ def spread(dp_matrix, dspr_matrix, dirs):
 
 
 @deprecated(
-    reason="All functions and classes in `wavespectra.construct` will be replaced in **4.0.0** by a new spectral reconstruction api.",
-    version="3.14.1"
+    "All functions and classes in `wavespectra.construct` will be replaced in "
+    "**4.0.0** by a new spectral reconstruction api.",
 )
 def arrange_inputs(*args):
     """Check all inputs are same shape and add frequency and direction dims."""
@@ -53,8 +53,8 @@ def arrange_inputs(*args):
 
 
 @deprecated(
-    reason="All functions and classes in `wavespectra.construct` will be replaced in **4.0.0** by a new spectral reconstruction api.",
-    version="3.14.1"
+    "All functions and classes in `wavespectra.construct` will be replaced in "
+    "**4.0.0** by a new spectral reconstruction api.",
 )
 def make_dataset(spec, freqs, dirs, coordinates=[]):
     """Package spectral matrix to xarray.
@@ -79,8 +79,8 @@ def make_dataset(spec, freqs, dirs, coordinates=[]):
 
 
 @deprecated(
-    reason="All functions and classes in `wavespectra.construct` will be replaced in **4.0.0** by a new spectral reconstruction api.",
-    version="3.14.1"
+    "All functions and classes in wavespectra.construct will be replaced in "
+    "**4.0.0** by a new spectral reconstruction api.",
 )
 def check_coordinates(param, coordinates):
     """Check coordinates are consistent with parameter.
