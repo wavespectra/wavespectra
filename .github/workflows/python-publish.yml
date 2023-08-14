@@ -36,7 +36,7 @@ jobs:
         python -m build -s
     -
       name: Publish package
-      uses: pypa/gh-action-pypi-publish@v1.6.4
+      uses: pypa/gh-action-pypi-publish@v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
         verbose: true

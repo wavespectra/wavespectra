@@ -1,4 +1,5 @@
 import numpy as np
+from typing_extensions import deprecated
 from wavespectra.construct.helpers import (
     spread,
     check_coordinates,
@@ -7,6 +8,10 @@ from wavespectra.construct.helpers import (
 )
 
 
+@deprecated(
+    "All functions and classes in `wavespectra.construct` will be replaced in "
+    "**4.0.0** by a new spectral reconstruction api.",
+)
 def jonswap(
     tp,
     dp,
