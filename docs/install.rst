@@ -71,12 +71,6 @@ Once you have a copy of the source, you can install it from the base project dir
 
     $ pip install .
 
-or alternatively in `development mode`_ with:
-
-.. code-block:: console
-
-   $ pip install -e .
-
 Again, include the [extra] tag for the full install:
 
 .. code-block:: console
