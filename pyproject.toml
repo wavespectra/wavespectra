@@ -43,6 +43,7 @@ dependencies = [
     "sortedcontainers",
     "scipy",
     "toolz",
+    "typing_extensions",
     "xarray",
 ]
 dynamic = ["version"]
