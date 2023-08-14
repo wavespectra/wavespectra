@@ -21,6 +21,8 @@ from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid
 from wavespectra.core import xrstats
 from wavespectra.plot import polar_plot, CBAR_TICKS
 
+from typing_extensions import deprecated
+
 
 @xr.register_dataarray_accessor("spec")
 class SpecArray(object):
@@ -57,6 +59,7 @@ class SpecArray(object):
         return set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
 
     @property
+    @deprecated("spec.dfarr will be removed in **4.0.0**, use spec.df instead")
     def dfarr(self):
         """Frequency resolution DataArray."""
         if self._dfarr is not None:
@@ -71,6 +74,10 @@ class SpecArray(object):
         return self._dfarr
 
     @property
+    @deprecated(
+        "This method will return a DataArray instead of a numpy array in **4.0.0** "
+        "and will replace spec.dfarr"
+    )
     def df(self):
         """Frequency resolution numpy array.
 
@@ -553,6 +560,10 @@ class SpecArray(object):
         L.name = "wavelength"
         return L
 
+    @deprecated(
+        "spec.partition will become a namespace in **4.0.0**, "
+        "use spec.partion.ptm1() instead for equivalent functionality."
+    )
     def partition(
         self,
         wsp_darr,

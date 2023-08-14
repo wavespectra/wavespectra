@@ -12,6 +12,21 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.15.0 (2023-08-dd)
+___________________
+
+This release adds deprecation warnings to functions and modules that will be removed or
+redesigned in the next major release.
+
+Bug Fixes
+---------
+* Fix reading of gzipped swan ascii files.
+
+Internal Changes
+----------------
+* Add deprecation warnings to prepare for the next major release.
+
+
 3.14.0 (2023-07-03)
 ___________________
 
@@ -22,9 +37,9 @@ Internal Changes
   setup.py file is now only used to build the Fortran module.
 * Removed the MANIFEST.in file, package data now handled in pyproject.toml.
 * Removed the requirements folder, requirements now handled in pyproject.toml.
-* Removed some packaging attributes from wavespectra.__init__.py, now handled in
+* Removed some packaging attributes from `wavespectra.__init__.py`, now handled in
   pyproject.toml.
-* New docs theme: sphinx_rtd_theme by pydata_sphinx_theme, fixes issue with rtd not working with sphinx>=7.0.
+* Replace docs the RTD by the PYDATA docs theme, this fixes issue with rtd not working with sphinx>=7.0.
 * Add readthedocs config.
 
 
@@ -615,7 +630,7 @@ Internal Changes
 3.0 (2018-03-05)
 __________________
 
-**This major release marks the migration from the predecessor** `pyspectra` **library,
+**This major release marks the migration from the predecessor** `pyspectra`** library,
 as well as the open-sourcing of wavespectra and first PyPI release.**
 
 New Features
