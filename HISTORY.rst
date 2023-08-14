@@ -12,6 +12,21 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+3.15.0 (2023-08-dd)
+___________________
+
+This release adds deprecation warnings to functions and modules that will be removed or
+redesigned in the next major release.
+
+Bug Fixes
+---------
+* Fix reading of gzipped swan ascii files.
+
+Internal Changes
+----------------
+* Add deprecation warnings to prepare for the next major release.
+
+
 3.14.0 (2023-07-03)
 ___________________
 
