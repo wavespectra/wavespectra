@@ -1,11 +1,25 @@
+from collections import OrderedDict
 import re
 import datetime
+import numpy as np
 import xarray as xr
 
-from wavespectra.core.attributes import attrs
+from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.utils import R2D
 
 
 HEADER_REGEX_STR = r"'WAVEWATCH III SPECTRA'\s*([0-9]{0,2})\s*([0-9]{0,2})\s*([0-9]{0,2})"
+
+
+def extract_direction(dir):
+    """Convert direction from ww3 station file to be in
+    meteorlogical convention.
+
+    Args:
+        - dir (float): raw direction string in radians
+    """
+    dir = abs(((float(dir) - (2.5 * np.pi)) % (2.0 * np.pi)))
+    return dir * R2D
 
 
 def read_ww3_station(fileobj):
@@ -14,27 +28,29 @@ def read_ww3_station(fileobj):
         - fileobj (file-like): file to read.
 
     Returns:
-        - dset (SpecDataset): spectra dataset object read from WW3 station output file.
+        - dset (SpecDataset): spectra dataset object read from
+        WW3 station output file.
     """
     header = fileobj.readline()
     header_regex = re.compile(HEADER_REGEX_STR)
-    try: 
-        # Parse out the frequency and direction dimensions, ignore the location count dimension for now
+    try:
+        # Parse out the frequency and direction dimensions,
+        # ignore the location count dimension for now
         nfreq, ndir, nloc = header_regex.match(header).groups()
         nfreq = int(nfreq)
         ndir = int(ndir)
         nloc = int(nloc)
     except Exception as e:
-        raise ValueError("Could not parse header line of WW3 station file.") from e
-    
+        raise ValueError(f"Could not parse header line of WW3 station file")
+
     # Read the frequency, direction, and location coordinates
-    freq = []
-    while len(freq) < nfreq:
-        freq.extend(map(float, fileobj.readline().split()))
-    
-    dir = []
-    while len(dir) < ndir:
-        dir.extend(map(float, fileobj.readline().split()))
+    freqs = []
+    while len(freqs) < nfreq:
+        freqs.extend(map(float, fileobj.readline().split()))
+
+    dirs = []
+    while len(dirs) < ndir:
+        dirs.extend(map(extract_direction, fileobj.readline().split()))
 
     # Parse the spectra for each timestep until the end of the file
     date = []
@@ -59,10 +75,10 @@ def read_ww3_station(fileobj):
         line = fileobj.readline()
         if not line:
             break
-        
-        first_split = line.split("'")
-        loc.append(first_split[0])
-        parts = first_split[1].split()
+
+        first_split = line.strip().split("'")
+        loc.append(first_split[1].strip())
+        parts = first_split[2].split()
         lat.append(float(parts[0]))
         lon.append(float(parts[1]))
         depth.append(float(parts[2]))
@@ -77,4 +93,59 @@ def read_ww3_station(fileobj):
 
         spectra.append(spec)
 
-    # TODO: Construct the spectra dataset
+    times = np.unique(date)
+    locs = np.unique(loc)
+    lats = np.unique(lat)
+    lons = np.unique(lon)
+
+    spec_arr = np.array(spectra).reshape(
+            len(times), len(lons), len(lats), len(freqs), len(dirs)
+    )
+
+    dset = xr.DataArray(
+            data=spec_arr,
+            coords=OrderedDict(
+                (
+                    (attrs.TIMENAME, times),
+                    (attrs.LATNAME, lats),
+                    (attrs.LONNAME, lons),
+                    (attrs.FREQNAME, freqs),
+                    (attrs.DIRNAME, dirs),
+                )
+            ),
+            dims=(
+                attrs.TIMENAME,
+                attrs.LATNAME,
+                attrs.LONNAME,
+                attrs.FREQNAME,
+                attrs.DIRNAME,
+            ),
+            name=attrs.SPECNAME,
+        ).to_dataset()
+
+    dset[attrs.WSPDNAME] = xr.DataArray(
+        data=np.array(wind_speed).reshape(len(times), len(lats), len(lons)),
+        dims=[attrs.TIMENAME, attrs.LATNAME, attrs.LONNAME],
+    )
+    dset[attrs.WDIRNAME] = xr.DataArray(
+        data=np.array(wind_dir).reshape(len(times), len(lats), len(lons)),
+        dims=[attrs.TIMENAME, attrs.LATNAME, attrs.LONNAME],
+    )
+    dset[attrs.DEPNAME] = xr.DataArray(
+        data=np.array(depth).reshape(len(times), len(lats), len(lons)),
+        dims=[attrs.TIMENAME, attrs.LATNAME, attrs.LONNAME],
+    )
+
+    dset[attrs.LATNAME] = xr.DataArray(
+        data=lats, coords={attrs.SITENAME: locs}, dims=[attrs.SITENAME]
+    )
+    dset[attrs.LONNAME] = xr.DataArray(
+        data=lons, coords={attrs.SITENAME: locs}, dims=[attrs.SITENAME]
+    )
+
+    set_spec_attributes(dset)
+    dset[attrs.SPECNAME].attrs.update(
+        {"_units": "m^{2}.s.degree^{-1}", "_variable_name": "VaDens"}
+    )
+
+    return dset
