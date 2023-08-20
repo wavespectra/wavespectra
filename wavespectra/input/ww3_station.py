@@ -19,7 +19,7 @@ def extract_direction(dir):
         - dir (float): raw direction string in radians
     """
     dir = abs(((float(dir) - (2.5 * np.pi)) % (2.0 * np.pi)))
-    return dir * R2D
+    return ((dir * R2D) + 270) % 360
 
 
 def read_ww3_station(fileobj):
@@ -69,6 +69,8 @@ def read_ww3_station(fileobj):
         if not line:
             break
 
+        # If there are more than one location to be parsed, we need to parse the points for 
+        # each location. Otherwise, we can just parse the points for the single location for now.
         d = datetime.datetime.strptime(line.strip(), "%Y%m%d %H%M%S")
         date.append(d)
 
@@ -87,23 +89,24 @@ def read_ww3_station(fileobj):
         current_speed.append(float(parts[5]))
         current_dir.append(float(parts[6]))
 
-        spec = []
-        while len(spec) < nfreq * ndir:
-            spec.extend(map(float, fileobj.readline().split()))
+        spec_count = 0
+        while spec_count < nfreq * ndir:
+            vals = list(map(float, fileobj.readline().strip().split()))
+            spectra.extend(vals)
+            spec_count += len(vals)
 
-        spectra.append(spec)
-
+    spectra = np.array(spectra)
     times = np.unique(date)
     locs = np.unique(loc)
     lats = np.unique(lat)
     lons = np.unique(lon)
 
     spec_arr = np.array(spectra).reshape(
-            len(times), len(lons), len(lats), len(freqs), len(dirs)
+            len(times), len(lats), len(lons), len(dirs), len(freqs)
     )
 
     dset = xr.DataArray(
-            data=spec_arr,
+            data=spec_arr.swapaxes(3, 4),
             coords=OrderedDict(
                 (
                     (attrs.TIMENAME, times),
