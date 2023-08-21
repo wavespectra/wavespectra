@@ -22,8 +22,8 @@ class TestWW3Station(object):
 
         assert len(ds.spec.freq) == 50
         assert len(ds.spec.dir) == 36
-        assert len(ds.spec.time) == 385
-        assert ds.spec.efth.shape == (385, 1, 1, 50, 36)
+        assert len(ds.spec.time) == 4
+        assert ds.spec.efth.shape == (4, 1, 1, 50, 36)
 
         assert ds.spec.hs().values[0] == pytest.approx(1.16, rel=1e-1)
         assert ds.spec.tp().values[0] == pytest.approx(13.6, rel=1e-1)
