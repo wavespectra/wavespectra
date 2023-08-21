@@ -31,7 +31,13 @@ def read_ww3_station(fileobj):
         - dset (SpecDataset): spectra dataset object read from
         WW3 station output file.
     """
-    header = fileobj.readline()
+    raw_data = fileobj.read()
+    try:
+        raw_data = raw_data.decode("utf-8")
+    except Exception:
+        pass
+    lines = raw_data.split("\n")
+    header = lines.pop(0)
     header_regex = re.compile(HEADER_REGEX_STR)
     try:
         # Parse out the frequency and direction dimensions,
@@ -46,11 +52,11 @@ def read_ww3_station(fileobj):
     # Read the frequency, direction, and location coordinates
     freqs = []
     while len(freqs) < nfreq:
-        freqs.extend(map(float, fileobj.readline().split()))
+        freqs.extend(map(float, lines.pop(0).split()))
 
     dirs = []
     while len(dirs) < ndir:
-        dirs.extend(map(extract_direction, fileobj.readline().split()))
+        dirs.extend(map(extract_direction, lines.pop(0).split()))
 
     # Parse the spectra for each timestep until the end of the file
     date = []
@@ -65,8 +71,11 @@ def read_ww3_station(fileobj):
     spectra = []
 
     while True:
-        line = fileobj.readline()
-        if not line:
+        try:
+            line = lines.pop(0)
+            if not line:
+                break
+        except IndexError:
             break
 
         # If there are more than one location to be parsed, we need to parse the points for 
@@ -74,8 +83,11 @@ def read_ww3_station(fileobj):
         d = datetime.datetime.strptime(line.strip(), "%Y%m%d %H%M%S")
         date.append(d)
 
-        line = fileobj.readline()
-        if not line:
+        try:
+            line = lines.pop(0)
+            if not line:
+                break
+        except IndexError:
             break
 
         first_split = line.strip().split("'")
@@ -91,7 +103,7 @@ def read_ww3_station(fileobj):
 
         spec_count = 0
         while spec_count < nfreq * ndir:
-            vals = list(map(float, fileobj.readline().strip().split()))
+            vals = list(map(float, lines.pop(0).strip().split()))
             spectra.extend(vals)
             spec_count += len(vals)
 
