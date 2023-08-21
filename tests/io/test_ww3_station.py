@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from wavespectra import read_ww3_station
 
 
@@ -23,4 +25,6 @@ class TestWW3Station(object):
         assert len(ds.spec.time) == 385
         assert ds.spec.efth.shape == (385, 1, 1, 50, 36)
 
-        print(ds.isel(time=0).spec.hs().values)
+        assert ds.spec.hs().values[0] == pytest.approx(1.16, rel=1e-1)
+        assert ds.spec.tp().values[0] == pytest.approx(13.6, rel=1e-1)
+        assert ds.spec.dp().values[0] == pytest.approx(291.0, rel=1e-0)
