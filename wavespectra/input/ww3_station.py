@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.utils import R2D
+from wavespectra.core.utils import D2R, R2D
 
 
 HEADER_REGEX_STR = r"'WAVEWATCH III SPECTRA'\s*([0-9]{0,2})\s*([0-9]{0,2})\s*([0-9]{0,2})"
@@ -104,6 +104,9 @@ def read_ww3_station(fileobj):
     spec_arr = np.array(spectra).reshape(
             len(times), len(lats), len(lons), len(dirs), len(freqs)
     )
+
+    # Convert from m2/rad to m2/deg
+    spec_arr *= D2R
 
     dset = xr.DataArray(
             data=spec_arr.swapaxes(3, 4),

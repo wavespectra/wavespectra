@@ -16,9 +16,11 @@ class TestWW3Station(object):
 
     def test_read(self):
         with open(self.filename, "r") as file:
-            self.ds = read_ww3_station(file)
+            ds = read_ww3_station(file)
 
-        assert len(self.ds.spec.freq) == 50
-        assert len(self.ds.spec.dir) == 36
-        assert len(self.ds.spec.time) == 385
-        assert self.ds.spec.efth.shape == (385, 1, 1, 50, 36)
+        assert len(ds.spec.freq) == 50
+        assert len(ds.spec.dir) == 36
+        assert len(ds.spec.time) == 385
+        assert ds.spec.efth.shape == (385, 1, 1, 50, 36)
+
+        print(ds.isel(time=0).spec.hs().values)
