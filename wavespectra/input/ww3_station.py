@@ -12,8 +12,8 @@ HEADER_REGEX_STR = r"'WAVEWATCH III SPECTRA'\s*([0-9]{0,2})\s*([0-9]{0,2})\s*([0
 
 
 def extract_direction(dir):
-    """Convert direction from ww3 station file to be in
-    meteorlogical convention.
+    """Convert direction from ww3 station file to be in the correct
+    convention.
 
     Args:
         - dir (float): raw direction string in radians
@@ -46,8 +46,8 @@ def read_ww3_station(fileobj):
         nfreq = int(nfreq)
         ndir = int(ndir)
         nloc = int(nloc)
-    except Exception as e:
-        raise ValueError(f"Could not parse header line of WW3 station file")
+    except Exception:
+        raise ValueError("Could not parse header line of WW3 station file")
 
     # Read the frequency, direction, and location coordinates
     freqs = []
@@ -78,18 +78,13 @@ def read_ww3_station(fileobj):
         except IndexError:
             break
 
-        # If there are more than one location to be parsed, we need to parse the points for 
-        # each location. Otherwise, we can just parse the points for the single location for now.
+        # If there are more than one location to be parsed, we need to parse
+        # the points for each location. Otherwise, we can just
+        # parse the points for the single location for now.
         d = datetime.datetime.strptime(line.strip(), "%Y%m%d %H%M%S")
         date.append(d)
 
-        try:
-            line = lines.pop(0)
-            if not line:
-                break
-        except IndexError:
-            break
-
+        line = lines.pop(0)
         first_split = line.strip().split("'")
         loc.append(first_split[1].strip())
         parts = first_split[2].split()
