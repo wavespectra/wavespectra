@@ -8,7 +8,9 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D
 
 
-HEADER_REGEX_STR = r"'WAVEWATCH III SPECTRA'\s*([0-9]{0,2})\s*([0-9]{0,2})\s*([0-9]{0,2})"
+HEADER_REGEX_STR = (
+    r"'WAVEWATCH III SPECTRA'\s*([0-9]{0,2})\s*([0-9]{0,2})\s*([0-9]{0,2})"
+)
 
 
 def extract_direction(dir):
@@ -109,32 +111,32 @@ def read_ww3_station(fileobj):
     lons = np.unique(lon)
 
     spec_arr = np.array(spectra).reshape(
-            len(times), len(lats), len(lons), len(dirs), len(freqs)
+        len(times), len(lats), len(lons), len(dirs), len(freqs)
     )
 
     # Convert from m2/rad to m2/deg
     spec_arr *= D2R
 
     dset = xr.DataArray(
-            data=spec_arr.swapaxes(3, 4),
-            coords=OrderedDict(
-                (
-                    (attrs.TIMENAME, times),
-                    (attrs.LATNAME, lats),
-                    (attrs.LONNAME, lons),
-                    (attrs.FREQNAME, freqs),
-                    (attrs.DIRNAME, dirs),
-                )
-            ),
-            dims=(
-                attrs.TIMENAME,
-                attrs.LATNAME,
-                attrs.LONNAME,
-                attrs.FREQNAME,
-                attrs.DIRNAME,
-            ),
-            name=attrs.SPECNAME,
-        ).to_dataset()
+        data=spec_arr.swapaxes(3, 4),
+        coords=OrderedDict(
+            (
+                (attrs.TIMENAME, times),
+                (attrs.LATNAME, lats),
+                (attrs.LONNAME, lons),
+                (attrs.FREQNAME, freqs),
+                (attrs.DIRNAME, dirs),
+            )
+        ),
+        dims=(
+            attrs.TIMENAME,
+            attrs.LATNAME,
+            attrs.LONNAME,
+            attrs.FREQNAME,
+            attrs.DIRNAME,
+        ),
+        name=attrs.SPECNAME,
+    ).to_dataset()
 
     dset[attrs.WSPDNAME] = xr.DataArray(
         data=np.array(wind_speed).reshape(len(times), len(lats), len(lons)),
