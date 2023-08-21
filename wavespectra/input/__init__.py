@@ -9,6 +9,7 @@ All functions defined with these conventions will be dynamically
 imported at the module level
 
 """
+from pathlib import Path
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
@@ -70,7 +71,11 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping={}, chunks={}
         # Use mfdataset to open if a filename or fileglob is passed
         # otherwise we assume a fileobj is passed and open it directly with
         # xr.open_dataset
-        if isinstance(filename_or_fileglob, list) or isinstance(filename_or_fileglob, str):
+        if (
+            isinstance(filename_or_fileglob, list)
+            or isinstance(filename_or_fileglob, str)
+            or isinstance(filename_or_fileglob, Path)
+        ):
             dset = xr.open_mfdataset(
                 filename_or_fileglob, chunks=_chunks, combine="by_coords"
             )

@@ -24,7 +24,7 @@ def extract_direction(dir):
     return ((dir * R2D) + 270) % 360
 
 
-def read_ww3_station(fileobj):
+def read_ww3_station(filename_or_fileobj):
     """Read directional spectra from WW3 station output file.
     Args:
         - fileobj (file-like): file to read.
@@ -33,7 +33,12 @@ def read_ww3_station(fileobj):
         - dset (SpecDataset): spectra dataset object read from
         WW3 station output file.
     """
-    raw_data = fileobj.read()
+    if isinstance(filename_or_fileobj, str):
+        with open(filename_or_fileobj, "rb") as f:
+            raw_data = f.read()
+    else:
+        raw_data = filename_or_fileobj.read()
+
     try:
         raw_data = raw_data.decode("utf-8")
     except Exception:
