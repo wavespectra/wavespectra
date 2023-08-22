@@ -35,7 +35,7 @@ def read_ww3_station(filename_or_fileglob):
     """
     try:
         raw_data = filename_or_fileglob.read()
-    except Exception:
+    except AttributeError:
         with open(filename_or_fileglob, "rb") as f:
             raw_data = f.read()
 

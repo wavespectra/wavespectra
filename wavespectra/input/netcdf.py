@@ -19,8 +19,8 @@ def read_netcdf(
     """Read Spectra from generic netCDF format.
 
     Args:
-        - filename_or_fileglob (str): filename or fileglob specifying multiple
-          files to read.
+        - filename_or_fileglob (str, list, filelike): filename, fileglob specifying multiple
+          files, or filelike object to read.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
@@ -37,7 +37,12 @@ def read_netcdf(
           'time' and/or 'station' dims.
 
     """
-    dset = xr.open_mfdataset(filename_or_fileglob, chunks=chunks, combine="by_coords")
+    try:
+        dset = xr.open_mfdataset(
+            filename_or_fileglob, chunks=chunks, combine="by_coords"
+        )
+    except ValueError:
+        dset = xr.open_dataset(filename_or_fileglob)
     coord_map = {
         freqname: attrs.FREQNAME,
         dirname: attrs.DIRNAME,
