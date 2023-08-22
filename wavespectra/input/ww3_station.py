@@ -34,16 +34,11 @@ def read_ww3_station(filename_or_fileglob):
         WW3 station output file.
     """
     try:
-        raw_data = filename_or_fileglob.read()
+        lines = filename_or_fileglob.readlines()
     except AttributeError:
-        with open(filename_or_fileglob, "rb") as f:
-            raw_data = f.read()
+        with open(filename_or_fileglob, "r") as f:
+            lines = f.readlines()
 
-    try:
-        raw_data = raw_data.decode("utf-8")
-    except Exception:
-        pass
-    lines = raw_data.split("\n")
     header = lines.pop(0)
     header_regex = re.compile(HEADER_REGEX_STR)
     try:

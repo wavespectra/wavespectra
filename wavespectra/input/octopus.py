@@ -7,17 +7,21 @@ from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-def read_octopus(filename):
+def read_octopus(filename_or_obj):
     """Read spectra from Octopus file format.
 
     Args:
-        - filename (str, Path): Octopus file to read.
+        - filename_or_obj (str, Path, filelike obj): Octopus file to read.
 
     Returns:
         - dset (SpecDataset): spectra dataset object.
 
     """
-    with open(filename, "r") as f:
+    try:
+        if hasattr(filename_or_obj, "read"):
+            f = filename_or_obj
+        else:
+            f = open(filename_or_obj, "r")
 
         efths = []
         wspds = []
@@ -69,6 +73,10 @@ def read_octopus(filename):
 
             for __ in range(2):
                 next(f)
+    except Exception:
+        pass
+    finally:
+        f.close()
 
     # Output
     ds = xr.DataArray(
