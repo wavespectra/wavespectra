@@ -25,15 +25,6 @@ to_keep = {
 }
 
 
-def is_filename_or_fileglob(filename_or_fileglob):
-    """Check if input is a filename."""
-    return (
-        isinstance(filename_or_fileglob, list)
-        or isinstance(filename_or_fileglob, str)
-        or isinstance(filename_or_fileglob, Path)
-    )
-
-
 def chunks_dict(chunks, mapping):
     """Get the chunks dict either from keys or values in mapping.
 
@@ -80,11 +71,11 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping={}, chunks={}
         # Use mfdataset to open if a filename or fileglob is passed
         # otherwise we assume a fileobj is passed and open it directly with
         # xr.open_dataset
-        if is_filename_or_fileglob(filename_or_fileglob):
+        try:
             dset = xr.open_mfdataset(
                 filename_or_fileglob, chunks=_chunks, combine="by_coords"
             )
-        else:
+        except ValueError:
             dset = xr.open_dataset(filename_or_fileglob, chunks=_chunks)
     elif file_format == "zarr":
         dset = xr.open_zarr(filename_or_fileglob, consolidated=True, chunks=_chunks)

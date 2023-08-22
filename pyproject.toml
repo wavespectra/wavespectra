@@ -64,6 +64,7 @@ extra = [
     "gcsfs",
     "netCDF4<1.6.0",
     "zarr",
+    "h5netcdf",
 ]
 docs = [
     "autodoc",

@@ -6,7 +6,6 @@ import xarray as xr
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R, R2D
-from wavespectra.input import is_filename_or_fileglob
 
 
 HEADER_REGEX_STR = (
@@ -34,11 +33,11 @@ def read_ww3_station(filename_or_fileglob):
         - dset (SpecDataset): spectra dataset object read from
         WW3 station output file.
     """
-    if is_filename_or_fileglob(filename_or_fileglob):
+    try:
+        raw_data = filename_or_fileglob.read()
+    except Exception:
         with open(filename_or_fileglob, "rb") as f:
             raw_data = f.read()
-    else:
-        raw_data = filename_or_fileglob.read()
 
     try:
         raw_data = raw_data.decode("utf-8")
