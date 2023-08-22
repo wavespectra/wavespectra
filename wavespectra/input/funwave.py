@@ -6,11 +6,11 @@ from wavespectra import SpecArray
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-def read_funwave(filename):
+def read_funwave(filename_or_obj):
     """Read Spectra in Funwave format.
 
     Args:
-        - filename (str): Funwave file to read.
+        - filename_or_obj (str, filelike): Funwave file to read.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from funwave file.
@@ -22,8 +22,11 @@ def read_funwave(filename):
         - Phases are ignored if present.
 
     """
-    with open(filename, "r") as stream:
-        data = stream.readlines()
+    try:
+        data = filename_or_obj.readlines()
+    except AttributeError:
+        with open(filename_or_obj, "r") as f:
+            data = f.readlines()
 
     # Remove any empty rows
     data = [row for row in data if row != "\n"]
