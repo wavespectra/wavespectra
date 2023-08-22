@@ -50,6 +50,11 @@ their full module path, e.g.
 
     Files in ``ZARR`` format can be open from both local and remote (bucket) stores.
 
+.. note::
+
+    Files in ``NetCDF`` format can be open from both local and remote (bucket) stores
+    when they are opened using ``fsspec``.
+
 .. _open_dataset: https://xarray.pydata.org/en/stable/generated/xarray.open_dataset.html#xarray.open_dataset
 .. _open_mfdataset: https://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html#xarray.open_mfdataset
 .. _open_zarr: https://xarray.pydata.org/en/stable/generated/xarray.open_zarr.html#xarray.open_zarr
