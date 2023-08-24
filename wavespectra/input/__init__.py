@@ -74,7 +74,9 @@ def open_netcdf_or_zarr(filename_or_fileglob, file_format, mapping={}, chunks={}
             dset = xr.open_mfdataset(
                 filename_or_fileglob, chunks=_chunks, combine="by_coords"
             )
-        except ValueError:
+        # TODO: Some inconsistency in how xarray handles fileobjs between different
+        # versions. For now use a catch all.
+        except Exception:
             dset = xr.open_dataset(filename_or_fileglob, chunks=_chunks)
     elif file_format == "zarr":
         dset = xr.open_zarr(filename_or_fileglob, consolidated=True, chunks=_chunks)
