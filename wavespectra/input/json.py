@@ -6,22 +6,25 @@ import xarray as xr
 from wavespectra.core.attributes import set_spec_attributes
 
 
-def read_json(filename, date_format="%Y-%m-%dT%H:%M:%SZ"):
+def read_json(filename_or_obj, date_format="%Y-%m-%dT%H:%M:%SZ"):
     """Read Spectra from json.
 
     The wavespectra json format is produced from `SpecDataset.to_json` by running
     `Dataset.to_dict` and converting times into iso8601 strings.
 
     Args:
-        - filename (str): filename of json to read.
+        - filename_or_obj (str): filename or filelike object of json to read.
         - date_format(str): strftime format for de-serializing datetimes.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from json file.
 
     """
-    with open(filename) as fp:
-        dset_dict = json.load(fp)
+    try:
+        dset_dict = json.load(filename_or_obj)
+    except AttributeError:
+        with open(filename_or_obj) as fp:
+            dset_dict = json.load(fp)
 
     for item in ["coords", "data_vars"]:
         if "time" in dset_dict[item]:
