@@ -243,7 +243,7 @@ def read_tab(filename, toff=0):
         delim_whitespace=True,
         skiprows=[0, 1, 2, 3, 5, 6],
         parse_dates=[0],
-        date_parser=_dateparse,
+        date_format="%Y%m%d.%H%M%S",
         index_col=0,
     )
     df.index.name = attrs.TIMENAME
@@ -251,8 +251,3 @@ def read_tab(filename, toff=0):
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.iloc[:, 0:-1]
-
-
-def _dateparse(x):
-    """Date parsing to read SWAN tab files."""
-    return datetime.datetime.strptime(x, "%Y%m%d.%H%M%S")

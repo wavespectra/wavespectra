@@ -61,16 +61,13 @@ def _read_spotter_csv(filename):
 
     """
 
-    date_parser = lambda epoch: pd.to_datetime(epoch, unit="s")
-
     # Read bulk parameters
     dat_bulk = pd.read_csv(
         filename,
         index_col=3,
         usecols=np.insert(np.arange(13), -1, [364, 365, 366]),
-        parse_dates=[3],
-        date_parser=date_parser,
     )
+    dat_bulk.index = pd.to_datetime(dat_bulk.index, unit="s")
     dat_bulk.columns = dat_bulk.columns.str.strip()
     dat_bulk.index.name = dat_bulk.index.name.strip()
     b = dat_bulk.to_xarray()
@@ -112,8 +109,8 @@ def _read_spotter_csv(filename):
             usecols=np.insert(
                 np.arange(13 + (2 + idx) * (38 + 1), 13 + (3 + idx) * (38 + 1)), 0, 3
             ),
-            date_parser=date_parser,
         )
+        dat_tmp.index = pd.to_datetime(dat_tmp.index, unit="s")
         dat_tmp.columns = dat_tmp.columns.str.strip()
         dat_tmp.index.name = dat_tmp.index.name.strip()
         tmp_da = dat_tmp.to_xarray().to_array(dim="Frequency", name=name)
@@ -127,8 +124,8 @@ def _read_spotter_csv(filename):
         filename,
         index_col=[0],
         usecols=np.insert(np.arange(13 + 6 * (38 + 1), 13 + 7 * (38 + 1)), 0, 3),
-        date_parser=date_parser,
     )
+    dat_S.index = pd.to_datetime(dat_S.index, unit="s")
     dat_S.columns = dat_S.columns.str.strip()
     dat_S.index.name = dat_S.index.name.strip()
     S = dat_S.to_xarray().to_array(dim="Frequency", name="Variance density")
@@ -138,8 +135,8 @@ def _read_spotter_csv(filename):
         filename,
         index_col=[0],
         usecols=np.insert(np.arange(13 + 7 * (38 + 1), 13 + 8 * (38 + 1)), 0, 3),
-        date_parser=date_parser,
     )
+    dat_dir.index = pd.to_datetime(dat_dir.index, unit="s")
     dat_dir.columns = dat_dir.columns.str.strip()
     dat_dir.index.name = dat_dir.index.name.strip()
     Dir = dat_dir.to_xarray().to_array(dim="Frequency", name="Direction")
@@ -149,8 +146,8 @@ def _read_spotter_csv(filename):
         filename,
         index_col=[0],
         usecols=np.insert(np.arange(13 + 8 * (38 + 1), 13 + 9 * (38 + 1)), 0, 3),
-        date_parser=date_parser,
     )
+    dat_spread.index = pd.to_datetime(dat_spread.index, unit="s")
     dat_spread.index.name = dat_spread.index.name.strip()
     dat_spread.columns = dat_spread.columns.str.strip()
     spread = dat_spread.to_xarray().to_array(dim="Frequency", name="Directional spread")
