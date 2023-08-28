@@ -15,14 +15,16 @@ Developers
 
 * `Tom Durrant`_
 * `David Johnson`_
+* `Sebastien Delaux`_
 
 .. _`Tom Durrant`: https://github.com/tomdurrant
 .. _`David Johnson`: https://github.com/ondave
-
+.. _`Sebastien Delaux`: https://github.com/seboceanum
 
 Contributors
 ------------
 
+* `Matthew Iannucci`_
 * `Carlos A. Michelén Ströfer`_
 * `Henrique Rapizo`_
 * `John Harrington`_
@@ -32,6 +34,7 @@ Contributors
 * `Ryan Coe`_
 * `Spicer Bak`_
 
+.. _`Matthew Iannucci`: https://github.com/mpiannucci
 .. _`Carlos A. Michelén Ströfer`: https://github.com/cmichelenstrofer
 .. _`Henrique Rapizo`: https://github.com/hrapizo
 .. _`John Harrington`: https://github.com/JohnCHarrington
