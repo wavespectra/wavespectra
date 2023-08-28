@@ -24,8 +24,8 @@ def read_ww3(filename_or_fileglob, file_format="netcdf", mapping=MAPPING, chunks
     """Read Spectra from WAVEWATCHIII native netCDF format.
 
     Args:
-        - filename_or_fileglob (str, list, fileobj): filename, fileglob specifying multiple
-          files, or a file object to read.
+        - filename_or_fileglob (str, list, fileobj): filename, fileglob specifying
+          multiple files, or a file object to read.
         - file_format (str): format of file to open, one of `netcdf` or `zarr`.
         - mapping (dict): coordinates mapping from original dataset to wavespectra.
         - chunks (dict): chunk sizes for dimensions in dataset. By default

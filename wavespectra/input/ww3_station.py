@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.input import read_ascii_or_binary
 from wavespectra.core.utils import D2R, R2D
 
 
@@ -26,18 +27,15 @@ def extract_direction(dir):
 
 def read_ww3_station(filename_or_fileglob):
     """Read directional spectra from WW3 station output file.
+
     Args:
         - filename_or_fileglob (str, filelike): filename or file object to read.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from
-        WW3 station output file.
+          WW3 station output file.
     """
-    try:
-        lines = filename_or_fileglob.readlines()
-    except AttributeError:
-        with open(filename_or_fileglob, "r") as f:
-            lines = f.readlines()
+    lines = read_ascii_or_binary(filename_or_fileglob, mode="r")
 
     header = lines.pop(0)
     header_regex = re.compile(HEADER_REGEX_STR)

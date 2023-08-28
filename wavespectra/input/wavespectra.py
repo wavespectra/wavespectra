@@ -10,8 +10,8 @@ def read_wavespectra(filename_or_fileglob, file_format="netcdf", chunks={}):
     """Read Spectra from from netCDF or ZARR format in Wavespectra convention.
 
     Args:
-        - filename_or_fileglob (str, list, fileobj): filename, fileglob specifying multiple
-          files, or a file object to read.
+        - filename_or_fileglob (str, list, fileobj): filename, fileglob specifying
+          multiple files, or a file object to read.
         - file_format (str): format of file to open, one of `netcdf` or `zarr`.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
