@@ -24,8 +24,9 @@ class TestNcSwan(object):
         shutil.rmtree(self.tmp_dir)
 
     def test_ncswan(self):
-        ds_wavespectra = read_ncswan(self.filename)
-        ds_xarray = xr.open_dataset(self.filename)
-        assert ds_xarray.hs.values == pytest.approx(
-            ds_wavespectra.spec.hs().values, rel=0.01
-        )
+        with open(self.filename, "rb") as f:
+            ds_wavespectra = read_ncswan(f)
+            ds_xarray = xr.open_dataset(f)
+            assert ds_xarray.hs.values == pytest.approx(
+                ds_wavespectra.spec.hs().values, rel=0.01
+            )

@@ -9,8 +9,8 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
     """Read Spectra from ECMWF ERA5 netCDF format.
 
     Args:
-        - filename_or_fileglob (str): filename or fileglob specifying multiple
-          files to read.
+        - filename_or_fileglob (str, list, filelike): filename, fileglob specifying multiple
+          files, or filelike object to read.
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
@@ -40,7 +40,7 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
     )
 
     # Convert ERA5 format to wavespectra format
-    dset = 10 ** dset * np.pi / 180
+    dset = 10**dset * np.pi / 180
     dset = dset.fillna(0)
 
     dset[attrs.FREQNAME] = freqs if freqs else default_freqs
