@@ -28,6 +28,8 @@ Internal Changes
   without downloading them first, e.g. from Google Cloud Storage or AWS S3 by providing
   a fsspec file object. By `Matthew Iannucci`_
   (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
+* Replace deprecated `date_parser` argument in pandas.read_csv calls by `date_format`
+  (`GH44 <https://github.com/wavespectra/wavespectra/issues/90>`_).
 
 .. _`Matthew Iannucci`: https://github.com/mpiannucci
 .. _`read_ww3_station`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/ww3_station.py
