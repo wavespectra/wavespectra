@@ -12,6 +12,27 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+
+3.15.1 (2023-08-dd)
+___________________
+
+New Features
+------------
+* New reader `read_ww3_station`_ for WW3 SS3 station spectral files from GFS / NOAA by
+  `Matthew Iannucci`_ (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
+
+Internal Changes
+----------------
+* Changes to all netcdf- and zarr-based, and some ascii-based reader functions to allow
+  providing file objects instead of file paths. This allows reading from remote files
+  without downloading them first, e.g. from Google Cloud Storage or AWS S3 by providing
+  a fsspec file object. By `Matthew Iannucci`_
+  (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
+
+.. _`Matthew Iannucci`: https://github.com/mpiannucci
+.. _`read_ww3_station`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/ww3_station.py
+
+
 3.15.0 (2023-08-dd)
 ___________________
 
