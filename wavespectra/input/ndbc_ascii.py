@@ -114,7 +114,8 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
     elif isinstance(filename, list):
         if not len(filename) == 5:
             raise ValueError(
-                "filename argument for NDBC directional spectra must be list with 5 files [spden,swdir,swdir2,swr1,swr2]"
+                "filename argument for NDBC directional spectra must be "
+                "a list with 5 files [spden, swdir, swdir2, swr1, swr2]"
             )
     else:
         raise TypeError("filename argument must be string, path or list")

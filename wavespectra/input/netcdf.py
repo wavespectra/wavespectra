@@ -2,6 +2,7 @@
 import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
+from wavespectra.input import open_netcdf
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
@@ -37,12 +38,7 @@ def read_netcdf(
           'time' and/or 'station' dims.
 
     """
-    try:
-        dset = xr.open_mfdataset(
-            filename_or_fileglob, chunks=chunks, combine="by_coords"
-        )
-    except ValueError:
-        dset = xr.open_dataset(filename_or_fileglob)
+    dset = open_netcdf(filename_or_fileglob, chunks=chunks)
     coord_map = {
         freqname: attrs.FREQNAME,
         dirname: attrs.DIRNAME,

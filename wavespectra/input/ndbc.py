@@ -27,7 +27,7 @@ def read_ndbc(url, directional=True, dd=10.0, chunks={}):
     """Read Spectra from NDBC netCDF format.
 
     Args:
-        - url (str): Thredds URL or local path of file to read.
+        - url (str): Thredds URL or local path of file or fileobj to read.
         - directional (bool): Constructs 2D spectra if True, returns 1D if False.
         - dd (float): Directional resolution for 2D spectra (deg).
         - chunks (dict): Chunk sizes for dimensions in dataset. By default

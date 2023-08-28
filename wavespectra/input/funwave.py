@@ -3,6 +3,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra import SpecArray
+from wavespectra.input import read_ascii_or_binary
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
@@ -22,11 +23,7 @@ def read_funwave(filename_or_obj):
         - Phases are ignored if present.
 
     """
-    try:
-        data = filename_or_obj.readlines()
-    except AttributeError:
-        with open(filename_or_obj, "r") as f:
-            data = f.readlines()
+    data = read_ascii_or_binary(filename_or_obj, mode="r")
 
     # Remove any empty rows
     data = [row for row in data if row != "\n"]
