@@ -59,7 +59,7 @@ class TestNDBCASCII(object):
             engine="python",
             header=[0, 1],
             parse_dates={"time": [0, 1, 2, 3, 4]},
-            date_parser=lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M"),
+            date_format="%Y %m %d %H %M",
             index_col=0,
         ).sort_values(by="time", ascending=True)
         self.ds_history_1d = read_ndbc_ascii(FILES_DIR / "41010w2019part.txt.gz")

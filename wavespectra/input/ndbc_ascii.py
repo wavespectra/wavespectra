@@ -31,10 +31,10 @@ def read_file(filename):
         col5 = col5.decode("utf-8")
     if col5 == "mm":
         date_columns = [0, 1, 2, 3, 4]
-        date_parser = lambda x: datetime.datetime.strptime(x, "%Y %m %d %H %M")
+        date_format = "%Y %m %d %H %M"
     else:
         date_columns = [0, 1, 2, 3]
-        date_parser = lambda x: datetime.datetime.strptime(x, "%Y %m %d %H")
+        date_format = "%Y %m %d %H"
     # Look for header like this: #YY  MM DD hh mm Sep_Freq  < spec_1 (freq_1) spec_2 (freq_2) spec_3 (freq_3) ... >
     if header.strip()[-1] == ">":  # Realtime file
         df = pd.read_csv(
@@ -44,7 +44,7 @@ def read_file(filename):
             engine="python",
             header=None,
             parse_dates={"time": date_columns},
-            date_parser=date_parser,
+            date_format=date_format,
             index_col=0,
         )
         freqcols = df.select_dtypes(object)  # Get all columns with the frequency
@@ -65,7 +65,7 @@ def read_file(filename):
             engine="python",
             header=[0],
             parse_dates={"time": date_columns},
-            date_parser=date_parser,
+            date_format=date_format,
             index_col=0,
         )
     f.close()
