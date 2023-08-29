@@ -13,21 +13,20 @@ Releases
 ********
 
 
-3.15.1 (2023-08-dd)
+3.15.1 (2023-08-29)
 ___________________
 
 New Features
 ------------
-* New reader `read_ww3_station`_ for WW3 SS3 station spectral files from GFS / NOAA by
+* New reader `read_ww3_station`_ for WW3 stations spectral files from GFS / NOAA by
   `Matthew Iannucci`_ (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
 
 Internal Changes
 ----------------
 * Changes to all netcdf- and zarr-based, and some ascii-based reader functions to allow
-  providing file objects instead of file paths. This allows reading from remote files
-  without downloading them first, e.g. from Google Cloud Storage or AWS S3 by providing
-  a fsspec file object. By `Matthew Iannucci`_
-  (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
+  providing file objects. This allows reading from remote files without downloading
+  them first, e.g. from Google Cloud Storage or AWS S3 by providing a fsspec file
+  object. By `Matthew Iannucci`_ (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
 * Replace deprecated `date_parser` argument in pandas.read_csv calls by `date_format`
   (`GH44 <https://github.com/wavespectra/wavespectra/issues/90>`_).
 
@@ -35,7 +34,7 @@ Internal Changes
 .. _`read_ww3_station`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/ww3_station.py
 
 
-3.15.0 (2023-08-dd)
+3.15.0 (2023-08-14)
 ___________________
 
 This release adds deprecation warnings to functions and modules that will be removed or
