@@ -62,7 +62,7 @@ test = ["pytest"]
 extra = [
     "fsspec",
     "gcsfs",
-    "netCDF4<1.6.0",
+    "netCDF4",
     "zarr",
     "h5netcdf",
 ]
