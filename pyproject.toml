@@ -36,7 +36,6 @@ dependencies = [
     "dask",
     "matplotlib",
     "numba",
-    "numpy",
     "pandas",
     "python-dateutil",
     "pyyaml",

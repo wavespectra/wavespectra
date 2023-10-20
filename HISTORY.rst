@@ -13,6 +13,18 @@ Releases
 ********
 
 
+3.15.2 (2023-10-DD)
+___________________
+
+New Features
+------------
+
+Internal Changes
+----------------
+* Stop pinning netcdf4, opendap issue seems to be fixed.
+* Remove numpy from pyproject.toml since numba installs specific versions
+
+
 3.15.1 (2023-08-29)
 ___________________
 
