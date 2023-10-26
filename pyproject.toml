@@ -28,8 +28,9 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.8,<3.12"
 dependencies = [
     "click",
     "cmocean",
@@ -57,7 +58,7 @@ dynamic = ["version"]
 wavespectra = "wavespectra.cli:main"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "tox", "ruff"]
 extra = [
     "fsspec",
     "gcsfs",
@@ -82,3 +83,34 @@ docs = [
 
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
+
+[tool.ruff.extend-per-file-ignores]
+"wavespectra/__init__.py" = ["F401"]
+"wavespectra/specdataset.py" = ["F401"]
+"wavespectra/input/ww3.py" = ["F401"]
+"wavespectra/input/triaxys.py" = ["F401"]
+"wavespectra/input/wwm.py" = ["F401"]
+"wavespectra/input/netcdf.py" = ["F401"]
+"wavespectra/input/ncswan.py" = ["F401"]
+"wavespectra/input/spotter.py" = ["F401"]
+"wavespectra/input/dataset.py" = ["F401"]
+"wavespectra/input/swan.py" = ["F401"]
+
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    min_version = 4.0
+    env_list =
+      py38
+      py39
+      py310
+
+    [testenv]
+    deps = wavespectra[extra, test]
+    commands = pytest tests
+
+    [testenv:flake8]
+    basepython = python
+    deps = flake8
+    commands = flake8 wavespectra
+"""
