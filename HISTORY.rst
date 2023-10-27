@@ -23,6 +23,7 @@ Internal Changes
 ----------------
 * Stop pinning netcdf4, opendap issue seems to be fixed.
 * Remove numpy from pyproject.toml since numba installs specific versions
+* Move content of tox.ini into pyproject.toml
 
 
 3.15.1 (2023-08-29)
