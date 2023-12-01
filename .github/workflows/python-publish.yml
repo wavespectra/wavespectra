@@ -1,12 +1,8 @@
 name: Python Packaging and docker build
 
-# on:
-#   release:
-#     types: [published]
 on:
-  push:
-    branches:
-      - "docker"
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -43,12 +39,12 @@ jobs:
       run: |
         pip install build
         python -m build -s
-    # -
-    #   name: Publish package
-    #   uses: pypa/gh-action-pypi-publish@v1.8.1
-    #   with:
-    #     password: ${{ secrets.PYPI_API_TOKEN }}
-    #     verbose: true
+    -
+      name: Publish package
+      uses: pypa/gh-action-pypi-publish@v1.8.1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        verbose: true
 
   docker-publish:
     runs-on: ubuntu-latest
