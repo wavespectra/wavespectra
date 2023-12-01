@@ -13,17 +13,18 @@ Releases
 ********
 
 
-3.15.2 (2023-10-DD)
+3.15.2 (2023-12-01)
 ___________________
 
 New Features
 ------------
+* Docker image based on ubuntu:22.04 built and push to github packages (`PR100 <https://github.com/wavespectra/wavespectra/pull/100>`_).
 
 Internal Changes
 ----------------
 * Stop pinning netcdf4, opendap issue seems to be fixed.
-* Remove numpy from pyproject.toml since numba installs specific versions
-* Move content of tox.ini into pyproject.toml
+* Remove numpy from pyproject.toml since numba installs specific versions (Fixes `GH95 <https://github.com/wavespectra/wavespectra/issues/95>`_)
+* Move content of tox.ini into pyproject.toml.
 
 
 3.15.1 (2023-08-29)
@@ -41,7 +42,7 @@ Internal Changes
   them first, e.g. from Google Cloud Storage or AWS S3 by providing a fsspec file
   object. By `Matthew Iannucci`_ (`PR92 <https://github.com/wavespectra/wavespectra/pull/92>`_).
 * Replace deprecated `date_parser` argument in pandas.read_csv calls by `date_format`
-  (`GH44 <https://github.com/wavespectra/wavespectra/issues/90>`_).
+  (`GH90 <https://github.com/wavespectra/wavespectra/issues/90>`_).
 
 .. _`Matthew Iannucci`: https://github.com/mpiannucci
 .. _`read_ww3_station`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/input/ww3_station.py
