@@ -13,6 +13,21 @@ Releases
 ********
 
 
+3.16.1 (2023-12-06)
+___________________
+
+New Features
+------------
+* Allow ignoring missing sites within tolerance in the `nearest` method
+(`PR102 <https://github.com/wavespectra/wavespectra/pull/102>`_).
+
+Internal Changes
+----------------
+* Ensure at least one site is found in `nearest` method.
+* Ensure sites are returned in the same order as the input dataset in `nearest` method
+  when the `unique` option is selected.
+
+
 3.15.2 (2023-12-01)
 ___________________
 
