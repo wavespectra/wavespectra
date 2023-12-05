@@ -253,7 +253,7 @@ class TestSelCoordinatesConventions:
         )
         assert np.array_equal(ds.lon.values, dset.lon.values)
 
-    def test_bbox_both_180(self):
+    def test_boundary_both_180(self):
         """Test bbox with both dataset and slice in [-180 <--> 180]."""
         dset = self.dset.copy(deep=True)
         dset["lon"].values = [-10, 10]
