@@ -157,7 +157,7 @@ def sel_nearest(
         dset_lats (array): Latitude of stations in dset.
         missing (str): Action to take if no site is found within tolerance:
             - 'raise': raise an error
-            - 'ignore': return empty dataset
+            - 'ignore': skip site
 
     Returns:
         Selected SpecDataset at locations defined by (lons, lats).
@@ -180,6 +180,10 @@ def sel_nearest(
                     f"deg away but tolerance is {tolerance:g} deg."
                 )
             elif missing == "ignore":
+                logger.debug(
+                    f"No site within tolerance={tolerance} deg from (lat={lat}, "
+                    f"lon={lon}), skipping"
+                )
                 continue
         if exact and closest_dist > 0:
             raise AssertionError(
