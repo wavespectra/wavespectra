@@ -1,13 +1,12 @@
 """Wrapper around the xarray dataset."""
+import types
 import os
 import re
 import sys
-import types
-
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core.select import sel_bbox, sel_boundary, sel_idw, sel_nearest
+from wavespectra.core.select import sel_idw, sel_nearest, sel_bbox
 from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -112,7 +111,7 @@ class SpecDataset(metaclass=Plugin):
         tolerance=2.0,
         dset_lons=None,
         dset_lats=None,
-        **kwargs,
+        **kwargs
     ):
         """Select stations near or at locations defined by (lons, lats) vector.
 
@@ -149,7 +148,6 @@ class SpecDataset(metaclass=Plugin):
             "idw": sel_idw,
             "bbox": sel_bbox,
             "nearest": sel_nearest,
-            "boundary": sel_boundary,
             None: sel_nearest,
         }
         try:
@@ -172,6 +170,6 @@ class SpecDataset(metaclass=Plugin):
             tolerance=tolerance,
             dset_lons=dset_lons,
             dset_lats=dset_lats,
-            **kwargs,
+            **kwargs
         )
         return dsout

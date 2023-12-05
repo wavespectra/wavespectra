@@ -1,11 +1,10 @@
 """Interpolate stations."""
-import logging
-
 import numpy as np
 import xarray as xr
-from scipy.spatial import cKDTree
+import logging
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
+
 
 logger = logging.getLogger(__name__)
 
@@ -92,10 +91,7 @@ class Coordinates:
             List of distances between each station and site.
 
         """
-        dist = np.sqrt(
-            (self.dset_lons % 360 - np.array(lon) % 360) ** 2
-            + (self.dset_lats - np.array(lat)) ** 2
-        )
+        dist = np.sqrt((self.dset_lons % 360 - np.array(lon) % 360) ** 2 + (self.dset_lats - np.array(lat)) ** 2)
         if isinstance(dist, xr.DataArray):
             dist = dist.values
         return np.abs(dist)
@@ -123,12 +119,12 @@ class Coordinates:
     def nearest(self, lon, lat):
         """Nearest station in (dset_lons, dset_lats) to site (lon, lat).
 
-        Args:
-            lon (float): Longitude to locate from lons.
-            lat (float): Latitude to locate from lats.
+            Args:
+                lon (float): Longitude to locate from lons.
+                lat (float): Latitude to locate from lats.
 
-        Returns:
-            Index and distance of closest station.
+            Returns:
+                Index and distance of closest station.
 
         """
         dist = self.distance(lon, lat)
@@ -168,9 +164,7 @@ def sel_nearest(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
-    )
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
 
     station_ids = []
     for lon, lat in zip(coords.lons, coords.lats):
@@ -223,9 +217,7 @@ def sel_idw(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
-    )
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
 
     mask = dset.isel(site=0, drop=True) * np.nan
     dsout = []
@@ -302,9 +294,7 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
-    )
+    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
 
     minlon = min(coords.lons) - tolerance
     minlat = min(coords.lats) - tolerance
@@ -331,7 +321,7 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
                 & (coords.dset_lats >= minlat)
                 & (coords.dset_lons <= minlon)
                 & (coords.dset_lats <= maxlat)
-            )[0],
+            )[0]
         )
 
     if station_ids.size == 0:
@@ -348,51 +338,5 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
         dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
     dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
-
-    return dsout
-
-
-def sel_boundary(dset, lons, lats, tolerance=0.1, dset_lons=None, dset_lats=None):
-    """Select sites from wthin the given dset that are within a given distance of any of the passed points
-    Primary use case is to extract spectral points from a parent spectral forcing dataset that
-    are within a certain distance of nest boundary.
-
-    Args:
-        dset (Dataset): Stations SpecDataset to select from.
-        lons (array): Longitude of sites
-        lats (array): Latitude of sites
-        tolerance (float): Minimum distance from any site (degrees)
-        dset_lons (array): Longitude of stations in dset.
-        dset_lats (array): Latitude of stations in dset.
-
-    Returns:
-        Selected SpecDataset point within the miniumum_disance any site passed
-
-    Note:
-        Args `dset_lons`, `dset_lats` are not required but can improve performance when
-            `dset` is chunked with site=1 (expensive to access station coordinates) and
-            improve precision if projected coordinates are provided at high latitudes.
-
-    """
-    coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
-    )
-
-    # Create kdtree of boundary
-    input_points = list(zip(coords.dset_lons, coords.dset_lats))
-    boundary = list(zip(coords.lons, coords.lats))
-    tree = cKDTree(np.array(boundary))
-
-    # Find the indices of points in forcing dataset within the distance_threshold from any point in the boundary
-    within_distance_indices = tree.query_ball_point(np.array(input_points), tolerance)
-    result_list = [i for i, indices in enumerate(within_distance_indices) if indices]
-
-    dsout = dset.isel(**{attrs.SITENAME: result_list})
-
-    # Return longitudes in the convention provided
-    if coords.consistent is False:
-        dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
-
-    dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(result_list))})
 
     return dsout
