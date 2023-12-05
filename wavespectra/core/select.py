@@ -1,10 +1,10 @@
 """Interpolate stations."""
-import numpy as np
-import xarray as xr
 import logging
 
-from wavespectra.core.attributes import attrs, set_spec_attributes
+import numpy as np
+import xarray as xr
 
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 logger = logging.getLogger(__name__)
 
@@ -119,12 +119,12 @@ class Coordinates:
     def nearest(self, lon, lat):
         """Nearest station in (dset_lons, dset_lats) to site (lon, lat).
 
-            Args:
-                lon (float): Longitude to locate from lons.
-                lat (float): Latitude to locate from lats.
+        Args:
+            lon (float): Longitude to locate from lons.
+            lat (float): Latitude to locate from lats.
 
-            Returns:
-                Index and distance of closest station.
+        Returns:
+            Index and distance of closest station.
 
         """
         dist = self.distance(lon, lat)
@@ -142,6 +142,7 @@ def sel_nearest(
     exact=False,
     dset_lons=None,
     dset_lats=None,
+    missing="raise",
 ):
     """Select sites from nearest distance.
 
@@ -154,6 +155,9 @@ def sel_nearest(
         exact (bool): Require exact matches.
         dset_lons (array): Longitude of stations in dset.
         dset_lats (array): Latitude of stations in dset.
+        missing (str): Action to take if no site is found within tolerance:
+            - 'raise': raise an error
+            - 'ignore': return empty dataset
 
     Returns:
         Selected SpecDataset at locations defined by (lons, lats).
@@ -170,10 +174,13 @@ def sel_nearest(
     for lon, lat in zip(coords.lons, coords.lats):
         closest_id, closest_dist = coords.nearest(lon, lat)
         if closest_dist > tolerance:
-            raise AssertionError(
-                f"Nearest site from (lat={lat}, lon={lon}) is {closest_dist:g} "
-                f"deg away but tolerance is {tolerance:g} deg."
-            )
+            if missing == "raise":
+                raise AssertionError(
+                    f"Nearest site from (lat={lat}, lon={lon}) is {closest_dist:g} "
+                    f"deg away but tolerance is {tolerance:g} deg."
+                )
+            elif missing == "ignore":
+                continue
         if exact and closest_dist > 0:
             raise AssertionError(
                 f"Exact match required but no site at (lat={lat}, lon={lon}), "
