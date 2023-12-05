@@ -176,24 +176,32 @@ def sel_nearest(
         if closest_dist > tolerance:
             if missing == "raise":
                 raise AssertionError(
-                    f"Nearest site from (lat={lat}, lon={lon}) is {closest_dist:g} "
-                    f"deg away but tolerance is {tolerance:g} deg."
+                    f"Nearest site in dataset from ({lon, lat}) is {closest_dist:g} "
+                    f"deg away but tolerance is {tolerance:g} deg"
                 )
             elif missing == "ignore":
                 logger.debug(
-                    f"No site within tolerance={tolerance} deg from (lat={lat}, "
-                    f"lon={lon}), skipping"
+                    f"No site in dataset within tolerance={tolerance} deg "
+                    f"from requested location ({lon, lat}), skipping"
                 )
                 continue
         if exact and closest_dist > 0:
             raise AssertionError(
-                f"Exact match required but no site at (lat={lat}, lon={lon}), "
+                f"Exact match required but no site in dataset at ({lon, lat}), "
                 f"nearest site is {closest_dist} deg away."
             )
+        if unique and closest_id in station_ids:
+            logger.debug(
+                f"Nearest site at ({lon, lat}) is repeated, skipping "
+                f"because unique=True"
+            )
+            continue
         station_ids.append(closest_id)
-    if unique:
-        station_ids = list(set(station_ids))
-
+    if not station_ids:
+        raise ValueError(
+            f"No site in dataset found within tolerance={tolerance} deg of any site "
+            f"{list(zip(coords.lons, coords.lats))}"
+        )
     dsout = dset.isel(**{attrs.SITENAME: station_ids})
 
     # Return longitudes in the convention provided

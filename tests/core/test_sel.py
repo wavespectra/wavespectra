@@ -72,6 +72,40 @@ class TestSel:
         )
         assert dset[attrs.SITENAME].size == len(self.lons_exact)
 
+    def test_dset_sel_nearest_dont_tolerate_missing(self):
+        """Assert missing values raise by default."""
+        with pytest.raises(AssertionError):
+            dset = self.dset.spec.sel(
+                lons=self.lons,
+                lats=self.lats,
+                method="nearest",
+                unique=True,
+                tolerance=0.01,
+            )
+
+    def test_dset_sel_nearest_tolerate_missing(self):
+        """Assert missing values are ignored if specified."""
+        dset = self.dset.spec.sel(
+            lons=self.lons,
+            lats=self.lats,
+            method="nearest",
+            unique=True,
+            tolerance=0.01,
+            missing="ignore",
+        )
+
+    def test_dset_sel_nearest_at_least_one(self):
+        """Assert some site needs to be found even if missing=ignore."""
+        with pytest.raises(ValueError):
+            dset = self.dset.spec.sel(
+                lons=np.array(self.lons)+10,
+                lats=self.lats,
+                method="nearest",
+                unique=True,
+                tolerance=0.01,
+                missing="ignore",
+            )
+
     def test_dset_sel_none(self):
         """Assert that sel/none method runs."""
         dset = self.dset.spec.sel(
