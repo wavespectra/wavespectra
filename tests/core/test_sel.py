@@ -1,10 +1,11 @@
 """Unit testing for SpecDataset wrapper around DataArray."""
 import os
-import pytest
-import numpy as np
 
+import numpy as np
+import pytest
+
+from wavespectra import read_era5, read_ww3
 from wavespectra.core.attributes import attrs
-from wavespectra import read_ww3, read_era5
 from wavespectra.core.select import Coordinates
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -44,6 +45,16 @@ class TestSel:
             lons=self.dset.lon.values,
             lats=self.dset.lat.values,
             method="bbox",
+            tolerance=0.0,
+        )
+        dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
+
+    def test_dset_sel_boundary(self):
+        """Assert that sel/bbox method runs."""
+        dset = self.dset.spec.sel(
+            lons=self.dset.lon.values,
+            lats=self.dset.lat.values,
+            method="boundary",
             tolerance=0.0,
         )
         dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
@@ -123,6 +134,7 @@ class TestSel:
             upper = np.array([max(s1, s2) for s1, s2 in zip(site0, site1)])
             assert (upper - idw > 0).all() and (idw - lower > 0).all()
 
+
 class TestSelCoordinatesConventions:
     """Test Sel methods with different coordinates conventions."""
 
@@ -152,12 +164,7 @@ class TestSelCoordinatesConventions:
         dset = self.dset.copy(deep=True)
         dset["lon"].values = [-10, 10]
         dset["lat"].values = [30, 30]
-        ds = dset.spec.sel(
-            method="nearest",
-            lons=[-9],
-            lats=[31],
-            tolerance=5.0
-        )
+        ds = dset.spec.sel(method="nearest", lons=[-9], lats=[31], tolerance=5.0)
         assert ds.lon == -10
 
     def test_nearest_dset_360_slice_180(self):
@@ -165,12 +172,7 @@ class TestSelCoordinatesConventions:
         dset = self.dset.copy(deep=True)
         dset["lon"].values = [0, 350]
         dset["lat"].values = [30, 30]
-        ds = dset.spec.sel(
-            method="nearest",
-            lons=[-9],
-            lats=[31],
-            tolerance=5.0
-        )
+        ds = dset.spec.sel(method="nearest", lons=[-9], lats=[31], tolerance=5.0)
         assert ds.lon == -10
 
     def test_nearest_dset_180_slice_360(self):
@@ -185,7 +187,7 @@ class TestSelCoordinatesConventions:
             lats=[31],
             tolerance=5.0,
             dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values
+            dset_lats=dset.lat.values,
         )
         assert ds.lon == 350
 
@@ -247,7 +249,24 @@ class TestSelCoordinatesConventions:
             lats=[-35, 35],
             tolerance=0.0,
             dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values
+            dset_lats=dset.lat.values,
+        )
+        assert np.array_equal(ds.lon.values, dset.lon.values)
+
+    def test_bbox_both_180(self):
+        """Test bbox with both dataset and slice in [-180 <--> 180]."""
+        dset = self.dset.copy(deep=True)
+        dset["lon"].values = [-10, 10]
+        dset["lat"].values = [30, 30]
+        lon = -9
+
+        ds = dset.spec.sel(
+            method="boundary",
+            lons=[-10, 10],
+            lats=[-35, 35],
+            tolerance=50,
+            dset_lons=dset.lon.values,
+            dset_lats=dset.lat.values,
         )
         assert np.array_equal(ds.lon.values, dset.lon.values)
 
@@ -262,9 +281,11 @@ class TestSelCoordinatesConventions:
             lats=[-35, 35],
             tolerance=0.0,
             dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values
+            dset_lats=dset.lat.values,
         )
-        assert np.array_equal(sorted(ds.lon.values % 360), sorted(dset.lon.values % 360))
+        assert np.array_equal(
+            sorted(ds.lon.values % 360), sorted(dset.lon.values % 360)
+        )
 
     def test_bbox_dset_180_slice_360(self):
         """Test bbox with Dataset in [-180 <--> 180] and slice in [0 <--> 360]."""
@@ -277,6 +298,6 @@ class TestSelCoordinatesConventions:
             lats=[-35, 35],
             tolerance=0.0,
             dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values
+            dset_lats=dset.lat.values,
         )
         assert int(ds.lon) == 350
