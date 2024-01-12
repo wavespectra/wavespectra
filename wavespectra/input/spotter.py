@@ -5,6 +5,8 @@ Functions:
     read_spotters: Read multiple spotter files into single Dataset
 
 """
+import types
+from pathlib import Path
 import glob
 import os
 import getpass
@@ -446,6 +448,10 @@ class Spotter:
             filenames = sorted(self._filename_or_fileglob)
         elif isinstance(self._filename_or_fileglob, str):
             filenames = sorted(glob.glob(self._filename_or_fileglob))
+        elif isinstance(self._filename_or_fileglob, types.GeneratorType):
+            filenames = sorted(self._filename_or_fileglob)
+        elif isinstance(self._filename_or_fileglob, Path):
+            filenames = sorted(glob.glob(str(self._filename_or_fileglob)))
         if not filenames:
             raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames
