@@ -430,8 +430,8 @@ class SpecArray(object):
         True average period from the 1st spectral moment.
 
         """
-        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
-        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
+        m0 = self.momf(0)
+        m1 = self.momf(1)
         tm01 = m0 / m1
         tm01.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm01.rename(self._my_name())
