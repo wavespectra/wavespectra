@@ -78,8 +78,8 @@ def to_octopus(
                 dset.spec.stats(stats + ["dpm", "dspr"]),
                 dset.spec.stats(stats, names=[s + "_swell" for s in stats], fmax=fcut),
                 dset.spec.stats(stats, names=[s + "_sea" for s in stats], fmin=fcut),
-                dset.spec.momf(mom=1).sum(dim="dir").rename("momf1"),
-                dset.spec.momf(mom=2).sum(dim="dir").rename("momf2"),
+                dset.spec.momf(mom=1).rename("momf1"),
+                dset.spec.momf(mom=2).rename("momf2"),
                 dset.spec.momd(mom=0)[0].rename("momd"),
                 dset.spec.to_energy(),
                 (dset.efth.spec.df * dset.spec.momd(mom=0)[0])
