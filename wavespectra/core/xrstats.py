@@ -45,7 +45,7 @@ def peak_wave_direction(dset):
     darr.name = "dp"
     darr.attrs = {
         "standard_name": attrs.ATTRS.dp.standard_name,
-        "units": attrs.ATTRS.dp.units
+        "units": attrs.ATTRS.dp.units,
     }
     return darr
 
@@ -93,16 +93,56 @@ def mean_direction_at_peak_wave_period(dset):
     darr.name = "dpm"
     darr.attrs = {
         "standard_name": attrs.ATTRS.dpm.standard_name,
-        "units": attrs.ATTRS.dpm.units
+        "units": attrs.ATTRS.dpm.units,
     }
-    return darr #.where((darr >= 0) & (darr <= 360))
+    return darr  # .where((darr >= 0) & (darr <= 360))
+
+
+def alpha(dset, smooth=True):
+    """Jonswap fetch dependant scaling coefficient alpha.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - smooth (bool): Choose between the smooth or discrete peak frequency.
+
+    Returns:
+        - alpha (xr.DataArray): Peak wave period data array.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+
+    # Peak frequency
+    fp = 1 / peak_wave_period(dset, smooth=smooth)
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
+
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        npstats.alpha_gufunc,
+        dset.astype("float64"),
+        dset[attrs.FREQNAME].astype("float32"),
+        fp.astype("float32"),
+        input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], []],
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "alpha"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.alpha.standard_name,
+        "units": attrs.ATTRS.alpha.units,
+    }
+    return darr
 
 
 def peak_wave_period(dset, smooth=True):
     """Smooth Peak wave period Tp.
 
     Args:
-        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - dset (xr.DataArray, xr.Dataset): 1D spectra array or dataset in wavespectra convention.
         - smooth (bool): Choose between the smooth (tps) or the raw (tp) peak wave period type.
 
     Returns:
@@ -118,10 +158,6 @@ def peak_wave_period(dset, smooth=True):
         func = npstats.tps_gufunc
     else:
         func = npstats.tp_gufunc
-
-    # Integrate over directions
-    if attrs.DIRNAME in dset.dims:
-        dset = dset.sum(dim=attrs.DIRNAME)
 
     # Ensure single chunk along input core dimensions
     dset = dset.chunk({attrs.FREQNAME: None})
@@ -143,6 +179,50 @@ def peak_wave_period(dset, smooth=True):
     darr.name = "tp"
     darr.attrs = {
         "standard_name": attrs.ATTRS.tp.standard_name,
-        "units": attrs.ATTRS.tp.units
+        "units": attrs.ATTRS.tp.units,
+    }
+    return darr
+
+
+def peak_directional_spread(dset, mom=1):
+    """Wave spreading at the peak wave frequency Dpspr.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): Spectra array or dataset in wavespectra convention.
+        - mom (int): Directional moment for calculating the mth directional spread.
+
+    Returns:
+        - dpspr (xr.DataArray): Wave spreading at the peak wave frequency data array.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+
+    # Dimensions checking
+    if attrs.DIRNAME not in dset.dims:
+        raise ValueError("Cannot calculate dpspr from frequency spectra.")
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
+
+    # Frequency dependant directional spread and frequency peaks
+    fdspr = dset.spec.fdspr(mom=mom)
+    ipeak = dset.spec._peak(dset.spec.oned())
+
+    # Apply function over the full dataset
+    darr = xr.apply_ufunc(
+        npstats.dpspr_gufunc,
+        ipeak.astype("int64"),
+        fdspr.astype("float64"),
+        input_core_dims=[[], [attrs.FREQNAME]],
+        dask="parallelized",
+        output_dtypes=["float32"],
+    )
+    # Finalise
+    darr.name = "dpspr"
+    darr.attrs = {
+        "standard_name": attrs.ATTRS.dpspr.standard_name,
+        "units": attrs.ATTRS.dpspr.units,
     }
     return darr

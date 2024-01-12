@@ -70,10 +70,13 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docs/_build
+docs/generated
 docs/auto_gallery
 docs/savefig
 docs/generated
+docs/wavespectra*.rst
+docs/modules.rst
 
 # PyBuilder
 target/

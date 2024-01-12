@@ -1,12 +1,26 @@
 """Spectra object based on DataArray to calculate spectral statistics.
 
 Reference:
+    - Bunney, C., Saulter, A., Palmer, T. (2014). Reconstruction of complex 2D wave spectra for
+      rapid deployment of nearshore wave models. From Sea to Shore—Meeting the Challenges of the
+      Sea (Coasts, Marine Structures and Breakwaters 2013), W. Allsop and K. Burgess, Eds., 1050–1059.
+
     - Cartwright and Longuet-Higgins (1956). The Statistical Distribution of the Maxima
       of a Random Function, Proceedings of the Royal Society of London. Series A,
       Mathematical and Physical Sciences, 237, 212-232.
+
+    - Hanson, Jeffrey L., et al. (2009). Pacific hindcast performance of three numerical wave models.
+      JTECH 26.8 (2009): 1614-1633.
+
     - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+
+    - Goda, Y. (1970). Numerical experiments on wave statistics with spectral simulation.
+      Report of the Port and Harbour Research Institute 9, 3-57.
+
     - Longuet-Higgins (1975). On the joint distribution of the periods and amplitudes
       of sea waves, Journal of Geophysical Research, 80, 2688-2694.
+
+    - Phillips (1957). On the generation of waves by turbulent wind, Journal of Fluid Mechanics, 2, pp 426-434.
 
 """
 import re
@@ -15,13 +29,14 @@ import xarray as xr
 from itertools import product
 import inspect
 import warnings
+from scipy.constants import g, pi
 
-from wavespectra.core.attributes import attrs
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec
+from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
 from wavespectra.core import xrstats
+from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma, fit_gaussian_spectra, fit_gaussian_gw
 from wavespectra.plot import polar_plot, CBAR_TICKS
-
-from typing_extensions import deprecated
+from wavespectra.partition.partition import Partition
 
 
 @xr.register_dataarray_accessor("spec")
@@ -35,7 +50,6 @@ class SpecArray(object):
         # These are set when property is first called to avoid computing more than once
         self._df = None
         self._dd = None
-        self._dfarr = None
 
     def __repr__(self):
         return re.sub(r"<([^\s]+)", "<%s" % (self.__class__.__name__), str(self._obj))
@@ -54,43 +68,22 @@ class SpecArray(object):
             return None
 
     @property
+    def _spec_dims(self):
+        """Return the set of spectral dimensions in underlying dataset."""
+        return [d for d in self._obj.dims if d in [attrs.FREQNAME, attrs.DIRNAME]]
+
+    @property
     def _non_spec_dims(self):
         """Return the set of non-spectral dimensions in underlying dataset."""
         return set(self._obj.dims).difference((attrs.FREQNAME, attrs.DIRNAME))
 
     @property
-    @deprecated("spec.dfarr will be removed in **4.0.0**, use spec.df instead")
-    def dfarr(self):
-        """Frequency resolution DataArray."""
-        if self._dfarr is not None:
-            return self._dfarr
-        if len(self.freq) > 1:
-            fact = np.hstack((1.0, np.full(self.freq.size - 2, 0.5), 1.0))
-            ldif = np.hstack((0.0, np.diff(self.freq)))
-            rdif = np.hstack((np.diff(self.freq), 0.0))
-            self._dfarr = xr.DataArray(data=fact * (ldif + rdif), coords=self.freq.coords)
-        else:
-            self._dfarr = xr.DataArray( data=np.array((1.0,)), coords=self.freq.coords)
-        return self._dfarr
-
-    @property
-    @deprecated(
-        "This method will return a DataArray instead of a numpy array in **4.0.0** "
-        "and will replace spec.dfarr"
-    )
     def df(self):
-        """Frequency resolution numpy array.
-
-        TODO: Check if this can be removed in favor of dfarr.
-
-        """
-        if self._df is not None:
-            return self._df
-        if len(self.freq) > 1:
-            self._df = abs(self.freq[1:].values - self.freq[:-1].values)
+        """Frequency resolution DataArray."""
+        if self.freq.size > 1:
+            return xr.DataArray(np.gradient(self.freq), coords=self.freq.coords)
         else:
-            self._df = np.array((1.0,))
-        return self._df
+            return xr.DataArray(data=np.array((1.0,)), coords=self.freq.coords)
 
     @property
     def dd(self):
@@ -103,12 +96,9 @@ class SpecArray(object):
             self._dd = 1.0
         return self._dd
 
-    def _twod(self, darray, dim=attrs.DIRNAME):
-        """Ensure dir,freq dims are present so moment calculations won't break."""
-        if dim not in darray.dims:
-            return darray.expand_dims(dim={dim: [1]}, axis=-1)
-        else:
-            return darray
+    @property
+    def partition(self):
+        return Partition(self._obj)
 
     def _interp_freq(self, fint):
         """Linearly interpolate spectra at frequency fint.
@@ -151,12 +141,18 @@ class SpecArray(object):
             - Flat peaks are ignored by this criterium.
 
         """
-        fwd = xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
-            attrs.FREQNAME, n=1, label="upper"
-        ) > 0
-        bwd = xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
+        fwd = (
+            xr.concat((arr.isel(freq=0), arr), dim=attrs.FREQNAME).diff(
+                attrs.FREQNAME, n=1, label="upper"
+            )
+            > 0
+        )
+        bwd = (
+            xr.concat((arr, arr.isel(freq=-1)), dim=attrs.FREQNAME).diff(
                 attrs.FREQNAME, n=1, label="lower"
-        ) < 0
+            )
+            < 0
+        )
         ispeak = np.logical_and(fwd, bwd)
         return arr.where(ispeak, 0).argmax(dim=attrs.FREQNAME).astype(int)
 
@@ -184,6 +180,14 @@ class SpecArray(object):
             )
             return ""
 
+    def _get_cf_attributes(self, name):
+        """Returns dict with standard_name and units for method defined by name."""
+        return {"standard_name": self._standard_name(name), "units": self._units(name)}
+
+    def _is_circular(self):
+        """Check if directions cover 360 degrees."""
+        return (abs(self.dir.max() - self.dir.min() + self.dd - 360)) < (0.1 * self.dd)
+
     def oned(self, skipna=True):
         """Returns the one-dimensional frequency spectra.
 
@@ -196,11 +200,13 @@ class SpecArray(object):
 
         """
         if self.dir is not None:
-            return self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
+            dsout = self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
         else:
-            return self._obj.copy(deep=True)
+            dsout = self._obj.copy(deep=True)
+        set_spec_attributes(dsout)
+        return dsout
 
-    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, rechunk=True):
+    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True):
         """Split spectra over freq and/or dir dims.
 
         Args:
@@ -208,11 +214,9 @@ class SpecArray(object):
             - fmax (float): highest frequency to split spectra, by default the highest.
             - dmin (float): lowest direction to split spectra at, by default min(dir).
             - dmax (float): highest direction to split spectra at, by default max(dir).
+            - interpolate (bool): Interpolate spectra at frequency cutoffs they
+              are not available in coordinates of input spectra.
             - rechunk (bool): Rechunk split dims so there is one single chunk.
-
-        Note:
-            - Spectra are interpolated at `fmin` / `fmax` if they are not in self.freq.
-            - Recommended rechunk==True so ufuncs with freq/dir as core dims will work.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -227,27 +231,35 @@ class SpecArray(object):
         if attrs.DIRNAME in other.dims and (dmin or dmax):
             other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
 
+        tol = 1e-10
+
         # Interpolate at fmin
-        if fmin is not None and (other.freq.min() > fmin) and (self.freq.min() <= fmin):
-            other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
+        if interpolate and fmin is not None:
+            if abs(float(other.freq[0]) - fmin) > tol:
+                other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
-        if fmax is not None and (other.freq.max() < fmax) and (self.freq.max() >= fmax):
-            other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
+        if interpolate and fmax is not None:
+            if abs(float(other.freq[-1]) - fmax) > tol:
+                other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
         other.freq.attrs = self._obj.freq.attrs
-        other.dir.attrs = self._obj.dir.attrs
+        chunks = {attrs.FREQNAME: -1}
+        if attrs.DIRNAME in other.dims:
+            other.dir.attrs = self._obj.dir.attrs
+            chunks.update({attrs.DIRNAME: -1})
 
         if rechunk:
-            other = other.chunk({attrs.FREQNAME: None, attrs.DIRNAME: None})
+            other = other.chunk(chunks)
 
         return other
 
-    def to_energy(self, standard_name="sea_surface_wave_directional_energy_spectra"):
-        """Convert from energy density (m2/Hz/degree) into wave energy spectra (m2)."""
-        E = self._obj * self.dfarr * self.dd
-        E.attrs.update({"standard_name": standard_name, "units": "m^{2}"})
-        return E.rename("energy")
+    def to_energy(self):
+        """Convert spectra from energy density (m2/Hz/degree) into wave energy (m2)."""
+        energy = self._obj * self.df * self.dd
+        set_spec_attributes(energy)
+        energy.attrs.update(self._get_cf_attributes(attrs.ESPECNAME))
+        return energy.rename(attrs.ESPECNAME)
 
     def hs(self, tail=True):
         """Spectral significant wave height Hm0.
@@ -257,7 +269,7 @@ class SpecArray(object):
 
         """
         Sf = self.oned(skipna=False)
-        E = (Sf * self.dfarr).sum(dim=attrs.FREQNAME)
+        E = (Sf * self.df).sum(dim=attrs.FREQNAME)
         if tail and Sf.freq[-1] > 0.333:
             E += (
                 0.25
@@ -265,13 +277,27 @@ class SpecArray(object):
                 * Sf.freq[-1].values
             )
         hs = 4 * np.sqrt(E)
-        hs.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        hs.attrs.update(self._get_cf_attributes(self._my_name()))
         return hs.rename(self._my_name())
+
+    def hrms(self, tail=True):
+        """Root mean square wave height Hrms.
+
+        Args:
+            - tail (bool): if True fit high-frequency tail before integrating spectra.
+
+        """
+        Sf = self.oned(skipna=False)
+        E = (Sf * self.df).sum(dim=attrs.FREQNAME)
+        if tail and Sf.freq[-1] > 0.333:
+            E += (
+                0.25
+                * Sf[{attrs.FREQNAME: -1}].drop_vars(attrs.FREQNAME)
+                * Sf.freq[-1].values
+            )
+        hrms = np.sqrt(E * 8)
+        hrms.attrs.update(self._get_cf_attributes(self._my_name()))
+        return hrms.rename(self._my_name())
 
     def hmax(self):
         """Maximum wave height Hmax.
@@ -281,7 +307,7 @@ class SpecArray(object):
         not by much since the probability density function is rather narrow).
 
         Reference:
-            - Holthuijsen LH (2005). Waves in oceanic and coastal waters (page 82).
+            - Holthuijsen (2005).
 
         """
         if attrs.TIMENAME in self._obj.coords and self._obj.time.size > 1:
@@ -293,12 +319,7 @@ class SpecArray(object):
         else:
             k = 1.86  # assumes N = 3*3600 / 10.8
         hmax = k * self.hs()
-        hmax.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        hmax.attrs.update(self._get_cf_attributes(self._my_name()))
         return hmax.rename(self._my_name())
 
     def scale_by_hs(
@@ -344,19 +365,57 @@ class SpecArray(object):
             - smooth (bool): True for the smooth wave period, False for the discrete
               period corresponding to the maxima in the frequency spectra.
 
+        Note:
+            - The smooth wave period is defined from a parabolic fit around the
+              discrete peak of the frequency spectrum.
+
         """
-        return xrstats.peak_wave_period(self._obj, smooth=smooth)
+        return xrstats.peak_wave_period(self.oned(), smooth=smooth)
+
+    def fp(self, smooth=True):
+        """Peak wave frequency Fp.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+
+        Note:
+            - The smooth wave period is defined from a parabolic fit around the
+              discrete peak of the frequency spectrum.
+
+        """
+        fp = 1 / self.tp(smooth=smooth)
+        fp.attrs.update(self._get_cf_attributes(self._my_name()))
+        return fp.rename(self._my_name())
 
     def momf(self, mom=0):
-        """Calculate given frequency moment."""
+        """Frequency moment.
+
+        Args:
+            - mom (int): Moment to calculate.
+
+        Returns:
+            - mf (DataArray): The mth frequency moments for each direction.
+
+        """
         fp = self.freq ** mom
-        mf = self.dfarr * fp * self._obj
-        return self._twod(mf.sum(dim=attrs.FREQNAME, skipna=False)).rename(
-            f"mom{mom:0.0f}"
-        )
+        mf = self.df * fp * self._obj
+        return mf.sum(dim=attrs.FREQNAME, skipna=False).rename(f"mom{mom:0.0f}")
 
     def momd(self, mom=0, theta=90.0):
-        """Calculate given directional moment."""
+        """Directional moment.
+
+        Args:
+            - mom (int): Moment to calculate.
+            - theta (float): angle offset.
+
+        Returns:
+            - msin (DataArray): Sin component of the mth directional moment
+              for each frequency.
+            - mcos (DataArray): Cosine component of the mth directional moment
+              for each frequency.
+
+        """
         if self.dir is None:
             raise ValueError("Cannot calculate momd from 1d, frequency spectra.")
         cp = np.cos(np.radians(180 + theta - self.dir)) ** mom
@@ -371,13 +430,10 @@ class SpecArray(object):
         True average period from the 1st spectral moment.
 
         """
-        tm01 = self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(1).sum(dim=attrs.DIRNAME)
-        tm01.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
+        tm01 = m0 / m1
+        tm01.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm01.rename(self._my_name())
 
     def tm02(self):
@@ -386,15 +442,10 @@ class SpecArray(object):
         Average period of zero up-crossings (Zhang, 2011).
 
         """
-        tm02 = np.sqrt(
-            self.momf(0).sum(dim=attrs.DIRNAME) / self.momf(2).sum(dim=attrs.DIRNAME)
-        )
-        tm02.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        tm02 = np.sqrt(m0 / m2)
+        tm02.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm02.rename(self._my_name())
 
     def dm(self):
@@ -407,12 +458,7 @@ class SpecArray(object):
             momc.sum(dim=attrs.FREQNAME, skipna=False),
         )
         dm = (270 - R2D * dm) % 360.0
-        dm.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        dm.attrs.update(self._get_cf_attributes(self._my_name()))
         return dm.rename(self._my_name())
 
     def dp(self):
@@ -436,46 +482,56 @@ class SpecArray(object):
         return xrstats.mean_direction_at_peak_wave_period(self._obj)
 
     def dspr(self):
-        """Directional wave spreading Dspr.
+        """Mean directional wave spread Dspr.
 
         The one-sided directional width of the spectrum.
 
         """
         if self.dir is None:
             raise ValueError("Cannot calculate dspr from 1d, frequency spectra.")
-        moms, momc = self.momd(1)
-        # Manipulate dimensions so calculations work
-        moms = self._twod(moms, dim=attrs.DIRNAME)
-        momc = self._twod(momc, dim=attrs.DIRNAME)
-        mom0 = self._twod(self.momf(0), dim=attrs.FREQNAME).spec.oned(skipna=False)
-
-        dspr = (
-            2
-            * R2D ** 2
-            * (1 - ((moms.spec.momf() ** 2 + momc.spec.momf() ** 2) ** 0.5 / mom0))
-        ) ** 0.5
-        dspr = dspr.sum(dim=attrs.FREQNAME, skipna=False).sum(
-            dim=attrs.DIRNAME, skipna=False
-        )
-        dspr.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        mom_sin, mom_cos = self.momd(1)
+        a = (mom_sin * self.df).sum(dim=attrs.FREQNAME)
+        b = (mom_cos * self.df).sum(dim=attrs.FREQNAME)
+        e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
+        dspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        dspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dspr.rename(self._my_name())
+
+    def fdspr(self, mom=1):
+        """Directional wave spread at frequency :math:`dspr(f)`.
+
+        The directional width of the spectrum at each frequency.
+
+        Args:
+            - mom (int): Directional moment for calculating the mth directional spread.
+
+        """
+        if self.dir is None:
+            raise ValueError("Cannot calculate dpspr from 1d, frequency spectra.")
+        mom_sin, mom_cos = self.momd(mom=mom)
+        a = mom_sin * self.df
+        b = mom_cos * self.df
+        e = self.oned() * self.df
+        fdspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        return fdspr.rename(f"fdspr{mom:0.0f}")
+
+    def dpspr(self, mom=1):
+        """Peak directional wave spread Dpspr.
+
+        The directional width of the spectrum at peak frequency.
+
+        Args:
+            - mom (int): Directional moment to calculate the mth directional spread.
+
+        """
+        return xrstats.peak_directional_spread(self._obj)
 
     def crsd(self, theta=90.0):
         """Add description."""
         cp = np.cos(D2R * (180 + theta - self.dir))
         sp = np.sin(D2R * (180 + theta - self.dir))
         crsd = (self.dd * self._obj * cp * sp).sum(dim=attrs.DIRNAME)
-        crsd.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        crsd.attrs.update(self._get_cf_attributes(self._my_name()))
         return crsd.rename(self._my_name())
 
     def swe(self):
@@ -484,53 +540,114 @@ class SpecArray(object):
         Represents the range of frequencies where the dominant energy exists.
 
         Reference:
-            - Cartwright and Longuet-Higgins (1956). The statistical distribution
-              of maxima of a random function. Proc. R. Soc. A237, 212-232.
+            - Cartwright and Longuet-Higgins (1956).
 
         """
-        swe = (
-            1.0
-            - self.momf(2).sum(dim=attrs.DIRNAME) ** 2
-            / (
-                self.momf(0).sum(dim=attrs.DIRNAME)
-                * self.momf(4).sum(dim=attrs.DIRNAME)
-            )
-        ) ** 0.5
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        m4 = self.momf(4).sum(dim=attrs.DIRNAME)
+        swe = (1.0 - m2 ** 2 / (m0 * m4)) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
-        swe.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
+        swe.attrs.update(self._get_cf_attributes(self._my_name()))
         return swe.rename(self._my_name())
 
-    def sw(self, mask=np.nan):
+    def sw(self):
         """Spectral width parameter by Longuet-Higgins (1975).
 
         Represents energy distribution over entire frequency range.
 
-        Args:
-            - mask (float): value for missing data in output
-
         Reference:
-            - Longuet-Higgins (1975). On the joint distribution of the periods and
-              amplitudes of sea waves. JGR, 80, 2688-2694.
+            - Longuet-Higgins (1975).
 
         """
-        sw = (
-            self.momf(0).sum(dim=attrs.DIRNAME)
-            * self.momf(2).sum(dim=attrs.DIRNAME)
-            / self.momf(1).sum(dim=attrs.DIRNAME) ** 2
-            - 1.0
-        ) ** 0.5
-        sw.attrs.update(
-            {
-                "standard_name": self._standard_name(self._my_name()),
-                "units": self._units(self._my_name()),
-            }
-        )
-        return sw.where(self.hs() >= 0.001).fillna(mask).rename(self._my_name())
+        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
+        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
+        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        sw = (m0 * m2 / m1 ** 2 - 1.0) ** 0.5
+        sw.attrs.update(self._get_cf_attributes(self._my_name()))
+        return sw.where(self.hs() >= 0.001).rename(self._my_name())
+
+    def gw(self):
+        """Gaussian frequency spread by Bunney et al. (2014).
+
+        Represents gaussian width of a swell partition.
+
+        Reference:
+            - Bunney et al. (2014).
+
+        """
+        m0 = (self.hs() / 4) ** 2
+        gw = np.sqrt((m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2))
+        gw.attrs.update(self._get_cf_attributes(self._my_name()))
+        return gw.rename(self._my_name())
+
+    def alpha(self, smooth=True):
+        """Jonswap fetch dependant scaling coefficient alpha.
+
+        Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        Reference:
+            - Phillips (1957).
+
+        """
+        return xrstats.alpha(self.oned(), smooth=smooth)
+
+    def gamma(self, smooth=True):
+        """Jonswap peak enhancement factor gamma.
+
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
+        associate Pierson-Moskowitz shape.
+
+         Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        """
+        fp = self.fp(smooth=smooth)
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
+        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        gamma.attrs.update(self._get_cf_attributes(self._my_name()))
+        return gamma.where(gamma >= 1, 1).rename(self._my_name())
+
+    def gamma_scaled(self, smooth=True):
+        """Jonswap peak enhancement factor gamma.
+
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
+        associate Pierson-Moskowitz shape.
+
+         Args:
+            - smooth (bool): True for the smooth wave frequency, False for the discrete
+              frequency corresponding to the peak in the frequency spectrum.
+
+        """
+        fp = self.fp(smooth=smooth)
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
+        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        
+        p = [ 0.0378375 , -0.13543292,  0.64087366,  0.32524949,  0.12974958] # polynomial approximation for gamma
+        gamma_scaled = 0
+        for pow,c in enumerate(p[::-1]):
+            gamma_scaled += c*gamma**pow
+
+        gamma_scaled.attrs.update(self._get_cf_attributes(self._my_name()))
+        return gamma_scaled.where(gamma_scaled >= 1, 1).rename(self._my_name())
+
+    def goda(self):
+        """Goda peakedness parameter.
+
+        Reference:
+            - Goda (1970).
+
+        """
+        ef = self.oned()
+        mo2 = (ef * self.df).sum(dim=attrs.FREQNAME) ** 2
+        goda = (2 / mo2) * (ef ** 2 * self.freq * self.df).sum(attrs.FREQNAME)
+        goda.attrs.update(self._get_cf_attributes(self._my_name()))
+        return goda.rename(self._my_name())
 
     def celerity(self, depth=None):
         """Wave celerity C from frequency coords.
@@ -546,6 +663,89 @@ class SpecArray(object):
         C.name = "celerity"
         return C
 
+    def uss_x(self, depth=None, theta=90.0):
+        """Stokes drift - x component, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
+
+        """
+        if self.dir is None:
+            raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        cp = np.cos(D2R * (180 + theta - self.dir)) 
+        uss_x = (self.dd * fk * cp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss_x.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss_x.rename(self._my_name())
+
+    def uss_y(self, depth=None, theta=90.0):
+        """Stokes drift - y component, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+            - theta (float): angle offset.
+
+        """
+
+        if self.dir is None:
+            raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        sp = np.sin(D2R * (180 + theta - self.dir)) 
+        uss_y = (self.dd * fk * sp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss_y.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss_y.rename(self._my_name())
+    
+    def uss(self, depth=None):
+        """Stokes drift - speed, at sea surface. No high frequency tail.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+
+        """
+
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        fk = 4.*np.pi*self.freq*k
+        uss = (self.dd * fk * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+
+        uss.attrs.update(self._get_cf_attributes(self._my_name()))
+        return uss.rename(self._my_name())
+
+    def mss(self, depth=None):
+        """Mean squared slope of sea surface.
+
+        Args:
+            - depth (float): Water depth, use deep water approximation by default.
+
+        """
+        if depth is None:
+            L = 1.56 * (1. / self.freq)**2.
+            k = 2. * np.pi / L
+        else:
+            k=wavenuma(self.freq,depth)
+        
+        Sf = self.oned(skipna=False)
+        mss = (k ** 2. * Sf * self.df).sum(dim=attrs.FREQNAME)
+
+        mss.attrs.update(self._get_cf_attributes(self._my_name()))
+        return mss.rename(self._my_name())
+
     def wavelen(self, depth=None):
         """Wavelength L from frequency coords.
 
@@ -559,65 +759,6 @@ class SpecArray(object):
         L = wavelen(freq=self.freq, depth=depth)
         L.name = "wavelength"
         return L
-
-    @deprecated(
-        "spec.partition will become a namespace in **4.0.0**, "
-        "use spec.partion.ptm1() instead for equivalent functionality."
-    )
-    def partition(
-        self,
-        wsp_darr,
-        wdir_darr,
-        dep_darr,
-        swells=3,
-        agefac=1.7,
-        wscut=0.3333,
-    ):
-        """Partition wave spectra using Hanson's watershed algorithm.
-
-        This method is not lazy, make sure array will fit into memory.
-
-        Args:
-            - wsp_darr (DataArray): wind speed (m/s).
-            - wdir_darr (DataArray): Wind direction (degree).
-            - dep_darr (DataArray): Water depth (m).
-            - swells (int): Number of swell partitions to compute.
-            - agefac (float): Age factor.
-            - wscut (float): Wind speed cutoff.
-
-        Returns:
-            - part_spec (SpecArray): partitioned spectra with one extra dimension
-              representig partition number.
-
-        Note:
-            - Input DataArrays must have same non-spectral dims as SpecArray.
-
-        References:
-            - Hanson, Jeffrey L., et al. "Pacific hindcast performance of three
-              numerical wave models." JTECH 26.8 (2009): 1614-1633.
-
-        """
-        from wavespectra.core.watershed import partition
-
-        # Assert expected dimensions are defined
-        if not {attrs.FREQNAME, attrs.DIRNAME}.issubset(self._obj.dims):
-            raise ValueError(f"(freq, dir) dims required, only found {self._obj.dims}")
-        for darr in (wsp_darr, wdir_darr, dep_darr):
-            if set(darr.dims) != self._non_spec_dims:
-                raise ValueError(
-                    f"{darr.name} dims {list(darr.dims)} need matching "
-                    f"non-spectral dims in SpecArray {self._non_spec_dims}"
-                )
-
-        return partition(
-            dset=self._obj,
-            wspd=wsp_darr,
-            wdir=wdir_darr,
-            dpt=dep_darr,
-            swells=swells,
-            agefac=agefac,
-            wscut=wscut,
-        )
 
     def stats(self, stats, fmin=None, fmax=None, dmin=None, dmax=None, names=None):
         """Calculate multiple spectral stats into a Dataset.
@@ -681,6 +822,22 @@ class SpecArray(object):
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
+    def smooth(self, freq_window=3, dir_window=3):
+        """Smooth spectra with a running average.
+
+        Args:
+            - freq_window (int): Rolling window size along `freq` dim.
+            - dir_window (int): Rolling window size along `dir` dim.
+
+        Returns:
+            - efth (DataArray): Smoothed spectra.
+
+        Note:
+            - Window sizes must be odd to ensure symmetry.
+
+        """
+        return smooth_spec(self._obj, freq_window=freq_window, dir_window=dir_window)
+
     def interp(self, freq=None, dir=None, maintain_m0=True):
         """Interpolate onto new spectral basis.
 
@@ -728,11 +885,11 @@ class SpecArray(object):
         radii_ticks=None,
         radii_labels_angle=22.5,
         radii_labels_size=8,
-        cbar_ticks=CBAR_TICKS,
+        cbar_ticks=None,
         cmap="RdBu_r",
         extend="neither",
         efth_min=1e-3,
-        **kwargs
+        **kwargs,
     ):
         """Plot spectra in polar axis.
 
@@ -782,5 +939,129 @@ class SpecArray(object):
             cmap=cmap,
             extend=extend,
             efth_min=efth_min,
-            **kwargs
+            **kwargs,
         )
+
+    def rmse(self, other):
+        """Root-Mean-Square Error among spectral bins.
+
+        Args:
+            - other (SpecArray): Spectra to calculate binwise RMSE against.
+
+        Note:
+            - Spectral coordinates in self and other must be the same.
+            - Non-spectral coordinates in self and other should ideally be the same.
+              Coordinates are attempted to be broadcast if they are different.
+
+        Reference:
+            - Bunney et al. (2014).
+
+        """
+        e0 = self.to_energy()
+        e1 = other.spec.to_energy()
+        ediff = np.sqrt(((e0 - e1)**2).sum(dim=self._spec_dims))
+        e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
+        rmse =  ediff / e0sum
+        return rmse
+
+    def fit_jonswap(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        dsout = xr.apply_ufunc(
+            fit_jonswap_spectra,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gamma(self, smooth=True, gamma0=1.5):
+        """Nonlinear fit Jonswap peak enhancement factor gamma.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        gamma = xr.apply_ufunc(
+            fit_jonswap_gamma,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gamma0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gamma.attrs.update(self._get_cf_attributes("fit_gamma"))
+        return gamma.rename("fit_gamma")
+
+    def fit_gaussian(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Jonswap spectra.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gamma0 (float): Initial guess for gamma.
+
+        """
+        dsout = xr.apply_ufunc(
+            fit_gaussian_spectra,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[attrs.FREQNAME]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        set_spec_attributes(dsout)
+        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
+        return dsout.rename(attrs.SPEC1DNAME)
+
+    def fit_gw(self, smooth=True, gw0=1.5):
+        """Nonlinear fit Gaussian width.
+
+        Args:
+            - smooth (bool): True for the smooth wave period, False for the discrete
+              period corresponding to the maxima in the frequency spectrum.
+            - gw0 (float): Initial guess for gw.
+
+        """
+        gw = xr.apply_ufunc(
+            fit_gaussian_gw,
+            self.oned(),
+            self.freq,
+            self.fp(smooth=smooth),
+            self.hs(),
+            gw0,
+            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            exclude_dims=set((attrs.FREQNAME,)),
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=["float32"],
+        )
+        gw.attrs.update(self._get_cf_attributes("fit_gw"))
+        return gw.rename("fit_gw")
