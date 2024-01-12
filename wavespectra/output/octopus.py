@@ -72,23 +72,21 @@ def to_octopus(
 
         # Parameters
         stats = ["hs", "tm01", "dm"]
-        dset = (
-            xr.merge(
-                [
-                    dset,
-                    dset.spec.stats(stats + ["dpm", "dspr"]),
-                    dset.spec.stats(stats, names=[s + "_swell" for s in stats], fmax=fcut),
-                    dset.spec.stats(stats, names=[s + "_sea" for s in stats], fmin=fcut),
-                    dset.spec.momf(mom=1).sum(dim="dir").rename("momf1"),
-                    dset.spec.momf(mom=2).sum(dim="dir").rename("momf2"),
-                    dset.spec.momd(mom=0)[0].rename("momd"),
-                    dset.spec.to_energy(),
-                    (dset.efth.spec.dfarr * dset.spec.momd(mom=0)[0]).transpose(
-                        attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME
-                        ).rename("fSpec"),
-                ],
-                join="left"
-            )
+        dset = xr.merge(
+            [
+                dset,
+                dset.spec.stats(stats + ["dpm", "dspr"]),
+                dset.spec.stats(stats, names=[s + "_swell" for s in stats], fmax=fcut),
+                dset.spec.stats(stats, names=[s + "_sea" for s in stats], fmin=fcut),
+                dset.spec.momf(mom=1).sum(dim="dir").rename("momf1"),
+                dset.spec.momf(mom=2).sum(dim="dir").rename("momf2"),
+                dset.spec.momd(mom=0)[0].rename("momd"),
+                dset.spec.to_energy(),
+                (dset.efth.spec.df * dset.spec.momd(mom=0)[0])
+                .transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME)
+                .rename("fSpec"),
+            ],
+            join="left",
         )
         dset = dset.drop_vars("efth")
         dset = dset.sortby("dir").fillna(missing_val)
@@ -111,9 +109,13 @@ def to_octopus(
         # Extend energy array with directions values and sums along frequencies
         right = dset["energy"].sum(dim="freq").expand_dims({"freq": [10]})
         left = right * 0 + dset.dir
-        dset_dict["energy"] = xr.concat(
-            (left.assign_coords({"freq": [-10]}), dset["energy"], right), dim="freq"
-        ).transpose(attrs.TIMENAME, attrs.SITENAME, attrs.DIRNAME, attrs.FREQNAME).values
+        dset_dict["energy"] = (
+            xr.concat(
+                (left.assign_coords({"freq": [-10]}), dset["energy"], right), dim="freq"
+            )
+            .transpose(attrs.TIMENAME, attrs.SITENAME, attrs.DIRNAME, attrs.FREQNAME)
+            .values
+        )
 
         try:
             lons = dset_dict["lon"]

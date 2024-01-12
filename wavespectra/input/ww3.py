@@ -60,10 +60,13 @@ def from_ww3(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    dset = dset.rename(MAPPING)
+    vars_and_dims = set(dset.data_vars) | set(dset.dims)
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in vars_and_dims}
+    dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
-    if attrs.TIMENAME in dset[attrs.LONNAME].dims:
+    if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+    if attrs.LATNAME in dset and attrs.TIMENAME in dset[attrs.LATNAME].dims:
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
     # Only selected variables to be returned
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
