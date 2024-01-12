@@ -399,7 +399,7 @@ class SpecArray(object):
 
         """
         fp = self.freq ** mom
-        mf = self.df * fp * self._obj
+        mf = self.df * fp * self.oned()
         return mf.sum(dim=attrs.FREQNAME, skipna=False).rename(f"mom{mom:0.0f}")
 
     def momd(self, mom=0, theta=90.0):
@@ -442,8 +442,8 @@ class SpecArray(object):
         Average period of zero up-crossings (Zhang, 2011).
 
         """
-        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
-        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        m0 = self.momf(0)
+        m2 = self.momf(2)
         tm02 = np.sqrt(m0 / m2)
         tm02.attrs.update(self._get_cf_attributes(self._my_name()))
         return tm02.rename(self._my_name())
@@ -543,9 +543,9 @@ class SpecArray(object):
             - Cartwright and Longuet-Higgins (1956).
 
         """
-        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
-        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
-        m4 = self.momf(4).sum(dim=attrs.DIRNAME)
+        m0 = self.momf(0)
+        m2 = self.momf(2)
+        m4 = self.momf(4)
         swe = (1.0 - m2 ** 2 / (m0 * m4)) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
         swe.attrs.update(self._get_cf_attributes(self._my_name()))
@@ -560,9 +560,9 @@ class SpecArray(object):
             - Longuet-Higgins (1975).
 
         """
-        m0 = self.momf(0).sum(dim=attrs.DIRNAME)
-        m1 = self.momf(1).sum(dim=attrs.DIRNAME)
-        m2 = self.momf(2).sum(dim=attrs.DIRNAME)
+        m0 = self.momf(0)
+        m1 = self.momf(1)
+        m2 = self.momf(2)
         sw = (m0 * m2 / m1 ** 2 - 1.0) ** 0.5
         sw.attrs.update(self._get_cf_attributes(self._my_name()))
         return sw.where(self.hs() >= 0.001).rename(self._my_name())
