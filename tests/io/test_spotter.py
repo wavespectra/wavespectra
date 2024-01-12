@@ -1,6 +1,5 @@
-import os
-import glob
-import shutil
+# import os
+from pathlib import Path
 import pytest
 from tempfile import mkdtemp
 
@@ -8,8 +7,8 @@ from wavespectra import read_spotter
 from wavespectra.input.spotter import Spotter
 from wavespectra.core.attributes import attrs
 
-FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
+FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
 class TestSpotterJson:
     """Test parameters Spotter JSON reader."""
@@ -17,7 +16,7 @@ class TestSpotterJson:
     @classmethod
     def setup_class(self):
         """Setup class."""
-        infile = os.path.join(FILES_DIR, "spotter_20180214.json")
+        infile = FILES_DIR / "spotter_20180214.json"
         self.spot = Spotter(infile)
         self.spot.run()
         self.dset = read_spotter(infile)
@@ -40,8 +39,7 @@ class TestSpotterJson:
 @pytest.fixture(
     scope="module",
     params=[
-        os.path.join(FILES_DIR, "spotter_20210929.csv"),
-        glob.glob(os.path.join(FILES_DIR, "spotter*.csv"))[0],
+        FILES_DIR / "spotter_20210929.csv", sorted(FILES_DIR.glob("spotter*.csv"))[0],
     ],
 )
 def dset(request):
