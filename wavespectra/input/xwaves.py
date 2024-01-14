@@ -7,6 +7,7 @@ from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import R2D
 
+
 def read_xwaves(filename):
     """Read Spectra from XWaves MAT format.
 

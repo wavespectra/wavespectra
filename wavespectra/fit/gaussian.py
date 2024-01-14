@@ -31,7 +31,7 @@ def fit_gaussian(freq, hs, fp, gw, **kwargs):
 
     mo = (hs / 4) ** 2
     term1 = mo / (gw * np.sqrt(2 * pi))
-    term2 = np.exp(-0.5*((freq - fp) / gw) ** 2)
+    term2 = np.exp(-0.5 * ((freq - fp) / gw) ** 2)
     dsout = term1 * term2
 
     dsout = scaled(dsout, hs)
@@ -39,11 +39,11 @@ def fit_gaussian(freq, hs, fp, gw, **kwargs):
 
     return dsout
 
-def np_gaussian(freq, fp, hs, gw):
 
+def np_gaussian(freq, fp, hs, gw):
     mo = (hs / 4) ** 2
     term1 = mo / (gw * np.sqrt(2 * pi))
-    term2 = np.exp(-0.5*((freq - fp) / gw) ** 2)
+    term2 = np.exp(-0.5 * ((freq - fp) / gw) ** 2)
     dsout = term1 * term2
 
     return dsout

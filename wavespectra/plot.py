@@ -7,7 +7,7 @@ from wavespectra.core.attributes import attrs
 LOG_FACTOR = 1e3
 RADII_FREQ_TICKS_LOG = np.array([0.05, 0.1, 0.2, 0.3, 0.4])
 RADII_FREQ_TICKS_LIN = np.arange(0.1, 1.1, 0.1)
-RADII_PER_TICKS_LOG = (np.array([20, 10, 5, 3, 2]))
+RADII_PER_TICKS_LOG = np.array([20, 10, 5, 3, 2])
 RADII_PER_TICKS_LIN = np.arange(5, 30, 5)
 CBAR_TICKS = [1e-2, 1e-1, 1e0]
 LOG_CONTOUR_LEVELS = np.logspace(np.log10(0.005), np.log10(1), 14)
@@ -198,7 +198,12 @@ class WavePlot:
     @property
     def cbar_ticks(self):
         """Colorbar ticks."""
-        if self._cbar_ticks is None and self.normalised and "contour" in self.kind and "levels" not in self._kwargs:
+        if (
+            self._cbar_ticks is None
+            and self.normalised
+            and "contour" in self.kind
+            and "levels" not in self._kwargs
+        ):
             self._cbar_ticks = CBAR_TICKS
         return self._cbar_ticks
 
@@ -226,9 +231,9 @@ class WavePlot:
         # Raise ValueError if radii ticks are not within (rmin, rmax)
         if self.rmin >= radii_ticks.max() or self.rmax <= radii_ticks.min():
             if self.logradius:
-                ticks = 10 ** radii_ticks / LOG_FACTOR
-                rmin = 10 ** self.rmin / LOG_FACTOR
-                rmax = 10 ** self.rmax / LOG_FACTOR
+                ticks = 10**radii_ticks / LOG_FACTOR
+                rmin = 10**self.rmin / LOG_FACTOR
+                rmax = 10**self.rmax / LOG_FACTOR
             else:
                 ticks = radii_ticks
                 rmin = self.rmin
@@ -247,7 +252,7 @@ class WavePlot:
         """Tick labels for the radii axis."""
         units = self.darr[self.fname].attrs.get("units", "Hz")
         if self.logradius:
-            ticks = 10 ** self.radii_ticks / 1000
+            ticks = 10**self.radii_ticks / 1000
         else:
             ticks = self.radii_ticks
         ticklabels = [f"{v:g}" for v in ticks]

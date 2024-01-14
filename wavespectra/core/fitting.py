@@ -4,6 +4,7 @@ from scipy.optimize import curve_fit
 from wavespectra.fit.jonswap import np_jonswap
 from wavespectra.fit.gaussian import np_gaussian
 
+
 def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
     """Nonlinear fit Jonswap spectrum.
 
@@ -19,13 +20,18 @@ def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
 
     """
     import warnings
-    from scipy.optimize import OptimizeWarning # Covariance - warning make nans for unreliable fits
-    
+    from scipy.optimize import OptimizeWarning
+
     with warnings.catch_warnings():
         warnings.filterwarnings("error")
-        
-        if np.isnan(fp0) or (hs0<1E-10):
-            p1 = np.array([np.nan,]*3)
+
+        if np.isnan(fp0) or (hs0 < 1e-10):
+            p1 = np.array(
+                [
+                    np.nan,
+                ]
+                * 3
+            )
         else:
             try:
                 p1, cov = curve_fit(
@@ -33,12 +39,25 @@ def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
                     xdata=freq,
                     ydata=ef,
                     p0=[fp0, hs0, gamma0],
-                    bounds=(np.array([np.min(freq),1E-10,0.1]),np.array([np.max(freq),30.,20.]))
+                    bounds=(
+                        np.array([np.min(freq), 1e-10, 0.1]),
+                        np.array([np.max(freq), 30.0, 20.0]),
+                    ),
                 )
             except (ValueError, RuntimeError):
-                p1 = np.array([np.nan,]*3)
+                p1 = np.array(
+                    [
+                        np.nan,
+                    ]
+                    * 3
+                )
             except OptimizeWarning:
-                p1 = np.array([np.nan,]*3)
+                p1 = np.array(
+                    [
+                        np.nan,
+                    ]
+                    * 3
+                )
 
     return p1
 
@@ -69,13 +88,20 @@ def _fit_gaussian(ef, freq, fp0, hs0, gw):
 
     """
     import warnings
-    from scipy.optimize import OptimizeWarning # Covariance - warning make nans for unreliable fits
-    
+    from scipy.optimize import (
+        OptimizeWarning,
+    )  # Covariance - warning make nans for unreliable fits
+
     with warnings.catch_warnings():
         warnings.filterwarnings("error")
 
-        if np.isnan(fp0) or (hs0<1E-10):
-            p1 = np.array([np.nan,]*3)
+        if np.isnan(fp0) or (hs0 < 1e-10):
+            p1 = np.array(
+                [
+                    np.nan,
+                ]
+                * 3
+            )
         else:
             try:
                 p1, cov = curve_fit(
@@ -85,10 +111,20 @@ def _fit_gaussian(ef, freq, fp0, hs0, gw):
                     p0=[fp0, hs0, gw],
                 )
             except (ValueError, RuntimeError):
-                p1 = np.array([np.nan,]*3)
+                p1 = np.array(
+                    [
+                        np.nan,
+                    ]
+                    * 3
+                )
             except OptimizeWarning:
-                p1 = np.array([np.nan,]*3)
-        
+                p1 = np.array(
+                    [
+                        np.nan,
+                    ]
+                    * 3
+                )
+
     return p1
 
 

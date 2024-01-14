@@ -32,9 +32,22 @@ import warnings
 from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.utils import D2R, R2D, celerity, wavenuma, wavelen, regrid_spec, smooth_spec
+from wavespectra.core.utils import (
+    D2R,
+    R2D,
+    celerity,
+    wavenuma,
+    wavelen,
+    regrid_spec,
+    smooth_spec,
+)
 from wavespectra.core import xrstats
-from wavespectra.core.fitting import fit_jonswap_spectra, fit_jonswap_gamma, fit_gaussian_spectra, fit_gaussian_gw
+from wavespectra.core.fitting import (
+    fit_jonswap_spectra,
+    fit_jonswap_gamma,
+    fit_gaussian_spectra,
+    fit_gaussian_gw,
+)
 from wavespectra.plot import polar_plot, CBAR_TICKS
 from wavespectra.partition.partition import Partition
 
@@ -206,7 +219,9 @@ class SpecArray(object):
         set_spec_attributes(dsout)
         return dsout
 
-    def split(self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True):
+    def split(
+        self, fmin=None, fmax=None, dmin=None, dmax=None, interpolate=True, rechunk=True
+    ):
         """Split spectra over freq and/or dir dims.
 
         Args:
@@ -398,7 +413,7 @@ class SpecArray(object):
             - mf (DataArray): The mth frequency moments for each direction.
 
         """
-        fp = self.freq ** mom
+        fp = self.freq**mom
         mf = self.df * fp * self.oned()
         return mf.sum(dim=attrs.FREQNAME, skipna=False).rename(f"mom{mom:0.0f}")
 
@@ -493,7 +508,7 @@ class SpecArray(object):
         a = (mom_sin * self.df).sum(dim=attrs.FREQNAME)
         b = (mom_cos * self.df).sum(dim=attrs.FREQNAME)
         e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
-        dspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        dspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e))) ** 0.5
         dspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dspr.rename(self._my_name())
 
@@ -512,7 +527,7 @@ class SpecArray(object):
         a = mom_sin * self.df
         b = mom_cos * self.df
         e = self.oned() * self.df
-        fdspr = (2 * R2D ** 2 * (1 - ((a ** 2 + b ** 2) ** 0.5 / e))) ** 0.5
+        fdspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e))) ** 0.5
         return fdspr.rename(f"fdspr{mom:0.0f}")
 
     def dpspr(self, mom=1):
@@ -546,7 +561,7 @@ class SpecArray(object):
         m0 = self.momf(0)
         m2 = self.momf(2)
         m4 = self.momf(4)
-        swe = (1.0 - m2 ** 2 / (m0 * m4)) ** 0.5
+        swe = (1.0 - m2**2 / (m0 * m4)) ** 0.5
         swe = swe.where(swe >= 0.001, 1.0)
         swe.attrs.update(self._get_cf_attributes(self._my_name()))
         return swe.rename(self._my_name())
@@ -563,7 +578,7 @@ class SpecArray(object):
         m0 = self.momf(0)
         m1 = self.momf(1)
         m2 = self.momf(2)
-        sw = (m0 * m2 / m1 ** 2 - 1.0) ** 0.5
+        sw = (m0 * m2 / m1**2 - 1.0) ** 0.5
         sw.attrs.update(self._get_cf_attributes(self._my_name()))
         return sw.where(self.hs() >= 0.001).rename(self._my_name())
 
@@ -577,7 +592,7 @@ class SpecArray(object):
 
         """
         m0 = (self.hs() / 4) ** 2
-        gw = np.sqrt((m0 / (self.tm02() ** 2)) - (m0 ** 2 / self.tm01() ** 2))
+        gw = np.sqrt((m0 / (self.tm02() ** 2)) - (m0**2 / self.tm01() ** 2))
         gw.attrs.update(self._get_cf_attributes(self._my_name()))
         return gw.rename(self._my_name())
 
@@ -606,8 +621,8 @@ class SpecArray(object):
 
         """
         fp = self.fp(smooth=smooth)
-        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
-        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp**4
+        epm_fp = alpha_pm * fp**-5 * 0.2865048
         gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.where(gamma >= 1, 1).rename(self._my_name())
@@ -624,14 +639,20 @@ class SpecArray(object):
 
         """
         fp = self.fp(smooth=smooth)
-        alpha_pm = 0.3125 * self.hs() ** 2 * fp ** 4
-        epm_fp = alpha_pm * fp ** -5 * 0.2865048
+        alpha_pm = 0.3125 * self.hs() ** 2 * fp**4
+        epm_fp = alpha_pm * fp**-5 * 0.2865048
         gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
-        
-        p = [ 0.0378375 , -0.13543292,  0.64087366,  0.32524949,  0.12974958] # polynomial approximation for gamma
+
+        p = [
+            0.0378375,
+            -0.13543292,
+            0.64087366,
+            0.32524949,
+            0.12974958,
+        ]  # polynomial approximation for gamma
         gamma_scaled = 0
-        for pow,c in enumerate(p[::-1]):
-            gamma_scaled += c*gamma**pow
+        for pow, c in enumerate(p[::-1]):
+            gamma_scaled += c * gamma**pow
 
         gamma_scaled.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma_scaled.where(gamma_scaled >= 1, 1).rename(self._my_name())
@@ -645,7 +666,7 @@ class SpecArray(object):
         """
         ef = self.oned()
         mo2 = (ef * self.df).sum(dim=attrs.FREQNAME) ** 2
-        goda = (2 / mo2) * (ef ** 2 * self.freq * self.df).sum(attrs.FREQNAME)
+        goda = (2 / mo2) * (ef**2 * self.freq * self.df).sum(attrs.FREQNAME)
         goda.attrs.update(self._get_cf_attributes(self._my_name()))
         return goda.rename(self._my_name())
 
@@ -674,13 +695,15 @@ class SpecArray(object):
         if self.dir is None:
             raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
         if depth is None:
-            L = 1.56 * (1. / self.freq)**2.
-            k = 2. * np.pi / L
+            L = 1.56 * (1.0 / self.freq) ** 2.0
+            k = 2.0 * np.pi / L
         else:
-            k=wavenuma(self.freq,depth)
-        fk = 4.*np.pi*self.freq*k
-        cp = np.cos(D2R * (180 + theta - self.dir)) 
-        uss_x = (self.dd * fk * cp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+            k = wavenuma(self.freq, depth)
+        fk = 4.0 * np.pi * self.freq * k
+        cp = np.cos(D2R * (180 + theta - self.dir))
+        uss_x = (self.dd * fk * cp * self._obj * self.df).sum(
+            dim=[attrs.FREQNAME, attrs.DIRNAME]
+        )
 
         uss_x.attrs.update(self._get_cf_attributes(self._my_name()))
         return uss_x.rename(self._my_name())
@@ -697,17 +720,19 @@ class SpecArray(object):
         if self.dir is None:
             raise ValueError("Cannot calculate uss_x from 1d, frequency spectra.")
         if depth is None:
-            L = 1.56 * (1. / self.freq)**2.
-            k = 2. * np.pi / L
+            L = 1.56 * (1.0 / self.freq) ** 2.0
+            k = 2.0 * np.pi / L
         else:
-            k=wavenuma(self.freq,depth)
-        fk = 4.*np.pi*self.freq*k
-        sp = np.sin(D2R * (180 + theta - self.dir)) 
-        uss_y = (self.dd * fk * sp * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+            k = wavenuma(self.freq, depth)
+        fk = 4.0 * np.pi * self.freq * k
+        sp = np.sin(D2R * (180 + theta - self.dir))
+        uss_y = (self.dd * fk * sp * self._obj * self.df).sum(
+            dim=[attrs.FREQNAME, attrs.DIRNAME]
+        )
 
         uss_y.attrs.update(self._get_cf_attributes(self._my_name()))
         return uss_y.rename(self._my_name())
-    
+
     def uss(self, depth=None):
         """Stokes drift - speed, at sea surface. No high frequency tail.
 
@@ -717,12 +742,14 @@ class SpecArray(object):
         """
 
         if depth is None:
-            L = 1.56 * (1. / self.freq)**2.
-            k = 2. * np.pi / L
+            L = 1.56 * (1.0 / self.freq) ** 2.0
+            k = 2.0 * np.pi / L
         else:
-            k=wavenuma(self.freq,depth)
-        fk = 4.*np.pi*self.freq*k
-        uss = (self.dd * fk * self._obj * self.df).sum(dim=[attrs.FREQNAME, attrs.DIRNAME])
+            k = wavenuma(self.freq, depth)
+        fk = 4.0 * np.pi * self.freq * k
+        uss = (self.dd * fk * self._obj * self.df).sum(
+            dim=[attrs.FREQNAME, attrs.DIRNAME]
+        )
 
         uss.attrs.update(self._get_cf_attributes(self._my_name()))
         return uss.rename(self._my_name())
@@ -735,13 +762,13 @@ class SpecArray(object):
 
         """
         if depth is None:
-            L = 1.56 * (1. / self.freq)**2.
-            k = 2. * np.pi / L
+            L = 1.56 * (1.0 / self.freq) ** 2.0
+            k = 2.0 * np.pi / L
         else:
-            k=wavenuma(self.freq,depth)
-        
+            k = wavenuma(self.freq, depth)
+
         Sf = self.oned(skipna=False)
-        mss = (k ** 2. * Sf * self.df).sum(dim=attrs.FREQNAME)
+        mss = (k**2.0 * Sf * self.df).sum(dim=attrs.FREQNAME)
 
         mss.attrs.update(self._get_cf_attributes(self._my_name()))
         return mss.rename(self._my_name())
@@ -959,9 +986,9 @@ class SpecArray(object):
         """
         e0 = self.to_energy()
         e1 = other.spec.to_energy()
-        ediff = np.sqrt(((e0 - e1)**2).sum(dim=self._spec_dims))
-        e0sum = np.sqrt(e0.sum(dim=self._spec_dims)**2)
-        rmse =  ediff / e0sum
+        ediff = np.sqrt(((e0 - e1) ** 2).sum(dim=self._spec_dims))
+        e0sum = np.sqrt(e0.sum(dim=self._spec_dims) ** 2)
+        rmse = ediff / e0sum
         return rmse
 
     def fit_jonswap(self, smooth=True, gamma0=1.5):

@@ -12,7 +12,9 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import interp_spec
 
 
-def read_triaxys(filename_or_fileglob, toff=0, magnetic_variation=None, regrid_dir=True):
+def read_triaxys(
+    filename_or_fileglob, toff=0, magnetic_variation=None, regrid_dir=True
+):
     """Read spectra from TRIAXYS wave buoy ASCII files.
 
     Args:
@@ -220,6 +222,7 @@ class Triaxys(object):
 if __name__ == "__main__":
     from pathlib import Path
     import matplotlib.pyplot as plt
+
     filename1 = "../../tests/sample_files/triaxys.DIRSPEC"
     filename2 = str(Path(filename1))
     dset1 = read_triaxys(filename2)

@@ -37,9 +37,9 @@ def fit_jonswap(
         freq = to_coords(freq, "freq")
 
     sigma = xr.where(freq <= fp, sigma_a, sigma_b)
-    term1 = alpha * g ** 2 * (2 * pi) ** -4 * freq ** -5
+    term1 = alpha * g**2 * (2 * pi) ** -4 * freq**-5
     term2 = np.exp(-(5 / 4) * (freq / fp) ** -4)
-    term3 = gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma ** 2 * fp ** 2))
+    term3 = gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma**2 * fp**2))
     dsout = term1 * term2 * term3
 
     if hs is not None:
@@ -71,13 +71,13 @@ def np_jonswap(freq, fp, hs, gamma=3.3, alpha=0.0081, sigma_a=0.07, sigma_b=0.09
 
     """
     sigma = np.where(freq <= fp, sigma_a, sigma_b)
-    term1 = alpha * g ** 2 * (2 * pi) ** -4 * freq ** -5
+    term1 = alpha * g**2 * (2 * pi) ** -4 * freq**-5
     term2 = np.exp(-(5 / 4) * (freq / fp) ** -4)
-    term3 = gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma ** 2 * fp ** 2))
+    term3 = gamma ** np.exp(-((freq - fp) ** 2) / (2 * sigma**2 * fp**2))
     dsout = term1 * term2 * term3
 
     if hs is not None:
         hs_jonswap = hs_numpy(dsout, freq)
-        dsout = dsout * (hs / hs_jonswap)**2
+        dsout = dsout * (hs / hs_jonswap) ** 2
 
     return dsout

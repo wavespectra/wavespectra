@@ -76,7 +76,7 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
         dir = to_coords(dir, "dir")
 
     # Gradients
-    #==========
+    # ==========
     # Limiters to avoid negative and large numbers
     dd = dm - dpm
     ds = np.maximum(dspr - dpspr, 0)
@@ -85,20 +85,20 @@ def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
     dsdf = ds / df
 
     # Modified peak direction
-    #========================
+    # ========================
     # Limiter for frequency band peak directon (30% peak spread)
     theta = dpm + dddf * (freq - fp)
     theta = np.minimum(1.5 * dpm, np.maximum(0.5 * dpm, theta))
 
     # Modified spread parameter
-    #==========================
+    # ==========================
     # Limiter for frequency band spreading, 0.14 limits s to ~100 for narrow beamwidths
     sigma = dpspr + dsdf * (freq - fp)
     sigma = np.maximum(0.5 * dspr, np.minimum(1.5 * np.maximum(dspr, dpspr), sigma))
     sigma = sigma.where(sigma >= 0.14, 0.14)
 
     # Apply cosine-square to modified parameters
-    #===========================================
+    # ===========================================
     gfth = cartwright(dir, theta, sigma, under_90=False)
 
     return gfth

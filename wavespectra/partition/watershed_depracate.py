@@ -61,7 +61,7 @@ def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
 
     # Avoid error if all partitions are null
     if iswell.size == 0:
-        return swell_partitions[:swells + 1]
+        return swell_partitions[: swells + 1]
 
     # Drop null partitions
     i0 = iswell[0]
@@ -76,7 +76,7 @@ def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
         dx = tp[-1] - tp[:-1]
         dy = (np.array(dpm[-1]) % 360) - (np.array(dpm[:-1]) % 360)
         dy = np.minimum(dy, 360 - dy)
-        dist = np.sqrt(dx ** 2 + dy ** 2)
+        dist = np.sqrt(dx**2 + dy**2)
 
         # Define if merging onto closest partition from all or from the kept ones
         if not combine_excluded:
@@ -97,7 +97,20 @@ def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
     return swell_partitions
 
 
-def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agefac=1.7, wscut=0.3333, merge_swells=False, combine_excluded=True):
+def nppart(
+    spectrum,
+    spectrum_smooth,
+    freq,
+    dir,
+    wspd,
+    wdir,
+    dpt,
+    swells=3,
+    agefac=1.7,
+    wscut=0.3333,
+    merge_swells=False,
+    combine_excluded=True,
+):
     """Watershed partition on a numpy array.
 
     Args:
@@ -144,7 +157,7 @@ def nppart(spectrum, spectrum_smooth, freq, dir, wspd, wdir, dpt, swells=3, agef
         __, imin = inflection(part_spec, freq, dfres=0.01, fmin=0.05)
         if len(imin) > 0:
             part_spec_new = part_spec.copy()
-            part_spec_new[int(imin[0]):, :] = 0
+            part_spec_new[int(imin[0]) :, :] = 0
             newpart = part_spec_new > 0
             if newpart.sum() > 20:
                 part_spec[newpart] = 0
@@ -253,7 +266,20 @@ def partition(
         wscut,
         merge_swells,
         combine_excluded,
-        input_core_dims=[["freq", "dir"], ["freq", "dir"], ["freq"], ["dir"], [], [], [], [], [], [], [], []],
+        input_core_dims=[
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ],
         output_core_dims=[["part", "freq", "dir"]],
         vectorize=True,
         dask="parallelized",

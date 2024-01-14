@@ -56,7 +56,7 @@ def construct_partition(
     dset = efth1d * spread
     set_spec_attributes(dset)
 
-    return dset.fillna(0.)
+    return dset.fillna(0.0)
 
 
 def partition_and_reconstruct(
@@ -112,7 +112,6 @@ def partition_and_reconstruct(
     # Reconstruct partitions
     reconstructed = []
     for ipart, part in enumerate(dspart.part):
-
         # Turn partitioned parameters for current partition into functions kwargs
         kw = {**coords, **{k: v for k, v in dparam.sel(part=[part]).data_vars.items()}}
 
@@ -122,12 +121,14 @@ def partition_and_reconstruct(
                 fit_name=fit_name[ipart],
                 dir_name=dir_name[ipart],
                 fit_kwargs=kw,
-                dir_kwargs=kw
+                dir_kwargs=kw,
             )
         )
 
     # Combine partitions
-    reconstructed = getattr(xr.concat(reconstructed, attrs.PARTNAME), method_combine)(attrs.PARTNAME)
+    reconstructed = getattr(xr.concat(reconstructed, attrs.PARTNAME), method_combine)(
+        attrs.PARTNAME
+    )
     reconstructed = reconstructed.to_dataset(name=attrs.SPECNAME)
     set_spec_attributes(reconstructed)
 

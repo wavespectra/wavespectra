@@ -40,7 +40,7 @@ def read_funwave(filename_or_obj):
     dir = (270 - dir) % 360
 
     # Turn zero dir into 360 for continuity
-    i0 = np.where(dir==0)[0]
+    i0 = np.where(dir == 0)[0]
     if i0.size > 0:
         dir[i0] = 360.0
 
@@ -56,7 +56,7 @@ def read_funwave(filename_or_obj):
     darr = xr.DataArray(data=amp.transpose(), coords=coords, dims=dims)
 
     # Energy density spectrum
-    darr = darr ** 2 / (darr.spec.df * darr.spec.dd * 2)
+    darr = darr**2 / (darr.spec.df * darr.spec.dd * 2)
 
     # Define output dataset
     dset = darr.to_dataset(name=attrs.SPECNAME)

@@ -1,7 +1,14 @@
 import logging
 import numpy as np
 
-from wavespectra.core.npstats import tps_gufunc, dpm_gufunc, dp_gufunc, dm_numpy, hs_numpy, mom1_numpy
+from wavespectra.core.npstats import (
+    tps_gufunc,
+    dpm_gufunc,
+    dp_gufunc,
+    dm_numpy,
+    hs_numpy,
+    mom1_numpy,
+)
 from wavespectra.core.utils import D2R, angle
 
 
@@ -19,7 +26,9 @@ def _partition_stats(spectrum, freq, dir):
         fp = 1 / tps_gufunc(ifpeak, spec1d, freq.astype("float32"))
         dpm = dpm_gufunc(ifpeak, *mom1_numpy(spectrum, dir))
         dm = dm_numpy(spectrum, dir)
-        idpeak = np.argmax((spectrum * _frequency_resolution(freq, dir.size)).sum(axis=0))
+        idpeak = np.argmax(
+            (spectrum * _frequency_resolution(freq, dir.size)).sum(axis=0)
+        )
         dp = dp_gufunc(idpeak.astype("int64"), dir.astype("float32"))
     return hs, fp, dpm, dm, dp
 
@@ -58,11 +67,12 @@ def _frequency_resolution(freq, ndir=None):
 
 def _plot_partitions(partitions, hs, fp, dp, show=False):
     import matplotlib.pyplot as plt
+
     # vmin = np.log10(min([spectrum.min() for spectrum in partitions]))
     # vmax = np.log10(max([spectrum.max() for spectrum in partitions]))
     # nplots = len(partitions)
-    ncol = 6 # min(5, nplots)
-    nrow = 10 #int(np.ceil(nplots / ncol))
+    ncol = 6  # min(5, nplots)
+    nrow = 10  # int(np.ceil(nplots / ncol))
     fig = plt.figure(figsize=(12, 15))
     iplot = 1
     for spectrum, h, f, d in zip(partitions, hs, fp, dp):
@@ -72,7 +82,9 @@ def _plot_partitions(partitions, hs, fp, dp, show=False):
             alpha = 0.5
         # if imerge == iplot - 1
         ax = fig.add_subplot(nrow, ncol, iplot)
-        p = ax.pcolormesh(dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha)
+        p = ax.pcolormesh(
+            dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha
+        )
         ax.plot(d, f, "o", markerfacecolor="w", markeredgecolor="k")
         # plt.colorbar(p)
         ax.set_xticklabels("")
@@ -103,7 +115,7 @@ def spread_hp01(partitions, freq, dir):
 
     # Frequency and direction parameters broadcast into spectrum shape
     F = np.tile(freq, (ndir, 1)).T
-    F2 = F ** 2
+    F2 = F**2
     D = D2R * np.tile(dir, (nfreq, 1))
     COSD = np.cos(D)
     SIND = np.sin(D)
@@ -118,7 +130,7 @@ def spread_hp01(partitions, freq, dir):
         fy = (1 / e) * (spectrum * F * SIND * DF * dd).sum()
         f2x = (1 / e) * (spectrum * F2 * COS2D * DF * dd).sum()
         f2y = (1 / e) * (spectrum * F2 * SIN2D * DF * dd).sum()
-        sf2[ipart] = f2x - fx ** 2 + f2y - fy ** 2
+        sf2[ipart] = f2x - fx**2 + f2y - fy**2
     return sf2
 
 
@@ -126,7 +138,7 @@ def _combine_last(parts, index, freq, dir, hs, fp, dpm, dm, dp, sf2, fpx, fpy):
     """Combine, update and reorder parts and stats.
 
     Args:
-        - parts (3darray): """
+        - parts (3darray):"""
     # Combine parts
     parts[index] += parts[-1]
     # Update stats
@@ -161,7 +173,16 @@ def _combine_last(parts, index, freq, dir, hs, fp, dpm, dm, dp, sf2, fpx, fpy):
     return parts, hs, fp, dpm, dm, dp, sf2, fpx, fpy
 
 
-def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max=30, hs_min=0.2, combine_extra_swells=True):
+def combine_partitions_hp01(
+    partitions,
+    freq,
+    dir,
+    swells=None,
+    k=0.5,
+    angle_max=30,
+    hs_min=0.2,
+    combine_extra_swells=True,
+):
     """Combine swell partitions according Hanson and Phillips (2001).
 
     Args:
@@ -194,7 +215,7 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
     dp = []
     merged_partitions = []
     for ipart, spectrum in enumerate(partitions):
-        hsi, fpi, dpmi, dmi, dpi =  _partition_stats(spectrum, freq, dir)
+        hsi, fpi, dpmi, dmi, dpi = _partition_stats(spectrum, freq, dir)
         if not np.isnan(fpi):
             hs.append(hsi)
             fp.append(fpi)
@@ -222,7 +243,6 @@ def combine_partitions_hp01(partitions, freq, dir, swells=None, k=0.5, angle_max
     logger.debug("Entering while loop to merge partitions")
     merged = True
     while merged:
-
         merged = False
 
         # Distances between last and all other peaks
