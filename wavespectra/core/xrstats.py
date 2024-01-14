@@ -1,5 +1,4 @@
 """Peak based wave stats ufuncs."""
-import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs

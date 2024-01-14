@@ -1,18 +1,14 @@
-import glob
-import copy
-import datetime
 from pathlib import Path
 import os
 import gzip
 from collections import OrderedDict
-from dateutil import parser
 import numpy as np
 import pandas as pd
 import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.utils import D2R
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.attributes import attrs
 
 IPI = 1.0 / np.pi
 

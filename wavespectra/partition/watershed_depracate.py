@@ -4,7 +4,7 @@ import xarray as xr
 
 from wavespectra.core.attributes import attrs
 from wavespectra.partition.specpart import specpart
-from wavespectra.core.utils import D2R, R2D, celerity
+from wavespectra.core.utils import D2R, celerity
 from wavespectra.core.npstats import hs_numpy, dpm_gufunc, tps_gufunc
 
 
@@ -88,8 +88,8 @@ def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
         swell_partitions[ipart] += swell_partitions[-1]
 
         # Drop last index
-        for l in [swell_partitions, tp, dpm]:
-            l.pop(-1)
+        for v in [swell_partitions, tp, dpm]:
+            v.pop(-1)
 
         # Update counter
         i1 -= 1

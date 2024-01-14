@@ -1,10 +1,7 @@
 """Conditional frequency spectrum selecting a given shape based on a boolean array."""
-import numpy as np
 import xarray as xr
-from scipy.constants import pi
 
 from wavespectra.core.utils import (
-    scaled,
     check_same_coordinates,
     to_coords,
     load_function,

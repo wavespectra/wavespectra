@@ -3,7 +3,6 @@
 https://dods.ndbc.noaa.gov/
 
 """
-import warnings
 import xarray as xr
 import numpy as np
 
