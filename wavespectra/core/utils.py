@@ -1,9 +1,7 @@
 """Utility functions."""
 import copy
 import itertools
-import datetime
 import numpy as np
-import pandas as pd
 import xarray as xr
 from importlib import import_module
 from inspect import getmembers, isfunction
@@ -12,10 +10,6 @@ from scipy.interpolate import griddata
 from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-GAMMA = (
-    lambda x: np.sqrt(2.0 * np.pi / x)
-    * ((x / np.exp(1)) * np.sqrt(x * np.sinh(1.0 / x))) ** x
-)
 D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
@@ -229,14 +223,14 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
     return outspec
 
 
-def flatten_list(l, a):
+def flatten_list(list_to_flat, list_to_append_into):
     """Flatten list of lists"""
-    for i in l:
+    for i in list_to_flat:
         if isinstance(i, list):
-            flatten_list(i, a)
+            flatten_list(i, list_to_append_into)
         else:
-            a.append(i)
-    return a
+            list_to_append_into.append(i)
+    return list_to_append_into
 
 
 def scaled(spec, hs):

@@ -1,5 +1,4 @@
 """Spectra reconstruction."""
-import numpy as np
 import xarray as xr
 import wavespectra
 from wavespectra.core.attributes import attrs, set_spec_attributes

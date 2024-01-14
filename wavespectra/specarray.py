@@ -26,10 +26,8 @@ Reference:
 import re
 import numpy as np
 import xarray as xr
-from itertools import product
 import inspect
 import warnings
-from scipy.constants import g, pi
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import (
@@ -48,7 +46,7 @@ from wavespectra.core.fitting import (
     fit_gaussian_spectra,
     fit_gaussian_gw,
 )
-from wavespectra.plot import polar_plot, CBAR_TICKS
+from wavespectra.plot import polar_plot
 from wavespectra.partition.partition import Partition
 
 

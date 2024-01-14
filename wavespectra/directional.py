@@ -1,10 +1,10 @@
 import numpy as np
 import xarray as xr
-from scipy.constants import g, pi
+from scipy.constants import pi
 
 from wavespectra import SpecArray
-from wavespectra.core.utils import D2R, R2D, check_same_coordinates, to_coords
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.utils import R2D, check_same_coordinates, to_coords
+from wavespectra.core.attributes import attrs
 
 
 def cartwright(dir, dm, dspr, under_90=False, **kwargs):

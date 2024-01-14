@@ -65,7 +65,7 @@ def _frequency_resolution(freq, ndir=None):
     return df
 
 
-def _plot_partitions(partitions, hs, fp, dp, show=False):
+def _plot_partitions(partitions, freq, hs, fp, dp, hs_threshold, show=False):
     import matplotlib.pyplot as plt
 
     # vmin = np.log10(min([spectrum.min() for spectrum in partitions]))
@@ -82,7 +82,7 @@ def _plot_partitions(partitions, hs, fp, dp, show=False):
             alpha = 0.5
         # if imerge == iplot - 1
         ax = fig.add_subplot(nrow, ncol, iplot)
-        p = ax.pcolormesh(
+        ax.pcolormesh(
             dir, freq, np.log10(spectrum), cmap="inferno", vmin=-5, vmax=-2, alpha=alpha
         )
         ax.plot(d, f, "o", markerfacecolor="w", markeredgecolor="k")

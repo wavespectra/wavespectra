@@ -2,12 +2,10 @@
 import os
 import click
 import yaml
-import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
 from wavespectra.core.utils import load_function
-from wavespectra.core.attributes import attrs
-from wavespectra.construct import partition_and_reconstruct, STATS
+from wavespectra.construct import partition_and_reconstruct
 
 
 @click.group()

@@ -71,6 +71,7 @@ Internal Changes
 
 Deprecation
 -----------
+* Depracate unused `wavespectra.core.utils.GAMMA` lambda function.
 * The `SpecArray.partition()` method now became a new namespace to access the different
   partitioning options. The legacy `partition` method is now equivalent to
   `spec.partition.ptm1()`.

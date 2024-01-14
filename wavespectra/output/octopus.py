@@ -65,7 +65,6 @@ def to_octopus(
 
         # Assign for speed
         freqs = dset.freq.values
-        dirs = dset.dir.values
         nfreq = dset.freq.size
         ndir = dset.dir.size
         ntime = dset.time.size
@@ -182,7 +181,6 @@ def to_octopus(
                     )
 
                     # Spectra
-                    specdump = ""
                     f.write(("freq," + fmt + "anspec\n").format(*freqs))
                     np.savetxt(f, ds["energy"], fmt=fmt2, delimiter=",")
                     f.write(("fSpec," + fmt + "\n").format(*ds["fSpec"]))

@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.attributes import set_spec_attributes
 
 
 def read_octopus(filename_or_obj):
@@ -39,7 +39,7 @@ def read_octopus(filename_or_obj):
         dset["lon"] = xr.DataArray([float(f.readline().split(",")[1])], dims=("site",))
         dset["site"] = [0]
 
-        dpt = float(f.readline().split(",")[1])
+        __ = float(f.readline().split(",")[1])
 
         # Append each record
         for i in range(nrecs):
@@ -73,8 +73,8 @@ def read_octopus(filename_or_obj):
 
             for __ in range(2):
                 next(f)
-    except Exception:
-        pass
+    except Exception as e:
+        raise(e)
     finally:
         f.close()
 
