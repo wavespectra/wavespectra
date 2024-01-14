@@ -211,7 +211,7 @@ def read_swans(
 
     # Default spectral basis for interpolating
     if int_freq is True:
-        int_freq = [0.04118 * 1.1 ** n for n in range(31)]
+        int_freq = [0.04118 * 1.1**n for n in range(31)]
     elif int_freq is False:
         int_freq = None
     if int_dir is True:

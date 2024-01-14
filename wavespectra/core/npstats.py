@@ -144,8 +144,8 @@ def alpha_gufunc(spectrum, freq, fp, out):
     else:
         s = spectrum[pos]
         f = freq[pos]
-        term1 = (2 * pi)**4 / g**2 / ((pos[-1] - pos[0]) + 1)
-        term2 = np.sum(s * f**5 * np.exp(1.25 * (fp / f)**4))
+        term1 = (2 * pi) ** 4 / g**2 / ((pos[-1] - pos[0]) + 1)
+        term2 = np.sum(s * f**5 * np.exp(1.25 * (fp / f) ** 4))
         out[0] = np.float32(term1 * term2)
 
 

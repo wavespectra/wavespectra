@@ -12,7 +12,7 @@ from wavespectra.core.utils import (
     D2R,
     celerity,
     is_overlap,
-    waveage
+    waveage,
 )
 from wavespectra.core.attributes import attrs
 from wavespectra.core.npstats import hs_numpy

@@ -127,7 +127,6 @@ def to_octopus(
 
         # Open output file
         with open(filename, mode) as f:
-
             # Looping over each site
             for isite in range(dset.site.size):
                 lon = lons[isite]

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.constants import pi, g
 import xarray as xr
 
+
 def dfp_wsea(wspd: float, fp: float, dt: float, scaling: float = 1.0) -> float:
     """Rate of change of the wind-sea peak wave frequency.
     Based on fetch-limited relationships, (Ewans & Kibblewhite, 1986).
@@ -129,9 +130,7 @@ def match_consecutive_partitions(
 
     # Loop over all partitions in the current time step
     for ip_curr, fp_curr in enumerate(fp[:, 1]):
-
         if ~np.isnan(fp_curr):
-
             # Find all possible matches for the current partition sorted by increasing distance
             part_matches = sorted(
                 [

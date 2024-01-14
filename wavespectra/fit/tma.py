@@ -9,7 +9,15 @@ from wavespectra.fit.jonswap import fit_jonswap
 
 
 def fit_tma(
-    freq, fp, dep, alpha=0.0081, gamma=3.3, sigma_a=0.07, sigma_b=0.09, hs=None, **kwargs
+    freq,
+    fp,
+    dep,
+    alpha=0.0081,
+    gamma=3.3,
+    sigma_a=0.07,
+    sigma_b=0.09,
+    hs=None,
+    **kwargs,
 ):
     """TMA frequency spectrum for seas in water of finite depth (Bouws et al., 1985).
 

@@ -3,11 +3,18 @@ import numpy as np
 import xarray as xr
 from scipy.constants import pi
 
-from wavespectra.core.utils import scaled, check_same_coordinates, to_coords, load_function
+from wavespectra.core.utils import (
+    scaled,
+    check_same_coordinates,
+    to_coords,
+    load_function,
+)
 from wavespectra.core.attributes import attrs
 
 
-def fit_conditional(freq, hs, fp, cond, when_true='fit_jonswap',when_false='fit_gaussian',**kwargs):
+def fit_conditional(
+    freq, hs, fp, cond, when_true="fit_jonswap", when_false="fit_gaussian", **kwargs
+):
     """Conditional frequency spectrum.
 
     Args:
@@ -33,16 +40,17 @@ def fit_conditional(freq, hs, fp, cond, when_true='fit_jonswap',when_false='fit_
         freq = to_coords(freq, "freq")
 
     import inspect
+
     arg_vals = inspect.getargvalues(inspect.currentframe())
-    arguments = {a:arg_vals.locals[a] for a in arg_vals.args}
-    arguments.update(arg_vals.locals['kwargs'])
+    arguments = {a: arg_vals.locals[a] for a in arg_vals.args}
+    arguments.update(arg_vals.locals["kwargs"])
 
     true_func = load_function("wavespectra", when_true, prefix="fit_")
     false_func = load_function("wavespectra", when_false, prefix="fit_")
 
     ds_true = true_func(**arguments)
     ds_false = false_func(**arguments)
-    dsout = xr.where(cond,ds_true,ds_false)
+    dsout = xr.where(cond, ds_true, ds_false)
 
     dsout.name = attrs.SPECNAME
 

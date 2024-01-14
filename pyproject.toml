@@ -84,6 +84,9 @@ docs = [
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
 
+[tool.ruff]
+line-length = 88
+
 [tool.ruff.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]
 "wavespectra/specdataset.py" = ["F401"]
