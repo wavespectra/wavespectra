@@ -16,12 +16,34 @@ Releases
 4.0.0 (2024-01-DD)
 ___________________
 
-This major release brings new spectra reconstruction capability based on the work from
-Bunney's.
+This major release brings several new features and improvements including new spectra
+reconstruction capability and a new partitioning api.
 
 New Features
 ------------
 
+* New functions to construct frequency spectra within the `fit` subpackage:
+  * jonswap
+  * tma
+  * pierson-moskowitz
+  * gaussian
+* New functions for directional within the `direction` module:
+  * Cartwright (1986) cosine-square distribution.
+  * Bunney (2014) skewed distribution for turning wind sea.
+* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
+  `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
+* Gaussian frequency width method `gw` in SpecArray.
+* Jonswap peak enhancement factor method `gamma` in SpecArray.
+* Jonswap fetch scaling coefficient method `alpha` in SpecArray.
+* Peak directional spread method `dpspr` in SpecArray.
+* Peak frequency method `fp` in SpecArray.
+* Root-mean-square wave height method `hrms` in SpecArray
+* Spectra smoothing capability.
+* New input function to read xwaves mat format.
 * New partition api with several new methods:
   * ptm1
   * ptm2
@@ -34,28 +56,6 @@ New Features
 * New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_
   (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
 * Allow merging minour watershed swells.
-* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
-* Parametric spectra functions in the `fit` module:
-  * jonswap
-  * tma
-  * pierson-moskowitz
-  * gaussian
-* Directional distribution module with the following options:
-  * Cartwright (1986) cosine-square distribution.
-  * Bunney (2014) skewed distribution for turning wind sea.
-* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
-  `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
-* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
-* Gaussian frequency width method `gw` in SpecArray.
-* Jonswap peak enhancement factor method `gamma` in SpecArray.
-* Jonswap fetch scaling coefficient method `alpha` in SpecArray.
-* Peak directional spread method `dpspr` in SpecArray.
-* Peak frequency method `fp` in SpecArray.
-* Root-mean-square wave height method `hrms` in SpecArray
-* Spectra smoothing capability.
-* New input function to read xwaves mat format.
 
 
 Internal Changes
