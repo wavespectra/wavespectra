@@ -45,6 +45,25 @@ class TestOctopus(object):
         ds = read_ncswan(self.ncswanfile).transpose("site", "time", ...)
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
+    def test_write_octopus_no_latlon_specify(self):
+        ds = read_ncswan(self.ncswanfile).drop(("lon", "lat"))
+        lons = [180.0]
+        lats = [-30.0]
+        filename = os.path.join(self.tmp_dir, "spectra.oct")
+        ds.spec.to_octopus(filename, lons=lons, lats=lats)
+        ds2 = read_octopus(filename)
+        assert sorted(ds2.lon.values) == sorted(lons)
+        assert sorted(ds2.lat.values) == sorted(lats)
+
+    def test_write_octopus_no_latlon_do_not_specify(self):
+        ds = read_ncswan(self.ncswanfile).drop(("lon", "lat"))
+        filename = os.path.join(self.tmp_dir, "spectra.oct")
+        ds.spec.to_octopus(filename)
+        ds2 = read_octopus(filename)
+        assert list(ds2.lon.values) == list(ds2.lon.values * 0)
+        assert list(ds2.lat.values) == list(ds2.lat.values * 0)
+        import ipdb; ipdb.set_trace()
+
     def test_write_octopus_and_read(self):
         ds = read_ncswan(self.ncswanfile)
         file = os.path.join(self.tmp_dir, "spectra.oct")
