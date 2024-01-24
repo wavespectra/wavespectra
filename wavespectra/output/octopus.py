@@ -6,7 +6,14 @@ from wavespectra.core.attributes import attrs
 
 
 def to_octopus(
-    self, filename, site_id="spec", fcut=0.125, missing_val=-99999, ntime=None
+    self,
+    filename,
+    site_id="spec",
+    fcut=0.125,
+    missing_val=-99999,
+    ntime=None,
+    lons=None,
+    lats=None,
 ):
     """Save spectra in Octopus format.
 
@@ -17,11 +24,16 @@ def to_octopus(
         - missing_value (int): missing value in output file.
         - ntime (int, None): number of times to load into memory before dumping output
           file if full dataset does not fit into memory, choose None to load all times.
+        - lons: (np.array, None): longitudes to use for each site, if None use.
+        - lats: (np.array, None): latitudes to use for each site, if None use.
 
     Note:
+        - lons/lats parameters may be prescribed to set site locations if lon/lat are
+          not variables in the dataset (their sizes must match the number of sites).
+        - If lons/lats are not specified and the dataset does not have lon/lat coords,
+          all coordinates default to zero.
         - dataset needs to have lon/lat/time coordinates.
-        - dataset with multiple locations dumped at same file with one location
-          header per site.
+        - multiple locations dumped at same file with one location header per site.
         - 1D spectra not supported.
         - ntime=None optimises speed as the dataset is loaded into memory however the
           dataset may not fit into memory in which case a smaller number of times may
@@ -33,6 +45,15 @@ def to_octopus(
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset_stacked = self._check_and_stack_dims()
     ntime = min(ntime or dset_stacked.time.size, dset_stacked.time.size)
+
+    # Handle datasets with missing lon/lat
+    for arr, name in zip((lons, lats), (attrs.LONNAME, attrs.LATNAME)):
+        if name not in dset_stacked.data_vars:
+            if arr is None:
+                arr = np.zeros(dset_stacked.site.size)
+            elif len(arr) != dset_stacked.site.size:
+                raise ValueError(f"{name} must have same size as site dimension")
+            dset_stacked[name] = (("site",), arr)
 
     # Writing format definitions
     fmt = ",".join(len(self.freq) * ["{:8.7f}"]) + ","
