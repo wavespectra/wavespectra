@@ -24,15 +24,14 @@ def to_octopus(
         - missing_value (int): missing value in output file.
         - ntime (int, None): number of times to load into memory before dumping output
           file if full dataset does not fit into memory, choose None to load all times.
-        - lons: (np.array, None): longitudes to use for each site, if None use.
-        - lats: (np.array, None): latitudes to use for each site, if None use.
+        - lons: (np.array, None): longitudes to use for each site if not in dataset.
+        - lats: (np.array, None): latitudes to use for each site if not in dataset.
 
     Note:
         - lons/lats parameters may be prescribed to set site locations if lon/lat are
           not variables in the dataset (their sizes must match the number of sites).
         - If lons/lats are not specified and the dataset does not have lon/lat coords,
           all coordinates default to zero.
-        - dataset needs to have lon/lat/time coordinates.
         - multiple locations dumped at same file with one location header per site.
         - 1D spectra not supported.
         - ntime=None optimises speed as the dataset is loaded into memory however the
@@ -127,7 +126,7 @@ def to_octopus(
 
         # Put everything in dict because it is a lot faster to slice
         dset_dict = {v: dset[v].values for v in dset.data_vars}
-        data_vars = list(dset_dict.keys() - ("lon", "lat"))
+        data_vars = list(dset_dict.keys() - (attrs.LONNAME, attrs.LATNAME))
 
         # Extend energy array with directions values and sums along frequencies
         right = dset["energy"].sum(dim="freq").expand_dims({"freq": [10]})
@@ -136,13 +135,8 @@ def to_octopus(
             (left.assign_coords({"freq": [-10]}), dset["energy"], right), dim="freq"
         ).transpose(attrs.TIMENAME, attrs.SITENAME, attrs.DIRNAME, attrs.FREQNAME).values
 
-        try:
-            lons = np.atleast_1d(dset_dict["lon"])
-            lats = np.atleast_1d(dset_dict["lat"])
-        except KeyError as err:
-            raise NotImplementedError(
-                "lon-lat variables are required to write Octopus spectra file"
-            ) from err
+        lons = np.atleast_1d(dset_dict[attrs.LONNAME])
+        lats = np.atleast_1d(dset_dict[attrs.LATNAME])
 
         # Open output file
         with open(filename, mode) as f:
