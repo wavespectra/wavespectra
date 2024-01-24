@@ -62,7 +62,6 @@ class TestOctopus(object):
         ds2 = read_octopus(filename)
         assert list(ds2.lon.values) == list(ds2.lon.values * 0)
         assert list(ds2.lat.values) == list(ds2.lat.values * 0)
-        import ipdb; ipdb.set_trace()
 
     def test_write_octopus_and_read(self):
         ds = read_ncswan(self.ncswanfile)
@@ -75,12 +74,6 @@ class TestOctopus(object):
         ds = read_ncswan(self.ncswanfile)
         ds = ds.drop_vars([attrs.WSPDNAME, attrs.WDIRNAME, attrs.DEPNAME])
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spec_no_winds_depth.oct"))
-
-    def test_write_octopus_missing_lonlat(self):
-        ds = read_ncswan(self.ncswanfile)
-        ds = ds.rename({"lon": "x", "lat": "y"})
-        with pytest.raises(NotImplementedError):
-            ds.spec.to_octopus(os.path.join(self.tmp_dir, "spec_no_lonlat.oct"))
 
     def test_write_octopus_one_time(self):
         ds = read_ncswan(self.ncswanfile)
