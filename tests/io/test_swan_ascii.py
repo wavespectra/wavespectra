@@ -72,3 +72,8 @@ class TestSwan(object):
         ds2 = read_swan(filename)
         assert list(ds2.lon.values) == list(ds2.lon.values * 0)
         assert list(ds2.lat.values) == list(ds2.lat.values * 0)
+
+    def test_write_swanascii_latlon_as_dims_and_no_site_dim(self):
+        ds = self.ds.isel(site=0).set_coords(("lon","lat"))
+        filename = os.path.join(self.tmp_dir, "spectra.swn")
+        ds.spec.to_swan(filename)
