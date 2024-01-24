@@ -46,7 +46,7 @@ class TestOctopus(object):
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
     def test_write_octopus_no_latlon_specify(self):
-        ds = read_ncswan(self.ncswanfile).drop(("lon", "lat"))
+        ds = read_ncswan(self.ncswanfile).drop_vars(("lon", "lat"))
         lons = [180.0]
         lats = [-30.0]
         filename = os.path.join(self.tmp_dir, "spectra.oct")
@@ -56,7 +56,7 @@ class TestOctopus(object):
         assert sorted(ds2.lat.values) == sorted(lats)
 
     def test_write_octopus_no_latlon_do_not_specify(self):
-        ds = read_ncswan(self.ncswanfile).drop(("lon", "lat"))
+        ds = read_ncswan(self.ncswanfile).drop_vars(("lon", "lat"))
         filename = os.path.join(self.tmp_dir, "spectra.oct")
         ds.spec.to_octopus(filename)
         ds2 = read_octopus(filename)
