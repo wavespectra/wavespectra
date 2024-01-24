@@ -12,7 +12,7 @@ FILES_DIR = Path(__file__).parent / "../sample_files"
 
 
 
-class TestNcSwan(object):
+class TestSwan(object):
     """Test read swan ascii functions."""
 
     @classmethod
@@ -54,3 +54,21 @@ class TestNcSwan(object):
             assert self.ds.isel(site=0).spec.hs().values == pytest.approx(
                 ds.isel(lon=0, lat=0, drop=True).spec.hs().values, rel=1e-2
             )
+
+    def test_write_swanascii_no_latlon_specify(self):
+        ds = self.ds.drop_vars(("lon", "lat"))
+        lons = [180.0]
+        lats = [-30.0]
+        filename = os.path.join(self.tmp_dir, "spectra.swn")
+        ds.spec.to_swan(filename, lons=lons, lats=lats)
+        ds2 = read_swan(filename)
+        assert sorted(ds2.lon.values) == sorted(lons)
+        assert sorted(ds2.lat.values) == sorted(lats)
+
+    def test_write_swanascii_no_latlon_do_not_specify(self):
+        ds = self.ds.drop_vars(("lon", "lat"))
+        filename = os.path.join(self.tmp_dir, "spectra.swn")
+        ds.spec.to_swan(filename)
+        ds2 = read_swan(filename)
+        assert list(ds2.lon.values) == list(ds2.lon.values * 0)
+        assert list(ds2.lat.values) == list(ds2.lat.values * 0)
