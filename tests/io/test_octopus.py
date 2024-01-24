@@ -33,6 +33,18 @@ class TestOctopus(object):
         ds = read_ncswan(self.ncswanfile)
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
+    def test_write_octopus_site_as_variable(self):
+        ds = read_ncswan(self.ncswanfile).isel(site=0)
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_lat_lon(self):
+        ds = read_ncswan(self.ncswanfile).isel(site=0).set_coords(("lon","lat"))
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_dims_ordering(self):
+        ds = read_ncswan(self.ncswanfile).transpose("site", "time", ...)
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
     def test_write_octopus_and_read(self):
         ds = read_ncswan(self.ncswanfile)
         file = os.path.join(self.tmp_dir, "spectra.oct")
