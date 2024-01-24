@@ -21,6 +21,12 @@ New Features
 * Support datasets with no lat / lon variables when writing octopus and swan ascii.
   There is now an option to specify the coordinates manually or skip specifying them.
 
+Internal Changes
+----------------
+* Ensure octopus writer can handle lon/lat defined as coordinates in dataset rather
+  than data_vars.
+* Fix octopus writer to support datasets without site as a dimension.
+
 
 3.16.0 (2023-12-14)
 ___________________
