@@ -4,6 +4,8 @@ import logging
 from wavespectra.input.ww3 import from_ww3
 from wavespectra.input.wwm import from_wwm
 from wavespectra.input.ncswan import from_ncswan
+from wavespectra.input.era5 import from_era5
+from wavespectra.input.ndbc import from_ndbc
 from wavespectra.specdataset import SpecDataset
 
 logger = logging.getLogger(__name__)
@@ -20,17 +22,12 @@ def read_dataset(dset):
             consistent any supported file format (currently WW3, SWAN and WWM).
 
     """
-    vars_wavespectra = {"freq", "dir", "site", "efth", "lon", "lat"}
-    vars_ww3 = {"frequency", "direction", "station", "efth", "longitude", "latitude"}
-    vars_wwm = {"nfreq", "ndir", "nbstation", "AC", "lon", "lat"}
-    vars_ncswan = {
-        "frequency",
-        "direction",
-        "points",
-        "density",
-        "longitude",
-        "latitude",
-    }
+    vars_wavespectra = {"freq", "dir", "site", "efth"}
+    vars_ww3 = {"frequency", "direction", "station", "efth"}
+    vars_wwm = {"nfreq", "ndir", "nbstation", "AC"}
+    vars_era5 = {"frequency", "direction", "d2fd"}
+    vars_ndbc = {"frequency", "direction", "spectral_wave_density"}
+    vars_ncswan = {"frequency", "direction", "points", "density"}
 
     vars_dset = set(dset.variables.keys()).union(dset.dims)
     if not vars_wavespectra - vars_dset:
@@ -45,6 +42,12 @@ def read_dataset(dset):
     elif not vars_wwm - vars_dset:
         logger.debug("Dataset identified as wwm")
         func = from_wwm
+    elif not vars_era5 - vars_dset:
+        logger.debug("Dataset identified as era5")
+        func = from_era5
+    elif not vars_ndbc - vars_dset:
+        logger.debug("Dataset identified as ndbc")
+        func = from_ndbc
     else:
         raise ValueError(
             f"Cannot identify appropriate reader from dataset variables: {vars_dset}"
