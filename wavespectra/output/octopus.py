@@ -116,8 +116,8 @@ def to_octopus(
         ).transpose(attrs.TIMENAME, attrs.SITENAME, attrs.DIRNAME, attrs.FREQNAME).values
 
         try:
-            lons = dset_dict["lon"]
-            lats = dset_dict["lat"]
+            lons = np.atleast_1d(dset_dict["lon"])
+            lats = np.atleast_1d(dset_dict["lat"])
         except KeyError as err:
             raise NotImplementedError(
                 "lon-lat variables are required to write Octopus spectra file"
