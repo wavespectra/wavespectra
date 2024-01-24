@@ -107,6 +107,11 @@ class SpecDataset(metaclass=Plugin):
         if attrs.LATNAME in dset.coords:
             dset = dset.reset_coords(attrs.LATNAME)
 
+        # Ensure site dim in lon/lat
+        for coord in [attrs.LONNAME, attrs.LATNAME]:
+            if coord in dset.data_vars and attrs.SITENAME not in dset[coord].dims:
+                dset[coord] = dset[coord].expand_dims(attrs.SITENAME)
+
         # Ensure times comes first
         if attrs.TIMENAME in dset.dims:
             dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, ...)
