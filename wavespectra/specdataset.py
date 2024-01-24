@@ -97,7 +97,7 @@ class SpecDataset(metaclass=Plugin):
 
         # If grid reshape into site, if neither define fake site dimension
         if set((attrs.LONNAME, attrs.LATNAME)).issubset(dset.dims):
-            dset = dset.stack(site=(attrs.LATNAME, attrs.LONNAME))
+            dset = dset.stack(site=(attrs.LATNAME, attrs.LONNAME), create_index=False)
         elif attrs.SITENAME not in dset.dims:
             dset = dset.expand_dims(attrs.SITENAME)
 
