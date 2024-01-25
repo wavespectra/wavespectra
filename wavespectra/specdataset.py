@@ -96,10 +96,25 @@ class SpecDataset(metaclass=Plugin):
             )
 
         # If grid reshape into site, if neither define fake site dimension
-        if set(("lon", "lat")).issubset(dset.dims):
-            dset = dset.stack(site=("lat", "lon"))
-        elif "site" not in dset.dims:
-            dset = dset.expand_dims("site")
+        if set((attrs.LONNAME, attrs.LATNAME)).issubset(dset.dims):
+            dset = dset.stack(site=(attrs.LATNAME, attrs.LONNAME), create_index=False)
+        elif attrs.SITENAME not in dset.dims:
+            dset = dset.expand_dims(attrs.SITENAME)
+
+        # Ensure lon/lat are not coordinates
+        if attrs.LONNAME in dset.coords:
+            dset = dset.reset_coords(attrs.LONNAME)
+        if attrs.LATNAME in dset.coords:
+            dset = dset.reset_coords(attrs.LATNAME)
+
+        # Ensure site dim in lon/lat
+        for coord in [attrs.LONNAME, attrs.LATNAME]:
+            if coord in dset.data_vars and attrs.SITENAME not in dset[coord].dims:
+                dset[coord] = dset[coord].expand_dims(attrs.SITENAME)
+
+        # Ensure times comes first
+        if attrs.TIMENAME in dset.dims:
+            dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, ...)
 
         return dset
 
