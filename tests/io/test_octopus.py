@@ -33,6 +33,36 @@ class TestOctopus(object):
         ds = read_ncswan(self.ncswanfile)
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
+    def test_write_octopus_site_as_variable(self):
+        ds = read_ncswan(self.ncswanfile).isel(site=0)
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_latlon_as_dims(self):
+        ds = read_ncswan(self.ncswanfile).isel(site=0).set_coords(("lon","lat"))
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_dims_ordering(self):
+        ds = read_ncswan(self.ncswanfile).transpose("site", "time", ...)
+        ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
+
+    def test_write_octopus_no_latlon_specify(self):
+        ds = read_ncswan(self.ncswanfile).drop_vars(("lon", "lat"))
+        lons = [180.0]
+        lats = [-30.0]
+        filename = os.path.join(self.tmp_dir, "spectra.oct")
+        ds.spec.to_octopus(filename, lons=lons, lats=lats)
+        ds2 = read_octopus(filename)
+        assert sorted(ds2.lon.values) == sorted(lons)
+        assert sorted(ds2.lat.values) == sorted(lats)
+
+    def test_write_octopus_no_latlon_do_not_specify(self):
+        ds = read_ncswan(self.ncswanfile).drop_vars(("lon", "lat"))
+        filename = os.path.join(self.tmp_dir, "spectra.oct")
+        ds.spec.to_octopus(filename)
+        ds2 = read_octopus(filename)
+        assert list(ds2.lon.values) == list(ds2.lon.values * 0)
+        assert list(ds2.lat.values) == list(ds2.lat.values * 0)
+
     def test_write_octopus_and_read(self):
         ds = read_ncswan(self.ncswanfile)
         file = os.path.join(self.tmp_dir, "spectra.oct")
@@ -44,12 +74,6 @@ class TestOctopus(object):
         ds = read_ncswan(self.ncswanfile)
         ds = ds.drop_vars([attrs.WSPDNAME, attrs.WDIRNAME, attrs.DEPNAME])
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spec_no_winds_depth.oct"))
-
-    def test_write_octopus_missing_lonlat(self):
-        ds = read_ncswan(self.ncswanfile)
-        ds = ds.rename({"lon": "x", "lat": "y"})
-        with pytest.raises(NotImplementedError):
-            ds.spec.to_octopus(os.path.join(self.tmp_dir, "spec_no_lonlat.oct"))
 
     def test_write_octopus_one_time(self):
         ds = read_ncswan(self.ncswanfile)

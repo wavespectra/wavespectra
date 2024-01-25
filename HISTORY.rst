@@ -79,6 +79,24 @@ Deprecation
 .. _`Sebastien Dealaux`: https://github.com/seboceanum
 
 
+3.17.0 (2023-12-14)
+___________________
+
+New Features
+------------
+* Support ERA5 and NDBC netcdf file types in `read_dataset` reader.
+* Support datasets with no lat / lon variables when writing octopus and swan ascii.
+  There is now an option to specify the coordinates manually or skip specifying them.
+
+Internal Changes
+----------------
+* Stop relying on lon/lat coordinates in order to identify file types in read_dataset.
+* Ensure octopus writer can handle lon/lat defined as coordinates in dataset rather
+  than data_vars.
+* Fix octopus writer to support datasets without site as a dimension.
+* Fix swan ascii writer for bug in cases where lon/lat are dimensions and site is not.
+
+
 3.16.0 (2023-12-14)
 ___________________
 

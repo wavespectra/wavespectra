@@ -6,7 +6,14 @@ from wavespectra.core.attributes import attrs
 
 
 def to_octopus(
-    self, filename, site_id="spec", fcut=0.125, missing_val=-99999, ntime=None
+    self,
+    filename,
+    site_id="spec",
+    fcut=0.125,
+    missing_val=-99999,
+    ntime=None,
+    lons=None,
+    lats=None,
 ):
     """Save spectra in Octopus format.
 
@@ -17,11 +24,15 @@ def to_octopus(
         - missing_value (int): missing value in output file.
         - ntime (int, None): number of times to load into memory before dumping output
           file if full dataset does not fit into memory, choose None to load all times.
+        - lons: (np.array, None): longitudes to use for each site if not in dataset.
+        - lats: (np.array, None): latitudes to use for each site if not in dataset.
 
     Note:
-        - dataset needs to have lon/lat/time coordinates.
-        - dataset with multiple locations dumped at same file with one location
-          header per site.
+        - lons/lats parameters may be prescribed to set site locations if lon/lat are
+          not variables in the dataset (their sizes must match the number of sites).
+        - If lons/lats are not specified and the dataset does not have lon/lat coords,
+          all coordinates default to zero.
+        - multiple locations dumped at same file with one location header per site.
         - 1D spectra not supported.
         - ntime=None optimises speed as the dataset is loaded into memory however the
           dataset may not fit into memory in which case a smaller number of times may
@@ -33,6 +44,15 @@ def to_octopus(
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset_stacked = self._check_and_stack_dims()
     ntime = min(ntime or dset_stacked.time.size, dset_stacked.time.size)
+
+    # Handle datasets with missing lon/lat
+    for arr, name in zip((lons, lats), (attrs.LONNAME, attrs.LATNAME)):
+        if name not in dset_stacked.data_vars:
+            if arr is None:
+                arr = np.zeros(dset_stacked.site.size)
+            elif len(arr) != dset_stacked.site.size:
+                raise ValueError(f"{name} must have same size as site dimension")
+            dset_stacked[name] = (("site",), arr)
 
     # Writing format definitions
     fmt = ",".join(len(self.freq) * ["{:8.7f}"]) + ","
@@ -103,7 +123,7 @@ def to_octopus(
 
         # Put everything in dict because it is a lot faster to slice
         dset_dict = {v: dset[v].values for v in dset.data_vars}
-        data_vars = list(dset_dict.keys() - ("lon", "lat"))
+        data_vars = list(dset_dict.keys() - (attrs.LONNAME, attrs.LATNAME))
 
         # Extend energy array with directions values and sums along frequencies
         right = dset["energy"].sum(dim="freq").expand_dims({"freq": [10]})
@@ -116,13 +136,8 @@ def to_octopus(
             .values
         )
 
-        try:
-            lons = dset_dict["lon"]
-            lats = dset_dict["lat"]
-        except KeyError as err:
-            raise NotImplementedError(
-                "lon-lat variables are required to write Octopus spectra file"
-            ) from err
+        lons = np.atleast_1d(dset_dict[attrs.LONNAME])
+        lats = np.atleast_1d(dset_dict[attrs.LATNAME])
 
         # Open output file
         with open(filename, mode) as f:

@@ -1,9 +1,18 @@
 """SWAN ASCII output plugin."""
+import numpy as np
 from wavespectra.core.attributes import attrs
 from wavespectra.core.swan import SwanSpecFile
 
 
-def to_swan(self, filename, append=False, id="Created by wavespectra", ntime=None):
+def to_swan(
+    self,
+    filename,
+    append=False,
+    id="Created by wavespectra",
+    ntime=None,
+    lons=None,
+    lats=None,
+):
     """Write spectra in SWAN ASCII format.
 
     Args:
@@ -12,9 +21,14 @@ def to_swan(self, filename, append=False, id="Created by wavespectra", ntime=Non
         - id (str): used for header in output file.
         - ntime (int, None): number of times to load into memory before dumping output
           file if full dataset does not fit into memory, choose None to load all times.
+        - lons: (np.array, None): longitudes to use for each site, if None use.
+        - lats: (np.array, None): latitudes to use for each site, if None use.
 
     Note:
-        - Only datasets with lat/lon coordinates are currently supported.
+        - lons/lats parameters may be prescribed to set site locations if lon/lat are
+          not variables in the dataset (their sizes must match the number of sites).
+        - If lons/lats are not specified and the dataset does not have lon/lat coords,
+          all coordinates default to zero.
         - Extra dimensions other than time, site, lon, lat, freq, dim not yet
           supported.
         - Only 2D spectra E(f,d) are currently supported.
@@ -26,6 +40,15 @@ def to_swan(self, filename, append=False, id="Created by wavespectra", ntime=Non
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
     ntime = min(ntime or dset.time.size, dset.time.size)
+
+    # Handle datasets with missing lon/lat
+    for arr, name in zip((lons, lats), (attrs.LONNAME, attrs.LATNAME)):
+        if name not in dset.data_vars:
+            if arr is None:
+                arr = np.zeros(dset.site.size)
+            elif len(arr) != dset.site.size:
+                raise ValueError(f"{name} must have same size as site dimension")
+            dset[name] = (("site",), arr)
 
     # Ensure time dimension exists
     is_time = attrs.TIMENAME in dset[attrs.SPECNAME].dims
@@ -44,20 +67,13 @@ def to_swan(self, filename, append=False, id="Created by wavespectra", ntime=Non
     dset = dset.transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
 
     # Instantiate swan object
-    try:
-        x = dset.lon.values
-        y = dset.lat.values
-    except AttributeError as err:
-        raise NotImplementedError(
-            "lon-lat variables are required to write SWAN spectra file"
-        ) from err
     sfile = SwanSpecFile(
         filename,
         freqs=dset.freq,
         dirs=dset.dir,
         time=is_time,
-        x=x,
-        y=y,
+        x=dset[attrs.LONNAME].values,
+        y=dset[attrs.LATNAME].values,
         append=append,
         id=id,
     )
