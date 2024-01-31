@@ -1,4 +1,5 @@
 """Read Octopus spectra files."""
+import gzip
 import datetime
 import numpy as np
 import xarray as xr
@@ -20,8 +21,10 @@ def read_octopus(filename_or_obj):
     try:
         if hasattr(filename_or_obj, "read"):
             f = filename_or_obj
+        elif str(filename_or_obj).endswith(".gz"):
+            f = gzip.open(filename_or_obj, "rt")
         else:
-            f = open(filename_or_obj, "r")
+            f = open(filename_or_obj, "rt")
 
         efths = []
         wspds = []
