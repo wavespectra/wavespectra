@@ -43,7 +43,6 @@ dependencies = [
     "sortedcontainers",
     "scipy",
     "toolz",
-    "typing_extensions",
     "xarray",
 ]
 dynamic = ["version"]
@@ -87,6 +86,9 @@ docs = [
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
 
+[tool.ruff]
+line-length = 88
+
 [tool.ruff.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]
 "wavespectra/specdataset.py" = ["F401"]
@@ -98,6 +100,16 @@ version = {attr = "wavespectra.__version__"}
 "wavespectra/input/spotter.py" = ["F401"]
 "wavespectra/input/dataset.py" = ["F401"]
 "wavespectra/input/swan.py" = ["F401"]
+"wavespectra/construct.py" = ["F401"]
+"wavespectra/directional.py" = ["F401"]
+"wavespectra/fit/pierson_moskowitz.py" = ["F401"]
+"wavespectra/fit/tma.py" = ["F401"]
+"wavespectra/input/funwave.py" = ["F401"]
+"wavespectra/input/ndbc.py" = ["F401"]
+"wavespectra/input/ndbc_ascii.py" = ["F401"]
+"wavespectra/input/octopus.py" = ["F401"]
+"wavespectra/input/wavespectra.py" = ["F401"]
+"wavespectra/input/xwaves.py" = ["F401"]
 
 [tool.tox]
 legacy_tox_ini = """

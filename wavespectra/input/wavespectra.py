@@ -1,8 +1,6 @@
 """Read netCDF or ZARR formatted with wavespectra conventions."""
-import xarray as xr
-
 from wavespectra.specdataset import SpecDataset
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.attributes import set_spec_attributes
 from wavespectra.input import open_netcdf_or_zarr
 
 

@@ -5,10 +5,10 @@ setup(
     name="wavespectra",
     ext_modules=[
         Extension(
-            name='wavespectra.specpart',
+            name='wavespectra.partition.specpart',
             sources=[
-                "wavespectra/specpart/specpart.pyf",
-                "wavespectra/specpart/specpart.f90",
+                "wavespectra/partition/specpart/specpart.pyf",
+                "wavespectra/partition/specpart/specpart.f90",
             ]
         )
     ]

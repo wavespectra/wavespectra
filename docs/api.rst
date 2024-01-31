@@ -32,7 +32,9 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    :toctree: generated/
 
    SpecArray.hs
+   SpecArray.hrms
    SpecArray.hmax
+   SpecArray.fp
    SpecArray.tp
    SpecArray.tm01
    SpecArray.tm02
@@ -40,8 +42,13 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
+   SpecArray.dpspr
    SpecArray.swe
    SpecArray.sw
+   SpecArray.gw
+   SpecArray.gamma
+   SpecArray.alpha
+   SpecArray.goda
 
 **Spectral partitioning**
 
@@ -119,6 +126,7 @@ Input functions
    read_dataset
    read_ndbc
    read_json
+   read_funwave
 
 **Convenience SWAN ASCII input functions**
 
@@ -145,25 +153,43 @@ Output functions
    SpecDataset.to_octopus
    SpecDataset.to_ww3
    SpecDataset.to_json
+   SpecDataset.to_funwave
+   SpecDataset.to_orcaflex
 
 
-Spectral reconstruction
------------------------
-
-Spectral reconstruction functionality is under development. There are functions
-available to fit parametric spectrum shapes from wave partitions but the construct
-api is not properly established.
+Spectral fitting
+----------------
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   construct.jonswap
-   construct.ochihubble
-   construct.helpers.spread
-   construct.helpers.arrange_inputs
-   construct.helpers.make_dataset
-   construct.helpers.check_coordinates
+   fit_pierson_moskowitz
+   fit_jonswap
+   fit_tma
+   fit_gaussian
+
+
+Directional distribution
+------------------------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   directional.cartwright
+   directional.bunney
+
+
+Construct
+---------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   construct.construct_partition
+   construct.partition_and_reconstruct
 
 
 Internal core functions and objects
@@ -201,6 +227,7 @@ Internal core functions and objects
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
    core.npstats.tp_gufunc
+   core.npstats.dpspr_gufunc
 
 **xrstats**
 
@@ -211,6 +238,7 @@ Internal core functions and objects
    core.xrstats.peak_wave_direction
    core.xrstats.mean_direction_at_peak_wave_period
    core.xrstats.peak_wave_period
+   core.xrstats.peak_directional_spread
 
 **select module**
 
@@ -234,11 +262,9 @@ Internal core functions and objects
    core.utils.wavelen
    core.utils.wavenuma
    core.utils.celerity
-   core.utils.dnum_to_datetime
    core.utils.to_nautical
    core.utils.unique_indices
    core.utils.unique_times
-   core.utils.to_datetime
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec

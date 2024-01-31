@@ -5,6 +5,7 @@ import xarray as xr
 import pytest
 
 from wavespectra import SpecArray
+from wavespectra import _import_functions
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
@@ -60,7 +61,9 @@ def test_hmax_defalt(dset):
 def test_scale_by_hs(dset):
     ds = dset.spec.scale_by_hs(expr="2*hs")
     assert ds.spec.hs().values == pytest.approx(2 * dset.spec.hs().values)
-    dset.spec.scale_by_hs("2*hs", hs_min=1, hs_max=2, tp_min=5, tp_max=15, dpm_min=1, dpm_max=180)
+    dset.spec.scale_by_hs(
+        "2*hs", hs_min=1, hs_max=2, tp_min=5, tp_max=15, dpm_min=1, dpm_max=180
+    )
 
 
 def test_directional_methods_raise_on_oned_spec(dset):
@@ -71,6 +74,15 @@ def test_directional_methods_raise_on_oned_spec(dset):
         ds.spec.dm()
     with pytest.raises(ValueError):
         ds.spec.dspr()
+    with pytest.raises(ValueError):
+        ds.spec.dpspr()
+    with pytest.raises(ValueError):
+        ds.spec.fdspr()
+    with pytest.raises(ValueError):
+        ds.spec.uss_x()
+    with pytest.raises(ValueError):
+        ds.spec.uss_y()
+
 
 def test_crsd(dset):
     dset.spec.crsd()
@@ -88,21 +100,6 @@ def test_wavelen(dset):
     assert all(deep - shallow) > 0
 
 
-def test_partition_has_spectral_coords(dset):
-    ds = dset.isel(freq=0, dir=0, drop=True)
-    with pytest.raises(ValueError):
-        ds.spec.partition(None, None, None)
-
-
-def test_partition_efth_wind_depth_have_same_nonspectral_coords(dset_full):
-    dset = dset_full
-    wsp_darr = dset.wspd
-    wdir_darr = dset.wdir
-    dep_darr = dset.dpt.isel(time=0, drop=True)
-    with pytest.raises(ValueError):
-        dset.spec.partition(wsp_darr=wsp_darr, wdir_darr=wdir_darr, dep_darr=dep_darr)
-
-
 def test_stats(dset):
     hs1 = dset.spec.hs()
     hs2 = dset.spec.stats(["hs"]).hs
@@ -118,3 +115,22 @@ def test_stats(dset):
         dset.spec.stats(["stat_not_implemented"])
     with pytest.raises(ValueError):
         dset.spec.stats(["dd"])
+
+
+def test_import_function():
+    _import_functions("input", "read")
+    _import_functions("dummy", "dummy2")
+
+
+def test_one_frequency_bin(dset):
+    ds = dset.isel(freq=[0])
+    assert ds.spec.freq == dset.isel(freq=0).freq
+    assert ds.spec.df.size == 1
+
+
+def test_partition_interface(dset_full):
+    dset = dset_full
+    dset.spec.partition
+    methods = ["ptm1", "ptm2", "ptm3", "ptm4", "ptm5"]
+    for method in methods:
+        assert(method in dir(dset.spec.partition))
