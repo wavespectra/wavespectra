@@ -13,7 +13,21 @@ Releases
 ********
 
 
-3.17.0 (2023-12-14)
+3.18.0 (2024-02-01)
+___________________
+
+New Features
+------------
+* Support gzip writing in octopus writer and reader (`PR110 <https://github.com/wavespectra/wavespectra/pull/110>`_).
+* New option to set compression level when writing gzipped swan ascii file.
+
+Internal Changes
+----------------
+* Gzipped swan ascii files are written with compresslevel=6 by default instead of 9.
+* Explicitly set text mode when reading / writing swan ascii files.
+
+
+3.17.0 (2024-01-09)
 ___________________
 
 New Features
@@ -29,6 +43,7 @@ Internal Changes
   than data_vars.
 * Fix octopus writer to support datasets without site as a dimension.
 * Fix swan ascii writer for bug in cases where lon/lat are dimensions and site is not.
+
 
 3.16.0 (2023-12-14)
 ___________________
