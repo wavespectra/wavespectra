@@ -57,6 +57,9 @@ dynamic = ["version"]
 [project.scripts]
 wavespectra = "wavespectra.cli:main"
 
+[project.entry-points."xarray.backends"]
+ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
+
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
 extra = [
