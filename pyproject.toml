@@ -60,6 +60,7 @@ wavespectra = "wavespectra.cli:main"
 ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
 ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
+ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
 
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
