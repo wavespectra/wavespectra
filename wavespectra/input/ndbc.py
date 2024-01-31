@@ -3,6 +3,7 @@
 https://dods.ndbc.noaa.gov/
 
 """
+from xarray.backends import BackendEntrypoint
 import xarray as xr
 import numpy as np
 
@@ -87,3 +88,23 @@ def from_ndbc(dset, directional=True, dd=10.0):
     set_spec_attributes(dset)
 
     return dset
+
+
+class NDBCBackendEntrypoint(BackendEntrypoint):
+    """NDBC netcdf backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        directional=True,
+        dd=10.0,
+    ):
+        return read_ndbc(filename_or_obj, directional=directional, dd=dd)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open NDBC netcdf spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
