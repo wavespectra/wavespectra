@@ -24,6 +24,7 @@ New Features
 Internal Changes
 ----------------
 * Gzipped swan ascii files are written with compresslevel=6 by default instead of 9.
+* Explicitly set text mode when reading / writing swan ascii files.
 
 
 3.17.0 (2024-01-09)
