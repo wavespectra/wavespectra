@@ -1,5 +1,6 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
 import numpy as np
+from xarray.backends import BackendEntrypoint
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.input.netcdf import read_netcdf
@@ -67,3 +68,23 @@ def from_era5(dset, freqs=None, dirs=None):
     set_spec_attributes(dset)
 
     return dset
+
+
+class ERA5BackendEntrypoint(BackendEntrypoint):
+    """ERA5 backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        freqs=None,
+        dirs=None,
+    ):
+        return read_era5(filename_or_obj, freqs=freqs, dirs=dirs)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open ERA5 netcdf spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
