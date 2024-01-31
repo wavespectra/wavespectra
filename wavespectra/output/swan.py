@@ -12,6 +12,7 @@ def to_swan(
     ntime=None,
     lons=None,
     lats=None,
+    compresslevel=6,
 ):
     """Write spectra in SWAN ASCII format.
 
@@ -23,8 +24,9 @@ def to_swan(
           file if full dataset does not fit into memory, choose None to load all times.
         - lons: (np.array, None): longitudes to use for each site, if None use.
         - lats: (np.array, None): latitudes to use for each site, if None use.
-
+        - compresslevel (int): compression level for gzip compression (1-9).
     Note:
+        - Output files are gzipped if filename ends with `.gz`.
         - lons/lats parameters may be prescribed to set site locations if lon/lat are
           not variables in the dataset (their sizes must match the number of sites).
         - If lons/lats are not specified and the dataset does not have lon/lat coords,
@@ -76,6 +78,7 @@ def to_swan(
         y=dset[attrs.LATNAME].values,
         append=append,
         id=id,
+        compresslevel=compresslevel,
     )
 
     # Dump each timestep
