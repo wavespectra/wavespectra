@@ -1,13 +1,10 @@
 """Read Native WW3 spectra files."""
-import numpy as np
-import xarray as xr
+from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R
 from wavespectra.input import open_netcdf_or_zarr, to_keep
-
-from xarray.backends import BackendEntrypoint
 
 
 MAPPING = {
@@ -94,6 +91,6 @@ class WW3BackendEntrypoint(BackendEntrypoint):
     def guess_can_open(self, filename_or_obj):
         return False
 
-    description = "Open WW3 netcdf or zarr spectra files into wavespectra convention."
+    description = "Open WW3 netcdf or zarr spectra files as a wavespectra dataset."
 
     url = "https://github.com/wavespectra/wavespectra"
