@@ -57,11 +57,11 @@ dynamic = ["version"]
 wavespectra = "wavespectra.cli:main"
 
 [project.entry-points."xarray.backends"]
-ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
 ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
 ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
-
+wwm = "wavespectra.input.wwm:WWMBackendEntrypoint"
+ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
 extra = [
