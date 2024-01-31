@@ -1,5 +1,5 @@
 """Read Native WWM netCDF spectra files."""
-import xarray as xr
+from xarray.backends import BackendEntrypoint
 import numpy as np
 
 from wavespectra.specdataset import SpecDataset
@@ -77,3 +77,23 @@ def from_wwm(dset):
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
     dims = [d for d in ["time", "site", "freq", "dir"] if d in dset.efth.dims]
     return dset.drop_vars(to_drop).transpose(*dims)
+
+
+class WWMBackendEntrypoint(BackendEntrypoint):
+    """WWM netcdf backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        file_format="netcdf",
+        mapping=MAPPING,
+    ):
+        return read_wwm(filename_or_obj, file_format=file_format, mapping=mapping)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open WWM netcdf spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
