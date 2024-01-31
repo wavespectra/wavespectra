@@ -79,9 +79,36 @@ Again, include the [extra] tag for the full install:
 
 please make sure a Fortran compiler is available when installing from source.
 
+
+Building the docs
+-----------------
+
+To build the docs locally, first install the docs requirements:
+
+.. code-block:: console
+
+    $ pip install -r requirements/docs.txt
+
+Then run the available makefile:
+
+.. code-block:: console
+
+    $ make docs
+
+Alternatively, run the sphinx_ command directly from inside the docs folder:
+
+.. code-block:: console
+
+    $ cd docs
+    sphinx-build -b html ./ _build
+
+and open the index file `_build/index.html` with your browser.
+
+
 .. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 .. _Github repo: https://github.com/wavespectra/wavespectra
 .. _tarball: https://github.com/wavespectra/wavespectra/tarball/master
 .. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
+.. _sphinx: https://www.sphinx-doc.org/en/master/

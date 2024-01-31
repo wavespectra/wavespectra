@@ -23,6 +23,7 @@ class TestSpecArray(object):
         [
             ("hs", 1e-3),
             ("hmax", 1e-3),
+            ("hrms", 1e-3),
             ("tp", 1e-3),
             ("tm01", 1e-3),
             ("tm02", 1e-3),
@@ -31,6 +32,12 @@ class TestSpecArray(object):
             ("dpm", 1e-3),
             ("swe", 1e-3),
             ("sw", 1e-3),
+            ("fp", 1e-3),
+            ("gamma", 1e-3),
+            ("goda", 1e-3),
+            ("gw", 1e-3),
+            ("dpspr", 1e-3),
+            # ("alpha", 1e-3),
         ],
     )
     def test_stat(self, stat_name, rel):

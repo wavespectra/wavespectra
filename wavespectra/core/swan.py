@@ -31,9 +31,9 @@ class SwanSpecFile(object):
     ):
         self.times = False
         self.filename = Path(filename)
-        self.tabfile = (
-            tabfile or Path(str(self.filename).replace(".gz", "")).with_suffix(".tab")
-        )
+        self.tabfile = tabfile or Path(
+            str(self.filename).replace(".gz", "")
+        ).with_suffix(".tab")
         self.is_tab = False
         self.buf = None
 

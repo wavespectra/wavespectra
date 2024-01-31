@@ -13,6 +13,72 @@ Releases
 ********
 
 
+4.0.0 (2024-01-DD)
+___________________
+
+This major release brings several new features and improvements including new spectra
+reconstruction capability and a new partitioning api.
+
+New Features
+------------
+
+* New functions to construct frequency spectra within the `fit` subpackage:
+  * jonswap
+  * tma
+  * pierson-moskowitz
+  * gaussian
+* New functions for directional within the `direction` module:
+  * Cartwright (1986) cosine-square distribution.
+  * Bunney (2014) skewed distribution for turning wind sea.
+* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
+  `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
+* Gaussian frequency width method `gw` in SpecArray.
+* Jonswap peak enhancement factor method `gamma` in SpecArray.
+* Jonswap fetch scaling coefficient method `alpha` in SpecArray.
+* Peak directional spread method `dpspr` in SpecArray.
+* Peak frequency method `fp` in SpecArray.
+* Root-mean-square wave height method `hrms` in SpecArray
+* Spectra smoothing capability.
+* New input function to read xwaves mat format.
+* New partition api with several new methods:
+  * ptm1
+  * ptm2
+  * ptm3
+  * ptm4
+  * ptm5
+  * hp01
+  * bbox
+  * ptm1_track
+* New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
+* Allow merging minour watershed swells.
+
+
+Internal Changes
+----------------
+* SpecArray.partition now longer is a method but a namespace to access the different
+  partitioning options.
+* Change ihmax default from 200 to 100 in specpart, options to redefine in partition methods.
+* Allow reading WW3 and SWAN files without winds and depth available.
+* Optimised and simplified calculations in frequency and directional moments methods.
+* Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
+* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
+
+
+Deprecation
+-----------
+* Depracate unused `wavespectra.core.utils.GAMMA` lambda function.
+* The `SpecArray.partition()` method now became a new namespace to access the different
+  partitioning options. The legacy `partition` method is now equivalent to
+  `spec.partition.ptm1()`.
+
+.. _`Sebastien Dealaux`: https://github.com/seboceanum
+
+
 3.17.0 (2023-12-14)
 ___________________
 
@@ -29,6 +95,7 @@ Internal Changes
   than data_vars.
 * Fix octopus writer to support datasets without site as a dimension.
 * Fix swan ascii writer for bug in cases where lon/lat are dimensions and site is not.
+
 
 3.16.0 (2023-12-14)
 ___________________
@@ -225,7 +292,12 @@ Deprecation
   properties now must be manually defined from the axis.
 * Argument `as_log10` from the old plot api to plot the log10(efth) is deprecated in the new
   api. Similar result can be achieved in the new api by manually converting efth before plotting.
-* Remove deprecated methods `_strictly_increasing` and `_collapse_array`.
+* Remove deprecated methods `_strictly_increasing` and `_collapse_array` and `_twod`.
+* Remove `dfarr` attribute from SpecArray, replaced by `df`.
+* Remove unused functions `to_datetime` and `dnum_to_datetime`.
+* The "mask" argument has been removed from `SpecArray.sw` method.
+
+.. _`Paul Branson`: https://github.com/pbranson
 
 
 3.9.0 (2021-05-29)
@@ -256,11 +328,10 @@ New Features
 * Watershed partitioning now supports dask (`PR27 <https://github.com/wavespectra/wavespectra/pull/27>`_).
 * Spectral splitting now supports dask.
 * The following spectral parameters now support dask (`PR11 <https://github.com/wavespectra/wavespectra/pull/11>`_):
-
-  * tp
-  * dp
-  * dpm
-  * dspr
+    * tp
+    * dp
+    * dpm
+    * dspr
 * Wavespectra conda recipe by `RubendeBruin`_.
 
 Internal Changes

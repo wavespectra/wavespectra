@@ -126,7 +126,7 @@ class SpecDataset(metaclass=Plugin):
         tolerance=2.0,
         dset_lons=None,
         dset_lats=None,
-        **kwargs
+        **kwargs,
     ):
         """Select stations near or at locations defined by (lons, lats) vector.
 
@@ -185,6 +185,6 @@ class SpecDataset(metaclass=Plugin):
             tolerance=tolerance,
             dset_lons=dset_lons,
             dset_lats=dset_lats,
-            **kwargs
+            **kwargs,
         )
         return dsout

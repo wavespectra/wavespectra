@@ -1,4 +1,6 @@
 SPECNAME: &SPECNAME efth
+SPEC1DNAME: &SPEC1DNAME ef
+ESPECNAME: &ESPECNAME energy
 TIMENAME: &TIMENAME time
 SITENAME: &SITENAME site
 LATNAME: &LATNAME lat
@@ -14,6 +16,12 @@ ATTRS:
     *SPECNAME:
         standard_name: sea_surface_wave_directional_variance_spectral_density
         units: m2 s degree-1
+    *SPEC1DNAME:
+        standard_name: sea_surface_wave_variance_spectral_density
+        units: m2 s degree-1
+    *ESPECNAME:
+        standard_name: sea_surface_wave_directional_energy_spectra
+        units: m2
     *TIMENAME:
         standard_name: time
     *LATNAME:
@@ -48,6 +56,9 @@ ATTRS:
     hs:
         standard_name: sea_surface_wave_significant_height
         units: m
+    hrms:
+        standard_name: sea_surface_wave_root_mean_square_height
+        units: m
     hmax:
         standard_name: sea_surface_wave_maximum_height
         units: m
@@ -66,15 +77,54 @@ ATTRS:
     dspr:
         standard_name: sea_surface_wave_directional_spread
         units: degree
+    dpspr:
+        standard_name: sea_surface_wave_directional_spread_at_variance_spectral_density_maximum
+        units: degree
     sw:
         standard_name: sea_surface_wave_spectral_width
         units: ""
     swe:
         standard_name: sea_surface_wave_spectral_width
         units: ""
+    gw:
+        standard_name: sea_surface_wave_gaussian_spread
+        units: "m2s"
+    fit_gw:
+        standard_name: sea_surface_wave_gaussian_spread
+        units: "m2s"
     tm01:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_first_frequency_moment
         units: s
     tm02:
         standard_name: sea_surface_wave_mean_period_from_variance_spectral_density_second_frequency_moment
         units: s
+    gamma:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    gamma_scaled:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    fit_gamma:
+        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
+        units: ""
+    alpha:
+        standard_name: sea_surface_wave_jonswap_fetch_dependant_coefficient
+        units: "m s-3"
+    goda:
+        standard_name: sea_surface_wave_goda_peakedness
+        units: ""
+    fp:
+        standard_name: sea_surface_wave_frequency_at_variance_spectral_density_maximum
+        units: Hz
+    uss_x:
+        standard_name: sea_surface_wave_stokes_drift_x_velocity
+        units: "m s-1"
+    uss_y:
+        standard_name: sea_surface_wave_stokes_drift_y_velocity
+        units: "m s-1"
+    uss:
+        standard_name: sea_surface_wave_stokes_drift_speed
+        units: "m s-1"
+    mss:
+        standard_name: sea_surface_wave_mean_square_slope
+        units: ""
