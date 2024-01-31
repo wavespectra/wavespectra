@@ -27,6 +27,7 @@ class SwanSpecFile(object):
         dirorder=False,
         append=False,
         tabfile=None,
+        compresslevel=6,
     ):
         self.times = False
         self.filename = Path(filename)
@@ -39,9 +40,11 @@ class SwanSpecFile(object):
         if self.filename.suffix == ".gz":
             fopen = gzip.open
             suffix = "t"
+            kwargs = {"compresslevel": compresslevel}
         else:
             fopen = open
             suffix = ""
+            kwargs = {}
         if freqs is not None:  # Writable file
             self.freqs = np.array(freqs)
             self.dirs = np.array(dirs)
@@ -49,7 +52,7 @@ class SwanSpecFile(object):
             self.y = np.array(y)
             if time:
                 self.times = []
-            self.fid = fopen(filename, f"w{suffix}")
+            self.fid = fopen(filename, f"w{suffix}", **kwargs)
             self.write_header(time, id)
             self.fmt = len(self.dirs) * "{:5.0f}"
         else:
