@@ -1,4 +1,5 @@
 """OCTOPUS output plugin."""
+import gzip
 import numpy as np
 import xarray as xr
 
@@ -14,6 +15,7 @@ def to_octopus(
     ntime=None,
     lons=None,
     lats=None,
+    compresslevel=6,
 ):
     """Save spectra in Octopus format.
 
@@ -26,8 +28,10 @@ def to_octopus(
           file if full dataset does not fit into memory, choose None to load all times.
         - lons: (np.array, None): longitudes to use for each site if not in dataset.
         - lats: (np.array, None): latitudes to use for each site if not in dataset.
+        - compresslevel (int): compression level for gzip compression (1-9).
 
     Note:
+        - Output files are gzipped if filename ends with `.gz`.
         - lons/lats parameters may be prescribed to set site locations if lon/lat are
           not variables in the dataset (their sizes must match the number of sites).
         - If lons/lats are not specified and the dataset does not have lon/lat coords,
@@ -60,15 +64,17 @@ def to_octopus(
     fmt2 = fmt2.replace("{", "").replace("}", "").replace(":", "%").split(",")
     fmt2[-1] += ","
 
+    # Open file for writing
+    if filename.endswith(".gz"):
+        fid = gzip.open(filename, "wt", compresslevel=compresslevel)
+    else:
+        fid = open(filename, "wt")
+
     # Load up to ntime times at a time to optimise memory and speed
     i0 = 0
     i1 = ntime
     while i1 <= dset_stacked.time.size:
         dset = dset_stacked.isel(time=slice(i0, i1)).load()
-        if i0 == 0:
-            mode = "w"
-        else:
-            mode = "a"
         i0 = i1
         i1 += ntime
 
@@ -138,66 +144,65 @@ def to_octopus(
         lons = np.atleast_1d(dset_dict[attrs.LONNAME])
         lats = np.atleast_1d(dset_dict[attrs.LATNAME])
 
-        # Open output file
-        with open(filename, mode) as f:
+        # Looping over each site
+        for isite in range(dset.site.size):
+            lon = lons[isite]
+            lat = lats[isite]
+            dsite = {v: dset_dict[v][:, isite] for v in data_vars}
 
-            # Looping over each site
-            for isite in range(dset.site.size):
-                lon = lons[isite]
-                lat = lats[isite]
-                dsite = {v: dset_dict[v][:, isite] for v in data_vars}
+            # General header
+            fid.write(f"Forecast valid for {tstart}\n")
+            fid.write(f"nfreqs,{nfreq:d}\n")
+            fid.write(f"ndir,{ndir:d}\n")
+            fid.write(f"nrecs,{ntime:d}\n")
+            fid.write(f"Latitude,{lat:0.6f}\n")
+            fid.write(f"Longitude,{lon:0.6f}\n")
+            fid.write(f"Depth,{dsite[attrs.DEPNAME][0]:0.2f}\n\n")
 
-                # General header
-                f.write(f"Forecast valid for {tstart}\n")
-                f.write(f"nfreqs,{nfreq:d}\n")
-                f.write(f"ndir,{ndir:d}\n")
-                f.write(f"nrecs,{ntime:d}\n")
-                f.write(f"Latitude,{lat:0.6f}\n")
-                f.write(f"Longitude,{lon:0.6f}\n")
-                f.write(f"Depth,{dsite[attrs.DEPNAME][0]:0.2f}\n\n")
+            # Dump each timestep
+            for itime, time in enumerate(times):
+                ds = {v: dsite[v][itime] for v in data_vars}
 
-                # Dump each timestep
-                for itime, time in enumerate(times):
-                    ds = {v: dsite[v][itime] for v in data_vars}
+                # Timestamp header
+                lp = f"{site_id}_{time}"
+                fid.write(
+                    "CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,"
+                    "TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n"
+                )
 
-                    # Timestamp header
-                    lp = f"{site_id}_{time}"
-                    f.write(
-                        "CCYYMM,DDHHmm,LPoint,WD,WS,ETot,TZ,VMD,ETotSe,TZSe,VMDSe,ETotSw,"
-                        "TZSw,VMDSw,Mo1,Mo2,HSig,DomDr,AngSpr,Tau\n"
+                # Header and parameters
+                fid.write(
+                    "{},{},{},{:0.0f},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},"
+                    "{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:0.0f},"
+                    "{:0.0f},{:0.0f}\n".format(
+                        ym[itime],
+                        dhm[itime],
+                        lp,
+                        ds[attrs.WDIRNAME],
+                        ds[attrs.WSPDNAME],
+                        0.25 * ds["hs"] ** 2,
+                        ds["tm01"],
+                        ds["dm"],
+                        0.25 * ds["hs_sea"] ** 2,
+                        ds["tm01_sea"],
+                        ds["dm_sea"],
+                        0.25 * ds["hs_swell"] ** 2,
+                        ds["tm01_swell"],
+                        ds["dm_swell"],
+                        ds["momf1"],
+                        ds["momf2"],
+                        ds["hs"],
+                        ds["dpm"],
+                        ds["dspr"],
+                        itime * dt,
                     )
+                )
 
-                    # Header and parameters
-                    f.write(
-                        "{},{},{},{:0.0f},{:.2f},{:.4f},{:.2f},{:.1f},{:.4f},"
-                        "{:.2f},{:.1f},{:.4f},{:.2f},{:.1f},{:.5f},{:.5f},{:.4f},{:0.0f},"
-                        "{:0.0f},{:0.0f}\n".format(
-                            ym[itime],
-                            dhm[itime],
-                            lp,
-                            ds[attrs.WDIRNAME],
-                            ds[attrs.WSPDNAME],
-                            0.25 * ds["hs"] ** 2,
-                            ds["tm01"],
-                            ds["dm"],
-                            0.25 * ds["hs_sea"] ** 2,
-                            ds["tm01_sea"],
-                            ds["dm_sea"],
-                            0.25 * ds["hs_swell"] ** 2,
-                            ds["tm01_swell"],
-                            ds["dm_swell"],
-                            ds["momf1"],
-                            ds["momf2"],
-                            ds["hs"],
-                            ds["dpm"],
-                            ds["dspr"],
-                            itime * dt,
-                        )
-                    )
+                # Spectra
+                specdump = ""
+                fid.write(("freq," + fmt + "anspec\n").format(*freqs))
+                np.savetxt(fid, ds["energy"], fmt=fmt2, delimiter=",")
+                fid.write(("fSpec," + fmt + "\n").format(*ds["fSpec"]))
+                fid.write(("den," + fmt + "\n\n").format(*ds["momd"]))
 
-                    # Spectra
-                    specdump = ""
-                    f.write(("freq," + fmt + "anspec\n").format(*freqs))
-                    np.savetxt(f, ds["energy"], fmt=fmt2, delimiter=",")
-                    f.write(("fSpec," + fmt + "\n").format(*ds["fSpec"]))
-                    f.write(("den," + fmt + "\n\n").format(*ds["momd"]))
+    fid.close()

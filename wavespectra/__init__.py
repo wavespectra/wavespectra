@@ -13,7 +13,7 @@ except ImportError:
     warnings.warn("Cannot import accessors at the main module level")
 
 
-__version__ = "3.17.0"
+__version__ = "3.18.0"
 
 
 def _import_read_functions(pkgname="input"):
