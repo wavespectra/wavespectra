@@ -8,6 +8,8 @@ Functions:
         from most recent files.
 
 """
+from xarray.backends import BackendEntrypoint
+from pathlib import Path
 import os
 import glob
 import datetime
@@ -543,3 +545,28 @@ def read_swanow(fileglob):
     for swan in swans:
         ds = read_swan(swan).combine_first(ds)
     return ds
+
+
+class SWANBackendEntrypoint(BackendEntrypoint):
+    """SWAN backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        dirorder=True,
+        as_site=False,
+    ):
+        return read_swan(filename_or_obj, dirorder=dirorder, as_site=as_site)
+
+    def guess_can_open(self, filename_or_obj):
+        path = Path(filename_or_obj)
+        if not path.is_file():
+            return False
+        if path.suffix == ".swn" or path.suffix == ".swn.gz":
+            return True
+        return False
+
+    description = "Open SWAN ASCII spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
