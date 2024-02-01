@@ -241,14 +241,14 @@ def read_tab(filename, toff=0):
     """
     df = pd.read_csv(
         filename,
-        delim_whitespace=True,
+        sep="\s+",
         skiprows=[0, 1, 2, 3, 5, 6],
         parse_dates=[0],
         date_format="%Y%m%d.%H%M%S",
         index_col=0,
     )
     df.index.name = attrs.TIMENAME
-    df.index = df.index.shift(toff, freq="1H")
+    df.index = df.index.shift(toff, freq="1h")
     for col1, col2 in zip(df.columns[-1:0:-1], df.columns[-2::-1]):
         df = df.rename(columns={col2: col1})
     return df.iloc[:, 0:-1]
