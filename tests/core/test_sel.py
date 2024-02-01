@@ -306,4 +306,4 @@ class TestSelCoordinatesConventions:
             dset_lons=dset.lon.values,
             dset_lats=dset.lat.values,
         )
-        assert int(ds.lon) == 350
+        assert ds.lon.values[0] == 350
