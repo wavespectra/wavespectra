@@ -63,6 +63,7 @@ ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
 wwm = "wavespectra.input.wwm:WWMBackendEntrypoint"
 ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
 swan = "wavespectra.input.swan:SWANBackendEntrypoint"
+funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
 
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
