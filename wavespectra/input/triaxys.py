@@ -1,3 +1,4 @@
+from xarray.backends import BackendEntrypoint
 import glob
 import copy
 import datetime
@@ -217,6 +218,27 @@ class Triaxys(object):
         if not filenames:
             raise ValueError(f"No file located in {self._filename_or_fileglob}")
         return filenames
+
+
+class TRIAXYSBackendEntrypoint(BackendEntrypoint):
+    """TRIAXYS backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        toff=0,
+        magnetic_variation=None,
+        regrid_dir=True,
+    ):
+        return read_triaxys(filename_or_obj, toff=toff, magnetic_variation=magnetic_variation, regrid_dir=regrid_dir)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open TRIAXYS spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
 
 
 if __name__ == "__main__":

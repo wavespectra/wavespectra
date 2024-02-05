@@ -1,4 +1,5 @@
 """Read Octopus spectra files."""
+from xarray.backends import BackendEntrypoint
 import gzip
 import datetime
 import numpy as np
@@ -97,3 +98,21 @@ def read_octopus(filename_or_obj):
     dset.attrs.update({"description": description})
 
     return dset
+
+
+class OctopusBackendEntrypoint(BackendEntrypoint):
+    """Octopus backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_octopus(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Octopus spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

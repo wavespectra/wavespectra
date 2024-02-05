@@ -1,4 +1,5 @@
 """Read XWaves MAT files"""
+from xarray.backends import BackendEntrypoint
 import datetime
 import xarray as xr
 from scipy.io import loadmat
@@ -45,3 +46,21 @@ def read_xwaves(filename):
     set_spec_attributes(dset)
 
     return dset
+
+
+class XWavesBackendEntrypoint(BackendEntrypoint):
+    """XWaves backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_xwaves(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open XWaves spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
