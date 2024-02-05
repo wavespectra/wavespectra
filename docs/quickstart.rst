@@ -126,8 +126,8 @@ accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
 
 Spectra file writing
 --------------------
-Wavespectra provides methods to write spectral data to different file formats in the
-`SpecDataset` accessor. The following example writes the dataset to a SWAN ASCII file.
+Wavespectra provides methods in the `SpecDataset` accessor for writing spectral data to
+different file formats. The following example writes the dataset to a SWAN ASCII file:
 
 .. ipython:: python
     :okwarning:
@@ -145,7 +145,7 @@ namespace. The partitioning methods follow the naming convention defined in the
 `WAVEWATCHIII`_ model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In
 the following example, the `ptm1` method is used to partition the dataset into wind sea
 and three swells (`ptm1` is equivalent to the watershed technique previously available in
-wavespectra as the `spec.partition()` method.
+wavespectra as the `spec.partition()` method).
 
 .. ipython:: python
     :okwarning:
