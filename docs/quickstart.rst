@@ -84,6 +84,7 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     stats = dset.spec.stats(
         ["hs", "hmax", "tp", "tm01", "tm02", "dpm", "dm", "dspr", "swe"]
@@ -133,6 +134,7 @@ Spectral split
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     fcut = 1 / 8
     sea = dset.spec.split(fmin=fcut)
@@ -160,7 +162,7 @@ Watershed
 .. ipython:: python
     :okwarning:
 
-    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+    dspart = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
     pstats = dspart.spec.stats(["hs", "dpm"])
     pstats
 
@@ -196,7 +198,7 @@ frequency-direction spectral plots in polar coordinates.
 .. ipython:: python
     :okwarning:
 
-    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=2.0)
+    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=0.4)
     @savefig faceted_polar_plot.png
     ds.spec.plot(
         kind="contourf",
