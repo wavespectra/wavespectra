@@ -45,7 +45,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
     :okexcept:
     :okwarning:
 
-    dset = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    dset = fit_pierson_moskowitz(freq=freq, hs=2, fp=0.1)
 
     hs = float(dset.spec.hs())
     tp = float(dset.spec.tp())
@@ -100,7 +100,7 @@ When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz s
 .. ipython:: python
     :okwarning:
 
-    dset1 = fit_pierson_moskowitz(freq=freq, hs=2, tp=10)
+    dset1 = fit_pierson_moskowitz(freq=freq, hs=2, fp=0.1)
     dset2 = fit_jonswap(freq=freq, hs=2, fp=0.1, gamma=1.0)
 
     @suppress

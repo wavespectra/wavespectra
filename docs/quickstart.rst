@@ -61,6 +61,7 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 .. ipython:: python
     :okwarning:
+    :okexcept:
 
     hs = dset.efth.spec.hs()
     hs
