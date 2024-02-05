@@ -75,7 +75,7 @@ Again, include the [extra] tag for the full install:
 
 .. code-block:: console
 
-   $ pip install ./[extra]
+   $ pip install './[extra]'
 
 please make sure a Fortran compiler is available when installing from source.
 
@@ -83,11 +83,11 @@ please make sure a Fortran compiler is available when installing from source.
 Building the docs
 -----------------
 
-To build the docs locally, first install the docs requirements:
+To build the docs locally, first install the docs extra requirements:
 
 .. code-block:: console
 
-    $ pip install -r requirements/docs.txt
+    $ pip install './[docs]'
 
 Then run the available makefile:
 
