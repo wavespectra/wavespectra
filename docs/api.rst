@@ -58,6 +58,14 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
 
    SpecArray.split
    SpecArray.partition
+   partition.partition.ptm2
+   partition.partition.ptm3
+   partition.partition.ptm4
+   partition.partition.ptm5
+   partition.partition.hp01
+   partition.partition.bbox
+   partition.partition.ptm1_track
+
 
 **Other methods**
 
@@ -109,6 +117,7 @@ Input functions
    read_wwm
    read_netcdf
    read_era5
+   read_ndbc
 
 \* These functions also support Zarr files
 
@@ -124,9 +133,13 @@ Input functions
    read_spotter
    read_octopus
    read_dataset
-   read_ndbc
+   read_ndbc_ascii
    read_json
    read_funwave
+   read_xwaves
+   read_dataset
+   read_wavespectra
+   read_ww3_station
 
 **Convenience SWAN ASCII input functions**
 
@@ -195,17 +208,28 @@ Construct
 Internal core functions and objects
 -----------------------------------
 
-**watershed module**
+**Partition subpackage**
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   core.watershed.partition
-   core.watershed.nppart
-   core.watershed.hs
-   core.watershed.frequency_resolution
-   core.watershed.inflection
+   partition.partition.np_ptm1
+   partition.partition.np_ptm2
+   partition.partition.np_ptm3
+   partition.partition.np_hp01
+   partition.tracking.dfp_wsea
+   partition.tracking.dfp_swell
+   partition.tracking.match_consecutive_partitions
+   partition.tracking.np_tracking_partitions
+   partition.tracking.track_partitions
+   partition.hanson_and_phillips_2001._partition_stats
+   partition.hanson_and_phillips_2001._is_contiguous
+   partition.hanson_and_phillips_2001._frequency_resolution
+   partition.hanson_and_phillips_2001._plot_partitions
+   partition.hanson_and_phillips_2001.spread_hp01
+   partition.hanson_and_phillips_2001._combine_last
+   partition.hanson_and_phillips_2001.combine_partitions_hp01
 
 **attributes module**
 
@@ -222,7 +246,7 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs
+   core.npstats.hs_numpy
    core.npstats.dpm_gufunc
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
@@ -279,4 +303,3 @@ Internal core functions and objects
 
    core.swan.read_tab
    core.swan.SwanSpecFile
-   core.swan._dateparse
