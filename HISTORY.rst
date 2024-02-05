@@ -22,6 +22,8 @@ reconstruction capability and a new partitioning api.
 New Features
 ------------
 
+Spectra reconstruction
+~~~~~~~~~~~~~~~~~~~~~~
 * New functions to construct frequency spectra within the `fit` subpackage:
   * jonswap
   * tma
@@ -32,6 +34,9 @@ New Features
   * Bunney (2014) skewed distribution for turning wind sea.
 * Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
   `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+
+Stats
+~~~~~
 * Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
   (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
@@ -43,7 +48,9 @@ New Features
 * Peak frequency method `fp` in SpecArray.
 * Root-mean-square wave height method `hrms` in SpecArray
 * Spectra smoothing capability.
-* New input function to read xwaves mat format.
+
+Partitioning
+~~~~~~~~~~~~
 * New partition api with several new methods:
   * ptm1
   * ptm2
@@ -57,16 +64,23 @@ New Features
   (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
 * Allow merging minour watershed swells.
 
+IO
+~~~
+* New xarray backend entrypoints for reading wavespectra datasets with xr.open_dataset.
+* New input function to read xwaves mat format.
+
 
 Internal Changes
 ----------------
 * SpecArray.partition now longer is a method but a namespace to access the different
   partitioning options.
-* Change ihmax default from 200 to 100 in specpart, options to redefine in partition methods.
+* Change ihmax default from 200 to 100 in specpart, options to redefine in partition
+  methods.
 * Allow reading WW3 and SWAN files without winds and depth available.
 * Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
-* wavenuma function now takes the cyclic frequency (Hz) instead of the angular frequency omega.
+* wavenuma function now takes the cyclic frequency (Hz) instead of the angular
+  frequency omega.
 
 
 Deprecation
