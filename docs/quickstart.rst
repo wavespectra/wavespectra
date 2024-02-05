@@ -61,7 +61,6 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 .. ipython:: python
     :okwarning:
-    :okexcept:
 
     hs = dset.efth.spec.hs()
     hs
@@ -84,7 +83,6 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
 
 .. ipython:: python
     :okwarning:
-    :okexcept:
 
     stats = dset.spec.stats(
         ["hs", "hmax", "tp", "tm01", "tm02", "dpm", "dm", "dspr", "swe"]
@@ -118,7 +116,7 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
     ax6.set_ylabel("$Tm01$ (s)")
 
     @suppress
-    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.set_xticks([]); ax.get_legend().remove()
+    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.tick_params(bottom=False, labelbottom=False); ax.get_legend().remove()    
 
     @savefig many_stats.png
     plt.draw()
@@ -134,7 +132,6 @@ Spectral split
 
 .. ipython:: python
     :okwarning:
-    :okexcept:
 
     fcut = 1 / 8
     sea = dset.spec.split(fmin=fcut)
@@ -237,16 +234,16 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
     :okwarning:
 
     idw = dset.spec.sel(
-        lons=[92.01, 92.05, 92.09],
-        lats=[19.812, 19.875, 19.935],
+        lons=[92.0, 92.05, 92.10, 92.10, 92.10, 92.10, 92.05, 92.0, 92.0, 92.0],
+        lats=[19.8, 19.8, 19.8, 19.85, 19.9, 19.95, 19.95, 19.95, 19.9, 19.85],
         method="idw"
     )
     idw
 
     @suppress
     plt.figure(figsize=(8, 4.5))
-    p = plt.scatter(dset.lon, dset.lat, 80, dset.isel(time=0).spec.hs(), label="Dataset points");
-    p = plt.scatter(idw.lon, idw.lat, 100, idw.isel(time=0).spec.hs(), marker="v", label="Interpolated point");
+    p = plt.scatter(dset.lon, dset.lat, 200, dset.isel(time=0).spec.hs(), cmap="turbo", marker="v", edgecolor="k", label="Dataset points");
+    p = plt.scatter(idw.lon, idw.lat, 80, idw.isel(time=0).spec.hs(), cmap="turbo", marker="o", edgecolor="k", label="Interpolated point");
 
     @suppress
     plt.legend(); plt.colorbar(p, label="Hs (m)")
