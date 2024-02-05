@@ -1,3 +1,4 @@
+from xarray.backends import BackendEntrypoint
 from pathlib import Path
 import os
 import gzip
@@ -167,3 +168,22 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
         "time", ascending=True
     )  # Realtime data is in reversed time order
     return dset
+
+
+class NDBCASCIIBackendEntrypoint(BackendEntrypoint):
+    """NDBC ASCII backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        dirs=np.arange(0, 360, 10)
+    ):
+        return read_ndbc_ascii(filename_or_obj, dirs=dirs)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open NDBC ASCII spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
