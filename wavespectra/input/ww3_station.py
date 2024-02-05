@@ -1,3 +1,5 @@
+"""Read directional spectra from WW3 station output file."""
+from xarray.backends import BackendEntrypoint
 from collections import OrderedDict
 import re
 import datetime
@@ -162,3 +164,21 @@ def read_ww3_station(filename_or_fileglob):
     )
 
     return dset
+
+
+class WW3StationBackendEntrypoint(BackendEntrypoint):
+    """WW3 station backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_ww3_station(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open WW3 station spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

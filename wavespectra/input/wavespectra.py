@@ -1,4 +1,6 @@
 """Read netCDF or ZARR formatted with wavespectra conventions."""
+from xarray.backends import BackendEntrypoint
+
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import set_spec_attributes
 from wavespectra.input import open_netcdf_or_zarr
@@ -32,3 +34,22 @@ def read_wavespectra(filename_or_fileglob, file_format="netcdf", chunks={}):
     )
     set_spec_attributes(dset)
     return dset
+
+
+class WavespectraBackendEntrypoint(BackendEntrypoint):
+    """Wavespectra backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        file_format="netcdf",
+    ):
+        return read_wavespectra(filename_or_obj, file_format=file_format)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Wavespectra spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

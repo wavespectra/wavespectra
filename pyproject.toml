@@ -58,14 +58,21 @@ wavespectra = "wavespectra.cli:main"
 
 [project.entry-points."xarray.backends"]
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
+funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
+json = "wavespectra.input.json:JsonBackendEntrypoint"
 ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
 ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
 ndbc_ascii = "wavespectra.input.ndbc_ascii:NDBCASCIIBackendEntrypoint"
+netcdf = "wavespectra.input.netcdf:NetCDFBackendEntrypoint"
+octopus = "wavespectra.input.octopus:OctopusBackendEntrypoint"
+spotter = "wavespectra.input.spotter:SpotterBackendEntrypoint"
+swan = "wavespectra.input.swan:SWANBackendEntrypoint"
+triaxys = "wavespectra.input.triaxys:TRIAXYSBackendEntrypoint"
+wavespectra = "wavespectra.input.wavespectra:WavespectraBackendEntrypoint"
 wwm = "wavespectra.input.wwm:WWMBackendEntrypoint"
 ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
-swan = "wavespectra.input.swan:SWANBackendEntrypoint"
-funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
-json = "wavespectra.input.json:JsonBackendEntrypoint"
+ww3_station = "wavespectra.input.ww3_station:WW3StationBackendEntrypoint"
+xwaves = "wavespectra.input.xwaves:XWavesBackendEntrypoint"
 
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
