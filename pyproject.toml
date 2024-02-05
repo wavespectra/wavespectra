@@ -60,10 +60,12 @@ wavespectra = "wavespectra.cli:main"
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
 ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
 ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
+ndbc_ascii = "wavespectra.input.ndbc_ascii:NDBCASCIIBackendEntrypoint"
 wwm = "wavespectra.input.wwm:WWMBackendEntrypoint"
 ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
 swan = "wavespectra.input.swan:SWANBackendEntrypoint"
 funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
+json = "wavespectra.input.json:JsonBackendEntrypoint"
 
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]

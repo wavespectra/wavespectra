@@ -1,4 +1,5 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
+from xarray.backends import BackendEntrypoint
 import json
 import datetime
 import xarray as xr
@@ -35,3 +36,21 @@ def read_json(filename_or_obj, date_format="%Y-%m-%dT%H:%M:%SZ"):
     dset = xr.Dataset.from_dict(dset_dict)
     set_spec_attributes(dset)
     return dset
+
+
+class JsonBackendEntrypoint(BackendEntrypoint):
+    """Jason backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_json(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Json spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
