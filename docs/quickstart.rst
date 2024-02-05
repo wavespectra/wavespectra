@@ -16,7 +16,8 @@ Reading spectra from files
 --------------------------
 
 Several methods are provided to read various file formats including spectral wave
-models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
+models like WAVEWATCHIII, SWAN and WWM, observation instruments such as TRIAXYS and
+SPOTTER, and industry standard formats including ERA5, NDBC, Octopus among others.
 
 .. ipython:: python
     :okwarning:
@@ -30,13 +31,14 @@ models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTT
 The `spec` namespace
 --------------------
 
-Wavespectra defines a new namespace accessor called `spec` which is attached to `xarray`_
-objects. This namespace provides access to methods from the two main objects in wavespectra:
+Wavespectra defines a new namespace accessor called `spec` which is attached to
+`xarray`_ objects. This namespace provides access to several methods from the two main
+objects in wavespectra:
 
 * :py:class:`~wavespectra.specarray.SpecArray`
 * :py:class:`~wavespectra.specdataset.SpecDataset`
 
-which extend functionality from xarray's `DataArray`_ and `Dataset`_ objects respectively.
+which extend functionality from xarray's `DataArray`_ and `Dataset`_ respectively.
 
 SpecArray
 ~~~~~~~~~
@@ -46,7 +48,7 @@ SpecArray
 
     dset.efth.spec
 
-SpecDset
+SpecDataset
 ~~~~~~~~~
 
 .. ipython:: python
@@ -57,7 +59,7 @@ SpecDset
 Spectral wave parameters
 ------------------------
 Several methods are available to calculate integrated wave parameters. They can be
-accessed from both SpecArray (`efth` variable) and SpecDset accessors:
+accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
 
 .. ipython:: python
     :okwarning:
@@ -121,40 +123,29 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
     @savefig many_stats.png
     plt.draw()
 
-Partitioning
-------------
 
-Two different partitioning techniques are available, a simple spectral split based on
-frequency / direction cutoffs and the watershed algorithm of `Hanson et al. (2008)`_.
-
-Spectral split
-~~~~~~~~~~~~~~~
+Spectra file writing
+--------------------
+Wavespectra provides methods to write spectral data to different file formats in the
+`SpecDataset` accessor. The following example writes the dataset to a SWAN ASCII file.
 
 .. ipython:: python
     :okwarning:
 
-    fcut = 1 / 8
-    sea = dset.spec.split(fmin=fcut)
-    swell = dset.spec.split(fmax=fcut)
-    dset.freq.values
-    sea.freq.values
-    swell.freq.values
+    dset.spec.to_swan("specfile.swn")
 
-    @suppress
-    plt.figure(figsize=(8, 4.5))
+    !head -n 40 specfile.swn
 
-    dset.spec.hs().isel(site=0).plot(label='Full spectrum', marker='o');
-    sea.spec.hs().isel(site=0).plot(label='Sea', marker='o');
-    swell.spec.hs().isel(site=0).plot(label='Swell', marker='o');
 
-    @suppress
-    plt.legend(loc=0, fontsize=8); plt.title(""); plt.ylabel("$Hs$ (m)"); plt.xlabel("")
+Partitioning
+------------
 
-    @savefig freq_split_hs.png
-    plt.draw()
-
-Watershed
-~~~~~~~~~
+Several different partitioning techniques are available within the `spec.partition`
+namespace. The partitioning methods follow the naming convention defined in the
+`WAVEWATCHIII`_ model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In
+the following example, the `ptm1` method is used to partition the dataset into wind sea
+and three swells (`ptm1` is equivalent to the watershed technique previously available in
+wavespectra as the `spec.partition()` method.
 
 .. ipython:: python
     :okwarning:
@@ -185,6 +176,7 @@ Watershed
 
     @savefig watershed_hs.png
     plt.draw()
+
 
 Plotting
 --------
@@ -234,7 +226,7 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
     :okwarning:
 
     idw = dset.spec.sel(
-        lons=[92.0, 92.05, 92.10, 92.10, 92.10, 92.10, 92.05, 92.0, 92.0, 92.0],
+        lons=[92, 92.05, 92.1, 92.1, 92.1, 92.1, 92.05, 92, 92, 92],
         lats=[19.8, 19.8, 19.8, 19.85, 19.9, 19.95, 19.95, 19.95, 19.9, 19.85],
         method="idw"
     )
@@ -264,3 +256,4 @@ The `nearest` neighbour and `bbox` options are also available besides inverse di
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
 .. _`Hanson et al. (2008)`: https://journals.ametsoc.org/doi/pdf/10.1175/2009JTECHO650.1
+.. _`WAVEWATCHIII`: https://github.com/NOAA-EMC/WW3
