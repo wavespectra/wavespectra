@@ -31,7 +31,6 @@ Documentation
 * :doc:`fitting_1d`
 
 .. toctree::
-    :maxdepth: 1
     :hidden:
     :caption: Contents:
 
