@@ -28,9 +28,11 @@ Documentation
 * :doc:`conventions`
 * :doc:`plotting`
 * :doc:`selecting`
-* :doc:`fitting_1d`
+* :doc:`partitioning`
+* :doc:`reconstruction`
 
 .. toctree::
+    :maxdepth: 3
     :hidden:
     :caption: Contents:
 

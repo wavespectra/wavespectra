@@ -86,7 +86,7 @@ extra = [
 docs = [
     "autodoc",
     "ipython",
-    # "sphinx_book_theme",
+    "pickleshare",
     "pydata_sphinx_theme",
     "sphinx-book-theme",
     "sphinx",
