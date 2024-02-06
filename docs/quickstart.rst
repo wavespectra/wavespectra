@@ -49,7 +49,7 @@ SpecArray
     dset.efth.spec
 
 SpecDataset
-~~~~~~~~~
+~~~~~~~~~~~
 
 .. ipython:: python
     :okwarning:

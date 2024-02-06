@@ -86,7 +86,9 @@ extra = [
 docs = [
     "autodoc",
     "ipython",
+    # "sphinx_book_theme",
     "pydata_sphinx_theme",
+    "sphinx-book-theme",
     "sphinx",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
