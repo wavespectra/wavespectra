@@ -44,12 +44,12 @@ def get_timestamp(stem):
 def read_obscape_file(filename : str or Path):
     """
     Read an Obscape file.
-    
+
     - metadata is marked with a # symbol
     - time is in filename, UTC
-    
+
     all other lines are a CSV file
-    
+
     """
     filename = Path(filename)
     assert filename.exists()
@@ -133,16 +133,17 @@ def get_obs_files(directory, start_date = None, end_date = None):
     R = []
     for file in files:
 
-        if start_date is not None:
-            timestamp = get_timestamp(file.stem)
-            if start_date is not None:
-                if timestamp < start_date:
-                    continue
-            if end_date is not None:
-                if timestamp > end_date:
-                    continue
+        timestamp = get_timestamp(file.stem)
 
-            R.append(file)
+        if start_date is not None:
+            if timestamp < start_date:
+                continue
+
+        if end_date is not None:
+            if timestamp > end_date:
+                continue
+
+        R.append(file)
 
     return R
 
@@ -161,11 +162,16 @@ def read_obscape(directory, start_date, end_date):
 
     files = get_obs_files(directory, start_date, end_date)
 
+    if not files:
+        raise ValueError(f"No files found in {directory} between {start_date} and {end_date}")
+
     # step 2: get the data
 
     R = []
     for file in files:
         R.append(read_obscape_file(file))
+
+
 
     # step 3: construct the data
     #
@@ -186,6 +192,9 @@ def read_obscape(directory, start_date, end_date):
     ).to_dataset()
 
     ds = ds.sortby('time', ascending=True)
+
+    # scale
+    ds['efth'] = ds['efth'] * np.pi / 180  # convert to m2/Hz/deg
 
     for key in ['Station name', 'Device type', 'Device serial', 'Latitude [deg]', 'Longitude [deg]', 'Magnetic declination (corrected) [deg]', 'Directions', 'info']:
         try:
