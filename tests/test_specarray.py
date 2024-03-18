@@ -42,8 +42,8 @@ def test_split(dset):
     ds = dset.spec.split(fmin=0.1, fmax=0.2, dmin=0, dmax=15)
     ds.freq.min() == 0.1
     ds.freq.max() == 0.2
-    ds.dir.min() == 0
-    ds.dir.max() == 15
+    ds.direction.min() == 0
+    ds.direction.max() == 15
     with pytest.raises(ValueError):
         dset.spec.split(fmin=0.2, fmax=0.1)
     with pytest.raises(ValueError):

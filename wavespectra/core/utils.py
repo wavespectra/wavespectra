@@ -249,13 +249,13 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         to_concat = [dsout]
 
         # Repeat the first and last direction with 360 deg offset when required
-        if dir.min() < dsout.dir.min():
+        if dir.min() < dsout.direction.min():
             highest = dsout.isel(dir=-1)
-            highest['dir'] = highest.dir - 360
+            highest['dir'] = highest.direction - 360
             to_concat = [highest, dsout]
-        if dir.max() > dsout.dir.max():
+        if dir.max() > dsout.direction.max():
             lowest = dsout.isel(dir=0)
-            lowest['dir'] = lowest.dir + 360
+            lowest['dir'] = lowest.direction + 360
             to_concat.append(lowest)
 
         if len(to_concat) > 1:
