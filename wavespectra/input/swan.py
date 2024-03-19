@@ -517,7 +517,7 @@ def read_hotswan(fileglob, dirorder=True):
         dsets.append(dset)
     dset = xr.combine_by_coords(dsets)
     set_spec_attributes(dset)
-    if attrs.DIRNAME in dset and len(dset.dir) > 1:
+    if attrs.DIRNAME in dset and len(dset.direction) > 1:
         dset[attrs.SPECNAME].attrs.update(
             {"_units": "m^{2}.s.degree^{-1}", "_variable_name": "VaDens"}
         )
