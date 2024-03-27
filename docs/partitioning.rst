@@ -2,9 +2,9 @@
     :width: 150 px
     :align: right
 
-==============
-Reconstruction
-==============
+============
+Partitioning
+============
 
 .. ipython:: python
     :okexcept:
