@@ -24,8 +24,8 @@ Documentation
 
 * :doc:`install`
 * :doc:`quickstart`
-* :doc:`io-input`
 * :doc:`conventions`
+* :doc:`io-input`
 * :doc:`plotting`
 * :doc:`selecting`
 * :doc:`partitioning`
