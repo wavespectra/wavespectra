@@ -43,7 +43,6 @@ dependencies = [
     "sortedcontainers",
     "scipy",
     "toolz",
-    "typing_extensions",
     "xarray",
 ]
 dynamic = ["version"]
@@ -57,6 +56,24 @@ dynamic = ["version"]
 [project.scripts]
 wavespectra = "wavespectra.cli:main"
 
+[project.entry-points."xarray.backends"]
+era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
+funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
+json = "wavespectra.input.json:JsonBackendEntrypoint"
+ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
+ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
+ndbc_ascii = "wavespectra.input.ndbc_ascii:NDBCASCIIBackendEntrypoint"
+netcdf = "wavespectra.input.netcdf:NetCDFBackendEntrypoint"
+octopus = "wavespectra.input.octopus:OctopusBackendEntrypoint"
+spotter = "wavespectra.input.spotter:SpotterBackendEntrypoint"
+swan = "wavespectra.input.swan:SWANBackendEntrypoint"
+triaxys = "wavespectra.input.triaxys:TRIAXYSBackendEntrypoint"
+wavespectra = "wavespectra.input.wavespectra:WavespectraBackendEntrypoint"
+wwm = "wavespectra.input.wwm:WWMBackendEntrypoint"
+ww3 = "wavespectra.input.ww3:WW3BackendEntrypoint"
+ww3_station = "wavespectra.input.ww3_station:WW3StationBackendEntrypoint"
+xwaves = "wavespectra.input.xwaves:XWavesBackendEntrypoint"
+
 [project.optional-dependencies]
 test = ["pytest", "tox", "ruff"]
 extra = [
@@ -69,7 +86,9 @@ extra = [
 docs = [
     "autodoc",
     "ipython",
+    "pickleshare",
     "pydata_sphinx_theme",
+    "sphinx-book-theme",
     "sphinx",
     "sphinx-autobuild",
     "sphinx-autodoc-typehints",
@@ -84,6 +103,9 @@ docs = [
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
 
+[tool.ruff]
+line-length = 88
+
 [tool.ruff.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]
 "wavespectra/specdataset.py" = ["F401"]
@@ -95,6 +117,16 @@ version = {attr = "wavespectra.__version__"}
 "wavespectra/input/spotter.py" = ["F401"]
 "wavespectra/input/dataset.py" = ["F401"]
 "wavespectra/input/swan.py" = ["F401"]
+"wavespectra/construct.py" = ["F401"]
+"wavespectra/directional.py" = ["F401"]
+"wavespectra/fit/pierson_moskowitz.py" = ["F401"]
+"wavespectra/fit/tma.py" = ["F401"]
+"wavespectra/input/funwave.py" = ["F401"]
+"wavespectra/input/ndbc.py" = ["F401"]
+"wavespectra/input/ndbc_ascii.py" = ["F401"]
+"wavespectra/input/octopus.py" = ["F401"]
+"wavespectra/input/wavespectra.py" = ["F401"]
+"wavespectra/input/xwaves.py" = ["F401"]
 
 [tool.tox]
 legacy_tox_ini = """

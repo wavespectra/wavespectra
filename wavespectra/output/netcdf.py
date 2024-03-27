@@ -30,7 +30,9 @@ def to_netcdf(
         for ncvar in other.data_vars:
             encoding.update({ncvar: {"zlib": True}})
     if packed:
-        encoding[attrs.SPECNAME].update({"scale_factor": 1e-5, "dtype": "int32", "_FillValue": -32768})
+        encoding[attrs.SPECNAME].update(
+            {"scale_factor": 1e-5, "dtype": "int32", "_FillValue": -32768}
+        )
     if attrs.TIMENAME in other:
         other.time.encoding.update(time_encoding)
     other.to_netcdf(filename, format=ncformat, encoding=encoding)

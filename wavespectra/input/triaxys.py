@@ -1,3 +1,4 @@
+from xarray.backends import BackendEntrypoint
 import glob
 import copy
 import datetime
@@ -12,7 +13,9 @@ from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import interp_spec
 
 
-def read_triaxys(filename_or_fileglob, toff=0, magnetic_variation=None, regrid_dir=True):
+def read_triaxys(
+    filename_or_fileglob, toff=0, magnetic_variation=None, regrid_dir=True
+):
     """Read spectra from TRIAXYS wave buoy ASCII files.
 
     Args:
@@ -217,9 +220,31 @@ class Triaxys(object):
         return filenames
 
 
+class TRIAXYSBackendEntrypoint(BackendEntrypoint):
+    """TRIAXYS backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        toff=0,
+        magnetic_variation=None,
+        regrid_dir=True,
+    ):
+        return read_triaxys(filename_or_obj, toff=toff, magnetic_variation=magnetic_variation, regrid_dir=regrid_dir)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open TRIAXYS spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
+
+
 if __name__ == "__main__":
     from pathlib import Path
     import matplotlib.pyplot as plt
+
     filename1 = "../../tests/sample_files/triaxys.DIRSPEC"
     filename2 = str(Path(filename1))
     dset1 = read_triaxys(filename2)

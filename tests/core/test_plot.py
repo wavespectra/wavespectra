@@ -120,6 +120,8 @@ def test_radii_in_range(load_specdataset):
     dset = load_specdataset.isel(site=0, time=0)
     with pytest.raises(ValueError):
         dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True)
+    with pytest.raises(ValueError):
+        dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True, logradius=False)
 
 
 def test_repr(load_specdataset):
@@ -133,3 +135,10 @@ def test_rlim(load_specdataset):
     with pytest.raises(ValueError):
         dset.spec.plot(kind="contourf", rmin=-1, rmax=0)
         dset.spec.plot(kind="contourf", rmin=-1, rmax=0, logradius=False)
+
+
+def test_clean_axis(load_specdataset):
+    dset = load_specdataset.isel(site=0, time=0)
+    dset.spec.plot(kind="contour", clean_axis=True)
+    dset.spec.plot(kind="contourf", clean_axis=True)
+    dset.spec.plot(kind="pcolormesh", clean_axis=True)

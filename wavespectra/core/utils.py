@@ -1,21 +1,47 @@
-"""Miscellaneous functions."""
+"""Utility functions."""
 import copy
-import datetime
+import itertools
 import numpy as np
-import pandas as pd
 import xarray as xr
-
+from importlib import import_module
+from inspect import getmembers, isfunction
 from scipy.interpolate import griddata
 
-from wavespectra.core.attributes import attrs
+from wavespectra.core.attributes import attrs, set_spec_attributes
 
 
-GAMMA = (
-    lambda x: np.sqrt(2.0 * np.pi / x)
-    * ((x / np.exp(1)) * np.sqrt(x * np.sinh(1.0 / x))) ** x
-)
 D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
+
+
+def angle(dir1, dir2):
+    """Relative angle between two directions.
+
+    Args:
+        - dir1 (array): First direction (degree).
+        - dir2 (array): Second direction (degree).
+
+    Returns:
+        - angle (array): Angle difference between dir1 and dir2 (degree).
+
+    """
+    dif = np.absolute(dir1 % 360 - dir2 % 360)
+    return np.minimum(dif, 360 - dif)
+
+
+def waveage(dset, wspd, wdir, dpt, agefac):
+    """Wave age criterion for partitioning wind-sea.
+
+    Args:
+        - wspd (xr.DataArray): Wind speed.
+        - wdir (xr.DataArray): Wind direction.
+        - dpt (xr.DataArray): Water depth.
+        - agefac (float): Age factor.
+
+    """
+    wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
+    wave_celerity = celerity(dset.freq, dpt)
+    return wave_celerity <= wind_speed_component
 
 
 def wavelen(freq, depth=None):
@@ -30,19 +56,28 @@ def wavelen(freq, depth=None):
 
     """
     if depth is not None:
-        ang_freq = 2 * np.pi * freq
-        return 2 * np.pi / wavenuma(ang_freq, depth)
+        return 2 * np.pi / wavenuma(freq, depth)
     else:
-        return 1.56 / freq ** 2
+        return 1.56 / freq**2
 
 
-def wavenuma(ang_freq, water_depth):
-    """Chen and Thomson wavenumber approximation."""
+def wavenuma(freq, water_depth):
+    """Chen and Thomson wavenumber approximation.
+
+    Args:
+        freq (DataArray, 1darray, float): Frequencies (Hz).
+        water_depth (DataArray, float): Water depth (m).
+
+    Returns:
+        k (DataArray, 1darray, float): Wavenumber 2pi / L.
+
+    """
+    ang_freq = 2 * np.pi * freq
     k0h = 0.10194 * ang_freq * ang_freq * water_depth
     D = [0, 0.6522, 0.4622, 0, 0.0864, 0.0675]
     a = 1.0
     for i in range(1, 6):
-        a += D[i] * k0h ** i
+        a += D[i] * k0h**i
     return (k0h * (1 + 1.0 / (k0h * a)) ** 0.5) / water_depth
 
 
@@ -54,21 +89,14 @@ def celerity(freq, depth=None):
         - depth (float): Water depth, use deep water approximation by default.
 
     Returns;
-        - C: ndarray of same shape as freq with wave celerity for each frequency.
+        - C: ndarray of same shape as freq with wave celerity (m/s) for each frequency.
 
     """
     if depth is not None:
         ang_freq = 2 * np.pi * freq
-        return ang_freq / wavenuma(ang_freq, depth)
+        return ang_freq / wavenuma(freq, depth)
     else:
         return 1.56 / freq
-
-
-def dnum_to_datetime(dnum):
-    """Convert from numeric date to datetime."""
-    return datetime.datetime.fromordinal(int(dnum) - 366) + datetime.timedelta(
-        days=dnum % 1
-    )
 
 
 def to_nautical(ang):
@@ -94,21 +122,6 @@ def unique_indices(ds, dim="time"):
 def unique_times(ds):
     """Remove duplicate times from dataset."""
     return unique_indices(ds, "time")
-
-
-def to_datetime(np64):
-    """Convert Datetime64 date to datatime."""
-    if isinstance(np64, np.datetime64):
-        dt = pd.to_datetime(str(np64)).to_pydatetime()
-    elif isinstance(np64, xr.DataArray):
-        dt = pd.to_datetime(str(np64.values)).to_pydatetime()
-    else:
-        OSError(
-            "Cannot convert %s into datetime, expected np.datetime64 or xr.DataArray"
-            % type(np64)
-        )
-    return dt
-
 
 
 def spddir_to_uv(spd, direc, coming_from=False):
@@ -147,7 +160,7 @@ def uv_to_spddir(u, v, coming_from=False):
 
     """
     to_nautical = 270 if coming_from else 90
-    mag = np.sqrt(u ** 2 + v ** 2)
+    mag = np.sqrt(u**2 + v**2)
     direc = np.rad2deg(np.arctan2(v, u))
     direc = (to_nautical - direc) % 360
     return mag, direc
@@ -177,8 +190,14 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
     TODO: Deprecate in favour of new regrid_spec function.
 
     """
-    outfreq = infreq if outfreq is None or outfreq is False else outfreq
-    outdir = indir if outdir is None or outdir is False else outdir
+    ndim = inspec.ndim
+    if ndim > 2:
+        raise ValueError(f"interp_spec requires 2d spectra but inspec has {ndim} dims")
+
+    if outfreq is None:
+        outfreq = infreq
+    if outdir is None:
+        outdir = indir
 
     if (np.array_equal(infreq, outfreq)) & (np.array_equal(indir, outdir)):
         outspec = copy.deepcopy(inspec)
@@ -194,26 +213,97 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
                 outfreq, infreq, np.array(inspec).ravel(), left=0.0, right=0.0
             )
     else:
-        dirs = D2R * (270 - np.expand_dims(outdir, 0))
-        dirs2 = D2R * (270 - np.expand_dims(indir, 0))
-        cosmat = np.dot(np.expand_dims(outfreq, -1), np.cos(dirs))
-        sinmat = np.dot(np.expand_dims(outfreq, -1), np.sin(dirs))
-        cosmat2 = np.dot(np.expand_dims(infreq, -1), np.cos(dirs2))
-        sinmat2 = np.dot(np.expand_dims(infreq, -1), np.sin(dirs2))
-        outspec = griddata(
-            (cosmat2.flat, sinmat2.flat), inspec.flat, (cosmat, sinmat), method, 0.0
-        )
+        outdir = D2R * (270 - np.expand_dims(outdir, 0))
+        outcos = np.dot(np.expand_dims(outfreq, -1), np.cos(outdir))
+        outsin = np.dot(np.expand_dims(outfreq, -1), np.sin(outdir))
+        indir = D2R * (270 - np.expand_dims(indir, 0))
+        incos = np.dot(np.expand_dims(infreq, -1), np.cos(indir)).flat
+        insin = np.dot(np.expand_dims(infreq, -1), np.sin(indir)).flat
+        outspec = griddata((incos, insin), inspec.flat, (outcos, outsin), method, 0.0)
     return outspec
 
 
-def flatten_list(l, a):
+def flatten_list(list_to_flat, list_to_append_into):
     """Flatten list of lists"""
-    for i in l:
+    for i in list_to_flat:
         if isinstance(i, list):
-            flatten_list(i, a)
+            flatten_list(i, list_to_append_into)
         else:
-            a.append(i)
-    return a
+            list_to_append_into.append(i)
+    return list_to_append_into
+
+
+def scaled(spec, hs):
+    """Scale spectra.
+
+    The energy density in each spectrum is scaled by a single factor so that
+        significant wave height calculated from the scaled spectrum corresponds to hs.
+
+    Args:
+        - spec (SpecArray, SpecDataset): Wavespectra object to be scaled.
+        - hs (DataArray, float): Hs values to use for scaling, if float it will scale
+          each spectrum in the dataset, if a DataArray it must have all non-spectral
+          coordinates as the spectra dataset.
+
+    Returns:
+        - spec (SpecArray, SpecDataset): Scaled wavespectra object.
+
+    """
+    fac = (hs / spec.spec.hs()) ** 2
+    return fac * spec
+
+
+def check_same_coordinates(*args):
+    """Check if DataArrays have same coordinates."""
+    for darr1, darr2 in itertools.combinations(args, 2):
+        if isinstance(darr1, xr.DataArray) and isinstance(darr2, xr.DataArray):
+            if not darr1.coords.to_dataset().equals(darr2.coords.to_dataset()):
+                raise ValueError(f"{darr1.name} and {darr2.name} must have same coords")
+        elif isinstance(darr1, xr.Dataset) or isinstance(darr2, xr.Dataset):
+            raise TypeError(
+                f"Only DataArrays should be compared, got {type(darr1)}, {type(darr2)}"
+            )
+
+
+def load_function(module_name, func_name, prefix=None):
+    """Returns a function object from string.
+
+    Args:
+        - module_name (str): Name of module to import function from.
+        - func_name (str): Name of function to import.
+        - prefix (str): Used to filter available functions in exception.
+
+    """
+    module = import_module(module_name)
+    try:
+        return getattr(module, func_name)
+    except AttributeError as exc:
+        members = getmembers(module, isfunction)
+        if prefix is not None:
+            # Check for functions starting with prefix
+            funcs = [mem[0] for mem in members if mem[0].startswith(prefix)]
+        else:
+            # Check for functions defined in module (exclude those imported in module)
+            funcs = [mem[0] for mem in members if mem[1].__module__ == module.__name__]
+        raise AttributeError(
+            f"'{func_name}' not available in {module.__name__}, available are: {funcs}"
+        ) from exc
+
+
+def to_coords(array, name):
+    """Create coordinates DataArray.
+
+    Args:
+        - array (list, 1darray): Coordinate values.
+        - name (str): Coordinate name.
+
+    Returns:
+        coords (DataArray): Coordinates DataArray.
+
+    """
+    coords = xr.DataArray(array, coords={name: array}, dims=(name,))
+    set_spec_attributes(coords)
+    return coords
 
 
 def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
@@ -237,6 +327,10 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
 
     """
     dsout = dset.copy()
+    if isinstance(freq, (list, tuple)):
+        freq = np.array(freq)
+    if isinstance(dir, (list, tuple)):
+        dir = np.array(dir)
 
     if dir is not None:
         dsout = dsout.assign_coords({attrs.DIRNAME: dsout[attrs.DIRNAME] % 360})
@@ -245,39 +339,114 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         dsout = unique_indices(dsout, attrs.DIRNAME)
 
         # Interpolate heading
-        dsout = dsout.sortby('dir')
+        dsout = dsout.sortby("dir")
         to_concat = [dsout]
 
         # Repeat the first and last direction with 360 deg offset when required
         if dir.min() < dsout.dir.min():
             highest = dsout.isel(dir=-1)
-            highest['dir'] = highest.dir - 360
+            highest["dir"] = highest.dir - 360
             to_concat = [highest, dsout]
         if dir.max() > dsout.dir.max():
             lowest = dsout.isel(dir=0)
-            lowest['dir'] = lowest.dir + 360
+            lowest["dir"] = lowest.dir + 360
             to_concat.append(lowest)
 
         if len(to_concat) > 1:
-            dsout = xr.concat(to_concat, dim='dir')
+            dsout = xr.concat(to_concat, dim="dir")
 
         # Interpolate directions
         dsout = dsout.interp(dir=dir, assume_sorted=True)
 
     if freq is not None:
-
         # If needed, add a new frequency at f=0 with zero energy
         if freq.min() < dsout.freq.min():
             fzero = 0 * dsout.isel(freq=0)
-            fzero['freq'] = 0
-            dsout = xr.concat([fzero, dsout], dim='freq')
+            fzero["freq"] = 0
+            dsout = xr.concat([fzero, dsout], dim="freq")
 
         # Interpolate frequencies
-        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={'fill_value': 0})
+        dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={"fill_value": 0})
 
     if maintain_m0:
-        scale = dset.spec.hs()**2 / dsout.spec.hs()**2
+        scale = dset.spec.hs() ** 2 / dsout.spec.hs() ** 2
         dsout = dsout * scale
 
     return dsout
 
+
+def smooth_spec(dset, freq_window=3, dir_window=3):
+    """Smooth spectra with a running average.
+
+    Args:
+        - dset (Dataset, DataArray): Spectra to smooth.
+        - freq_window (int): Rolling window size along `freq` dim.
+        - dir_window (int): Rolling window size along `dir` dim.
+
+    Returns:
+        - efth (DataArray): Smoothed spectra.
+
+    Note:
+        - The window size should be an odd value to ensure symmetry.
+
+    """
+    for window in [freq_window, dir_window]:
+        if (window % 2) == 0:
+            raise ValueError(
+                f"Window size must be an odd value to ensure symmetry, got {window}"
+            )
+
+    dsout = dset.sortby(attrs.DIRNAME)
+
+    # Avoid problems when extending dirs with wrong data type
+    dsout[attrs.DIRNAME] = dset[attrs.DIRNAME].astype("float32")
+
+    # Extend circular directions to take care of edge effects
+    dirs = dsout[attrs.DIRNAME].values
+    dd = list(set(np.diff(dirs)))
+    if len(dd) == 1:
+        dd = float(dd[0])
+        is_circular = (abs(dirs.max() - dirs.min() + dd - 360)) < (0.1 * dd)
+    else:
+        is_circular = False
+    if is_circular:
+        # Extend directions on both sides
+        left = dsout.isel(**{attrs.DIRNAME: slice(-window, None)})
+        left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
+        right = dsout.isel(**{attrs.DIRNAME: slice(0, window)})
+        right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
+        dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
+
+    # Smooth
+    dim = {attrs.FREQNAME: freq_window, attrs.DIRNAME: dir_window}
+    dsout = dsout.rolling(dim=dim, center=True).mean()
+
+    # Clip to original shape
+    if not dsout[attrs.DIRNAME].equals(dset[attrs.DIRNAME]):
+        dsout = dsout.sel(**{attrs.DIRNAME: dset[attrs.DIRNAME]})
+        dsout = dsout.chunk(**{attrs.DIRNAME: -1})
+
+    # Fill missing values at boundaries using original spectra
+    dsout = xr.where(dsout.notnull(), dsout, dset)
+
+    return dsout.assign_coords(dset.coords)
+
+
+def is_overlap(rect1, rect2):
+    """Check if rectangles overlap.
+
+    Args:
+        - rect1 (list): Bounding box of the 1st rectangle [l1, b1, r1, t1].
+        - rect2 (list): Bounding box of the 2nd rectangle [l2, b2, r2, t2].
+
+    Returns:
+        - True if the two rectangles overlap, False otherwise.
+
+    """
+    l1, b1, r1, t1 = rect1
+    l2, b2, r2, t2 = rect2
+    if (r1 <= l2) or (r2 <= l1):
+        return False
+    if (t1 <= b2) or (t2 <= b1):
+        return False
+    return True

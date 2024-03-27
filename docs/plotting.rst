@@ -132,8 +132,8 @@ Logarithmic contour levels are only default for normalised spectra but they can 
     );
 
 
-Logarithmic radii
------------------
+Linear radii
+------------
 
 Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False` 
 (radii ticks can be prescribed from the `radii_ticks` paramater):

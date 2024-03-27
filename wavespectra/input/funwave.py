@@ -1,4 +1,5 @@
 """Read Funwave 2D Wave Maker files"""
+from xarray.backends import BackendEntrypoint
 import numpy as np
 import xarray as xr
 
@@ -18,7 +19,7 @@ def read_funwave(filename_or_obj):
 
     Note:
         - Format description: https://fengyanshi.github.io/build/html/wavemaker_para.html.
-        - Both 2D E(f,d) and 1d E(f) spectra are supported.
+        - Both 2D :math:`E(f,d)` and 1d :math:`E(f)` spectra are supported.
         - Directions converted from Cartesian (0E, CCW, to) to wavespectra (0N, CW, from).
         - Phases are ignored if present.
 
@@ -40,7 +41,7 @@ def read_funwave(filename_or_obj):
     dir = (270 - dir) % 360
 
     # Turn zero dir into 360 for continuity
-    i0 = np.where(dir==0)[0]
+    i0 = np.where(dir == 0)[0]
     if i0.size > 0:
         dir[i0] = 360.0
 
@@ -48,7 +49,7 @@ def read_funwave(filename_or_obj):
     if nd == 1:
         amp = np.genfromtxt(data)
         coords = {attrs.FREQNAME: freq}
-        dims = (attrs.FREQNAME)
+        dims = (attrs.FREQNAME,)
     else:
         amp = np.genfromtxt(data[:nd])
         coords = {attrs.FREQNAME: freq, attrs.DIRNAME: dir}
@@ -56,7 +57,7 @@ def read_funwave(filename_or_obj):
     darr = xr.DataArray(data=amp.transpose(), coords=coords, dims=dims)
 
     # Energy density spectrum
-    darr = darr ** 2 / (darr.spec.dfarr * darr.spec.dd * 2)
+    darr = darr**2 / (darr.spec.df * darr.spec.dd * 2)
 
     # Define output dataset
     dset = darr.to_dataset(name=attrs.SPECNAME)
@@ -65,3 +66,21 @@ def read_funwave(filename_or_obj):
     dset["tp"] = tp
     set_spec_attributes(dset)
     return dset
+
+
+class FunwaveBackendEntrypoint(BackendEntrypoint):
+    """Funwave backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_funwave(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Funwave ASCII spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

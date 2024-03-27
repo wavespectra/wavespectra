@@ -16,7 +16,8 @@ Reading spectra from files
 --------------------------
 
 Several methods are provided to read various file formats including spectral wave
-models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTTER.
+models like WAVEWATCHIII, SWAN and WWM, observation instruments such as TRIAXYS and
+SPOTTER, and industry standard formats including ERA5, NDBC, Octopus among others.
 
 .. ipython:: python
     :okwarning:
@@ -30,13 +31,14 @@ models like WW3, SWAN, WWM and observation instruments such as TRIAXYS and SPOTT
 The `spec` namespace
 --------------------
 
-Wavespectra defines a new namespace accessor called `spec` which is attached to `xarray`_
-objects. This namespace provides access to methods from the two main objects in wavespectra:
+Wavespectra defines a new namespace accessor called `spec` which is attached to
+`xarray`_ objects. This namespace provides access to several methods from the two main
+objects in wavespectra:
 
 * :py:class:`~wavespectra.specarray.SpecArray`
 * :py:class:`~wavespectra.specdataset.SpecDataset`
 
-which extend functionality from xarray's `DataArray`_ and `Dataset`_ objects respectively.
+which extend functionality from xarray's `DataArray`_ and `Dataset`_ respectively.
 
 SpecArray
 ~~~~~~~~~
@@ -46,8 +48,8 @@ SpecArray
 
     dset.efth.spec
 
-SpecDset
-~~~~~~~~~
+SpecDataset
+~~~~~~~~~~~
 
 .. ipython:: python
     :okwarning:
@@ -57,7 +59,7 @@ SpecDset
 Spectral wave parameters
 ------------------------
 Several methods are available to calculate integrated wave parameters. They can be
-accessed from both SpecArray (`efth` variable) and SpecDset accessors:
+accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
 
 .. ipython:: python
     :okwarning:
@@ -116,50 +118,39 @@ accessed from both SpecArray (`efth` variable) and SpecDset accessors:
     ax6.set_ylabel("$Tm01$ (s)")
 
     @suppress
-    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.set_xticks([]); ax.get_legend().remove()
+    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.tick_params(bottom=False, labelbottom=False); ax.get_legend().remove()    
 
     @savefig many_stats.png
     plt.draw()
 
+
+Spectra file writing
+--------------------
+Wavespectra provides methods in the `SpecDataset` accessor for writing spectral data to
+different file formats. The following example writes the dataset to a SWAN ASCII file:
+
+.. ipython:: python
+    :okwarning:
+
+    dset.spec.to_swan("specfile.swn")
+
+    !head -n 40 specfile.swn
+
+
 Partitioning
 ------------
 
-Two different partitioning techniques are available, a simple spectral split based on
-frequency / direction cutoffs and the watershed algorithm of `Hanson et al. (2008)`_.
-
-Spectral split
-~~~~~~~~~~~~~~~
-
-.. ipython:: python
-    :okwarning:
-
-    fcut = 1 / 8
-    sea = dset.spec.split(fmin=fcut)
-    swell = dset.spec.split(fmax=fcut)
-    dset.freq.values
-    sea.freq.values
-    swell.freq.values
-
-    @suppress
-    plt.figure(figsize=(8, 4.5))
-
-    dset.spec.hs().isel(site=0).plot(label='Full spectrum', marker='o');
-    sea.spec.hs().isel(site=0).plot(label='Sea', marker='o');
-    swell.spec.hs().isel(site=0).plot(label='Swell', marker='o');
-
-    @suppress
-    plt.legend(loc=0, fontsize=8); plt.title(""); plt.ylabel("$Hs$ (m)"); plt.xlabel("")
-
-    @savefig freq_split_hs.png
-    plt.draw()
-
-Watershed
-~~~~~~~~~
+Several different partitioning techniques are available within the `spec.partition`
+namespace. The partitioning methods follow the naming convention defined in the
+`WAVEWATCHIII`_ model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In
+the following example, the `ptm1` method is used to partition the dataset into wind sea
+and three swells (`ptm1` is equivalent to the watershed technique previously available in
+wavespectra as the `spec.partition()` method).
 
 .. ipython:: python
     :okwarning:
 
-    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+    dspart = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
     pstats = dspart.spec.stats(["hs", "dpm"])
     pstats
 
@@ -186,6 +177,7 @@ Watershed
     @savefig watershed_hs.png
     plt.draw()
 
+
 Plotting
 --------
 
@@ -195,7 +187,7 @@ frequency-direction spectral plots in polar coordinates.
 .. ipython:: python
     :okwarning:
 
-    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=2.0)
+    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=0.4)
     @savefig faceted_polar_plot.png
     ds.spec.plot(
         kind="contourf",
@@ -234,16 +226,16 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
     :okwarning:
 
     idw = dset.spec.sel(
-        lons=[92.01, 92.05, 92.09],
-        lats=[19.812, 19.875, 19.935],
+        lons=[92, 92.05, 92.1, 92.1, 92.1, 92.1, 92.05, 92, 92, 92],
+        lats=[19.8, 19.8, 19.8, 19.85, 19.9, 19.95, 19.95, 19.95, 19.9, 19.85],
         method="idw"
     )
     idw
 
     @suppress
     plt.figure(figsize=(8, 4.5))
-    p = plt.scatter(dset.lon, dset.lat, 80, dset.isel(time=0).spec.hs(), label="Dataset points");
-    p = plt.scatter(idw.lon, idw.lat, 100, idw.isel(time=0).spec.hs(), marker="v", label="Interpolated point");
+    p = plt.scatter(dset.lon, dset.lat, 200, dset.isel(time=0).spec.hs(), cmap="turbo", marker="v", edgecolor="k", label="Dataset points");
+    p = plt.scatter(idw.lon, idw.lat, 80, idw.isel(time=0).spec.hs(), cmap="turbo", marker="o", edgecolor="k", label="Interpolated point");
 
     @suppress
     plt.legend(); plt.colorbar(p, label="Hs (m)")
@@ -264,3 +256,4 @@ The `nearest` neighbour and `bbox` options are also available besides inverse di
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
 .. _`Hanson et al. (2008)`: https://journals.ametsoc.org/doi/pdf/10.1175/2009JTECHO650.1
+.. _`WAVEWATCHIII`: https://github.com/NOAA-EMC/WW3

@@ -32,7 +32,9 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    :toctree: generated/
 
    SpecArray.hs
+   SpecArray.hrms
    SpecArray.hmax
+   SpecArray.fp
    SpecArray.tp
    SpecArray.tm01
    SpecArray.tm02
@@ -40,8 +42,13 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.dp
    SpecArray.dm
    SpecArray.dspr
+   SpecArray.dpspr
    SpecArray.swe
    SpecArray.sw
+   SpecArray.gw
+   SpecArray.gamma
+   SpecArray.alpha
+   SpecArray.goda
 
 **Spectral partitioning**
 
@@ -51,6 +58,14 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
 
    SpecArray.split
    SpecArray.partition
+   partition.partition.ptm2
+   partition.partition.ptm3
+   partition.partition.ptm4
+   partition.partition.ptm5
+   partition.partition.hp01
+   partition.partition.bbox
+   partition.partition.ptm1_track
+
 
 **Other methods**
 
@@ -102,6 +117,7 @@ Input functions
    read_wwm
    read_netcdf
    read_era5
+   read_ndbc
 
 \* These functions also support Zarr files
 
@@ -117,8 +133,13 @@ Input functions
    read_spotter
    read_octopus
    read_dataset
-   read_ndbc
+   read_ndbc_ascii
    read_json
+   read_funwave
+   read_xwaves
+   read_dataset
+   read_wavespectra
+   read_ww3_station
 
 **Convenience SWAN ASCII input functions**
 
@@ -145,41 +166,70 @@ Output functions
    SpecDataset.to_octopus
    SpecDataset.to_ww3
    SpecDataset.to_json
+   SpecDataset.to_funwave
+   SpecDataset.to_orcaflex
 
 
-Spectral reconstruction
------------------------
-
-Spectral reconstruction functionality is under development. There are functions
-available to fit parametric spectrum shapes from wave partitions but the construct
-api is not properly established.
+Spectral fitting
+----------------
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   construct.jonswap
-   construct.ochihubble
-   construct.helpers.spread
-   construct.helpers.arrange_inputs
-   construct.helpers.make_dataset
-   construct.helpers.check_coordinates
+   fit_pierson_moskowitz
+   fit_jonswap
+   fit_tma
+   fit_gaussian
+
+
+Directional distribution
+------------------------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   directional.cartwright
+   directional.bunney
+
+
+Construct
+---------
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   construct.construct_partition
+   construct.partition_and_reconstruct
 
 
 Internal core functions and objects
 -----------------------------------
 
-**watershed module**
+**Partition subpackage**
 
 .. autosummary::
    :nosignatures:
    :toctree: generated/
 
-   core.watershed.partition
-   core.watershed.nppart
-   core.watershed.hs
-   core.watershed.frequency_resolution
-   core.watershed.inflection
+   partition.partition.np_ptm1
+   partition.partition.np_ptm2
+   partition.partition.np_ptm3
+   partition.partition.np_hp01
+   partition.tracking.dfp_wsea
+   partition.tracking.dfp_swell
+   partition.tracking.match_consecutive_partitions
+   partition.tracking.np_tracking_partitions
+   partition.tracking.track_partitions
+   partition.hanson_and_phillips_2001._partition_stats
+   partition.hanson_and_phillips_2001._is_contiguous
+   partition.hanson_and_phillips_2001._frequency_resolution
+   partition.hanson_and_phillips_2001._plot_partitions
+   partition.hanson_and_phillips_2001.spread_hp01
+   partition.hanson_and_phillips_2001._combine_last
+   partition.hanson_and_phillips_2001.combine_partitions_hp01
 
 **attributes module**
 
@@ -196,11 +246,12 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs
+   core.npstats.hs_numpy
    core.npstats.dpm_gufunc
    core.npstats.dp_gufunc
    core.npstats.tps_gufunc
    core.npstats.tp_gufunc
+   core.npstats.dpspr_gufunc
 
 **xrstats**
 
@@ -211,6 +262,7 @@ Internal core functions and objects
    core.xrstats.peak_wave_direction
    core.xrstats.mean_direction_at_peak_wave_period
    core.xrstats.peak_wave_period
+   core.xrstats.peak_directional_spread
 
 **select module**
 
@@ -234,11 +286,9 @@ Internal core functions and objects
    core.utils.wavelen
    core.utils.wavenuma
    core.utils.celerity
-   core.utils.dnum_to_datetime
    core.utils.to_nautical
    core.utils.unique_indices
    core.utils.unique_times
-   core.utils.to_datetime
    core.utils.spddir_to_uv
    core.utils.uv_to_spddir
    core.utils.interp_spec
@@ -253,4 +303,3 @@ Internal core functions and objects
 
    core.swan.read_tab
    core.swan.SwanSpecFile
-   core.swan._dateparse

@@ -1,5 +1,5 @@
 """Read Native SWAN netCDF spectra files."""
-import xarray as xr
+from xarray.backends import BackendEntrypoint
 import numpy as np
 
 from wavespectra.specdataset import SpecDataset
@@ -60,13 +60,15 @@ def from_ncswan(dset):
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    dset = dset.rename(MAPPING)
+    vars_and_dims = set(dset.data_vars) | set(dset.dims)
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in vars_and_dims}
+    dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
-    if attrs.TIMENAME in dset[attrs.LONNAME].dims:
-        dset = dset.assign({
-            attrs.LONNAME: dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0}),
-            attrs.LATNAME: dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
-        })
+    if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:
+        dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+    if attrs.LATNAME in dset and attrs.TIMENAME in dset[attrs.LATNAME].dims:
+        dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+
     # Calculating wind speeds and directions
     if "xwnd" in dset and "ywnd" in dset:
         dset[attrs.WSPDNAME], dset[attrs.WDIRNAME] = uv_to_spddir(
@@ -84,3 +86,23 @@ def from_ncswan(dset):
     # Setting standard attributes
     set_spec_attributes(dset)
     return dset.drop_vars(to_drop)
+
+
+class NCSwanBackendEntrypoint(BackendEntrypoint):
+    """Swan netcdf backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        file_format="netcdf",
+        mapping=MAPPING,
+    ):
+        return read_ncswan(filename_or_obj, file_format=file_format, mapping=mapping)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open SWAN netcdf or zarr spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

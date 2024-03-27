@@ -8,17 +8,20 @@ def to_orcaflex(self, model, minEnergy=1e-6):
     Uses the orcaflex API (OrcFxAPI) to set the wave-data of the provided orcaflex model.
 
     The axis system conversion used is:
+
     - Orcaflex global X  = Towards East
     - Orcaflex global Y  = Towards North
 
     This function creates a wave-train for each of the directions in this spectrum using a user-defined spectrum.
 
     Calculation of wave-components in orcaflex is computationally expensive. To save computational time:
+
     1. Use the minEnergy parameter of this function to define a treshold for the amount of energy in a wave-train.
-    2. In orcaflex itself: limit the amount of wave-components
+    2. In orcaflex itself: limit the amount of wave-components.
     3. Before exporting: regrid the spectrum to a lower amount of directions.
 
     Orcaflex theory:
+
     - https://www.orcina.com/webhelp/OrcaFlex/Content/html/Wavetheory.htm
     - https://www.orcina.com/webhelp/OrcaFlex/Content/html/Directionconventions.htm
 
@@ -29,15 +32,14 @@ def to_orcaflex(self, model, minEnergy=1e-6):
         >>> spectrum = read_triaxys("triaxys.DIRSPEC")).isel(time=0)  # get only the fist spectrum in time
         >>> spectrum.spec.to_orcaflex(m)
 
-
     Args:
-        - model : orcaflex model (OrcFxAPI.model instance)
-        - minEnergy [1e-6] : threshold for minimum sum of energy in a direction before it is exported
+        - model : orcaflex model (OrcFxAPI.model instance).
+        - minEnergy [1e-6] : threshold for minimum sum of energy in a direction before it is exported.
 
     Note:
         - an Orcaflex license is required to work with the orcaflex API.
-        - Only 2D spectra E(f,d) are currently supported.
-        - The DataArray should contain only a single spectrum. Hint: first_spetrum = spectra.isel(time=0)
+        - Only 2D spectra :math:`E(f,d)` are currently supported.
+        - The DataArray should contain only a single spectrum. Hint: first_spetrum = spectra.isel(time=0).
 
     """
 
@@ -49,7 +51,8 @@ def to_orcaflex(self, model, minEnergy=1e-6):
     # verify what all coordinates other than dir and freq are one
     if not np.prod(self.efth.shape) == len(dirs) * len(freqs):
         raise ValueError(
-            "The DataArray should contain only a single spectrum.\nHint: first_spetrum = spectra.isel(time=0)"
+            "The DataArray should contain only a single spectrum. "
+            "Hint: first_spetrum = spectra.isel(time=0)"
         )
 
     nTrains = 0
@@ -90,16 +93,16 @@ def to_orcaflex(self, model, minEnergy=1e-6):
         env.WaveSpectrumS = E[iFirst:iLast]
         env.WaveSpectrumFrequency = freqs[iFirst:iLast]
 
-        env.WaveType = 'Airy'  #Temporary set the wave-type to Airy. This is to avoid re-calcultion of
-                               # the spectral properties each time the next train is set (can slow-down
-                               # considerably when using many sprectral components
-                               # !thank you people at orcina for your help solving this!
-
+        # Temporary set the wave-type to Airy. This is to avoid re-calcultion of
+        # the spectral properties each time the next train is set (can slow-down
+        # considerably when using many sprectral components
+        # !thank you people at orcina for your help solving this!
+        env.WaveType = "Airy"
 
     # When all data is set, restore all trains to 'user-defined'. The data that we set earlier
     # will still be there.
     for env.SelectedWaveTrainIndex in range(nTrains):
-        env.WaveType = 'User Defined Spectrum'
+        env.WaveType = "User Defined Spectrum"
 
     if nTrains == 0:
         raise ValueError(

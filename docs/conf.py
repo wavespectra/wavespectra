@@ -90,7 +90,7 @@ release = wavespectra.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -112,8 +112,9 @@ todo_include_todos = False
 html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
-    "collapse_navigation": True,
-    "show_nav_level": 4,
+    # "collapse_navigation": True,
+    "show_nav_level": 0,
+    "navigation_depth": 2,
     "navbar_align": "content",
     "navbar_center": ["navbar-nav"],
     # "navbar_end": ["navbar-icon-links.html"],

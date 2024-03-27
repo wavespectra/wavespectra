@@ -3,22 +3,31 @@ Output
 
 .. py:module:: wavespectra.output
 
-Wavespectra provides functions to write :py:class:`~wavespectra.specdataset.SpecDataset`
-objects into different file types. They are defined in module within :py:mod:`wavespectra.output`.
-They are attached as methods in the SpecDataset accessor.
+Functions are available to write wavespectra datasets to disk in a number of different
+file types. Output functions are defined in modules within the :py:mod:`wavespectra.output`
+subpackage, for example, :py:func:`wavespectra.output.swan.to_swan`. They are accessed
+as methods in the SpecDataset accessor, for instance:
 
-.. note::
+.. ipython:: python
 
-    The following conventions are expected for defining output functions:
+    dset.spec.to_octopus("_static/octopusfile.oct")
 
-    - Funcions for different file types are defined in different modules within :py:mod:`wavespectra.output` subpackage.
+    !head -n 20 _static/octopusfile.oct
 
-    - Modules are named as `filetype`.py, e.g., ``swan.py``.
 
-    - Functions are named as to_`filetype`, e.g., ``to_swan``.
+The following conventions are expected for defining output functions:
 
-    - Function **must** accept ``self`` as the first input argument.
+* Output functions must be defined in modules within the `wavespectra.output`_ subpackage.
 
+* Modules should be named as `filetype`.py, e.g., ``swan.py``.
+
+* Functions should be named as to_`filetype`, e.g., ``to_swan``.
+
+* Function **must** accept ``self`` as the first input argument so they can be plugged
+  in as methods in the :py:class:`~wavespectra.specdataset.SpecDataset` accessor class.
+
+Available writers
+~~~~~~~~~~~~~~~~~
 
 These output functions are currently available as methods of :py:class:`~wavespectra.specdataset.SpecDataset`:
 
@@ -35,3 +44,5 @@ These output functions are currently available as methods of :py:class:`~wavespe
     SpecDataset.to_orcaflex
     SpecDataset.to_swan
     SpecDataset.to_ww3
+
+.. _wavespectra.output: https://github.com/wavespectra/wavespectra/tree/master/wavespectra/output

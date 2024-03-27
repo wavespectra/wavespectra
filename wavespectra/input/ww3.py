@@ -1,5 +1,5 @@
 """Read Native WW3 spectra files."""
-import numpy as np
+from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
@@ -60,10 +60,13 @@ def from_ww3(dset):
         Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
-    dset = dset.rename(MAPPING)
+    vars_and_dims = set(dset.data_vars) | set(dset.dims)
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in vars_and_dims}
+    dset = dset.rename(mapping)
     # Ensuring lon,lat are not function of time
-    if attrs.TIMENAME in dset[attrs.LONNAME].dims:
+    if attrs.LONNAME in dset and attrs.TIMENAME in dset[attrs.LONNAME].dims:
         dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(drop=True, **{attrs.TIMENAME: 0})
+    if attrs.LATNAME in dset and attrs.TIMENAME in dset[attrs.LATNAME].dims:
         dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(drop=True, **{attrs.TIMENAME: 0})
     # Only selected variables to be returned
     to_drop = list(set(dset.data_vars.keys()) - to_keep)
@@ -74,3 +77,23 @@ def from_ww3(dset):
     # Setting standard attributes
     set_spec_attributes(dset)
     return dset.drop_vars(to_drop).drop_dims("string16", errors="ignore")
+
+
+class WW3BackendEntrypoint(BackendEntrypoint):
+    """WW3 backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        file_format="netcdf",
+        mapping=MAPPING,
+    ):
+        return read_ww3(filename_or_obj, file_format=file_format, mapping=mapping)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open WW3 netcdf or zarr spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

@@ -11,7 +11,7 @@ from wavespectra import read_ww3
 
 dset = read_ww3("../_static/ww3file.nc")
 
-dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+dspart = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
 pstats = dspart.spec.stats(["hs", "tp", "dpm"])
 
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))

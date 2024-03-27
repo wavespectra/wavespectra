@@ -1,5 +1,5 @@
 """Read generic netCDF spectra files."""
-import xarray as xr
+from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.input import open_netcdf
@@ -51,3 +51,37 @@ def read_netcdf(
     dset = dset.rename({k: v for k, v in coord_map.items() if k in dset})
     set_spec_attributes(dset)
     return dset
+
+
+class NetCDFBackendEntrypoint(BackendEntrypoint):
+    """Netcdf backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        freqname=attrs.FREQNAME,
+        dirname=attrs.DIRNAME,
+        sitename=attrs.SITENAME,
+        specname=attrs.SPECNAME,
+        lonname=attrs.LONNAME,
+        latname=attrs.LATNAME,
+        timename=attrs.TIMENAME,
+    ):
+        return read_netcdf(
+            filename_or_obj,
+            freqname=freqname,
+            dirname=dirname,
+            sitename=sitename,
+            specname=specname,
+            lonname=lonname,
+            latname=latname,
+            timename=timename,
+        )
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open generic netcdf spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

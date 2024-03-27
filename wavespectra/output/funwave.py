@@ -27,7 +27,7 @@ def to_funwave(
         - Directions converted from  wavespectra (0N, CW, from) to Cartesian (0E, CCW, to).
         - Funwave only seems to deal with directions in the [-90, 90] range in
           cartesian convention, use clip=True to clip spectra outside that range.
-        - Both 2D E(f,d) and 1d E(f) spectra are supported.
+        - Both 2D :math:`E(f,d)` and 1d :math:`E(f)` spectra are supported.
         - If the SpecArray has more than one spectrum, multiple files are created in a
           zip archive defined by replacing the extension of `filename` by ".zip".
 
@@ -93,7 +93,7 @@ def funwave_spectrum(darr, filename):
         darr = darr.assign_coords({attrs.DIRNAME: [0]})
 
     # Amplitudes and phases
-    amp = np.sqrt(darr * darr.spec.dfarr * darr.spec.dd * 8) / 2
+    amp = np.sqrt(darr * darr.spec.df * darr.spec.dd * 8) / 2
     amp = amp.transpose()
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0

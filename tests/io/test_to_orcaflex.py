@@ -7,7 +7,7 @@ import numpy as np
 
 from wavespectra import read_triaxys
 from wavespectra.core.attributes import attrs
-from wavespectra.construct import ochihubble
+
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 

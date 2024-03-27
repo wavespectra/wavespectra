@@ -3,6 +3,7 @@
 https://dods.ndbc.noaa.gov/
 
 """
+from xarray.backends import BackendEntrypoint
 import xarray as xr
 import numpy as np
 
@@ -65,6 +66,20 @@ def from_ndbc(dset, directional=True, dd=10.0):
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
+    # Some datasets have different naming convention
+    mapping = {}
+    if "waveFrequency" in dset.dims:
+        mapping.update({"waveFrequency": "frequency"})
+    if "waveTime" in dset.dims:
+        mapping.update({"waveTime": "time"})
+    if "waveEnergyDensity" in dset.data_vars:
+        mapping.update({"waveEnergyDensity": "spectral_wave_density"})
+    if "gpsLatitude" in dset.data_vars:
+        mapping.update({"gpsLatitude": "latitude"})
+    if "gpsLongitude" in dset.data_vars:
+        mapping.update({"gpsLongitude": "longitude"})
+    dset = dset.rename(mapping)
+
     dset = dset.transpose(..., "frequency")
     if directional:
         dirs = np.arange(0, 360, dd)
@@ -87,3 +102,23 @@ def from_ndbc(dset, directional=True, dd=10.0):
     set_spec_attributes(dset)
 
     return dset
+
+
+class NDBCBackendEntrypoint(BackendEntrypoint):
+    """NDBC netcdf backend engine."""
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        directional=True,
+        dd=10.0,
+    ):
+        return read_ndbc(filename_or_obj, directional=directional, dd=dd)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open NDBC netcdf spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

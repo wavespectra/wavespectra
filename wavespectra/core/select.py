@@ -91,7 +91,10 @@ class Coordinates:
             List of distances between each station and site.
 
         """
-        dist = np.sqrt((self.dset_lons % 360 - np.array(lon) % 360) ** 2 + (self.dset_lats - np.array(lat)) ** 2)
+        dist = np.sqrt(
+            (self.dset_lons % 360 - np.array(lon) % 360) ** 2
+            + (self.dset_lats - np.array(lat)) ** 2
+        )
         if isinstance(dist, xr.DataArray):
             dist = dist.values
         return np.abs(dist)
@@ -168,7 +171,9 @@ def sel_nearest(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    coords = Coordinates(
+        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+    )
 
     station_ids = []
     for lon, lat in zip(coords.lons, coords.lats):
@@ -236,7 +241,9 @@ def sel_idw(
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    coords = Coordinates(
+        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+    )
 
     mask = dset.isel(site=0, drop=True) * np.nan
     dsout = []
@@ -313,7 +320,9 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
             improve precision if projected coordinates are provided at high latitudes.
 
     """
-    coords = Coordinates(dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats)
+    coords = Coordinates(
+        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+    )
 
     minlon = min(coords.lons) - tolerance
     minlat = min(coords.lats) - tolerance
@@ -340,7 +349,7 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
                 & (coords.dset_lats >= minlat)
                 & (coords.dset_lons <= minlon)
                 & (coords.dset_lats <= maxlat)
-            )[0]
+            )[0],
         )
 
     if station_ids.size == 0:
