@@ -57,7 +57,7 @@ def read_obscape_file(filename : str or Path):
     # get the timestamps from the filename
     # filename is like 20240214_000000_wavebuoy_xxx_spec2D
 
-    utc = get_timestamp(filename.stem)
+    # utc = get_timestamp(filename.stem)
 
 
     info = []
@@ -110,7 +110,14 @@ def read_obscape_file(filename : str or Path):
     R['freq'] = freq
     R['dir'] = dirs
     R['data'] = data
-    R['utc'] = utc
+
+    timestamp = metadata['Timestamp']  # unix timestamp
+
+    # convert timestamp to datetime object
+    R['utc'] = datetime.utcfromtimestamp(int(timestamp))
+
+
+
     R['metadata'] = metadata
 
     return R
