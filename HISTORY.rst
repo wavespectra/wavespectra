@@ -16,17 +16,10 @@ Releases
 3.19.0 (2024-05-02)
 ___________________
 
-New Features
-------------
-* Make numba an `extra` dependency (`PR122 <https://github.com/wavespectra/wavespectra/pull/122>`_)
-
 Internal Changes
 ----------------
-* Move numba to `extra` dependencies.
-* Move numba-based fuctions from module `wavespectra.core.npstats` to `wavespectra.core.npstats_numba`.
-* Replace functions in `wavespectra.core.npstats` by numpy equivalents of those functions.
-* Conditionally import numba functions in `wavespectra.core.npstats` if numba is installed,
-  otherwise import numpy functions.
+* Remove numba dependency (`PR122 <https://github.com/wavespectra/wavespectra/pull/122>`_)
+* Remove other dependencies already installed by xarray.
 
 
 3.18.0 (2024-02-01)
