@@ -126,7 +126,7 @@ accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
 
 Spectra file writing
 --------------------
-Wavespectra provides methods in the `SpecDataset` accessor for writing spectral data to
+Several methods are available in the `SpecDataset` accessor for writing spectral data to
 different file formats. The following example writes the dataset to a SWAN ASCII file:
 
 .. ipython:: python
@@ -137,15 +137,55 @@ different file formats. The following example writes the dataset to a SWAN ASCII
     !head -n 40 specfile.swn
 
 
+Plotting
+--------
+
+Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defining
+frequency-direction spectral plots in polar coordinates.
+
+.. ipython:: python
+    :okwarning:
+
+    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=0.4)
+    @savefig faceted_polar_plot.png
+    ds.spec.plot(
+        kind="contourf",
+        col="time",
+        as_period=False,
+        normalised=True,
+        logradius=True,
+        add_colorbar=False,
+        figsize=(8, 5)
+    );
+
+
+Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
+
+.. ipython:: python
+    :okwarning:
+
+    import cmocean
+
+    @suppress
+    plt.figure(figsize=(8, 4))
+
+    ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"})
+    ds = ds.assign_coords({"period": 1 / ds.period})
+    ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
+
+    @savefig hovmoller_plot.png
+    ds.plot.contourf(x="time", y="period", vmax=1.25, cmap=cmocean.cm.thermal, levels=10);
+
+
 Partitioning
 ------------
 
-Several different partitioning techniques are available within the `spec.partition`
-namespace. The partitioning methods follow the naming convention defined in the
-`WAVEWATCHIII`_ model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In
-the following example, the `ptm1` method is used to partition the dataset into wind sea
-and three swells (`ptm1` is equivalent to the watershed technique previously available in
-wavespectra as the `spec.partition()` method).
+Different partitioning techniques are available within the `spec.partition` namespace.
+The partitioning methods follow the naming convention defined in the `WAVEWATCHIII`_
+model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In the following
+example, the `ptm1` method is used to partition the dataset into wind sea and three
+swells (`ptm1` is equivalent to the former `spec.partition()` method deprecated in 
+version 4).
 
 .. ipython:: python
     :okwarning:
@@ -178,43 +218,33 @@ wavespectra as the `spec.partition()` method).
     plt.draw()
 
 
-Plotting
---------
+Reconstruction
+--------------
 
-Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defining
-frequency-direction spectral plots in polar coordinates.
-
-.. ipython:: python
-    :okwarning:
-
-    ds = dset.isel(site=0, time=[0, 1]).spec.split(fmin=0.05, fmax=0.4)
-    @savefig faceted_polar_plot.png
-    ds.spec.plot(
-        kind="contourf",
-        col="time",
-        as_period=False,
-        normalised=True,
-        logradius=True,
-        add_colorbar=False,
-        figsize=(8, 5)
-    );
-
-Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
+Spectral reconstruction functionality has been implemented in version 4 with different
+shape functions available for frequency and direction such as Jonswap and Cartwright:
 
 .. ipython:: python
     :okwarning:
 
-    import cmocean
+    import numpy as np
+    from wavespectra.construct import construct_partition
+    freq = np.arange(0.03, 0.401, 0.001)
+    dir = np.arange(0, 360, 1)
+    ds = construct_partition(
+        fit_name="fit_jonswap",
+        dir_name="cartwright",
+        fit_kwargs={"freq":  freq, "fp": 0.1, "gamma": 3.3, "hs": 1.5},
+        dir_kwargs={"dir": dir, "dm": 60, "dspr": 30},
+    )
+    @savefig reconstruted_polar.png
+    ds.spec.plot();
 
-    @suppress
-    plt.figure(figsize=(8, 4))
+.. ipython:: python
+    :okwarning:
 
-    ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"})
-    ds = ds.assign_coords({"period": 1 / ds.period})
-    ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
-
-    @savefig hovmoller_plot.png
-    ds.plot.contourf(x="time", y="period", vmax=1.25, cmap=cmocean.cm.thermal, levels=10);
+    @savefig reconstruted_1d.png
+    ds.spec.oned().plot(figsize=(8, 4));
 
 Selecting
 ---------
@@ -244,6 +274,7 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
     plt.draw()
 
 The `nearest` neighbour and `bbox` options are also available besides inverse distance weighting (idw).
+
 
 
 .. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
