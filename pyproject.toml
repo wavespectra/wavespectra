@@ -29,20 +29,17 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.8"
 dependencies = [
     "click",
-    "cmocean",
     "dask",
     "matplotlib",
-    "numba",
-    "pandas",
     "python-dateutil",
     "pyyaml",
     "sortedcontainers",
     "scipy",
-    "toolz",
     "xarray",
 ]
 dynamic = ["version"]
@@ -79,9 +76,9 @@ test = ["pytest", "tox", "ruff"]
 extra = [
     "fsspec",
     "gcsfs",
+    "h5netcdf",
     "netCDF4",
     "zarr",
-    "h5netcdf",
 ]
 docs = [
     "autodoc",
