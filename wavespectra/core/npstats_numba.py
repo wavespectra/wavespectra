@@ -35,7 +35,7 @@ def hs(spectrum, freq, dir, tail=True):
     cache=True,
     forceobj=True,
 )
-def dpm_gufunc(ipeak, momsin, momcos, out):
+def dpm(ipeak, momsin, momcos, out):
     """Mean direction at the peak wave period Dpm.
 
     Args:
@@ -62,7 +62,7 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
     cache=True,
     forceobj=True,
 )
-def dp_gufunc(ipeak, dir, out):
+def dp(ipeak, dir, out):
     """Peak wave direction Dp.
 
     Args:
@@ -85,7 +85,7 @@ def dp_gufunc(ipeak, dir, out):
     cache=True,
     forceobj=True,
 )
-def tps_gufunc(ipeak, spectrum, freq, out):
+def tps(ipeak, spectrum, freq, out):
     """Smooth peak wave period Tp.
 
     Args:
@@ -126,7 +126,7 @@ def tps_gufunc(ipeak, spectrum, freq, out):
     cache=True,
     forceobj=True,
 )
-def tp_gufunc(ipeak, spectrum, freq, out):
+def tp(ipeak, spectrum, freq, out):
     """Peak wave period Tp.
 
     Args:
