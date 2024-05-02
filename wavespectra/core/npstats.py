@@ -1,8 +1,7 @@
 """Wave spectra stats on numpy arrays sourced by apply_ufuncs."""
 import numpy as np
-from numba import guvectorize
 
-from wavespectra.core.utils import D2R, R2D
+from wavespectra.core.utils import R2D
 
 
 def hs(spectrum, freq, dir, tail=True):
@@ -27,15 +26,7 @@ def hs(spectrum, freq, dir, tail=True):
     return 4.0 * np.sqrt(Etot)
 
 
-@guvectorize(
-    "(int64, float64[:], float64[:], float32[:])",
-    "(), (n), (n) -> ()",
-    nopython=True,
-    target="parallel",
-    cache=True,
-    forceobj=True,
-)
-def dpm_gufunc(ipeak, momsin, momcos, out):
+def dpm_gufunc(ipeak, momsin, momcos):
     """Mean direction at the peak wave period Dpm.
 
     Args:
@@ -48,21 +39,13 @@ def dpm_gufunc(ipeak, momsin, momcos, out):
 
     """
     if not ipeak:
-        out[0] = np.nan
+        return np.nan
     else:
         dpm = np.arctan2(momsin[ipeak], momcos[ipeak])
-        out[0] = np.float32((270 - R2D * dpm) % 360.)
+        return np.float32((270 - R2D * dpm) % 360.)
 
 
-@guvectorize(
-    "(int64, float32[:], float32[:])",
-    "(), (n) -> ()",
-    nopython=True,
-    target="parallel",
-    cache=True,
-    forceobj=True,
-)
-def dp_gufunc(ipeak, dir, out):
+def dp_gufunc(ipeak, dir):
     """Peak wave direction Dp.
 
     Args:
@@ -74,18 +57,10 @@ def dp_gufunc(ipeak, dir, out):
           frequency-integrated spectrum.
 
     """
-    out[0] = np.float32(dir[ipeak])
+    return np.float32(dir[ipeak])
 
 
-@guvectorize(
-    "(int64, float64[:], float32[:], float32[:])",
-    "(), (n), (n) -> ()",
-    nopython=True,
-    target="parallel",
-    cache=True,
-    forceobj=True,
-)
-def tps_gufunc(ipeak, spectrum, freq, out):
+def tps_gufunc(ipeak, spectrum, freq):
     """Smooth peak wave period Tp.
 
     Args:
@@ -102,7 +77,7 @@ def tps_gufunc(ipeak, spectrum, freq, out):
 
     """
     if not ipeak:
-        out[0] = np.nan
+        return np.nan
     else:
         f1 = freq[ipeak - 1]
         f2 = freq[ipeak]
@@ -115,18 +90,10 @@ def tps_gufunc(ipeak, spectrum, freq, out):
         q13 = (e1 - e3) / (f1 - f3)
         qa = (q13 - q12) / (f3 - f2)
         fp = (s12 - q12 / qa) / 2.0
-        out[0] = np.float32(1.0 / fp)
+        return np.float32(1.0 / fp)
 
 
-@guvectorize(
-    "(int64, float64[:], float32[:], float32[:])",
-    "(), (n), (n) -> ()",
-    nopython=True,
-    target="parallel",
-    cache=True,
-    forceobj=True,
-)
-def tp_gufunc(ipeak, spectrum, freq, out):
+def tp_gufunc(ipeak, spectrum, freq):
     """Peak wave period Tp.
 
     Args:
@@ -142,6 +109,6 @@ def tp_gufunc(ipeak, spectrum, freq, out):
 
     """
     if not ipeak:
-        out[0] = np.nan
+        return np.nan
     else:
-        out[0] = np.float32(1.0 / freq[ipeak])
+        return np.float32(1.0 / freq[ipeak])
