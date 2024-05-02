@@ -40,7 +40,7 @@ def peak_wave_direction(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.dp_gufunc,
+        npstats.dp,
         ipeak.astype("int64"),
         dset[attrs.DIRNAME].astype("float32"),
         input_core_dims=[[], [attrs.DIRNAME]],
@@ -88,7 +88,7 @@ def mean_direction_at_peak_wave_period(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.dpm_gufunc,
+        npstats.dpm,
         ipeak.astype("int64"),
         msin.astype("float64"),
         mcos.astype("float64"),
@@ -123,9 +123,9 @@ def peak_wave_period(dset, smooth=True):
 
     # Choose peak period function
     if smooth:
-        func = npstats.tps_gufunc
+        func = npstats.tps
     else:
-        func = npstats.tp_gufunc
+        func = npstats.tp
 
     # Integrate over directions
     if attrs.DIRNAME in dset.dims:

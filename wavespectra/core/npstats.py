@@ -26,7 +26,7 @@ def hs(spectrum, freq, dir, tail=True):
     return 4.0 * np.sqrt(Etot)
 
 
-def dpm_gufunc(ipeak, momsin, momcos):
+def dpm(ipeak, momsin, momcos):
     """Mean direction at the peak wave period Dpm.
 
     Args:
@@ -45,7 +45,7 @@ def dpm_gufunc(ipeak, momsin, momcos):
         return np.float32((270 - R2D * dpm) % 360.)
 
 
-def dp_gufunc(ipeak, dir):
+def dp(ipeak, dir):
     """Peak wave direction Dp.
 
     Args:
@@ -60,7 +60,7 @@ def dp_gufunc(ipeak, dir):
     return np.float32(dir[ipeak])
 
 
-def tps_gufunc(ipeak, spectrum, freq):
+def tps(ipeak, spectrum, freq):
     """Smooth peak wave period Tp.
 
     Args:
@@ -93,7 +93,7 @@ def tps_gufunc(ipeak, spectrum, freq):
         return np.float32(1.0 / fp)
 
 
-def tp_gufunc(ipeak, spectrum, freq):
+def tp(ipeak, spectrum, freq):
     """Peak wave period Tp.
 
     Args:
