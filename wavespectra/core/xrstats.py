@@ -3,7 +3,13 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
-from wavespectra.core import npstats
+
+try:
+    from wavespectra.core import npstats_numba as npstats
+    vectorize = False
+except ImportError:
+    from wavespectra.core import npstats
+    vectorize = True
 
 
 def peak_wave_direction(dset):
@@ -38,6 +44,7 @@ def peak_wave_direction(dset):
         ipeak.astype("int64"),
         dset[attrs.DIRNAME].astype("float32"),
         input_core_dims=[[], [attrs.DIRNAME]],
+        vectorize=vectorize,
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -86,6 +93,7 @@ def mean_direction_at_peak_wave_period(dset):
         msin.astype("float64"),
         mcos.astype("float64"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        vectorize=vectorize,
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -136,6 +144,7 @@ def peak_wave_period(dset, smooth=True):
         dset.astype("float64"),
         dset[attrs.FREQNAME].astype("float32"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        vectorize=vectorize,
         dask="parallelized",
         output_dtypes=["float32"],
     )
