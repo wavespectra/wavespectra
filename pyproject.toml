@@ -33,16 +33,12 @@ classifiers = [
 requires-python = ">=3.8,<3.12"
 dependencies = [
     "click",
-    "cmocean",
     "dask",
     "matplotlib",
-    "numba",
-    "pandas",
     "python-dateutil",
     "pyyaml",
     "sortedcontainers",
     "scipy",
-    "toolz",
     "typing_extensions",
     "xarray",
 ]
@@ -62,9 +58,9 @@ test = ["pytest", "tox", "ruff"]
 extra = [
     "fsspec",
     "gcsfs",
+    "h5netcdf",
     "netCDF4",
     "zarr",
-    "h5netcdf",
 ]
 docs = [
     "autodoc",

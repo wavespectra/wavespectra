@@ -13,6 +13,15 @@ Releases
 ********
 
 
+3.19.0 (2024-05-02)
+___________________
+
+Internal Changes
+----------------
+* Remove numba dependency (`PR122 <https://github.com/wavespectra/wavespectra/pull/122>`_)
+* Remove other dependencies already installed by xarray.
+
+
 3.18.0 (2024-02-01)
 ___________________
 
