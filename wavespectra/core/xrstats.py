@@ -33,10 +33,11 @@ def peak_wave_direction(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.dp_gufunc,
+        npstats.dp,
         ipeak.astype("int64"),
         dset[attrs.DIRNAME].astype("float32"),
         input_core_dims=[[], [attrs.DIRNAME]],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -80,11 +81,12 @@ def mean_direction_at_peak_wave_period(dset):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.dpm_gufunc,
+        npstats.dpm,
         ipeak.astype("int64"),
         msin.astype("float64"),
         mcos.astype("float64"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -154,9 +156,9 @@ def peak_wave_period(dset, smooth=True):
 
     # Choose peak period function
     if smooth:
-        func = npstats.tps_gufunc
+        func = npstats.tps
     else:
-        func = npstats.tp_gufunc
+        func = npstats.tp
 
     # Ensure single chunk along input core dimensions
     dset = dset.chunk({attrs.FREQNAME: None})
@@ -171,6 +173,7 @@ def peak_wave_period(dset, smooth=True):
         dset.astype("float64"),
         dset[attrs.FREQNAME].astype("float32"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
     )
