@@ -127,6 +127,7 @@ def alpha(dset, smooth=True):
         dset[attrs.FREQNAME].astype("float32"),
         fp.astype("float32"),
         input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], []],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
     )
@@ -218,6 +219,7 @@ def peak_directional_spread(dset, mom=1):
         ipeak.astype("int64"),
         fdspr.astype("float64"),
         input_core_dims=[[], [attrs.FREQNAME]],
+        vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],
     )
