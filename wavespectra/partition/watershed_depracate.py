@@ -5,7 +5,7 @@ import xarray as xr
 from wavespectra.core.attributes import attrs
 from wavespectra.partition.specpart import specpart
 from wavespectra.core.utils import D2R, celerity
-from wavespectra.core.npstats import hs_numpy, dpm_gufunc, tps_gufunc
+from wavespectra.core import npstats
 
 
 def mom1(spectrum, dir, theta=90.0):
@@ -53,8 +53,8 @@ def combine_swells(swell_partitions, freq, dir, swells, combine_excluded=True):
             tp.append(np.nan)
             dpm.append(np.nan)
         else:
-            tp.append(tps_gufunc(ipeak, spec1d, freq.astype("float32")))
-            dpm.append(dpm_gufunc(ipeak, *mom1(spectrum, dir)))
+            tp.append(npstats.tps(ipeak, spec1d, freq.astype("float32")))
+            dpm.append(npstats.dpm(ipeak, *mom1(spectrum, dir)))
 
     # Indices of non-null partitions
     iswell = np.where(~np.isnan(tp))[0]
@@ -170,7 +170,7 @@ def nppart(
         if W > wscut:
             part_array[part_array == ipeak] = 0
         else:
-            partitions_hs_swell[ipeak] = hs_numpy(part_spec, freq, dir)
+            partitions_hs_swell[ipeak] = npstats.hs(part_spec, freq, dir)
 
         ipeak += 1
 

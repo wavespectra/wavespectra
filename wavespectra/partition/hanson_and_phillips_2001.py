@@ -12,13 +12,13 @@ def _partition_stats(spectrum, freq, dir):
     """Wave stats from partition."""
     spec1d = spectrum.sum(axis=1).astype("float64")
     ifpeak = np.argmax(spec1d).astype("int64")
-    hs = npstats.hs_numpy(spectrum, freq, dir)
+    hs = npstats.hs(spectrum, freq, dir)
     if (ifpeak == 0) or (ifpeak == freq.size - 1):
         fp = dpm = dm = dp = np.nan
     else:
         fp = 1 / npstats.tps(ifpeak, spec1d, freq.astype("float32"))
-        dpm = npstats.dpm(ifpeak, *npstats.mom1_numpy(spectrum, dir))
-        dm = npstats.dm_numpy(spectrum, dir)
+        dpm = npstats.dpm(ifpeak, *npstats.mom1(spectrum, dir))
+        dm = npstats.dm(spectrum, dir)
         idpeak = np.argmax(
             (spectrum * _frequency_resolution(freq, dir.size)).sum(axis=0)
         )

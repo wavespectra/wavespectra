@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from wavespectra import read_swan
-from wavespectra.core.npstats import hs_numpy, dpm, dp, tps, tp, dpspr_gufunc
+from wavespectra.core.npstats import hs, dpm, dp, tps, tp, dpspr
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -19,10 +19,10 @@ def dset():
 
 def test_hs(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=True)
-    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=False)
+    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=True)
+    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=False)
     ds = ds.isel(dir=[0])
-    hs_numpy(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values)
+    hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values)
 
 
 def test_dpm(dset):
@@ -65,17 +65,17 @@ def test_tp(dset):
     assert np.isnan(out)
 
 
-def test_dpspr_gufunc(dset):
+def test_dpspr(dset):
     ds = dset.isel(time=0, site=0, drop=True)
     ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
     fdspr1 = ds.spec.fdspr(mom=1).values.astype("float64")
     fdspr2 = ds.spec.fdspr(mom=2).values.astype("float64")
 
-    out = dpspr_gufunc(ipeak, fdspr1)
+    out = dpspr(ipeak, fdspr1)
     assert np.isclose(out, 8.463889)
 
-    out = dpspr_gufunc(ipeak, fdspr2)
+    out = dpspr(ipeak, fdspr2)
     assert np.isclose(out, 29.384691)
 
-    out = dpspr_gufunc(0, fdspr1)
+    out = dpspr(0, fdspr1)
     assert np.isnan(out)

@@ -15,7 +15,7 @@ from wavespectra.core.utils import (
     waveage,
 )
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import hs_numpy
+from wavespectra.core import npstats
 from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
 from wavespectra.partition.tracking import track_partitions
 
@@ -791,7 +791,7 @@ def np_ptm1(
             swell_partitions[ipart] += part
 
     # Sort swells by Hs
-    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
+    isort = np.argsort([-npstats.hs(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = list(np.array(swell_partitions)[isort])
 
     # Dealing with the number of swells
@@ -873,7 +873,7 @@ def np_ptm2(
             swell_partitions[ipart] += np.where(windseamask, 0.0, part)
 
     # Sort swells by Hs
-    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in swell_partitions])
+    isort = np.argsort([-npstats.hs(swell, freq, dir) for swell in swell_partitions])
     swell_partitions = list(np.array(swell_partitions)[isort])
 
     # Dealing with the number of swells
@@ -931,7 +931,7 @@ def np_ptm3(
         partitions.append(np.where(watershed_map == npart, spectrum, 0.0))
 
     # Sort partitions by Hs
-    isort = np.argsort([-hs_numpy(swell, freq, dir) for swell in partitions])
+    isort = np.argsort([-npstats.hs(swell, freq, dir) for swell in partitions])
     partitions = list(np.array(partitions)[isort])
 
     if parts is not None:
@@ -1011,7 +1011,7 @@ def np_hp01(
     swell_partitions = np.array(swell_partitions)
 
     # Sort swells by Hs
-    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    hs_swells_neg = [-npstats.hs(swell, freq, dir) for swell in swell_partitions]
     isort = np.argsort(hs_swells_neg)
     swell_partitions = list(swell_partitions[isort])
 
@@ -1106,7 +1106,7 @@ def np_hp01_wseabins(
     swell_partitions = np.array(swell_partitions)
 
     # Sort swells by Hs
-    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    hs_swells_neg = [-npstats.hs(swell, freq, dir) for swell in swell_partitions]
     isort = np.argsort(hs_swells_neg)
     swell_partitions = list(swell_partitions[isort])
 
@@ -1203,7 +1203,7 @@ def np_hp01_wseafrac_wseabins(
     swell_partitions = np.array(swell_partitions)
 
     # Sort swells by Hs
-    hs_swells_neg = [-hs_numpy(swell, freq, dir) for swell in swell_partitions]
+    hs_swells_neg = [-npstats.hs(swell, freq, dir) for swell in swell_partitions]
     isort = np.argsort(hs_swells_neg)
     swell_partitions = list(swell_partitions[isort])
 

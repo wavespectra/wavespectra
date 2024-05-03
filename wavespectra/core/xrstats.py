@@ -122,7 +122,7 @@ def alpha(dset, smooth=True):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.alpha_gufunc,
+        npstats.alpha,
         dset.astype("float64"),
         dset[attrs.FREQNAME].astype("float32"),
         fp.astype("float32"),
@@ -215,7 +215,7 @@ def peak_directional_spread(dset, mom=1):
 
     # Apply function over the full dataset
     darr = xr.apply_ufunc(
-        npstats.dpspr_gufunc,
+        npstats.dpspr,
         ipeak.astype("int64"),
         fdspr.astype("float64"),
         input_core_dims=[[], [attrs.FREQNAME]],

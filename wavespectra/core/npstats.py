@@ -5,7 +5,7 @@ from scipy.constants import g, pi
 from wavespectra.core.utils import R2D
 
 
-def mom1_numpy(spectrum, dir, theta=90.0):
+def mom1(spectrum, dir, theta=90.0):
     """First directional moment.
 
     Args:
@@ -26,7 +26,7 @@ def mom1_numpy(spectrum, dir, theta=90.0):
     return msin, mcos
 
 
-def dm_numpy(spectrum, dir):
+def dm(spectrum, dir):
     """Mean wave direction Dm.
 
     Args:
@@ -37,13 +37,13 @@ def dm_numpy(spectrum, dir):
         - dm (float): Mean spectral period.
 
     """
-    moms, momc = mom1_numpy(spectrum, dir)
+    moms, momc = mom1(spectrum, dir)
     dm = np.arctan2(moms.sum(axis=0), momc.sum(axis=0))
     dm = (270 - R2D * dm) % 360.0
     return dm
 
 
-def hs_numpy(spectrum, freq, dir=None, tail=True):
+def hs(spectrum, freq, dir=None, tail=True):
     """Significant wave height Hmo.
 
     Args:
@@ -102,7 +102,7 @@ def dp(ipeak, dir):
     return np.float32(dir[ipeak])
 
 
-def alpha_gufunc(spectrum, freq, fp):
+def alpha(spectrum, freq, fp):
     """Phillips fetch dependant scaling coefficient.
 
     Args:
@@ -178,7 +178,7 @@ def tp(ipeak, spectrum, freq):
         return np.float32(1.0 / freq[ipeak])
 
 
-def dpspr_gufunc(ipeak, fdspr):
+def dpspr(ipeak, fdspr):
     """Peak directional wave spread Dpspr.
 
     Args:

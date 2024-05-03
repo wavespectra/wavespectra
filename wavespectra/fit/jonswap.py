@@ -5,7 +5,7 @@ from scipy.constants import g, pi
 
 from wavespectra.core.utils import scaled, check_same_coordinates, to_coords
 from wavespectra.core.attributes import attrs
-from wavespectra.core.npstats import hs_numpy
+from wavespectra.core import npstats
 
 
 def fit_jonswap(
@@ -77,7 +77,7 @@ def np_jonswap(freq, fp, hs, gamma=3.3, alpha=0.0081, sigma_a=0.07, sigma_b=0.09
     dsout = term1 * term2 * term3
 
     if hs is not None:
-        hs_jonswap = hs_numpy(dsout, freq)
+        hs_jonswap = npstats.hs(dsout, freq)
         dsout = dsout * (hs / hs_jonswap) ** 2
 
     return dsout
