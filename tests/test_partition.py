@@ -12,7 +12,7 @@ from wavespectra.partition.partition import (
     np_hp01,
 )
 from wavespectra.core.utils import waveage
-from wavespectra.core.npstats import hs_numpy
+from wavespectra.core import npstats
 from wavespectra.partition.tracking import track_partitions
 
 
@@ -29,11 +29,11 @@ class BasePTM:
 
     @property
     def hs_full(self):
-        return hs_numpy(self.efth, self.freq, self.dir)
+        return npstats.hs(self.efth, self.freq, self.dir)
 
     @property
     def hs_from_partitions(self):
-        hs_partitions = [hs_numpy(efth, self.freq, self.dir) for efth in self.out]
+        hs_partitions = [npstats.hs(efth, self.freq, self.dir) for efth in self.out]
         return np.sqrt(np.sum(np.power(hs_partitions, 2)))
 
 
