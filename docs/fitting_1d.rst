@@ -15,8 +15,8 @@ Reconstruction
     import matplotlib.pyplot as plt
     import cmocean
     from wavespectra import read_ww3, read_swan
-    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    from wavespectra.directional import cartwright, bunney
+    from wavespectra.construct.frequency import pierson_moskowitz, jonswap, tma, gaussian
+    from wavespectra.construct.direction import cartwright, asymmetric
     from wavespectra.construct import construct_partition, partition_and_reconstruct
     freq = np.arange(0.03, 0.401, 0.001)
     dir = np.arange(0, 360, 1)
@@ -25,13 +25,8 @@ Reconstruction
 One-dimensional fit
 ___________________
 
-Different functions are available for fitting parametric spectral shapes.
-The functions are defined within the :py:mod:`~wavespectra.fit` subpackage:
-
-* :func:`~wavespectra.fit_pierson_moskowitz`
-* :func:`~wavespectra.fit_jonswap`
-* :func:`~wavespectra.fit_tma`
-* :func:`~wavespectra.fit_gaussian`
+Different functions are available for constructing parametric spectral shapes.
+The functions are defined within the :py:mod:`~wavespectra.construct.frequency` module:
 
 
 Pierson-Moskowitz
@@ -45,7 +40,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
     :okexcept:
     :okwarning:
 
-    dset = fit_pierson_moskowitz(freq=freq, hs=2, fp=0.1)
+    dset = fpierson_moskowitz(freq=freq, hs=2, fp=0.1)
 
     hs = float(dset.spec.hs())
     tp = float(dset.spec.tp())
@@ -64,7 +59,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_pierson_moskowitz` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.pierson_moskowitz` function:
 
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
     * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
@@ -80,8 +75,8 @@ Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_):
 .. ipython:: python
     :okwarning:
 
-    dset1 = fit_jonswap(freq=freq, fp=0.1, gamma=3.3, hs=2.0)
-    dset2 = fit_jonswap(freq=freq, fp=0.1, gamma=2.0, hs=2.0)
+    dset1 = jonswap(freq=freq, fp=0.1, gamma=3.3, hs=2.0)
+    dset2 = jonswap(freq=freq, fp=0.1, gamma=2.0, hs=2.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -100,8 +95,8 @@ When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz s
 .. ipython:: python
     :okwarning:
 
-    dset1 = fit_pierson_moskowitz(freq=freq, hs=2, fp=0.1)
-    dset2 = fit_jonswap(freq=freq, hs=2, fp=0.1, gamma=1.0)
+    dset1 = pierson_moskowitz(freq=freq, hs=2, fp=0.1)
+    dset2 = jonswap(freq=freq, hs=2, fp=0.1, gamma=1.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -120,7 +115,7 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
 .. ipython:: python
 
     ds = read_swan("_static/swanfile.spec").isel(time=0, lat=0, lon=0, drop=True)
-    ds_fit = fit_jonswap(
+    ds_construct = jonswap(
         freq=ds.freq,
         fp=ds.spec.fp(),
         gamma=1.6,
@@ -131,20 +126,20 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     ds.spec.oned().plot(ax=ax, label="Original spectrum");
-    ds_fit.plot(ax=ax, label="Jonswap fitting");
+    ds_construct.plot(ax=ax, label="Jonswap");
 
     @suppress
     plt.legend()
 
-    @savefig jonswap_original_fitting.png
+    @savefig jonswap_original_constructed.png
     plt.draw()
 
 The spectrum is scalled by :math:`\alpha` but if :math:`Hs` is provided it is used so that :math:`4\sqrt{m_0} = Hs`.
 
 .. ipython:: python
 
-    ds1 = fit_jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha())
-    ds2 = fit_jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha(), hs=ds.spec.hs())
+    ds1 = jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha())
+    ds2 = jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha(), hs=ds.spec.hs())
 
     @suppress
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
@@ -163,7 +158,7 @@ The spectrum is scalled by :math:`\alpha` but if :math:`Hs` is provided it is us
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_jonswap` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.jonswap` function:
 
     * Peak wave period :meth:`~wavespectra.SpecArray.fp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
@@ -182,8 +177,8 @@ TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_):
     :okexcept:
     :okwarning:
 
-    dset1 = fit_tma(freq=freq, fp=0.1, dep=10, hs=2)
-    dset2 = fit_tma(freq=freq, fp=0.1, dep=50, hs=2)
+    dset1 = tma(freq=freq, fp=0.1, dep=10, hs=2)
+    dset2 = tma(freq=freq, fp=0.1, dep=50, hs=2)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -203,8 +198,8 @@ In deep water TMA becomes a Jonswap spectrum:
     :okexcept:
     :okwarning:
 
-    dset1 = fit_jonswap(freq=freq, fp=0.1, hs=2.0)
-    dset2 = fit_tma(freq=freq, fp=0.1, dep=80, hs=2.0)
+    dset1 = jonswap(freq=freq, fp=0.1, hs=2.0)
+    dset2 = tma(freq=freq, fp=0.1, dep=80, hs=2.0)
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -221,7 +216,7 @@ In deep water TMA becomes a Jonswap spectrum:
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_tma` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.tma` function:
 
     * Peak wave frequency :meth:`~wavespectra.SpecArray.fp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
@@ -256,8 +251,8 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
         m0 = (hs / 4) ** 2
         return np.sqrt((m0 / (tz ** 2)) - (m0 ** 2 / tm ** 2))
 
-    dset1 = fit_gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=6.5))
-    dset2 = fit_gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=8.0))
+    dset1 = gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=6.5))
+    dset2 = gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=8.0))
 
     @suppress
     fig = plt.figure(figsize=(6, 4))
@@ -275,18 +270,18 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :func:`~wavespectra.fit_gaussian` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.gaussian` function:
 
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
     * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
     * Gaussian width :meth:`~wavespectra.SpecArray.gw`.
 
 
-Fitting multiple spectra
-------------------------
+Constructing multiple spectra
+-----------------------------
 
-Fitting function parameters can be DataArrays with multiple dimensions
-such as times and watershed partitions:
+Parameters for the spectra construction functions can be DataArrays with multiple
+dimensions such as times and watershed partitions:
 
 .. ipython:: python
     :okexcept:
@@ -295,27 +290,27 @@ such as times and watershed partitions:
     from wavespectra import read_wwm
     dset = read_wwm("_static/wwmfile.nc").isel(site=0, drop=True)
 
-    dspart = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+    dspart = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
     dspart_param = dspart.spec.stats(["hs", "fp", "gamma"])
     dspart_param["dpt"] = dset.dpt.expand_dims({"part": dspart.part})
 
     dspart_param
 
 
-Spectra are fit along all coodinates in the DataArrays
+Spectra are constructed along all coodinates in the DataArrays
 
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
-    dspart_jonswap = fit_jonswap(
+    dspart_jonswap = jonswap(
         freq=dspart.freq,
         fp=dspart_param.fp,
         gamma=dspart_param.gamma,
         hs=dspart_param.hs,
     )
-    dspart_tma = fit_tma(
+    dspart_tma = tma(
         freq=dspart.freq,
         fp=dspart_param.fp,
         gamma=dspart_param.gamma,
@@ -325,7 +320,7 @@ Spectra are fit along all coodinates in the DataArrays
     dspart_tma
 
 
-Compare fits for the first swell partition:
+Compare shapes for the first swell partition:
 
 .. ipython:: python
     :okexcept:
@@ -346,27 +341,27 @@ Compare fits for the first swell partition:
     @suppress
     ax.set_xlabel("")
 
-    # Jonswap fit
+    # Jonswap
     ax = fig.add_subplot(312)
     ds = dspart_jonswap.isel(part=1).transpose("freq", "time")
     ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
     @suppress
-    ax.set_title("Jonswap fit")
+    ax.set_title("Jonswap")
     @suppress
     ax.set_xticklabels([])
     @suppress
     ax.set_xlabel("")
 
-    # TMA fit
+    # TMA
     ax = fig.add_subplot(313)
     ds = dspart_tma.isel(part=1).transpose("freq", "time")
     ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
     @suppress
-    ax.set_title("TMA fit")
+    ax.set_title("TMA")
 
-    @savefig frequency_spectra_timeseries_original_fits.png
+    @savefig frequency_spectra_timeseries_original_parametric.png
     plt.draw()
 
 
