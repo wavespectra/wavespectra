@@ -42,7 +42,8 @@ Documentation
     io-input
     plotting
     selecting
-    fitting_1d
+    partitioning
+    reconstruction
 
 **Help & Reference**
 
