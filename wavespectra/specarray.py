@@ -44,7 +44,7 @@ from wavespectra.core.fitting import (
     fit_jonswap_spectra,
     fit_jonswap_gamma,
     fit_gaussian_spectra,
-    fit_gaussian_gw,
+    fit_gaussian_width,
 )
 from wavespectra.plot import polar_plot
 from wavespectra.partition.partition import Partition
@@ -1076,7 +1076,7 @@ class SpecArray(object):
 
         """
         gw = xr.apply_ufunc(
-            fit_gaussian_gw,
+            fit_gaussian_width,
             self.oned(),
             self.freq,
             self.fp(smooth=smooth),
