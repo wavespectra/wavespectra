@@ -163,9 +163,9 @@ def test_interp_spec(dset):
 
 
 def test_load_function():
-    func = load_function("wavespectra", "fit_jonswap", prefix="fit_")
-    func = load_function("wavespectra.directional", "cartwright")
+    func = load_function("wavespectra.construct.frequency", "jonswap", prefix="")
+    func = load_function("wavespectra.construct.direction", "cartwright")
     with pytest.raises(AttributeError):
-        func = load_function("wavespectra", "fit_not_defined_spectrum", prefix="fit_")
+        func = load_function("wavespectra.construct.frequency", "not_defined")
     with pytest.raises(AttributeError):
-        func = load_function("wavespectra.directional", "not_defined_distribution")
+        func = load_function("wavespectra.construct.direction", "not_defined")

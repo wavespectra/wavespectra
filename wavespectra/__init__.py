@@ -47,4 +47,4 @@ def _import_functions(pkgname="input", prefix="read"):
 
 
 _import_functions(pkgname="input", prefix="read")
-_import_functions(pkgname="fit", prefix="fit")
+_import_functions(pkgname="shape", prefix="fit")
