@@ -193,3 +193,56 @@ def dpspr(ipeak, fdspr):
         return np.nan
     else:
         return fdspr[ipeak]
+
+
+def jonswap(freq, fpeak, hsig, gamma=3.3, alpha=0.0081, sigma_a=0.07, sigma_b=0.09):
+    """Jonswap frequency spectrum for developing seas (Hasselmann et al., 1973).
+
+    Args:
+        - freq (1darray): Frequency array (Hz).
+        - fpeak (float): Peak wave frequency (Hz).
+        - hsig (float): Significant wave height (m), if provided the Jonswap
+          spectra are scaled so that :math:`4\\sqrt{m_0} = hs`.
+        - gamma (float): Peak enhancement parameter.
+        - alpha (float): Phillip's fetch-dependent scaling coefficient.
+        - sigma_a (float): width of the peak enhancement parameter for f <= fp.
+        - sigma_b (float): width of the peak enhancement parameter for f > fp.
+
+    Returns:
+        - efth (SpecArray): Jonswap spectrum E(f) (m2s).
+
+    Note:
+        - This function is a numpy version of the `wavespectra.frequency.jonswap`
+          function and is primarily defined for spectral fitting.
+        - If `hs` is provided than the scaling parameter `alpha` becomes irrelevant.
+
+    """
+    sigma = np.where(freq <= fpeak, sigma_a, sigma_b)
+    term1 = alpha * g**2 * (2 * pi) ** -4 * freq**-5
+    term2 = np.exp(-(5 / 4) * (freq / fpeak) ** -4)
+    term3 = gamma ** np.exp(-((freq - fpeak) ** 2) / (2 * sigma**2 * fpeak**2))
+    dsout = term1 * term2 * term3
+    if hsig is not None:
+        dsout = dsout * (hsig / hs(dsout, freq)) ** 2
+    return dsout
+
+
+def gaussian(freq, fpeak, hsig, gw):
+    """Gaussian frequency spectrum (Bunney et al., 2014).
+
+    Args:
+        - freq (1darray): Frequency array (Hz).
+        - fpeak (float): Peak wave frequency (Hz).
+        - hsig (float): Significant wave height (m).
+        - gw (float): Gaussian width parameter :math:`\sigma` (m2s).
+
+    Returns:
+        - efth (SpecArray): Gaussian frequency spectrum E(f) (m2s).
+
+    Note:
+        - This function is a numpy version of the `wavespectra.frequency.gaussian`
+          function and is primarily defined for spectral fitting.
+
+    """
+    mo = (hsig / 4) ** 2
+    return mo / (gw * np.sqrt(2 * pi)) * np.exp(-0.5 * ((freq - fpeak) / gw) ** 2)
