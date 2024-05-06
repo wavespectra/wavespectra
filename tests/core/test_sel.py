@@ -5,7 +5,7 @@ import numpy as np
 
 from wavespectra.core.attributes import attrs
 from wavespectra import read_ww3, read_era5
-from wavespectra.core.select import Coordinates
+from wavespectra.select import Coordinates
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 

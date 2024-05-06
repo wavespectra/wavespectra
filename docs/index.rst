@@ -38,8 +38,8 @@ Documentation
 
     install
     quickstart
-    io-input
     conventions
+    io-input
     plotting
     selecting
     fitting_1d
