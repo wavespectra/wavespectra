@@ -3,7 +3,7 @@
     :align: right
 
 ==============
-Reconstruction
+Construction
 ==============
 
 .. ipython:: python
@@ -22,11 +22,11 @@ Reconstruction
     dir = np.arange(0, 360, 1)
 
 
-One-dimensional fit
-___________________
+Frequency spectral shapes
+_________________________
 
-Different functions are available for constructing parametric spectral shapes.
-The functions are defined within the :py:mod:`~wavespectra.construct.frequency` module:
+Wavespectra provides functions for constructing parametric spectral shapes within the
+:py:mod:`~wavespectra.construct.frequency` module:
 
 
 Pierson-Moskowitz
@@ -40,7 +40,7 @@ Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz
     :okexcept:
     :okwarning:
 
-    dset = fpierson_moskowitz(freq=freq, hs=2, fp=0.1)
+    dset = pierson_moskowitz(freq=freq, hs=2, fp=0.1)
 
     hs = float(dset.spec.hs())
     tp = float(dset.spec.tp())
@@ -75,14 +75,12 @@ Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_):
 .. ipython:: python
     :okwarning:
 
-    dset1 = jonswap(freq=freq, fp=0.1, gamma=3.3, hs=2.0)
-    dset2 = jonswap(freq=freq, fp=0.1, gamma=2.0, hs=2.0)
-
     @suppress
     fig = plt.figure(figsize=(6, 4))
 
-    dset1.plot(label="$\gamma=3.3$");
-    dset2.plot(label="$\gamma=2.0$");
+    for gamma in [3.3, 2.0]:
+        dset = jonswap(freq=freq, fp=0.1, hs=2.0, gamma=gamma)
+        dset.plot(label=f"$\gamma={gamma:0.1f}$")
 
     @suppress
     plt.legend()
@@ -114,12 +112,12 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
 
 .. ipython:: python
 
-    ds = read_swan("_static/swanfile.spec").isel(time=0, lat=0, lon=0, drop=True)
+    ds = read_swan("_static/swanfile.spec").isel(time=0).squeeze()
     ds_construct = jonswap(
         freq=ds.freq,
         fp=ds.spec.fp(),
-        gamma=1.6,
         hs=ds.spec.hs(),
+        gamma=1.6,
     )
 
     @suppress
@@ -134,19 +132,27 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
     @savefig jonswap_original_constructed.png
     plt.draw()
 
-The spectrum is scalled by :math:`\alpha` but if :math:`Hs` is provided it is used so that :math:`4\sqrt{m_0} = Hs`.
+If the :math:`Hs` parameter is provided it is used to scale the Jonswap spectrum so that
+:math:`4\sqrt{m_0} = Hs`, otherwise the spectrum is scaled by :math:`\alpha`:
 
 .. ipython:: python
 
-    ds1 = jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha())
-    ds2 = jonswap(freq=ds.freq, fp=ds.spec.fp(), gamma=ds.spec.gamma(), alpha=ds.spec.alpha(), hs=ds.spec.hs())
+    fp = ds.spec.fp()
+    gamma = ds.spec.gamma()
+    alpha = ds.spec.alpha()
+    hs = ds.spec.hs()
+    ds1 = jonswap(freq=ds.freq, fp=fp, gamma=gamma, alpha=alpha)
+    ds2 = jonswap(freq=ds.freq, fp=fp, gamma=gamma, alpha=alpha, hs=hs)
 
     @suppress
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
-    ds.spec.oned().plot(ax=ax, label=f"Original spectrum ($Hs={float(ds.spec.hs()):0.2f}m$)");
-    ds1.plot(ax=ax, label=f"Jonswap scaled by $\\alpha$ ($Hs={float(ds1.spec.hs()):0.2f}m$)");
-    ds2.plot(ax=ax, label=f"Jonswap scaled by $Hs$ ($Hs={float(ds2.spec.hs()):0.2f}m$)");
+    def label(dset):
+        return f"$Hs={float(dset.spec.hs()):0.2f}m$)"
+
+    ds.spec.oned().plot(ax=ax, label=f"Original spectrum ({label(ds)}");
+    ds1.plot(ax=ax, label=f"Jonswap scaled by $\\alpha$ ({label(ds1)}");
+    ds2.plot(ax=ax, label=f"Jonswap scaled by $Hs$ ({label(ds2)}");
 
     @suppress
     plt.legend(fontsize=9)
@@ -278,7 +284,7 @@ where :math:`T_0` is the period corresponding to the lowest frequency bin.
 
 
 Constructing multiple spectra
------------------------------
+_____________________________
 
 Parameters for the spectra construction functions can be DataArrays with multiple
 dimensions such as times and watershed partitions:
@@ -297,7 +303,7 @@ dimensions such as times and watershed partitions:
     dspart_param
 
 
-Spectra are constructed along all coodinates in the DataArrays
+Spectra are constructed along all dimensions in these DataArrays:
 
 
 .. ipython:: python
@@ -320,7 +326,7 @@ Spectra are constructed along all coodinates in the DataArrays
     dspart_tma
 
 
-Compare shapes for the first swell partition:
+Compare shapes for all times in the first swell partition:
 
 .. ipython:: python
     :okexcept:
