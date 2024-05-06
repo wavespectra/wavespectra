@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 
-from wavespectra.fit.jonswap import np_jonswap
-from wavespectra.fit.gaussian import np_gaussian
+from wavespectra.core import npstats
 
 
 def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
@@ -35,7 +34,7 @@ def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
         else:
             try:
                 p1, cov = curve_fit(
-                    f=np_jonswap,
+                    f=npstats.jonswap,
                     xdata=freq,
                     ydata=ef,
                     p0=[fp0, hs0, gamma0],
@@ -65,7 +64,7 @@ def _fit_jonswap(ef, freq, fp0, hs0, gamma0=1.5):
 def fit_jonswap_spectra(ef, freq, fp0, hs0, gamma0):
     """Wrapper to return only spectrum from _fit_jonswap to run as ufunc."""
     fp, hs, gamma = _fit_jonswap(ef, freq, fp0, hs0, gamma0)
-    return np_jonswap(freq, fp, hs, gamma)
+    return npstats.jonswap(freq, fp, hs, gamma)
 
 
 def fit_jonswap_gamma(ef, freq, fp0, hs0, gamma0):
@@ -105,7 +104,7 @@ def _fit_gaussian(ef, freq, fp0, hs0, gw):
         else:
             try:
                 p1, cov = curve_fit(
-                    f=np_gaussian,
+                    f=npstats.gaussian,
                     xdata=freq,
                     ydata=ef,
                     p0=[fp0, hs0, gw],
@@ -131,9 +130,9 @@ def _fit_gaussian(ef, freq, fp0, hs0, gw):
 def fit_gaussian_spectra(ef, freq, fp0, hs0, gw0):
     """Wrapper to return only spectrum from _fit_gaussian to run as ufunc."""
     fp, hs, gw = _fit_gaussian(ef, freq, fp0, hs0, gw0)
-    return np_gaussian(freq, fp, hs, gw)
+    return npstats.gaussian(freq, fp, hs, gw)
 
 
-def fit_gaussian_gw(ef, freq, fp0, hs0, gw0):
+def fit_gaussian_width(ef, freq, fp0, hs0, gw0):
     """Wrapper to return only gw from _fit_gaussian to run as ufunc."""
     return _fit_gaussian(ef, freq, fp0, hs0, gw0)[-1]
