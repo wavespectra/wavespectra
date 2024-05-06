@@ -48,8 +48,8 @@ def cartwright(dir, dm, dspr, under_90=False, **kwargs):
     return gth / R2D
 
 
-def bunney(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
-    """Asymmetrical directional spreading of Bunney et al. (2014).
+def asymmetric(dir, freq, dm, dpm, dspr, dpspr, fm, fp, **kwargs):
+    """Asymmetric directional spreading of Bunney et al. (2014).
 
     Args:
         - dir (DataArray, 1darray, list): Wave direction coords (degree).
