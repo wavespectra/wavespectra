@@ -42,5 +42,5 @@ def test_main_reconstruct_spectra(runner, tmpdir):
     result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-d", "cartwright,cartwright,cartwright"])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-f", "fit_jonswap,fit_jonswap,fit_jonswap"])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-f", "jonswap,jonswap,jonswap"])
     assert result.exit_code == 0

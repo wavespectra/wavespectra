@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 import xarray as xr
 
-from wavespectra.construct.direction import cartwright, bunney
+from wavespectra.construct.direction import cartwright, asymmetric
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
 
@@ -39,14 +39,14 @@ def test_cartwright_under_90(dir):
     assert gth_noncut.where(above_90_ids).sum() > 0
 
 
-def test_bunney(dir, freq):
+def test_asymmetric(dir, freq):
     dpm = 330
     dm = 350
     dspr = 30
     dpspr = 29
     fp = 0.1
     fm = 0.12
-    bunney(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
+    asymmetric(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
 
 
 def test_cartwright_dir_input_type(dir):
@@ -58,13 +58,13 @@ def test_cartwright_dir_input_type(dir):
     assert ds1.equals(ds3)
 
 
-def test_bunney_dir_freq_input_type(dir, freq):
+def test_asymmetric_dir_freq_input_type(dir, freq):
     """Test frequency input can also list, numpy or DataArray."""
-    ds1 = bunney(dir=dir, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds2 = bunney(dir=dir, freq=freq.values, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds3 = bunney(dir=dir, freq=list(freq.values), dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds4 = bunney(dir=dir.values, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds5 = bunney(dir=list(dir.values), freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds1 = asymmetric(dir=dir, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds2 = asymmetric(dir=dir, freq=freq.values, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds3 = asymmetric(dir=dir, freq=list(freq.values), dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds4 = asymmetric(dir=dir.values, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds5 = asymmetric(dir=list(dir.values), freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
     assert ds1.equals(ds2)
     assert ds1.equals(ds3)
     assert ds1.equals(ds4)
