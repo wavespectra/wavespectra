@@ -170,30 +170,6 @@ Output functions
    SpecDataset.to_orcaflex
 
 
-Spectral fitting
-----------------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: generated/
-
-   fit_pierson_moskowitz
-   fit_jonswap
-   fit_tma
-   fit_gaussian
-
-
-Directional distribution
-------------------------
-
-.. autosummary::
-   :nosignatures:
-   :toctree: generated/
-
-   directional.cartwright
-   directional.bunney
-
-
 Construct
 ---------
 
@@ -201,6 +177,12 @@ Construct
    :nosignatures:
    :toctree: generated/
 
+   construct.frequency.pierson_moskowitz
+   construct.frequency.jonswap
+   construct.frequency.tma
+   construct.frequency.gaussian
+   construct.direction.cartwright
+   construct.direction.asymmetric
    construct.construct_partition
    construct.partition_and_reconstruct
 
@@ -246,12 +228,16 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
-   core.npstats.hs_numpy
-   core.npstats.dpm_gufunc
-   core.npstats.dp_gufunc
-   core.npstats.tps_gufunc
-   core.npstats.tp_gufunc
-   core.npstats.dpspr_gufunc
+   core.npstats.hs
+   core.npstats.dpm
+   core.npstats.dp
+   core.npstats.dm
+   core.npstats.tps
+   core.npstats.tp
+   core.npstats.dpspr
+   core.npstats.mom1
+   core.npstats.jonswap
+   core.npstats.gaussian
 
 **xrstats**
 

@@ -218,10 +218,10 @@ version 4).
     plt.draw()
 
 
-Reconstruction
---------------
+Construction
+------------
 
-Spectral reconstruction functionality has been implemented in version 4 with different
+Spectral construction functionality has been implemented in version 4 with different
 shape functions available for frequency and direction such as Jonswap and Cartwright:
 
 .. ipython:: python
