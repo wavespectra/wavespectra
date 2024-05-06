@@ -232,9 +232,9 @@ shape functions available for frequency and direction such as Jonswap and Cartwr
     freq = np.arange(0.03, 0.401, 0.001)
     dir = np.arange(0, 360, 1)
     ds = construct_partition(
-        fit_name="fit_jonswap",
+        freq_name="jonswap",
         dir_name="cartwright",
-        fit_kwargs={"freq":  freq, "fp": 0.1, "gamma": 3.3, "hs": 1.5},
+        freq_kwargs={"freq":  freq, "fp": 0.1, "gamma": 3.3, "hs": 1.5},
         dir_kwargs={"dir": dir, "dm": 60, "dspr": 30},
     )
     @savefig reconstruted_polar.png
