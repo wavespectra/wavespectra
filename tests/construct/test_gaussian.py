@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from wavespectra import read_swan
-from wavespectra.fit.gaussian import fit_gaussian
+from wavespectra.construct.frequency import gaussian
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -19,22 +19,22 @@ def freq():
 
 def test_hs_tp(freq):
     """Test Hs, Tp values are conserved."""
-    ds = fit_gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
+    ds = gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
     assert float(ds.spec.hs()) == pytest.approx(2)
     assert float(ds.spec.tp()) == pytest.approx(10)
 
 
 def test_gamma(freq):
     """Test peak is higher when Tm and Tz are closer."""
-    ds1 = fit_gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.05)
-    ds2 = fit_gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
+    ds1 = gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.05)
+    ds2 = gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
     assert ds1.max() > ds2.max()
 
 
 def test_freq_input_type(freq):
     """Test frequency input can also list, numpy or DataArray."""
-    ds1 = fit_gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
-    ds2 = fit_gaussian(freq=freq.values, hs=2, fp=1 / 10, gw=0.07)
-    ds3 = fit_gaussian(freq=list(freq.values), hs=2, fp=1 / 10, gw=0.07)
+    ds1 = gaussian(freq=freq, hs=2, fp=1 / 10, gw=0.07)
+    ds2 = gaussian(freq=freq.values, hs=2, fp=1 / 10, gw=0.07)
+    ds3 = gaussian(freq=list(freq.values), hs=2, fp=1 / 10, gw=0.07)
     assert ds1.identical(ds2)
     assert ds1.identical(ds3)

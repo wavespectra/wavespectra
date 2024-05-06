@@ -1,11 +1,10 @@
 """Unit testing for stats methods in SpecArray."""
 import os
 import pytest
-import datetime
 import numpy as np
 import xarray as xr
 
-from wavespectra.directional import cartwright, bunney
+from wavespectra.construct.direction import cartwright, bunney
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
 

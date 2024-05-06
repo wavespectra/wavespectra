@@ -4,9 +4,7 @@ import numpy as np
 import pytest
 
 from wavespectra import read_swan
-from wavespectra.fit.conditional import fit_conditional
-from wavespectra.fit.jonswap import fit_jonswap
-from wavespectra.fit.gaussian import fit_gaussian
+from wavespectra.construct.frequency import conditional, jonswap, gaussian
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -23,10 +21,10 @@ def test_conditional(freq):
     """Test Hs, Tp values are conserved."""
     cond = True
     kwargs = dict(freq=freq, hs=2, fp=1 / 10, gamma=3.3, gw=0.07, cond=cond)
-    ds_true = fit_jonswap(**kwargs)
-    ds_false = fit_gaussian(**kwargs)
-    ds = fit_conditional(**kwargs)
+    ds_true = jonswap(**kwargs)
+    ds_false = gaussian(**kwargs)
+    ds = conditional(**kwargs)
     assert ds.equals(ds_true)
     kwargs['cond']=False
-    ds = fit_conditional(**kwargs)
+    ds = conditional(**kwargs)
     assert ds.equals(ds_false)
