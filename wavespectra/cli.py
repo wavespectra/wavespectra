@@ -22,7 +22,7 @@ def reconstruct():
 @click.argument("infile")
 @click.argument("outfile")
 @click.option(
-    "-f", "--fit_name", default="fit_jonswap", help="Fit function", show_default=True
+    "-f", "--freq_name", default="jonswap", help="Frequency function", show_default=True
 )
 @click.option(
     "-d", "--dir_name", default="cartwright", help="Spread function", show_default=True
@@ -52,7 +52,7 @@ def reconstruct():
     help="chunks dictionary to chunk dataset",
     show_default=True,
 )
-def spectra(infile, outfile, fit_name, dir_name, method_combine, parts, reader, chunks):
+def spectra(infile, outfile, freq_name, dir_name, method_combine, parts, reader, chunks):
     """Partition and reconstruct spectra from file."""
 
     if os.path.realpath(infile) == os.path.realpath(outfile):
@@ -64,8 +64,8 @@ def spectra(infile, outfile, fit_name, dir_name, method_combine, parts, reader, 
     dset = reader(infile).chunk(chunks)
 
     # Sorting out input arguments
-    if "," in fit_name:
-        fit_name = fit_name.split(",")
+    if "," in freq_name:
+        freq_name = freq_name.split(",")
     if "," in dir_name:
         dir_name = dir_name.split(",")
 
@@ -73,7 +73,7 @@ def spectra(infile, outfile, fit_name, dir_name, method_combine, parts, reader, 
     reconstructed = partition_and_reconstruct(
         dset,
         parts=parts,
-        fit_name=fit_name,
+        freq_name=freq_name,
         dir_name=dir_name,
         method_combine=method_combine,
     )
