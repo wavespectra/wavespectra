@@ -57,9 +57,16 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
     # Direction in going-to convention
     other[attrs.DIRNAME] = (other[attrs.DIRNAME] + 180) % 360
     # station_name variable
-    arr = np.array(
-        [[c for c in f"{s:06.0f}"] + [""] * 10 for s in other.site.values], dtype="|S1"
-    )
+    try:
+        arr = np.array(
+            [[c for c in f"{s:06.0f}"] + [""] * 10 for s in other.site.values],
+            dtype="|S1"
+        )
+    except ValueError:
+        arr = np.array(
+            [[c for c in f"{s:06.0f}"] + [""] * 10 for s in range(other.site.size)],
+            dtype="|S1"
+        )
     other["station_name"] = xr.DataArray(
         data=arr,
         coords={"site": other.site, "string16": [np.nan for i in range(16)]},
