@@ -1,381 +1,313 @@
-.. image:: _static/wavespectra_logo.png
-    :width: 150 px
-    :align: right
+Spectra reconstruction
+______________________
 
-==============
-Construction
-==============
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
+    @suppress
     import numpy as np
+    @suppress
     import xarray as xr
+    @suppress
     import matplotlib.pyplot as plt
-    import cmocean
-    from wavespectra import read_ww3, read_swan
-    from wavespectra.construct.frequency import pierson_moskowitz, jonswap, tma, gaussian
-    from wavespectra.construct.direction import cartwright, asymmetric
-    from wavespectra.construct import construct_partition, partition_and_reconstruct
-    freq = np.arange(0.03, 0.401, 0.001)
-    dir = np.arange(0, 360, 1)
+    @suppress
+    from wavespectra import read_ww3
+    @suppress
+    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
+    @suppress
+    from wavespectra.directional import cartwright, bunney
+    @suppress
+    from wavespectra.construct import construct_partition
 
 
-Frequency spectral shapes
-_________________________
-
-Wavespectra provides functions for constructing parametric spectral shapes within the
-:py:mod:`~wavespectra.construct.frequency` module:
+Spectra with multiple wave systems can be reconstructed by fitting spectral shapes
+and directional distributions to individual wave partitions and combining them together.
 
 
-Pierson-Moskowitz
------------------
+The example below uses the :meth:`~wavespectra.construct.direction.cartwright`
+spreading and the :meth:`~wavespectra.construct.frequency.jonswap` shape with default
+values for :math:`\sigma_a=0.07` and :math:`\sigma_b=0.09`, :math:`\gamma` calculated
+from the :meth:`~wavespectra.SpecArray.gamma` method and :math:`\alpha` calculated from
+the :meth:`~wavespectra.SpecArray.alpha` method.
 
-Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_):
-
-:math:`S(f)=Af^{-5} \exp{(-Bf^{-4})}`.
+The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partitions for each spectral bin.
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
-    dset = pierson_moskowitz(freq=freq, hs=2, fp=0.1)
+    ds = read_ww3("_static/ww3file.nc").isel(time=0, site=0, drop=True).sortby("dir")
 
-    hs = float(dset.spec.hs())
-    tp = float(dset.spec.tp())
+    # Partitioning
+    dspart = ds.spec.partition.ptm1(ds.wspd, ds.wdir, ds.dpt).load()
 
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
+    # Integrated parameters partitions
+    dsparam = dspart.spec.stats(["hs", "fp", "dm", "dspr", "gamma"])
+    dsparam["dpt"] = ds.dpt.expand_dims({"part": dspart.part})
 
-    dset.plot(label=f"Hs={hs:0.0f}m, Tp={tp:0.0f}s");
+    # Construct spectra for partitions
+    freq_kwargs = {
+        "freq": ds.freq,
+        "hs": dsparam.hs,
+        "fp": dsparam.fp,
+        "gamma": dsparam.gamma,
+        "sigma_a": 0.07,
+        "sigma_b": 0.09
+    }
+    dir_kwargs = {"dir": ds.dir, "dm": dsparam.dm, "dspr": dsparam.dspr}
+    efth_part = construct_partition("jonswap", "cartwright", freq_kwargs, dir_kwargs)
 
-    @suppress
-    plt.legend();
+    # Combine partitions from the max along the `part` dim
+    efth_max = efth_part.max(dim="part")
 
-    @savefig pm_1d.png
+    # Plot original and reconstructed spectra
+    ds_comp = xr.concat([ds.efth, efth_max], dim="spectype")
+    ds_comp["spectype"] = ["Original", "Reconstructed"]
+
+    ds_comp.spec.plot(
+        normalised=True,
+        as_period=False,
+        logradius=True,
+        figsize=(8,4),
+        show_theta_labels=False,
+        add_colorbar=False,
+        col="spectype",
+    );
+
+    @savefig original_vs_reconstructed.png
     plt.draw()
 
 
-.. tip::
-
-    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.pierson_moskowitz` function:
-
-    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
-    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
+Partition and reconstruct
+-------------------------
 
 
-Jonswap
--------
-
-Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_):
-
-:math:`S(f) = \alpha g^2 (2\pi)^{-4} f^{-5} \exp{\left [-\frac{5}{4} \left (\frac{f}{f_p} \right)^{-4} \right]} \gamma^{\exp{[\frac{(f-f_p)^2}{2\sigma^2f_p^2}}]}`.
+The :func:`~wavespectra.construct.partition_and_reconstruct` function allows
+partitioning and reconstructing existing spectra in a convenient way:
 
 .. ipython:: python
+    :okexcept:
     :okwarning:
 
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
+    ds = read_ww3("_static/ww3file.nc").isel(time=0, site=0, drop=True).sortby("dir")
 
-    for gamma in [3.3, 2.0]:
-        dset = jonswap(freq=freq, fp=0.1, hs=2.0, gamma=gamma)
-        dset.plot(label=f"$\gamma={gamma:0.1f}$")
-
-    @suppress
-    plt.legend()
-
-    @savefig jonswap_1d.png
-    plt.draw()
-
-When the peak enhancement :math:`\gamma=1` Jonswap becomes a Pierson-Moskowitz spectrum:
-
-.. ipython:: python
-    :okwarning:
-
-    dset1 = pierson_moskowitz(freq=freq, hs=2, fp=0.1)
-    dset2 = jonswap(freq=freq, hs=2, fp=0.1, gamma=1.0)
-
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
-
-    dset1.plot(label="Pierson-Moskowitz", linewidth=10);
-    dset2.plot(label="Jonswap with $\gamma=1$", linewidth=3);
-
-    @suppress
-    plt.legend()
-
-    @savefig pm_jonswap_gamma1.png
-    plt.draw()
-
-Compare against real frequency spectrum (with gamma adjusted for a good fit):
-
-.. ipython:: python
-
-    ds = read_swan("_static/swanfile.spec").isel(time=0).squeeze()
-    ds_construct = jonswap(
-        freq=ds.freq,
-        fp=ds.spec.fp(),
-        hs=ds.spec.hs(),
-        gamma=1.6,
+    # Use Cartwright and Jonswap
+    dsr1 = partition_and_reconstruct(
+        ds,
+        parts=4,
+        freq_name="jonswap",
+        dir_name="cartwright",
+        partition_method="ptm1",
+        method_combine="max",
     )
 
-    @suppress
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    ds.spec.oned().plot(ax=ax, label="Original spectrum");
-    ds_construct.plot(ax=ax, label="Jonswap");
-
-    @suppress
-    plt.legend()
-
-    @savefig jonswap_original_constructed.png
-    plt.draw()
-
-If the :math:`Hs` parameter is provided it is used to scale the Jonswap spectrum so that
-:math:`4\sqrt{m_0} = Hs`, otherwise the spectrum is scaled by :math:`\alpha`:
-
-.. ipython:: python
-
-    fp = ds.spec.fp()
-    gamma = ds.spec.gamma()
-    alpha = ds.spec.alpha()
-    hs = ds.spec.hs()
-    ds1 = jonswap(freq=ds.freq, fp=fp, gamma=gamma, alpha=alpha)
-    ds2 = jonswap(freq=ds.freq, fp=fp, gamma=gamma, alpha=alpha, hs=hs)
-
-    @suppress
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-
-    def label(dset):
-        return f"$Hs={float(dset.spec.hs()):0.2f}m$)"
-
-    ds.spec.oned().plot(ax=ax, label=f"Original spectrum ({label(ds)}");
-    ds1.plot(ax=ax, label=f"Jonswap scaled by $\\alpha$ ({label(ds1)}");
-    ds2.plot(ax=ax, label=f"Jonswap scaled by $Hs$ ({label(ds2)}");
-
-    @suppress
-    plt.legend(fontsize=9)
-
-    ax.set_xlim([0, 0.3])
-
-    @savefig jonswap_original_alpha_hs_scaled.png
-    plt.draw()
-
-.. tip::
-
-    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.jonswap` function:
-
-    * Peak wave period :meth:`~wavespectra.SpecArray.fp`.
-    * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
-    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
-    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
-
-
-TMA
----
-
-TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_):
-
-:math:`S(f) = S_{J}(f) \tanh{kh}^2 (1 + \frac{2kh} {\sinh{2kh}})^{-1}`
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    dset1 = tma(freq=freq, fp=0.1, dep=10, hs=2)
-    dset2 = tma(freq=freq, fp=0.1, dep=50, hs=2)
-
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
-
-    dset1.plot(label="Depth=10");
-    dset2.plot(label="Depth=50");
-
-    @suppress
-    plt.legend();
-
-    @savefig tma_1d.png
-    plt.draw()
-
-In deep water TMA becomes a Jonswap spectrum:
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    dset1 = jonswap(freq=freq, fp=0.1, hs=2.0)
-    dset2 = tma(freq=freq, fp=0.1, dep=80, hs=2.0)
-
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
-
-    dset1.plot(label="Jonswap", linewidth=10);
-    dset2.plot(label="TMA in deep water", linewidth=3);
-
-    @suppress
-    plt.legend()
-
-    @savefig jonswap_tma_deepwater.png
-    plt.draw()
-
-
-.. tip::
-
-    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.tma` function:
-
-    * Peak wave frequency :meth:`~wavespectra.SpecArray.fp`.
-    * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
-    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
-    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
-
-
-Gaussian
---------
-
-Gaussian spectral form for swell (`Bunney et al., 2014`_):
-
-:math:`S(f)=\frac{\displaystyle m_0^2}{\displaystyle \sigma \sqrt{2\pi}} \exp{\left(-\frac{\displaystyle (f-f_p)^2}{\displaystyle 2\sigma^2}\right)}`
-
-where :math:`m_0=\left(\frac{Hs}{4} \right)^2`, and the gaussian width :math:`\sigma` (:meth:`~wavespectra.SpecArray.gw`) is calculatd from the mean
-:math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) as
-
-:math:`\sigma=\sqrt{\frac{\displaystyle m_0}{\displaystyle T_z^2} - \frac{\displaystyle m_0^2}{\displaystyle T_m^2}}`.
-
-The authors define a criterion for fitting a swell partition with the Gaussian
-distribution based on the ratio :math:`rt` between :math:`T_m` and :math:`T_z`:
-
-:math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} >= 0.95`
-
-where :math:`T_0` is the period corresponding to the lowest frequency bin.
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    def sigma(hs, tm, tz):
-        m0 = (hs / 4) ** 2
-        return np.sqrt((m0 / (tz ** 2)) - (m0 ** 2 / tm ** 2))
-
-    dset1 = gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=6.5))
-    dset2 = gaussian(freq=freq, hs=2, fp=1/10, gw=sigma(hs=2, tm=8.0, tz=8.0))
-
-    @suppress
-    fig = plt.figure(figsize=(6, 4))
-
-    t0 = 1 / float(freq[0])
-    dset1.plot(label=f"rt={(8-t0)/(6.5-t0):0.2f}");
-    dset2.plot(label=f"rt={(8-t0)/(8-t0):0.2f}");
-
-    @suppress
-    plt.legend();
-
-    @savefig gaussian_1d.png
-    plt.draw()
-
-
-.. tip::
-
-    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.gaussian` function:
-
-    * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
-    * Peak wave period :meth:`~wavespectra.SpecArray.tp`.
-    * Gaussian width :meth:`~wavespectra.SpecArray.gw`.
-
-
-Constructing multiple spectra
-_____________________________
-
-Parameters for the spectra construction functions can be DataArrays with multiple
-dimensions such as times and watershed partitions:
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    from wavespectra import read_wwm
-    dset = read_wwm("_static/wwmfile.nc").isel(site=0, drop=True)
-
-    dspart = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
-    dspart_param = dspart.spec.stats(["hs", "fp", "gamma"])
-    dspart_param["dpt"] = dset.dpt.expand_dims({"part": dspart.part})
-
-    dspart_param
-
-
-Spectra are constructed along all dimensions in these DataArrays:
-
-
-.. ipython:: python
-    :okexcept:
-    :okwarning:
-
-    dspart_jonswap = jonswap(
-        freq=dspart.freq,
-        fp=dspart_param.fp,
-        gamma=dspart_param.gamma,
-        hs=dspart_param.hs,
+    # Asymmetric for wind sea and Cartwright for swells, Jonswap for all partitions
+    dsr2 = partition_and_reconstruct(
+        ds,
+        parts=4,
+        freq_name="jonswap",
+        dir_name=["asymmetric", "cartwright", "cartwright", "cartwright",],
+        partition_method="ptm1",
+        method_combine="max",
     )
-    dspart_tma = tma(
-        freq=dspart.freq,
-        fp=dspart_param.fp,
-        gamma=dspart_param.gamma,
-        dep=dspart_param.dpt,
-        hs=dspart_param.hs,
-    )
-    dspart_tma
+
+    # Plotting
+    dsall = xr.concat([ds.efth, dsr1.efth, dsr2.efth], dim="directype")
+    dsall["directype"] = ["Original", "Cartwright", "Asymmetric+Cartwright"]
+
+    dsall.spec.plot(
+        figsize=(8,4),
+        show_theta_labels=False,
+        add_colorbar=False,
+        col="directype",
+    );
+
+    @suppress
+    plt.tight_layout()
+
+    @savefig original_vs_cartwright_vs_bunney.png
+    plt.draw()
 
 
-Compare shapes for all times in the first swell partition:
+Zieger approach
+----------------
+
+.. attention::
+
+    **Note when reviewing**
+
+    I can't remember exactly where these Zieger methods came from, perhaps from Ron?
+    Should we keep this in the docs?
+
+    The alpha method in wavespectra is different, it is based on the slope of the high
+    frequency tail, but it has some issues. Perhaps this alpha implementation should be
+    used instead?
+
+
+Zieger defined three spectra reconstruction options based on Cartwright spread and Jonswap fits.
+The methods differ in how they specify some Jonswap parameters.
+
+.. admonition:: Method 1
+    :class: note
+
+    Default Jonswap parameters.
+
+    * Default :math:`\gamma=3.3`.
+
+    * Default :math:`\sigma_a=0.7`.
+
+    * Default :math:`\sigma_b=0.9`.
+
+    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
+
+.. admonition:: Method 2
+    :class: note
+
+    Gaussian width :math:`g_w` used to define the widths :math:`\sigma_a`, :math:`\sigma_b` of the peak enhancement factor :math:`\gamma`.
+
+    * :math:`\gamma` calculated from the spectra.
+
+    * :math:`\sigma_a=g_w` (but capped at min=0.04, max=0.09).
+
+    * :math:`\sigma_b=g_w+0.1`.
+
+    * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
+
+
+.. admonition:: Method 3
+    :class: note
+
+    Scale :math:`Hs` for very small partitions.
+
+    * Bump :math:`Hs` by 12% to calculate :math:`\alpha` if :math:`Hs<0.7m`.
+
+    * Otherwise same as method 2.
+
+
+Below are examples on how to implement the methods defined from Zieger from wavespectra.
+
+First define some input data:
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
-    cmap = cmocean.cm.thermal
-    fig = plt.figure(figsize=(12, 10))
+    # Reading and partitioning existing spectrum
+    dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
+    dsetp = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
 
-    # Original spectra
-    ax = fig.add_subplot(311)
-    ds = dspart.spec.oned().isel(part=1).transpose("freq", "time")
-    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
+    # Calculating parameters
+    ds = dsetp.spec.stats(["fp", "dm", "dspr", "gamma", "gw", "hs"])
 
-    @suppress
-    ax.set_title("Original spectra")
-    @suppress
-    ax.set_xticklabels([])
-    @suppress
-    ax.set_xlabel("")
+    # Alpha
+    ds["alpha"] = (5 * np.pi**4 / 9.81**2) * ds.hs**2 * ds.fp**4
 
-    # Jonswap
-    ax = fig.add_subplot(312)
-    ds = dspart_jonswap.isel(part=1).transpose("freq", "time")
-    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
+    # Alpha for method #3
+    hs = ds.hs.where(ds.hs >= 0.7, ds.hs * 1.12)
+    ds["alpha3"] = (5 * np.pi**4 / 9.81**2) * hs**2 * ds.fp**4
 
-    @suppress
-    ax.set_title("Jonswap")
-    @suppress
-    ax.set_xticklabels([])
-    @suppress
-    ax.set_xlabel("")
+    # Common reconstruct parameters
+    dir_name = "cartwright"
+    dir_kwargs = dict(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
+    freq_name = "jonswap"
+    kw = dict(freq=dset.freq, fp=ds.fp)
 
-    # TMA
-    ax = fig.add_subplot(313)
-    ds = dspart_tma.isel(part=1).transpose("freq", "time")
-    ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
-    @suppress
-    ax.set_title("TMA")
+Reconstruct from method 1
 
-    @savefig frequency_spectra_timeseries_original_parametric.png
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    freq_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}
+    method1 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
+    method1 = method1.max(dim="part")
+
+
+Reconstruct from method 2
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    sa = ds.gw.where(ds.gw >= 0.04, 0.04).where(ds.gw <= 0.09, 0.09)
+    sb = sa + 0.1
+    freq_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha)}
+    method2 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
+    method2 = method2.max(dim="part")
+
+
+Reconstruct from method 3
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    freq_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha3)}
+    method3 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
+    method3 = method3.max(dim="part")
+
+
+Plotting to compare
+
+.. ipython:: python
+    :okexcept:
+    :okwarning:
+
+    # Concat and plot
+    dsall = xr.concat([dset.efth, method1, method2, method3], dim="fit")
+    dsall["fit"] = ["Original", "Method 1", "Method 2", "Method 3"]
+    dsall.spec.plot(
+        figsize=(9, 9),
+        col="fit",
+        col_wrap=2,
+        logradius=True,
+        rmax=0.5,
+        add_colorbar=False,
+        show_theta_labels=False,
+    );
+
+    @savefig compare_stefan_methods.png
     plt.draw()
 
 
-.. include:: fitting_2d.rst
+Reconstruct CLI
+---------------
+
+Command line interface are available to reconstruct spectra.
+
+.. code::
+
+    $ wavespectra reconstruct --help
+    Usage: wavespectra reconstruct [OPTIONS] COMMAND [ARGS]...
+
+    Options:
+    --help  Show this message and exit.
+
+    Commands:
+    spectra  Partition and reconstruct spectra from file.
 
 
-.. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181
-.. _`Hasselmann et al., 1973`: https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP
-.. _`Bouws et al., 1985`: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JC090iC01p00975
-.. _`Bunney et al., 2014`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
-.. _`Cartwright (1963)`: https://repository.tudelft.nl/islandora/object/uuid:b6c19f1e-cb31-4733-a4fb-0f685706269b
+Partition and reconstruct from file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code::
+
+    $ wavespectra reconstruct spectra --help
+    Usage: wavespectra reconstruct spectra [OPTIONS] INFILE OUTFILE
+
+    Partition and reconstruct spectra from file.
+
+    Options:
+    -f, --fit_name TEXT        Fit function  [default: fit_jonswap]
+    -d, --dir_name TEXT        Spread function  [default: cartwright]
+    -m, --method_combine TEXT  Method to combine partitions  [default: max]
+    -s, --swells INTEGER       Swell partitions to keep  [default: 4]
+    -r, --reader TEXT          Spectra file reader  [default: read_ww3]
+    -c, --chunks TEXT          chunks dictionary to chunk dataset  [default: {}]
+    --help                     Show this message and exit.
+
+
+.. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
