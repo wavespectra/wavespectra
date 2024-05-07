@@ -88,7 +88,9 @@ def partition_and_reconstruct(
     parts=4,
     freq_name="jonswap",
     dir_name="cartwright",
+    partition_method="ptm3",
     method_combine="max",
+    use_defaults=["alpha"],
 ):
     """Partition and reconstruct existing spectra to evaluate.
 
@@ -100,14 +102,17 @@ def partition_and_reconstruct(
         - dir_name (str, list): Name of a valid directional spread function, e.g.
           `cartwright`, or a list of names with len=`parts` to define one directional
           spread function for each partition.
+        - partition_method (str): Partitioning method, either `ptm1`, `ptm2` or `ptm3`.
         - method_combine (str): Method to combine partitions when reconstructing.
+        - use_defaults (list): List of default parameters to use in the construct
+          shape functions, i.e., those that are not calculated from the input spectra.
 
     Returns:
         - dsout (SpecArray): Reconstructed spectra with same coordinates as dset.
 
     Note:
-        - The PTM3 partitioning method is used in which wind sea and swell systems
-          are not distiguished or merged together.
+        - The `ptm3` partitioning method is used by default in which wind sea and swell
+          systems are not distiguished or merged together.
         - If `freq_name` or `dir_name` are str, the functions specified by these
           arguments are applied to all sea and swell partitions.
 
@@ -123,14 +128,27 @@ def partition_and_reconstruct(
                 f"Len of '{name}' must correspond to the "
                 f"number of wave systems '{parts}'"
             )
+    if partition_method not in ["ptm1", "ptm2", "ptm3"]:
+        raise ValueError(
+            f"Invalid partition method '{partition_method}'. "
+            f"Choose between 'ptm1', 'ptm2' and 'ptm3'."
+        )
 
     coords = {attrs.FREQNAME: dset[attrs.FREQNAME], attrs.DIRNAME: dset[attrs.DIRNAME]}
 
     # Partitioning
-    dspart = dset.spec.partition.ptm3(parts=parts)
+    if partition_method == "ptm3":
+        kw = {"parts": parts}
+    else:
+        for v in ["wspd", "wdir", "dpt"]:
+            if v not in dset.data_vars:
+                raise ValueError(f"Missing variable '{v}' in dset for partitioning.")
+        kw = dict(wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=parts-1)
+    dspart = getattr(dset.spec.partition, partition_method)(**kw)
 
     # Calculating parameters
-    dparam = dspart.spec.stats(STATS)
+    stats = list(set(STATS) - set(use_defaults))
+    dparam = dspart.spec.stats(stats)
     dparam["fm"] = 1 / dparam.tm01
 
     # Reconstruct partitions
