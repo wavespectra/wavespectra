@@ -344,18 +344,35 @@ Here we use the constructor to define 2D spectra with four different spectral sh
     dm = 225
     dspr = 20
     gw = 0.07
-    dir_kw = dict(
-        dir_name="cartwright",
-        dir_kwargs=dict(dir=dir, dm=dm, dspr=dspr),
-    )
+    d_kw = dict(dir_name="cartwright", dir_kwargs=dict(dir=dir, dm=dm, dspr=dspr))
     # Pierson-Moskowitz
-    freq_kw = dict(
-        freq_name="pierson_moskowitz",
-        freq_kwargs=dict(freq=freq, hs=hs, fp=fp),
-    )
-    efth_pm = construct_partition(**{**freq_kw, **dir_kw})
+    f_kw = dict(freq_name="pierson_moskowitz", freq_kwargs=dict(freq=freq, hs=hs, fp=fp))
+    efth_pm = construct_partition(**{**f_kw, **d_kw})
+    # Jonswap
+    f_kw = dict(freq_name="jonswap", freq_kwargs=dict(freq=freq, hs=hs, fp=fp, gamma=gamma))
+    efth_jswap = construct_partition(**{**f_kw, **d_kw})
+    # TMA
+    f_kw = dict(freq_name="tma", freq_kwargs=dict(freq=freq, hs=hs, fp=fp, gamma=gamma, dep=dep))
+    efth_tma = construct_partition(**{**f_kw, **d_kw})
+    # Gaussian
+    f_kw = dict(freq_name="gaussian", freq_kwargs=dict(freq=freq, hs=hs, fp=fp, gw=gw))
+    efth_gaus = construct_partition(**{**f_kw, **d_kw})
+    # Concat along the new "method" dimension
+    efth = xr.concat([efth_pm, efth_jswap, efth_tma, efth_gaus], dim="method")
+    efth["method"] = ["Pierson-Moskowitz", "Jonswap", "TMA", "Gaussian"]
+    efth.spec.plot(
+        normalised=True,
+        as_period=False,
+        logradius=True,
+        figsize=(8,8),
+        show_theta_labels=False,
+        add_colorbar=False,
+        col="method",
+        col_wrap=2,
+    );
 
-
+    @savefig compare_parametric_2d.png
+    plt.draw()
 
 In this example the constructor is used to construct multiple spectra with common
 :func:`~wavespectra.construct.direction.cartwright` distribution and
@@ -373,7 +390,7 @@ parameter:
     dep = xr.DataArray(n*[30], {"gamma": gamma}, ("gamma",))
 
     efth = construct_partition(
-        freq_name="ftma",
+        freq_name="tma",
         freq_kwargs={"freq": freq, "fp": fp, "dep": dep, "gamma": hs.gamma, "hs": hs},
         dir_name="cartwright",
         dir_kwargs={"dir": dir, "dm": 225, "dspr": 20}
