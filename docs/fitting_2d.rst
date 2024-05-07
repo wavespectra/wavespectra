@@ -1,5 +1,5 @@
-Two-dimensional fit
-___________________
+Directional spreading
+_____________________
 
 
 .. ipython:: python
@@ -28,12 +28,10 @@ ___________________
     dir = np.arange(0, 360, 1)
 
 
-Frequency-direction spectra can be constructed by applying a directional spreading
-function to a frequency spectrum. Two directional spreading functions are
-currently implemented in wavespectra:
+Two directional spreading functions are currently implemented in wavespectra:
 
-* Symmetrical cosine-squared distribution of :func:`~wavespectra.construct.direction.cartwright`
-* Asymmetrical directional distribution of :func:`~wavespectra.construct.direction.asymmetric`
+* Symmetrical cosine-squared distribution of Cartwright (1963): :func:`~wavespectra.construct.direction.cartwright`
+* Asymmetrical directional distribution of Bunney et al. (2014): :func:`~wavespectra.construct.direction.asymmetric`
 
 
 Cartwright symmetrical spread
@@ -101,8 +99,8 @@ equations imply :math:`f=f_p \Rightarrow \theta=\theta_p` and
 above the frequency peak at rates defined by the gradients
 :math:`\frac{\partial{\theta}}{\partial{f}}` and :math:`\frac{\partial{\sigma}}{\partial{f}}`.
 
-The `Bunney et al. (2014)`_ asymmetrical distribution is designed for wind sea systems
-satisfying the following constraints:
+The asymmetrical distribution is designed for wind sea systems satisfying the following
+constraints:
 
 :math:`T_m<10s`, and
 
@@ -112,7 +110,16 @@ satisfying the following constraints:
     :okexcept:
     :okwarning:
 
-    asym = asymmetric(dir=dir, freq=freq, dm=45, dpm=50, dspr=20, dpspr=17, fm=0.1, fp=0.09)
+    asym = asymmetric(
+        dir=dir,
+        freq=freq,
+        dm=45,
+        dpm=50,
+        dspr=20,
+        dpspr=17,
+        fm=0.1,
+        fp=0.09,
+    )
 
     @savefig asymmetric_distribution.png
     asym.spec.plot();
@@ -139,74 +146,87 @@ spread function of `Bunney et al. (2014)`_. Here we briefly examine sensitivity 
 :math:`\theta`, :math:`\sigma` and :math:`f` parameters:
 
 
-:math:`\partial{\theta}`
-^^^^^^^^^^^^^^^^^^^^^^^^
+Sensitivity to :math:`\partial{\theta}`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
     dim = "$d_p-d_m$"
-    dm = xr.DataArray([49., 45., 40.], coords={dim: [49, 45, 40]}, dims=(dim,))
-    dpm = xr.full_like(dm, 50)
-    dspr = xr.full_like(dm, 20)
-    dpspr = xr.full_like(dm, 17)
-    fm = xr.full_like(dm, 0.1)
-    fp = xr.full_like(dm, 0.09)
+    kw["dm"] = xr.DataArray(
+        [49., 45., 40.],
+        coords={dim: [49, 45, 40]},
+        dims=(dim,),
+    )
+    kw["dpm"] = xr.full_like(kw["dm"], 50)
+    kw["dspr"] = xr.full_like(kw["dm"], 20)
+    kw["dpspr"] = xr.full_like(kw["dm"], 17)
+    kw["fm"] = xr.full_like(kw["dm"], 0.1)
+    kw["fp"] = xr.full_like(kw["dm"], 0.09)
 
-    asym = asymmetric(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
+    asym = asymmetric(dir=dir, freq=freq, **kw)
     # Just for titles
-    asym = asym.assign_coords({dim: (dpm - dm).values})
+    asym = asym.assign_coords({dim: (kw["dpm"] - kw["dm"]).values})
 
     @savefig bunney_distribution_vary_dm.png
     asym.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
 
 
-:math:`\partial{\sigma}`
-^^^^^^^^^^^^^^^^^^^^^^^^
+Sensitivity to :math:`\partial{\sigma}`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
     dim = "$\sigma_p-\sigma_m$"
-    dspr = xr.DataArray([19.9, 19.5, 19.1], coords={dim: [19.9, 19.5, 19.1]}, dims=(dim,))
-    dpspr = xr.full_like(dspr, 20)
-    dpm = xr.full_like(dspr, 50)
-    dm = xr.full_like(dspr, 45)
-    fm = xr.full_like(dspr, 0.1)
-    fp = xr.full_like(dspr, 0.09)
+    kw["dspr"] = xr.DataArray(
+        [19.9, 19.5, 19.1],
+        coords={dim: [19.9, 19.5, 19.1]},
+        dims=(dim,),
+    )
+    kw["dpspr"] = xr.full_like(kw["dspr"], 20)
+    kw["dpm"] = xr.full_like(kw["dspr"], 50)
+    kw["dm"] = xr.full_like(kw["dspr"], 45)
+    kw["fm"] = xr.full_like(kw["dspr"], 0.1)
+    kw["fp"] = xr.full_like(kw["dspr"], 0.09)
 
-    asym = asymmetric(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
-    asym = asym.assign_coords({dim: (dpspr - dspr).values})
+    asym = asymmetric(dir=dir, freq=freq, **kw)
+    asym = asym.assign_coords({dim: (kw["dpspr"] - kw["dspr"]).values})
 
     @savefig bunney_distribution_vary_dspr.png
     asym.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
 
-:math:`\partial{f}`
-^^^^^^^^^^^^^^^^^^^
+Sensitivity to :math:`\partial{f}`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. ipython:: python
     :okexcept:
     :okwarning:
 
     dim = "$f_p-f_m$"
-    fm = xr.DataArray([0.095, 0.1, 0.15], coords={dim: [0.095, 0.1, 0.15]}, dims=(dim,))
-    fp = xr.full_like(fm, 0.09)
-    dspr = xr.full_like(fm, 19.5)
-    dpspr = xr.full_like(fm, 20)
-    dpm = xr.full_like(fm, 50)
-    dm = xr.full_like(fm, 45)
+    kw = {}
+    kw["fm"] = xr.DataArray(
+        [0.095, 0.1, 0.15],
+        coords={dim: [0.095, 0.1, 0.15]},
+        dims=(dim,),
+    )
+    kw["fp"] = xr.full_like(kw["fm"], 0.09)
+    kw["dspr"] = xr.full_like(kw["fm"], 19.5)
+    kw["dpspr"] = xr.full_like(kw["fm"], 20)
+    kw["dpm"] = xr.full_like(kw["fm"], 50)
+    kw["dm"] = xr.full_like(kw["fm"], 45)
 
-    asym = asymmetric(dir=dir, freq=freq, dm=dm, dpm=dpm, dspr=dspr, dpspr=dpspr, fm=fm, fp=fp)
-    asym = asym.assign_coords({dim: (fp - fm).values})
+    asym = asymmetric(dir=dir, freq=freq, **kw)
+    asym = asym.assign_coords({dim: (kw["fp"] - kw["fm"]).values})
 
     @savefig bunney_distribution_vary_fm.png
     asym.spec.plot(col=dim, add_colorbar=False, figsize=(12, 5), logradius=False);
 
 
 Frequency-direction spectrum
-----------------------------
+____________________________
 
 Frequency-directional spectra :math:`E_{d}(f,d)` can be constructed from spectral wave
 parameters by applying a directional spreading function to a parametric frequency
@@ -230,7 +250,7 @@ spectrum:
 
 
 Symmetrical vs asymmetrical
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 Two-dimensional spectra can be constructed from existing frequency spectra. This
 example constructs symmetrical and asymmetrical directional distributions to
@@ -240,15 +260,29 @@ one-dimensional spectrum :math:`E_d(f)` integrated from existing :math:`E_d(f,d)
     :okexcept:
     :okwarning:
 
-    dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
-    dset = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt).isel(part=0, drop=True)
+    dset = read_ww3("_static/ww3file.nc")
+    dset = dset.spec.partition.ptm1(
+        dset.wspd,
+        dset.wdir,
+        dset.dpt,
+    )
+    dset = dset.isel(time=0, site=-1, part=0, drop=True).sortby("dir")
 
     ds = dset.spec.stats(["dm", "dpm", "dspr", "dpspr", "tm01", "fp"])
     ds["fm"] = 1 / ds.tm01
 
     # Define directional distributions
     c = cartwright(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
-    a = asymmetric(dir=dset.dir, freq=dset.freq, dm=ds.dm, dpm=ds.dpm, dspr=ds.dspr, dpspr=ds.dpspr, fm=ds.fm, fp=ds.fp)
+    a = asymmetric(
+        dir=dset.dir,
+        freq=dset.freq,
+        dm=ds.dm,
+        dpm=ds.dpm,
+        dspr=ds.dspr,
+        dpspr=ds.dpspr,
+        fm=ds.fm,
+        fp=ds.fp,
+    )
 
     # Apply directional distributions to the one-dimensional spectrum
     dscart = dset.spec.oned() * c
@@ -270,11 +304,11 @@ one-dimensional spectrum :math:`E_d(f)` integrated from existing :math:`E_d(f,d)
 
 
 Constructor function
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
-The :func:`~wavespectra.construct.construct_partition` constructor defines a low-level
-api to construct two-dimensional spectra for a partition from frequency shape and
-directional spread functions available in wavespectra:
+The :func:`~wavespectra.construct.construct_partition` constructor defines an api to
+construct two-dimensional spectra for a partition from frequency shape and directional
+spread functions available in wavespectra:
 
 .. ipython:: python
     :okexcept:
@@ -296,8 +330,7 @@ directional spread functions available in wavespectra:
     plt.draw()
 
 
-Here we use the constructor to define two-dimensional spectra with a cosine-square
-directional distribution and four different spectral shapes: 
+Here we use the constructor to define 2D spectra with four different spectral shapes: 
 
 .. ipython:: python
     :okexcept:
@@ -311,52 +344,17 @@ directional distribution and four different spectral shapes:
     dm = 225
     dspr = 20
     gw = 0.07
-
+    dir_kw = dict(
+        dir_name="cartwright",
+        dir_kwargs=dict(dir=dir, dm=dm, dspr=dspr),
+    )
     # Pierson-Moskowitz
-    efth_pm = construct_partition(
+    freq_kw = dict(
         freq_name="pierson_moskowitz",
-        freq_kwargs={"freq": freq, "hs": hs, "tp": tp},
-        dir_name="cartwright",
-        dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr},
+        freq_kwargs=dict(freq=freq, hs=hs, fp=fp),
     )
-    # Jonswap
-    efth_jswap = construct_partition(
-        freq_name="jonswap",
-        freq_kwargs={"freq": freq, "fp": fp, "gamma": gamma, "hs": hs},
-        dir_name="cartwright",
-        dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr},
-    )
-    # TMA
-    efth_tma = construct_partition(
-        freq_name="tma",
-        freq_kwargs={"freq": freq, "fp": fp, "dep": dep, "gamma": gamma, "hs": hs},
-        dir_name="cartwright",
-        dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr},
-    )
-    # Gaussian
-    efth_gaus = construct_partition(
-        freq_name="gaussian",
-        freq_kwargs={"freq": freq, "hs": hs, "fp": fp, "gw": gw},
-        dir_name="cartwright",
-        dir_kwargs={"dir": dir, "dm": dm, "dspr": dspr},
-    )
-    # Concat along the new "method" dimension
-    efth = xr.concat([efth_pm, efth_jswap, efth_tma, efth_gaus], dim="method")
-    efth["method"] = ["Pierson-Moskowitz", "Jonswap", "TMA", "Gaussian"]
+    efth_pm = construct_partition(**{**freq_kw, **dir_kw})
 
-    efth.spec.plot(
-        normalised=True,
-        as_period=False,
-        logradius=True,
-        figsize=(8,8),
-        show_theta_labels=False,
-        add_colorbar=False,
-        col="method",
-        col_wrap=2,
-    );
-
-    @savefig compare_parametric_2d.png
-    plt.draw()
 
 
 In this example the constructor is used to construct multiple spectra with common
