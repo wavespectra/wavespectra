@@ -26,10 +26,11 @@ Spectra with multiple wave systems can be reconstructed by fitting spectral shap
 and directional distributions to individual wave partitions and combining them together.
 
 
-The example below uses the :meth:`~wavespectra.directional.cartwright` spreading and the
-:meth:`~wavespectra.fit_jonswap` fitting with default values for :math:`\sigma_a=0.07`
-and :math:`\sigma_b=0.09`, :math:`\gamma` calculated from the :meth:`~wavespectra.SpecArray.gamma`
-method and :math:`\alpha` calculated from the :meth:`~wavespectra.SpecArray.alpha` method.
+The example below uses the :meth:`~wavespectra.construct.direction.cartwright`
+spreading and the :meth:`~wavespectra.construct.frequency.jonswap` shape with default
+values for :math:`\sigma_a=0.07` and :math:`\sigma_b=0.09`, :math:`\gamma` calculated
+from the :meth:`~wavespectra.SpecArray.gamma` method and :math:`\alpha` calculated from
+the :meth:`~wavespectra.SpecArray.alpha` method.
 
 The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partitions for each spectral bin.
 
@@ -40,23 +41,23 @@ The spectrum is reconstructed by taking the :math:`\max{Ed}` among all partition
     ds = read_ww3("_static/ww3file.nc").isel(time=0, site=0, drop=True).sortby("dir")
 
     # Partitioning
-    dspart = ds.spec.partition(ds.wspd, ds.wdir, ds.dpt).load()
+    dspart = ds.spec.partition.ptm1(ds.wspd, ds.wdir, ds.dpt).load()
 
     # Integrated parameters partitions
-    dsparam = dspart.spec.stats(["fp", "dm", "dspr", "gamma", "alpha"])
+    dsparam = dspart.spec.stats(["hs", "fp", "dm", "dspr", "gamma"])
     dsparam["dpt"] = ds.dpt.expand_dims({"part": dspart.part})
 
     # Construct spectra for partitions
-    fit_kwargs = {
+    freq_kwargs = {
         "freq": ds.freq,
+        "hs": dsparam.hs,
         "fp": dsparam.fp,
         "gamma": dsparam.gamma,
-        "alpha": dsparam.alpha,
         "sigma_a": 0.07,
         "sigma_b": 0.09
     }
     dir_kwargs = {"dir": ds.dir, "dm": dsparam.dm, "dspr": dsparam.dspr}
-    efth_part = construct_partition("fit_jonswap", "cartwright", fit_kwargs, dir_kwargs)
+    efth_part = construct_partition("jonswap", "cartwright", freq_kwargs, dir_kwargs)
 
     # Combine partitions from the max along the `part` dim
     efth_max = efth_part.max(dim="part")
