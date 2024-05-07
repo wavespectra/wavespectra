@@ -108,20 +108,26 @@ def alpha(spectrum, freq, fp):
     Args:
         - spectrum (1darray): Direction-integrated wave spectrum array E(f).
         - freq (1darray): Wave frequency array.
+        - fp (float): Peak wave frequency (Hz).
 
     Returns:
         - alpha (float): Phillips constant.
 
     """
+    # Positions for fitting high-frequency tail
     pos = np.where((freq > 1.35 * fp) & (freq < 2.0 * fp))[0]
-    if pos.size < 2:
-        return np.nan
-    else:
-        s = spectrum[pos]
-        f = freq[pos]
-        term1 = (2 * pi) ** 4 / g**2 / ((pos[-1] - pos[0]) + 1)
-        term2 = np.sum(s * f**5 * np.exp(1.25 * (fp / f) ** 4))
-        return np.float32(term1 * term2)
+    if pos.size == 0:
+        pos = [freq.size-2, freq.size-1]
+    elif pos.size == 1:
+        if pos[0] == freq.size[-1]:
+            pos = [pos[0]-1, pos[0]]
+        else:
+            pos = [pos[0], pos[0]+1]
+    s = spectrum[pos]
+    f = freq[pos]
+    term1 = (2 * pi) ** 4 / g**2 / ((pos[-1] - pos[0]) + 1)
+    term2 = np.sum(s * f**5 * np.exp(1.25 * (fp / f) ** 4))
+    return np.float32(term1 * term2)
 
 
 def tps(ipeak, spectrum, freq):
