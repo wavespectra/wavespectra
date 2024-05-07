@@ -96,24 +96,26 @@ partitioning and reconstructing existing spectra in a convenient way:
     # Use Cartwright and Jonswap
     dsr1 = partition_and_reconstruct(
         ds,
-        swells=3,
-        fit_name="fit_jonswap",
+        parts=4,
+        freq_name="jonswap",
         dir_name="cartwright",
+        partition_method="ptm1",
         method_combine="max",
     )
 
-    # Use Bunney for wind sea and Cartwright for swells, and Jonswap for all partitions
+    # Asymmetric for wind sea and Cartwright for swells, Jonswap for all partitions
     dsr2 = partition_and_reconstruct(
         ds,
-        swells=3,
-        fit_name="fit_jonswap",
-        dir_name=["bunney", "cartwright", "cartwright", "cartwright",],
+        parts=4,
+        freq_name="jonswap",
+        dir_name=["asymmetric", "cartwright", "cartwright", "cartwright",],
+        partition_method="ptm1",
         method_combine="max",
     )
 
     # Plotting
     dsall = xr.concat([ds.efth, dsr1.efth, dsr2.efth], dim="directype")
-    dsall["directype"] = ["Original", "Cartwright", "Bunney+Cartwright"]
+    dsall["directype"] = ["Original", "Cartwright", "Asymmetric+Cartwright"]
 
     dsall.spec.plot(
         figsize=(8,4),
@@ -131,6 +133,18 @@ partitioning and reconstructing existing spectra in a convenient way:
 
 Zieger approach
 ----------------
+
+.. attention::
+
+    **Note when reviewing**
+
+    I can't remember exactly where these Zieger methods came from, perhaps from Ron?
+    Should we keep this in the docs?
+
+    The alpha method in wavespectra is different, it is based on the slope of the high
+    frequency tail, but it has some issues. Perhaps this alpha implementation should be
+    used instead?
+
 
 Zieger defined three spectra reconstruction options based on Cartwright spread and Jonswap fits.
 The methods differ in how they specify some Jonswap parameters.
@@ -182,7 +196,7 @@ First define some input data:
 
     # Reading and partitioning existing spectrum
     dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
-    dsetp = dset.spec.partition(dset.wspd, dset.wdir, dset.dpt)
+    dsetp = dset.spec.partition.ptm1(dset.wspd, dset.wdir, dset.dpt)
 
     # Calculating parameters
     ds = dsetp.spec.stats(["fp", "dm", "dspr", "gamma", "gw", "hs"])
@@ -197,7 +211,7 @@ First define some input data:
     # Common reconstruct parameters
     dir_name = "cartwright"
     dir_kwargs = dict(dir=dset.dir, dm=ds.dm, dspr=ds.dspr)
-    fit_name = "fit_jonswap"
+    freq_name = "jonswap"
     kw = dict(freq=dset.freq, fp=ds.fp)
 
 
@@ -207,8 +221,8 @@ Reconstruct from method 1
     :okexcept:
     :okwarning:
 
-    fit_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}
-    method1 = construct_partition(fit_name, dir_name, fit_kwargs, dir_kwargs)
+    freq_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}
+    method1 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
     method1 = method1.max(dim="part")
 
 
@@ -220,8 +234,8 @@ Reconstruct from method 2
 
     sa = ds.gw.where(ds.gw >= 0.04, 0.04).where(ds.gw <= 0.09, 0.09)
     sb = sa + 0.1
-    fit_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha)}
-    method2 = construct_partition(fit_name, dir_name, fit_kwargs, dir_kwargs)
+    freq_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha)}
+    method2 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
     method2 = method2.max(dim="part")
 
 
@@ -231,8 +245,8 @@ Reconstruct from method 3
     :okexcept:
     :okwarning:
 
-    fit_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha3)}
-    method3 = construct_partition(fit_name, dir_name, fit_kwargs, dir_kwargs)
+    freq_kwargs = {**kw, **dict(gamma=ds.gamma, sigma_a=sa, sigma_b=sb, alpha=ds.alpha3)}
+    method3 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
     method3 = method3.max(dim="part")
 
 
