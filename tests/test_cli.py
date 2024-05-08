@@ -31,16 +31,17 @@ def test_main_reconstruct(runner):
 
 def test_main_reconstruct_spectra(runner, tmpdir):
     INFILE = os.path.join(TESTDIR, "sample_files/ww3file.nc")
+    ENGINE = "ww3"
     OUTFILE = str(tmpdir / "outspec.nc")
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, INFILE])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, INFILE])
     assert isinstance(result.exception, ValueError)
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-d", "cartwright,cartwright,cartwright"])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE, "-p", "3", "-d", "cartwright,cartwright,cartwright"])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, OUTFILE, "-p", "3", "-f", "jonswap,jonswap,jonswap"])
+    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE, "-p", "3", "-f", "jonswap,jonswap,jonswap"])
     assert result.exit_code == 0

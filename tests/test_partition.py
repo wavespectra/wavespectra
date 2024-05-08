@@ -266,7 +266,9 @@ class TestHP01(BasePTM):
         wspd = self.dset.wspd.isel(time=0, site=0)
         wdir = self.dset.wdir.isel(time=0, site=0)
         dpt = self.dset.dpt.isel(time=0, site=0)
-        self.windseamask = waveage(self.dset, wspd, wdir, dpt, self.agefac)
+        self.windseamask = waveage(
+            self.dset.freq, self.dset.dir, wspd, wdir, dpt, self.agefac
+        )
 
     def _exec(self, **kwargs):
         out = np_hp01(
