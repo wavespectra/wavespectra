@@ -435,6 +435,8 @@ def smooth_spec(dset, freq_window=3, dir_window=3):
     # Fill missing values at boundaries using original spectra
     dsout = xr.where(dsout.notnull(), dsout, dset)
 
+    set_spec_attributes(dsout)
+
     return dsout
 
 
