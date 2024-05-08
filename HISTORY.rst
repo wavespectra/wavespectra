@@ -13,7 +13,7 @@ Releases
 ********
 
 
-4.0.0 (2024-01-DD)
+4.0.0 (2024-05-DD)
 ___________________
 
 This major release brings several new features and improvements including new spectra
