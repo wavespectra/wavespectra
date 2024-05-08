@@ -9,7 +9,7 @@ Partitioning
 A new partitioning api has been implemented in Wavespectra version 4. Previously, two
 methods were available in :class:`~wavespectra.specarray.SpecArray` for spectral
 partitioning, the `split` method for threshold-based frequency splits and the
-`partition` method for the watershed partitioning based on `Hanson et al. (2008)`_
+`partition` method for the watershed partitioning based on `Hanson et al. (2009)`_
 and implemented in spectral wave models such as WW3 and SWAN.
 
 In version 4, :meth:`~wavespectra.specarray.SpecArray.partition` became a namespace of
@@ -59,7 +59,6 @@ order of decreasing wave height.
 .. ipython:: python
     :okwarning:
 
-    #dset = read_ww3("_static/ww3file.nc")
     dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm1(
         dset.wspd,
@@ -73,12 +72,12 @@ order of decreasing wave height.
     plt.draw()
 
 Smoothing the spectra before partitioning can help to avoid spurious partitions as
-suggested by (`Portilla et al., 2009`_).
-
+suggested by `Portilla et al. (2009)`_.
 
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm1(
         dset.wspd,
         dset.wdir,
@@ -97,6 +96,7 @@ Some watershed parameters are exposed to the user for tuning the partitioning al
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm1(
         dset.wspd,
         dset.wdir,
@@ -126,6 +126,7 @@ This implies PTM2 has an extra partition compared to PTM1.
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm2(
         dset.wspd,
         dset.wdir,
@@ -151,6 +152,7 @@ dataset.
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm3(parts=3)
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
@@ -169,6 +171,7 @@ used to generate wind-sea and swell from the WAM model.
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm4(
         dset.wspd,
         dset.wdir,
@@ -212,6 +215,7 @@ be an "area" at one of the frequency adges adjacent to the zero-values.
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     dspart = dset.spec.partition.ptm5(fcut=0.1)
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
@@ -228,15 +232,107 @@ space.
 .. ipython:: python
     :okwarning:
 
+    dset = read_wwm("_static/wwmfile.nc")
     bbox = dict(fmin=0.05, fmax=0.1, dmin=30, dmax=120)
     dspart = dset.spec.partition.bbox(bboxes=[bbox])
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_bbox.png
+    @savefig partitioning_bbox.png
+    plt.draw()
+
+
+HP01
+____
+
+HP01 partitions the spectra and merges wind-sea components as in the PTM1 method, then
+it merges adjacent swells following the criteria outlined in `Hanson and Phillips (2001)`_
+and `Hanson et al. (2009)`_. This method is particularly useful when partitioning measured
+wave spectra which are typically noisy and may contain small, non-physical partitions.
+The method is still under development in wavespectra and may not work as expected.
+
+The example below shows the partitioning of a model spectra which aren't noisy, the
+result is the same as the PTM1 method.
+
+.. ipython:: python
+    :okwarning:
+
+    dset = read_wwm("_static/wwmfile.nc")
+    dspart = dset.spec.partition.hp01(
+        dset.wspd,
+        dset.wdir,
+        dset.dpt,
+        swells=2,
+    )
+    dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
+
+    @savefig partitionint_hp01.png
+    plt.draw()
+
+
+PTM1_TRACK
+__________
+PTM1_TRACK extends the `PTM1` method to track the partitions using the evolution of
+peak frequency and peak direction in time. The method returns a partitioned dataset
+with the addition of a couple of extra data variables `part_id` and `npart_id`:
+
+.. ipython:: python
+    :okwarning:
+
+    dset = read_ww3("_static/ww3file.nc").isel(site=0, drop=True)
+    dspart = dset.spec.partition.ptm1_track(
+        wspd=dset.wspd,
+        wdir=dset.wdir,
+        dpt=dset.dpt,
+    )
+    # Add some spectral parameters to visualise
+    dspart = xr.merge([dspart, dspart.spec.stats(["hs", "tp", "dpm"])])
+    dspart
+
+These variables track the id of all unique wave systems identified over the time range
+of the input spectra dataset and can be used to combine these systems to yield
+consistent timeseries.
+
+Compare the original partitions with no tracking:
+
+.. ipython:: python
+    :okwarning:
+
+    fig, axes = plt.subplots(3, 1, figsize=(10, 10))
+
+    # Iterate over each original partition
+    for part in dspart.part.values:
+        pstats = dspart.sel(part=part)
+        # Plot stats for this wave system
+        for ax, var in zip(axes, ["hs", "tp", "dpm"]):
+            ax.plot(pstats.time, pstats[var], ".-", label=f"Partition {part}")
+            ax.set_ylabel(var)
+    ax.legend();
+
+    @savefig partitioning_nontracked.png
+    plt.draw()
+
+Against the tracked partitions:
+
+.. ipython:: python
+    :okwarning:
+
+    fig, axes = plt.subplots(3, 1, figsize=(10, 10))
+
+    # Iterate over each unique wave system
+    for part_id in range(dspart.npart_id.values):
+        ind = np.where(dspart.part_id.values.flatten()==part_id)[0]
+        pstats = dspart.stack(tpart=("part", "time")).isel(tpart=ind).sortby("time")
+        # Plot stats for this wave system
+        for ax, var in zip(axes, ["hs", "tp", "dpm"]):
+            ax.plot(pstats.time, pstats[var], ".-", label=f"Partition {part_id}")
+            ax.set_ylabel(var)
+    ax.legend()
+
+    @savefig partitioning_tracked.png
     plt.draw()
 
 
 .. _`WAVEWATCHIII`: https://github.com/NOAA-EMC/WW3
 .. _`Hanson and Phillips (2001)`: https://journals.ametsoc.org/view/journals/atot/18/2/1520-0426_2001_018_0277_aaoosd_2_0_co_2.xml
-.. _`Hanson et al. (2008)`: https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml
+.. _`Hanson et al. (2009)`: https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml
 .. _`Portilla et al. (2009)`: https://journals.ametsoc.org/view/journals/atot/26/1/2008jtecho609_1.xml
