@@ -43,12 +43,11 @@ Partitioning
   * ptm3
   * ptm4
   * ptm5
-  * hp01
   * bbox
+  * hp01
   * ptm1_track
 * New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_
   (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
-* Allow merging minour watershed swells.
 
 Stats
 ~~~~~
