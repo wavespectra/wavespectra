@@ -22,8 +22,8 @@ reconstruction capability and a new partitioning api.
 New Features
 ------------
 
-Spectra reconstruction
-~~~~~~~~~~~~~~~~~~~~~~
+Spectra construction
+~~~~~~~~~~~~~~~~~~~~
 * New functions to construct frequency spectra within the `fit` subpackage:
   * jonswap
   * tma
@@ -34,20 +34,6 @@ Spectra reconstruction
   * Bunney (2014) skewed distribution for turning wind sea.
 * Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
   `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
-
-Stats
-~~~~~
-* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
-* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
-* Gaussian frequency width method `gw` in SpecArray.
-* Jonswap peak enhancement factor method `gamma` in SpecArray.
-* Jonswap fetch scaling coefficient method `alpha` in SpecArray.
-* Peak directional spread method `dpspr` in SpecArray.
-* Peak frequency method `fp` in SpecArray.
-* Root-mean-square wave height method `hrms` in SpecArray
-* Spectra smoothing capability.
 
 Partitioning
 ~~~~~~~~~~~~
@@ -64,10 +50,30 @@ Partitioning
   (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
 * Allow merging minour watershed swells.
 
+Stats
+~~~~~
+* Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+* Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
+  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
+* Gaussian frequency width method `gw` in SpecArray.
+* Jonswap peak enhancement factor method `gamma` in SpecArray.
+* Jonswap fetch scaling coefficient method `alpha` in SpecArray.
+* Peak directional spread method `dpspr` in SpecArray.
+* Peak frequency method `fp` in SpecArray.
+* Root-mean-square wave height method `hrms` in SpecArray
+* Spectra smoothing capability.
+
 IO
 ~~~
 * New xarray backend entrypoints for reading wavespectra datasets with xr.open_dataset.
 * New input function to read xwaves mat format.
+
+Command line interface
+~~~~~~~~~~~~~~~~~~~~~~
+* New CLI to convert between spectra file formats.
+* New CLI to create netcdf file with integrated spectral parameters from spectra file.
+* New CLI to Partition and reconstruct spectra from file
 
 
 Internal Changes
