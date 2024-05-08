@@ -371,7 +371,7 @@ Compare shapes for all times in the first swell partition:
     plt.draw()
 
 
-.. include:: fitting_2d.rst
+.. include:: construction_2d.rst
 
 
 .. _`Pierson and Moskowitz, 1964`: https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/JZ069i024p05181

@@ -416,7 +416,7 @@ parameter:
     plt.draw()
 
 
-.. include:: reconstruct.rst
+.. include:: reconstruction.rst
 
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
