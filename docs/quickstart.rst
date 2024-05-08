@@ -28,6 +28,16 @@ SPOTTER, and industry standard formats including ERA5, NDBC, Octopus among other
     dset = read_ww3("_static/ww3file.nc")
     dset
 
+In version 4, xarray engines have been defined for all wavespectra readers, allowing
+for direct reading of spectral data using `xarray.open_dataset`_.
+
+.. ipython:: python
+    :okwarning:
+
+    import xarray as xr
+    dset = xr.open_dataset("_static/ww3file.nc", engine="ww3")
+
+
 The `spec` namespace
 --------------------
 
@@ -315,6 +325,7 @@ The `nearest` neighbour and `bbox` options are also available besides inverse di
 .. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
 .. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py
 .. _xarray: https://xarray.pydata.org/en/stable/
+.. _`xarray.open_dataset`: https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
 .. _xarray_plot: https://xarray.pydata.org/en/stable/plotting.html
 .. _faceting: https://xarray.pydata.org/en/stable/plotting.html#faceting
 .. _selecting: https://xarray.pydata.org/en/latest/indexing.html
