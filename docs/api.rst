@@ -58,6 +58,7 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
 
    SpecArray.split
    SpecArray.partition
+   partition.partition.ptm1
    partition.partition.ptm2
    partition.partition.ptm3
    partition.partition.ptm4
@@ -196,6 +197,7 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
+   partition.partition.Partition
    partition.partition.np_ptm1
    partition.partition.np_ptm2
    partition.partition.np_ptm3

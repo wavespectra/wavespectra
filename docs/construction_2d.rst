@@ -154,6 +154,7 @@ Sensitivity to :math:`\partial{\theta}`
     :okwarning:
 
     dim = "$d_p-d_m$"
+    kw = {}
     kw["dm"] = xr.DataArray(
         [49., 45., 40.],
         coords={dim: [49, 45, 40]},
@@ -181,6 +182,7 @@ Sensitivity to :math:`\partial{\sigma}`
     :okwarning:
 
     dim = "$\sigma_p-\sigma_m$"
+    kw = {}
     kw["dspr"] = xr.DataArray(
         [19.9, 19.5, 19.1],
         coords={dim: [19.9, 19.5, 19.1]},

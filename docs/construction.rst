@@ -6,6 +6,24 @@
 Construction
 ==============
 
+Spectra construction capability has been added to the wavespectra package in version 4
+to generate synthetic spectra based on parametric spectral shapes. The package provides
+functions to construct 1D, frequency spectra from integrated parameters using the
+following spectral forms:
+
+* Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_).
+* Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_).
+* TMA spectral form for finite depth (`Bouws et al., 1985`_).
+* Gaussian spectral form for swells (`Bunney et al., 2014`_).
+
+Directional spectra can be constructed by combining these spectral forms with a
+directional spread function. Two spread functions are now available:
+
+* Cartwright cosine-squared spread (`Cartwright, 1963`_).
+* Asymmetrical spread (`Bunney et al., 2014`_)
+
+This page provides examples on how to construct spectra using these functions.
+
 .. ipython:: python
     :okexcept:
     :okwarning:
@@ -379,3 +397,4 @@ Compare shapes for all times in the first swell partition:
 .. _`Bouws et al., 1985`: https://agupubs.onlinelibrary.wiley.com/doi/10.1029/JC090iC01p00975
 .. _`Bunney et al., 2014`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
 .. _`Cartwright (1963)`: https://repository.tudelft.nl/islandora/object/uuid:b6c19f1e-cb31-4733-a4fb-0f685706269b
+.. _`Cartwright, 1963`: https://repository.tudelft.nl/islandora/object/uuid:b6c19f1e-cb31-4733-a4fb-0f685706269b
