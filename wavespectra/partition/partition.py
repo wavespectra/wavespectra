@@ -41,15 +41,16 @@ class Partition:
           defined fraction are aggregated and assigned to the wind-sea component (e.g., the first
           partition). The remaining partitions are assigned as swell components in order of
           decreasing wave height.
-        - ptm2: PTM2 works in a very similar way to PTM1, by first identifying a primary wind-sea component,
-          which is assigned as the first partition, then a number of swell (or secondary wind-sea)
-          partitions are identified, as follows. A set of secondary spectral partitions is established
-          using the topographic method, each partition is checked in turn, with any of their spectral
-          bins influenced by the wind (based on a wave age criterion) being removed and assigned as
-          separate, secondary wind-sea partitions. Swell are then ordered by decreasing wave height.
+        - ptm2: PTM2 works in a similar way to PTM1 by identifying a primary wind sea (assigned as
+          partition 0) and one or more swell components. In this method however all the swell
+          partitions are checked for the influence of wind-sea with energy within spectral bins
+          within the wind-sea range (as defined by a wave age criterion) removed and combined
+          into a secondary wind-sea partition (assigned as partition 1). The remaining swell
+          partitions are then assigned in order of decreasing wave height from partition 2 onwards.
+          This implies PTM2 has an extra partition compared to PTM1.
         - ptm3: PTM3 does not classify the topographic partitions into wind-sea or swell - it simply orders them
           by wave height. This approach is useful for producing data for spectral reconstruction applications
-          using a limited number of partitions, where the  classification of the partition as wind-sea or
+          using a limited number of partitions, where the classification of the partition as wind-sea or
           swell is less important than the proportion of overall spectral energy each partition represents.
         - ptm4: PTM4 uses the wave age criterion derived from the local wind speed to split the spectrum in
           to a wind-sea and single swell partition. In this case  waves with a celerity greater
@@ -60,6 +61,8 @@ class Partition:
         - hp01: HP01 partitions the spectra and merges wind-sea components as in the PTM1 method, then it merges
           adjacent swells following the criteria outlined in Hanson and Phillips (2001) and Hanson et al. (2009).
         - bbox: BBOX partitions the spectra based on user-defined bounding boxes in frequency-direction space.
+        - ptm1_track: Partition spectra using the PTM1 method and track the partitions using the evolution of
+          peak frequency and peak direction in time.
 
     References:
         - Hanson and Phillips (2001), Automated Analysis of Ocean Surface Directional Wave Spectra,
@@ -372,11 +375,8 @@ class Partition:
         """
         dsout = self.dset.sortby("dir").sortby("freq")
 
-        wind_speed_component = agefac * wspd * np.cos(D2R * (dsout.dir - wdir))
-        wave_celerity = celerity(dsout.freq, dpt)
-        windseamask = wave_celerity <= wind_speed_component
-
         # Masking wind sea and swell regions
+        windseamask = waveage(dsout.freq, dsout.dir, wspd, wdir, dpt, agefac)
         sea = dsout.where(windseamask)
         swell = dsout.where(~windseamask)
 
@@ -518,7 +518,14 @@ class Partition:
         if wspd is None or wdir is None or dpt is None:
             windseamask = xr.zeros_like(self.dset).astype(bool)
         else:
-            windseamask = waveage(self.dset, wspd, wdir, dpt, agefac)
+            windseamask = waveage(
+                self.dset.freq,
+                self.dset.dir,
+                wspd,
+                wdir,
+                dpt,
+                agefac,
+            )
 
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
@@ -661,18 +668,20 @@ class Partition:
         dfp_sea_scaling=1,
         dfp_swell_source_distance=1e6,
     ):
-        """Partition spectra using the PTM1 method and track the partitions
-        and track the partitions using the evolution of peak frequency and peak direction.
-        Partitions are matched with the closest partition in the frequency-direction
-        space of the previous time step for which the difference in direction with less
-        than ddpm_max and the difference in peak frequency is less than dfp_max.
-        ddpm_max differs for sea and swell partitions and is set manually.
-        dfp_max also differs for sea and swell partitions. In the case of sea partitions
-        it is a function of wind speed and is set to the rate of change of the wind-sea peak
-        wave frequency estimated from fetch-limited relationships, (Ewans & Kibblewhite, 1986).
-        In the case of swell partitions it is set to the rate of change of the swell peak wave
-        frequency based on the swell dispersion relationship derived by Snodgrass et al (1966)
-        assuming the distance to the source is 1e6 m.
+        """Partition and combine spectra from the same wave system over time.
+
+        Partition spectra using the PTM1 method and track the partitions
+        using the evolution of peak frequency and peak direction. Partitions are
+        matched with the closest partition in the frequency-direction space of the
+        previous time step for which the difference in direction with less than
+        ddpm_max and the difference in peak frequency is less than dfp_max. ddpm_max
+        differs for sea and swell partitions and is set manually. dfp_max also differs
+        for sea and swell partitions. In the case of sea partitions it is a function of
+        wind speed and is set to the rate of change of the wind-sea peak wave frequency
+        estimated from fetch-limited relationships, (Ewans & Kibblewhite, 1986). In the
+        case of swell partitions it is set to the rate of change of the swell peak wave
+        frequency based on the swell dispersion relationship derived by
+        Snodgrass et al (1966) assuming the distance to the source is 1e6 m.
 
         Args:
             - wspd (xr.DataArray): Wind speed DataArray.
@@ -682,25 +691,26 @@ class Partition:
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
-                as described in Portilla et al., 2009.
+              as described in Portilla et al., 2009.
             - freq_window (int): Size of running window along `freq` for smoothing spectra.
             - dir_window (int): Size of running window along `dir` for smoothing spectra.
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
             - ddpm_sea_max (float): Maximum peak direction difference for wind sea partition.
-                Default is 30 degrees.
+              Default is 30 degrees.
             - ddpm_swell_max (float): Maximum peak direction difference for swell partitions.
-                Default is 20 degrees.
+              Default is 20 degrees.
             - dfp_sea_scaling (float): Scaling factor for maximum peak frequency difference
-                for wind sea partition. Default is 1.
+              for wind sea partition. Default is 1.
             - dfp_swell_source_distance (float): Distance to source for swell peak frequency
-                difference. Default is 1e6 m.
+              difference. Default is 1e6 m.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
-                where the 0th index are the wind sea and remaining indices are the swells
-                sorted by descending order of Hs. Plus array `part_id` containing an integer
-                representing the partition id for each time step and partition. Plus array
-                `npart_id` containing the existing partition ids.
+              where the 0th index are the wind sea and remaining indices are the swells
+              sorted by descending order of Hs. Plus array `part_id` containing an integer
+              representing the partition id for each time step and partition. Plus array
+              `npart_id` containing the existing partition ids.
+
         """
 
         # Do the partitioning
