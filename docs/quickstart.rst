@@ -124,6 +124,41 @@ accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
     plt.draw()
 
 
+interpolation
+-------------
+A custom interpolation method takes care of the cyclic nature of the wave direction.
+
+.. ipython:: python
+    :okwarning:
+
+    ds = dset.efth.isel(site=0, time=0).sortby("dir")
+    freq = np.arange(ds.freq.min(), ds.freq.max()+0.001, 0.001)
+    dir = np.arange(0, 360, 1)
+    ds_interp = ds.spec.interp(freq=freq, dir=dir)
+    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+    ds.plot(ax=axs[0], x="dir", y="freq", cmap="turbo", add_colorbar=False)
+    ds_interp.plot(ax=axs[1], x="dir", y="freq", cmap="turbo", add_colorbar=False)
+
+    @savefig quickstart_interp.png
+    plt.draw()
+
+
+Smoothing
+---------
+Spectra smoothing is available using a running average method.
+
+.. ipython:: python
+    :okwarning:
+
+    ds_smooth = ds.spec.smooth(freq_window=5, dir_window=5)
+    dss = xr.concat([np.log10(ds), np.log10(ds_smooth)], dim="smooth")
+    dss["smooth"] = ["true", "false"]
+    dss.plot(col="smooth", x="dir", y="freq", cmap="turbo", add_colorbar=False);
+
+    @savefig quickstart_smooth.png
+    plt.draw()
+
+
 Spectra file writing
 --------------------
 Several methods are available in the `SpecDataset` accessor for writing spectral data to

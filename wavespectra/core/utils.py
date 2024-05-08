@@ -29,18 +29,20 @@ def angle(dir1, dir2):
     return np.minimum(dif, 360 - dif)
 
 
-def waveage(dset, wspd, wdir, dpt, agefac):
+def waveage(freq, dir, wspd, wdir, dpt, agefac):
     """Wave age criterion for partitioning wind-sea.
 
     Args:
+        - freq (xr.DataArray): Spectral frequencies.
+        - dir (xr.DataArray): Spectral directions.
         - wspd (xr.DataArray): Wind speed.
         - wdir (xr.DataArray): Wind direction.
         - dpt (xr.DataArray): Water depth.
         - agefac (float): Age factor.
 
     """
-    wind_speed_component = agefac * wspd * np.cos(D2R * (dset.dir - wdir))
-    wave_celerity = celerity(dset.freq, dpt)
+    wind_speed_component = agefac * wspd * np.cos(D2R * (dir - wdir))
+    wave_celerity = celerity(freq, dpt)
     return wave_celerity <= wind_speed_component
 
 

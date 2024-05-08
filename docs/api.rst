@@ -198,6 +198,7 @@ Internal core functions and objects
    :toctree: generated/
 
    partition.partition.Partition
+   partition.partition.Partition.ptm1
    partition.partition.np_ptm1
    partition.partition.np_ptm2
    partition.partition.np_ptm3
