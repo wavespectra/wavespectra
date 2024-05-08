@@ -45,6 +45,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "IPython.sphinxext.ipython_directive",
     "matplotlib.sphinxext.plot_directive",
+    "sphinxcontrib.programoutput",
 ]
 
 sphinx_gallery_conf = {

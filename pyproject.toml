@@ -86,6 +86,7 @@ docs = [
     "ipython",
     "pickleshare",
     "pydata_sphinx_theme",
+    "sphinxcontrib-programoutput",
     "sphinx-book-theme",
     "sphinx",
     "sphinx-autobuild",
