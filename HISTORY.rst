@@ -16,9 +16,13 @@ Releases
 4.0.0 (2024-05-DD)
 ___________________
 
-This major release brings several new features and improvements including new spectra
-reconstruction capability, a new partitioning api, and replacement of the fortran
-watershed algorithm with a new translated version in C.
+This major release brings several new features and improvements including spectra
+construction capability, a new partitioning api and replacement of the fortran
+watershed algorithm with a new translated version in C freeing wavespectra of the
+fortran dependency. The release also includes new methods for spectral statistics,
+engine drivers to open spectra files directly in xarray, and a new command line
+interface to convert between spectra file formats and create netcdf files with
+integrated spectral parameters from spectra files.
 
 New Features
 ------------
@@ -46,7 +50,6 @@ Partitioning
   * ptm5
   * bbox
   * hp01
-  * ptm1_track
 * New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_
   (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
 
@@ -88,13 +91,15 @@ Internal Changes
   methods.
 * Allow reading WW3 and SWAN files without winds and depth available.
 * Optimised and simplified calculations in frequency and directional moments methods.
-* Rename `SpecArray.dfarr` as `SpecArray.df` (get rid of old, unused df method).
+* Rename `SpecArray.dfarr` as `SpecArray.df`.
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular
   frequency omega.
+* Ensure spectral attributes are defined in the interp method of SpecArray.
 
 
 Deprecation
 -----------
+* Removed  `wavespectra.SpecArray.dfarr` method, replaced by `wavespectra.SpecArray.df`.
 * Removed the unused `wavespectra.core.utils.GAMMA` lambda function.
 * Removed the deprecated `SpecArray.partition()` method; `SpecArray.partition` is now
   a new namespace to access the different partitioning options. The legacy `partition`
