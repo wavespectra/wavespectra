@@ -80,8 +80,8 @@ Other
 
 Internal Changes
 ----------------
-* Watershed partitioning algorithm translated from fortran to C, Fortran is no longer
-  required to install wavespectra.
+* Watershed partitioning algorithm translated from fortran to C, **Fortran is no longer
+  required to install wavespectra**.
 * SpecArray.partition now longer is a method but a namespace to access the different
   partitioning options.
 * Change ihmax default from 200 to 100 in specpart, options to redefine in partition
