@@ -17,19 +17,20 @@ Releases
 ___________________
 
 This major release brings several new features and improvements including new spectra
-reconstruction capability and a new partitioning api.
+reconstruction capability, a new partitioning api, and replacement of the fortran
+watershed algorithm with a new translated version in C.
 
 New Features
 ------------
 
 Spectra construction
 ~~~~~~~~~~~~~~~~~~~~
-* New functions to construct frequency spectra within the `fit` subpackage:
+* New functions to construct frequency spectra within the `wavespectra.construct.frequency` module:
   * jonswap
   * tma
   * pierson-moskowitz
   * gaussian
-* New functions for directional within the `direction` module:
+* New functions for directional spreading within the `wavespectra.construct.direction` module:
   * Cartwright (1986) cosine-square distribution.
   * Bunney (2014) skewed distribution for turning wind sea.
 * Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
@@ -61,7 +62,6 @@ Stats
 * Peak directional spread method `dpspr` in SpecArray.
 * Peak frequency method `fp` in SpecArray.
 * Root-mean-square wave height method `hrms` in SpecArray
-* Spectra smoothing capability.
 
 IO
 ~~~
@@ -74,9 +74,14 @@ Command line interface
 * New CLI to create netcdf file with integrated spectral parameters from spectra file.
 * New CLI to Partition and reconstruct spectra from file
 
+Other
+~~~~~
+* New Spectra smoothing capability.
 
 Internal Changes
 ----------------
+* Watershed partitioning algorithm translated from fortran to C, Fortran is no longer
+  required to install wavespectra.
 * SpecArray.partition now longer is a method but a namespace to access the different
   partitioning options.
 * Change ihmax default from 200 to 100 in specpart, options to redefine in partition
@@ -90,10 +95,10 @@ Internal Changes
 
 Deprecation
 -----------
-* Depracate unused `wavespectra.core.utils.GAMMA` lambda function.
-* The `SpecArray.partition()` method now became a new namespace to access the different
-  partitioning options. The legacy `partition` method is now equivalent to
-  `spec.partition.ptm1()`.
+* Removed the unused `wavespectra.core.utils.GAMMA` lambda function.
+* Removed the deprecated `SpecArray.partition()` method; `SpecArray.partition` is now
+  a new namespace to access the different partitioning options. The legacy `partition`
+  method is now equivalent to `spec.partition.ptm1()` with the `ihmax` argument set to 200.
 
 .. _`Sebastien Dealaux`: https://github.com/seboceanum
 
