@@ -29,7 +29,8 @@ Documentation
 * :doc:`plotting`
 * :doc:`selecting`
 * :doc:`partitioning`
-* :doc:`reconstruction`
+* :doc:`construction`
+* :doc:`cli`
 
 .. toctree::
     :maxdepth: 3
@@ -43,7 +44,8 @@ Documentation
     plotting
     selecting
     partitioning
-    reconstruction
+    construction
+    cli
 
 **Help & Reference**
 
