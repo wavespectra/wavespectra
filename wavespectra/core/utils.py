@@ -372,6 +372,7 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         scale = dset.spec.hs() ** 2 / dsout.spec.hs() ** 2
         dsout = dsout * scale
 
+    set_spec_attributes(dsout)
     return dsout
 
 
@@ -426,10 +427,13 @@ def smooth_spec(dset, freq_window=3, dir_window=3):
         dsout = dsout.sel(**{attrs.DIRNAME: dset[attrs.DIRNAME]})
         dsout = dsout.chunk(**{attrs.DIRNAME: -1})
 
+    # Assign coords from original dataset
+    dsout = dsout.assign_coords(dset.coords)
+
     # Fill missing values at boundaries using original spectra
     dsout = xr.where(dsout.notnull(), dsout, dset)
 
-    return dsout.assign_coords(dset.coords)
+    return dsout
 
 
 def is_overlap(rect1, rect2):
