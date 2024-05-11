@@ -154,11 +154,14 @@ def get_obs_files(directory, start_date = None, end_date = None):
 
     return R
 
-def read_obscape(directory, start_date, end_date):
+def read_obscape(directory, start_date = None, end_date = None):
     """Read all the files in the directory that have a timestamp
     greater than or equal to start_date and less than or equal to end_date.
-    Timestamps are extracted from the filename which are expected to be
-    in the format yyyymmdd_hhmmss.....csv
+    Timestamps are extracted from the filename.
+    The filename is expected to start with the timestamp which is expected to be
+    in the format yyyymmdd_hhmmss
+
+    So a filename like 20240214_000000_wavebuoy_xxx_spec2D.csv is expected
 
     start_date and end_date are datetime objects
     use None for start_date or end_date to not filter on that date
