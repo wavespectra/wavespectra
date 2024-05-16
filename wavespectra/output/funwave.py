@@ -36,7 +36,7 @@ def to_funwave(
 
     # Convert directions to Cartesian, going-to convention
     if attrs.DIRNAME in self.efth.dims:
-        dir = (270 - self.direction.values) % 360
+        dir = (270 - self.dir.values) % 360
         dir[dir > 180] = dir[dir > 180] - 360
         darr = darr.assign_coords({attrs.DIRNAME: dir}).sortby(attrs.DIRNAME)
 

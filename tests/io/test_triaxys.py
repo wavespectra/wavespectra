@@ -40,9 +40,9 @@ def test_regrid_dir(dset_2d):
     dset1 = _ds = read_triaxys(filename, magnetic_variation=None)
     dset2 = _ds = read_triaxys(filename, magnetic_variation=10, regrid_dir=False)
     dset3 = _ds = read_triaxys(filename, magnetic_variation=10, regrid_dir=True)
-    assert dset_2d.direction.identical(dset1.direction)
-    assert dset_2d.direction.identical(dset3.direction)
-    assert not dset_2d.direction.identical(dset2.direction)
+    assert dset_2d.dir.identical(dset1.dir)
+    assert dset_2d.dir.identical(dset3.dir)
+    assert not dset_2d.dir.identical(dset2.dir)
 
 
 def test_declination_corrected_directional_stats(dset_2d):

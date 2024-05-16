@@ -33,7 +33,7 @@ def test_ndbc_netcdf_1d():
         url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
         directional=False,
     )
-    assert dset.spec.direction is None
+    assert dset.spec.dir is None
 
 
 class TestNDBCASCII(object):

@@ -41,7 +41,7 @@ def to_orcaflex(self, model, minEnergy=1e-6):
 
     """
 
-    dirs = np.array(self.direction.values)
+    dirs = np.array(self.dir.values)
     freqs = np.array(self.freq.values)
 
     ddir = self.dd
