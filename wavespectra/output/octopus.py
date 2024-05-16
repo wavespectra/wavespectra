@@ -91,9 +91,9 @@ def to_octopus(
 
         # Assign for speed
         freqs = dset.freq.values
-        dirs = dset.direction.values
+        dirs = dset.dir.values
         nfreq = dset.freq.size
-        ndir = dset.direction.size
+        ndir = dset.dir.size
         ntime = dset.time.size
 
         # Parameters

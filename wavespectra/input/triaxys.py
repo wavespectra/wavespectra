@@ -38,7 +38,7 @@ def read_triaxys(filename_or_fileglob, toff=0, magnetic_variation=None, regrid_d
     txys = Triaxys(filename_or_fileglob, toff)
     txys.run()
     dset = txys.dset
-    if magnetic_variation is not None and dset.spec.direction is not None:
+    if magnetic_variation is not None and dset.spec.dir is not None:
         # Rotate
         dirs = dset.dir
         dset = dset.assign_coords({"dir": dirs + magnetic_variation})

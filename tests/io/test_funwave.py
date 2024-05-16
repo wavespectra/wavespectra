@@ -70,13 +70,13 @@ class TestFunwave:
         dset1 = read_funwave(filename1)
         dset2 = read_funwave(filename2)
 
-        dir1 = (270 - dset1.direction.values) % 360
-        dir2 = (270 - dset2.direction.values) % 360
+        dir1 = (270 - dset1.dir.values) % 360
+        dir2 = (270 - dset2.dir.values) % 360
         dir1[dir1 > 180] = dir1[dir1 > 180] - 360
         dir2[dir2 > 180] = dir2[dir2 > 180] - 360
 
         assert dir1.min() >= -90 and dir1.max() <= 90
-        assert dir2.min() < -90 and dset2.direction.max() > 90
+        assert dir2.min() < -90 and dset2.dir.max() > 90
 
     def test_1d(self):
         """
@@ -90,7 +90,7 @@ class TestFunwave:
         dset0.spec.to_funwave(filename, clip=False)
         dset1 = read_funwave(filename)
         assert dset1.spec.dd == 1
-        assert dset1.spec.direction is None
+        assert dset1.spec.dir is None
         xr.testing.assert_allclose(
             dset0.spec.stats(["hs", "tp"]),
             dset1.spec.stats(["hs", "tp"]),

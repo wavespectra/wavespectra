@@ -72,7 +72,7 @@ def to_swan(
     sfile = SwanSpecFile(
         filename,
         freqs=dset.freq,
-        dirs=dset.direction,
+        dirs=dset.dir,
         time=is_time,
         x=dset[attrs.LONNAME].values,
         y=dset[attrs.LATNAME].values,

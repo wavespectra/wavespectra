@@ -21,7 +21,7 @@ class TestWW3Station(object):
             ds = read_ww3_station(file)
 
         assert len(ds.spec.freq) == 50
-        assert len(ds.spec.direction) == 36
+        assert len(ds.spec.dir) == 36
         assert len(ds.spec.time) == 4
         assert ds.spec.efth.shape == (4, 1, 1, 50, 36)
 
