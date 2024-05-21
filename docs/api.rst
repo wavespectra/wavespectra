@@ -58,14 +58,14 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
 
    SpecArray.split
    SpecArray.partition
-   partition.partition.ptm1
-   partition.partition.ptm2
-   partition.partition.ptm3
-   partition.partition.ptm4
-   partition.partition.ptm5
-   partition.partition.hp01
-   partition.partition.bbox
-   partition.partition.ptm1_track
+   partition.partition.Partition.ptm1
+   partition.partition.Partition.ptm2
+   partition.partition.Partition.ptm3
+   partition.partition.Partition.ptm4
+   partition.partition.Partition.ptm5
+   partition.partition.Partition.hp01
+   partition.partition.Partition.bbox
+   partition.partition.Partition.ptm1_track
 
 
 **Other methods**
@@ -96,7 +96,7 @@ SpecDataset
 
    SpecDataset.sel
 
-Output methods described in the `Output functions`_ section: 
+Output methods described in the `Output functions`_ section:
 :py:attr:`~SpecDataset.to_swan`
 :py:attr:`~SpecDataset.to_netcdf`
 :py:attr:`~SpecDataset.to_octopus`
@@ -206,7 +206,7 @@ Internal core functions and objects
    partition.tracking.dfp_wsea
    partition.tracking.dfp_swell
    partition.tracking.match_consecutive_partitions
-   partition.tracking.np_tracking_partitions
+   partition.tracking.np_track_partitions
    partition.tracking.track_partitions
    partition.hanson_and_phillips_2001._partition_stats
    partition.hanson_and_phillips_2001._is_contiguous

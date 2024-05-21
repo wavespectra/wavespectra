@@ -167,8 +167,8 @@ def sel_nearest(
 
     Note:
         Args `dset_lons`, `dset_lats` are not required but can improve performance when
-            `dset` is chunked with site=1 (expensive to access station coordinates) and
-            improve precision if projected coordinates are provided at high latitudes.
+        `dset` is chunked with site=1 (expensive to access station coordinates) and
+        improve precision if projected coordinates are provided at high latitudes.
 
     """
     coords = Coordinates(
