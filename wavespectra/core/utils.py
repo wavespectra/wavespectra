@@ -138,7 +138,6 @@ def spddir_to_uv(spd, direc, coming_from=False):
     Returns:
         u (array): eastward wind component.
         v (array): northward wind component.
-
     """
     ang_rot = 180 if coming_from else 0
     direcR = np.deg2rad(direc + ang_rot)
@@ -159,7 +158,6 @@ def uv_to_spddir(u, v, coming_from=False):
     Returns:
         mag (array): magnitudes.
         direc (array): directions (degree).
-
     """
     to_nautical = 270 if coming_from else 90
     mag = np.sqrt(u**2 + v**2)
@@ -190,7 +188,6 @@ def interp_spec(inspec, infreq, indir, outfreq=None, outdir=None, method="linear
         Choose indir=None if spectrum is 1D.
 
     TODO: Deprecate in favour of new regrid_spec function.
-
     """
     ndim = inspec.ndim
     if ndim > 2:
