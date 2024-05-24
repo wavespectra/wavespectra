@@ -10,14 +10,16 @@ Revision history:
 
 
 """
-
+import logging
 from datetime import datetime, timezone
-from logging import warn
 from pathlib import Path
 import numpy as np
 import xarray as xr
 
 from wavespectra.core.attributes import set_spec_attributes
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_timestamp(stem):
@@ -31,7 +33,7 @@ def get_timestamp(stem):
         minute = int(stem[11:13])
         second = int(stem[13:15])
     except ValueError:
-        warn(
+        logger.warning(
             f'Filename does not contain a valid UTC timestamp, expect the filename to start with yyyymmdd_hhmmss but got: {stem}')
         return None
 
@@ -98,10 +100,10 @@ def read_obscape_file(filename : str):
     # check dims
 
     if data.shape[0] != len(freq):
-        warn(f'Frequency dimension mismatch: {data.shape[0]} != {len(freq)}')
+        logger.warning(f'Frequency dimension mismatch: {data.shape[0]} != {len(freq)}')
 
     if data.shape[1] != len(dirs):
-        warn(f'Direction dimension mismatch: {data.shape[1]} != {len(dirs)}')
+        logger.warning(f'Direction dimension mismatch: {data.shape[1]} != {len(dirs)}')
 
     metadata['info'] = info
 
