@@ -10,6 +10,7 @@ Revision history:
 
 
 """
+
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 def get_timestamp(stem):
 
-
     try:
         year = int(stem[:4])
         month = int(stem[4:6])
@@ -34,7 +34,8 @@ def get_timestamp(stem):
         second = int(stem[13:15])
     except ValueError:
         logger.warning(
-            f'Filename does not contain a valid UTC timestamp, expect the filename to start with yyyymmdd_hhmmss but got: {stem}')
+            f"Filename does not contain a valid UTC timestamp, expect the filename to start with yyyymmdd_hhmmss but got: {stem}"
+        )
         return None
 
     # make a python datetime object
@@ -43,7 +44,7 @@ def get_timestamp(stem):
     return utc
 
 
-def read_obscape_file(filename : str):
+def read_obscape_file(filename: str):
     """
     Read an Obscape file.
 
@@ -61,36 +62,34 @@ def read_obscape_file(filename : str):
 
     # utc = get_timestamp(filename.stem)
 
-
     info = []
 
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         lines = f.readlines()
 
         metadata = dict()
 
         for line in lines:
             line = line.strip()
-            if line.startswith('#'):
-                if '=' in line:
-                    key, value = line.split('=')
+            if line.startswith("#"):
+                if "=" in line:
+                    key, value = line.split("=")
                     metadata[key[1:].strip()] = value.strip()
                 else:
                     info.append(line)
 
-
     # read the csv data using numpy, skipping lines that start with #
-    data = np.genfromtxt(filename, delimiter=',', comments='#')
+    data = np.genfromtxt(filename, delimiter=",", comments="#")
 
     # get frequencies
-    freq = metadata['Rows [Hz]']
-    freq = freq.split(',')
+    freq = metadata["Rows [Hz]"]
+    freq = freq.split(",")
     freq = [float(f) for f in freq]
 
-    dir = metadata['Columns [deg]']
+    dir = metadata["Columns [deg]"]
 
     # split on , or space
-    dir = dir.replace(' ',',').split(',')
+    dir = dir.replace(" ", ",").split(",")
 
     # check if it makes sense
     dd = float(dir[1]) - float(dir[0])
@@ -100,31 +99,30 @@ def read_obscape_file(filename : str):
     # check dims
 
     if data.shape[0] != len(freq):
-        logger.warning(f'Frequency dimension mismatch: {data.shape[0]} != {len(freq)}')
+        logger.warning(f"Frequency dimension mismatch: {data.shape[0]} != {len(freq)}")
 
     if data.shape[1] != len(dirs):
-        logger.warning(f'Direction dimension mismatch: {data.shape[1]} != {len(dirs)}')
+        logger.warning(f"Direction dimension mismatch: {data.shape[1]} != {len(dirs)}")
 
-    metadata['info'] = info
+    metadata["info"] = info
 
     # return as a dict
     R = dict()
-    R['freq'] = freq
-    R['dir'] = dirs
-    R['data'] = data
+    R["freq"] = freq
+    R["dir"] = dirs
+    R["data"] = data
 
-    timestamp = metadata['Timestamp']  # unix timestamp
+    timestamp = metadata["Timestamp"]  # unix timestamp
 
     # convert timestamp to datetime object
-    R['utc'] = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
+    R["utc"] = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
 
-
-
-    R['metadata'] = metadata
+    R["metadata"] = metadata
 
     return R
 
-def get_obs_files(directory, start_date = None, end_date = None):
+
+def get_obs_files(directory, start_date=None, end_date=None):
     """Return all the .csv files in the directory that have a timestamp
     greater than or equal to start_date and less than or equal to end_date.
     Timestamps are extracted from the filename which are expected to be
@@ -138,7 +136,7 @@ def get_obs_files(directory, start_date = None, end_date = None):
 
     assert directory.exists()
 
-    files = directory.glob('*.csv')
+    files = directory.glob("*.csv")
     R = []
     for file in files:
 
@@ -156,7 +154,8 @@ def get_obs_files(directory, start_date = None, end_date = None):
 
     return R
 
-def read_obscape(directory, start_date = None, end_date = None):
+
+def read_obscape(directory, start_date=None, end_date=None):
     """Read all the files in the directory that have a timestamp
     greater than or equal to start_date and less than or equal to end_date.
     Timestamps are extracted from the filename.
@@ -175,7 +174,9 @@ def read_obscape(directory, start_date = None, end_date = None):
     files = get_obs_files(directory, start_date, end_date)
 
     if not files:
-        raise ValueError(f"No files found in {directory} between {start_date} and {end_date}")
+        raise ValueError(
+            f"No files found in {directory} between {start_date} and {end_date}"
+        )
 
     # step 2: get the data
 
@@ -183,18 +184,16 @@ def read_obscape(directory, start_date = None, end_date = None):
     for file in files:
         R.append(read_obscape_file(file))
 
-
-
     # step 3: construct the data
     #
     #
 
-    metadata = R[0]['metadata']  # use the first read spectrum
-    dirs = R[0]['dir']
-    freqs = R[0]['freq']
+    metadata = R[0]["metadata"]  # use the first read spectrum
+    dirs = R[0]["dir"]
+    freqs = R[0]["freq"]
 
-    efth = [d['data'] for d in R]
-    times = [d['utc'] for d in R]
+    efth = [d["data"] for d in R]
+    times = [d["utc"] for d in R]
 
     ds = xr.DataArray(
         data=efth,
@@ -203,12 +202,21 @@ def read_obscape(directory, start_date = None, end_date = None):
         name="efth",
     ).to_dataset()
 
-    ds = ds.sortby('time', ascending=True)
+    ds = ds.sortby("time", ascending=True)
 
     # scale
-    ds['efth'] = ds['efth'] * np.pi / 180  # convert to m2/Hz/deg
+    ds["efth"] = ds["efth"] * np.pi / 180  # convert to m2/Hz/deg
 
-    for key in ['Station name', 'Device type', 'Device serial', 'Latitude [deg]', 'Longitude [deg]', 'Magnetic declination (corrected) [deg]', 'Directions', 'info']:
+    for key in [
+        "Station name",
+        "Device type",
+        "Device serial",
+        "Latitude [deg]",
+        "Longitude [deg]",
+        "Magnetic declination (corrected) [deg]",
+        "Directions",
+        "info",
+    ]:
         try:
             ds.attrs[key] = metadata[key]
         except KeyError:
@@ -217,8 +225,7 @@ def read_obscape(directory, start_date = None, end_date = None):
     # Set attributes
     set_spec_attributes(ds)
 
-
     # add site dimension
-    ds['site'] = [0]
+    ds["site"] = [0]
 
     return ds
