@@ -41,7 +41,7 @@ def get_timestamp(stem):
     return utc
 
 
-def read_obscape_file(filename : str or Path):
+def read_obscape_file(filename : str):
     """
     Read an Obscape file.
 
