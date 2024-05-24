@@ -11,7 +11,7 @@ Revision history:
 
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import warn
 from pathlib import Path
 import numpy as np
@@ -114,7 +114,7 @@ def read_obscape_file(filename : str or Path):
     timestamp = metadata['Timestamp']  # unix timestamp
 
     # convert timestamp to datetime object
-    R['utc'] = datetime.utcfromtimestamp(int(timestamp))
+    R['utc'] = datetime.fromtimestamp(int(timestamp), tz=timezone.utc)
 
 
 
