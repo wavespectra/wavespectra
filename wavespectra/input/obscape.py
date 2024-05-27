@@ -23,23 +23,23 @@ from wavespectra.core.attributes import set_spec_attributes
 logger = logging.getLogger(__name__)
 
 
-def read_obscape_file(filename: str):
-    """
-    Read an Obscape file.
+def _read_obscape_file(filename: str) -> dict:
+    """Read an Obscape file.
 
-    - metadata is marked with a # symbol
-    - time is in filename, UTC
+    args:
+        - filename (str): The filename to read.
 
-    all other lines are a CSV file
+    returns:
+        - R (dict): A dictionary containing the data read from the file.
+
+    Notes:
+        - metadata is marked with a # symbol.
+        - time is in filename, UTC.
+        - all other lines are a CSV file.
 
     """
     filename = Path(filename)
     assert filename.exists()
-
-    # get the timestamps from the filename
-    # filename is like 20240214_000000_wavebuoy_xxx_spec2D
-
-    # utc = get_timestamp(filename.stem)
 
     info = []
 
@@ -130,7 +130,7 @@ def read_obscape(filename_or_fileglob):
 
     R = []
     for file in files:
-        R.append(read_obscape_file(file))
+        R.append(_read_obscape_file(file))
 
     # step 3: construct the data
 
@@ -177,7 +177,7 @@ def read_obscape(filename_or_fileglob):
     return ds
 
 
-def get_timestamp(stem):
+def _get_timestamp(stem):
 
     try:
         year = int(stem[:4])
@@ -199,7 +199,7 @@ def get_timestamp(stem):
     return utc
 
 
-def get_obs_files(directory, start_date=None, end_date=None):
+def _get_obs_files(directory, start_date=None, end_date=None):
     """Get a list of csv files in a directory with timestamps in a given range.
 
     This function return all the .csv files in the directory that have a timestamp
@@ -226,7 +226,7 @@ def get_obs_files(directory, start_date=None, end_date=None):
     R = []
     for file in files:
 
-        timestamp = get_timestamp(file.stem)
+        timestamp = _get_timestamp(file.stem)
 
         if start_date is not None:
             if timestamp < start_date:
@@ -260,6 +260,6 @@ def read_obscape_dir(directory, start_date=None, end_date=None):
 
     """
 
-    files = get_obs_files(directory, start_date, end_date)
+    files = _get_obs_files(directory, start_date, end_date)
 
     return read_obscape(files)
