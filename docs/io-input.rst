@@ -103,7 +103,7 @@ imported from their full module path:
 
     Files in ``ZARR`` format can be open from both local and remote (bucket) stores.
     Files in ``NetCDF`` format can be open from remote (i.e., bucket) stores when they
-    are open using ``fsspec``.
+    are opened using ``fsspec``.
 
 .. _open_dataset: https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
 .. _open_mfdataset: https://docs.xarray.dev/en/stable/generated/xarray.open_mfdataset.html
