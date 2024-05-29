@@ -15,7 +15,8 @@ can be installed using pip or conda.
 Install using pip
 ~~~~~~~~~~~~~~~~~~~
 
-To install wavespectra, run this command in your terminal:
+Wavespectra can be installed using `pip`_. There are several differet options.
+For a basic intall that does not include some readers and writers:
 
 .. code-block:: console
 
@@ -33,6 +34,8 @@ you through the process.
 
 Install from conda
 ~~~~~~~~~~~~~~~~~~~
+
+The package can also be installed using `conda`_:
 
 .. code-block:: console
 

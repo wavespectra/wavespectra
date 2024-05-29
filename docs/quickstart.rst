@@ -128,7 +128,7 @@ accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
     ax6.set_ylabel("$Tm01$ (s)")
 
     @suppress
-    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.tick_params(bottom=False, labelbottom=False); ax.get_legend().remove()    
+    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]: ax.set_xlabel(""); ax.tick_params(bottom=False, labelbottom=False); ax.get_legend().remove()
 
     @savefig many_stats.png
     plt.draw()
@@ -162,7 +162,7 @@ Spectra smoothing is available using a running average method.
 
     ds_smooth = ds.spec.smooth(freq_window=5, dir_window=5)
     dss = xr.concat([np.log10(ds), np.log10(ds_smooth)], dim="smooth")
-    dss["smooth"] = ["true", "false"]
+    dss["smooth"] = ["false", "true"]
     dss.plot(col="smooth", x="dir", y="freq", cmap="turbo", add_colorbar=False);
 
     @savefig quickstart_smooth.png
@@ -185,8 +185,8 @@ different file formats. The following example writes the dataset to a SWAN ASCII
 Plotting
 --------
 
-Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defining
-frequency-direction spectral plots in polar coordinates.
+Wavespectra wraps the plotting functionality from `xarray`_ to allow easy
+plotting of frequency-direction spectral plots in polar coordinates.
 
 .. ipython:: python
     :okwarning:
@@ -229,7 +229,7 @@ Different partitioning techniques are available within the `spec.partition` name
 The partitioning methods follow the naming convention defined in the `WAVEWATCHIII`_
 model (`ptm1`, `ptm2`, etc) with the addition of some custom methods. In the following
 example, the `ptm1` method is used to partition the dataset into wind sea and three
-swells (`ptm1` is equivalent to the former `spec.partition()` method deprecated in 
+swells (`ptm1` is equivalent to the former `spec.partition()` method deprecated in
 version 4).
 
 .. ipython:: python
