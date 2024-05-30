@@ -53,15 +53,19 @@ class TestNDBCASCII(object):
                 FILES_DIR / "41010.swr2"
             ]
         )
-        self.ds_realtime_params = pd.read_csv(
-            FILES_DIR / "41010.spec",
+        f = open(FILES_DIR / "41010.spec", "r")
+        header = f.readline()
+        date_columns = {0: "year", 1: "month", 2: "day", 3: "hour", 4: "minute"}
+        df = pd.read_csv(
+            f,
             delimiter=r"\s+",
-            engine="python",
-            header=[0, 1],
-            parse_dates={"time": [0, 1, 2, 3, 4]},
-            date_format="%Y %m %d %H %M",
-            index_col=0,
-        ).sort_values(by="time", ascending=True)
+            header=None,
+            skiprows=1,
+        )
+        df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
+        df.columns = header.split()
+        f.close()
+        self.ds_realtime_params = df.sort_index(ascending=True)
         self.ds_history_1d = read_ndbc_ascii(FILES_DIR / "41010w2019part.txt.gz")
         self.ds_history_2d = read_ndbc_ascii(
             [
@@ -79,7 +83,7 @@ class TestNDBCASCII(object):
 
     def test_realtime_hs_equals_params(self):
         assert self.ds_realtime_1d.spec.hs().values == pytest.approx(
-            self.ds_realtime_params[("WVHT", "m")].values, rel=0.11
+            self.ds_realtime_params["WVHT"].values, rel=0.11
         )
 
     def test_realtime_1d_equals_2d(self):
