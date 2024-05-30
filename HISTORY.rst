@@ -18,7 +18,7 @@ ___________________
 
 This major release brings several new features and improvements including spectra
 construction capability, a new partitioning api and replacement of the fortran
-watershed algorithm with a new translated version in C freeing wavespectra of the
+watershed algorithm with a new translated version in C freeing wavespectra from the
 fortran dependency. The release also includes new methods for spectral statistics,
 engine drivers to open spectra files directly in xarray, and a new command line
 interface to convert between spectra file formats and create netcdf files with
@@ -29,20 +29,27 @@ New Features
 
 Spectra construction
 ~~~~~~~~~~~~~~~~~~~~
-* New functions to construct frequency spectra within the `wavespectra.construct.frequency` module:
-  * jonswap
-  * tma
-  * pierson-moskowitz
-  * gaussian
-* New functions for directional spreading within the `wavespectra.construct.direction` module:
-  * Cartwright (1986) cosine-square distribution.
-  * Bunney (2014) skewed distribution for turning wind sea.
-* Methods for fitting Jonswap and Gaussian from the spectra in SpecArray by
-  `Paul Branson`_ (`PR <https://github.com/oceanum/wavespectra/pull/4>`_).
+* New functions to construct frequency spectra within the
+  `wavespectra.construct.frequency` module:
+
+  * pierson-moskowitz spectrum for fully developed seas (`Pierson and Moskowitz, 1964 <https://ui.adsabs.harvard.edu/abs/1964JGR....69.5181P/abstract>`_)
+  * jonswap spectrum for developing seas (`Hasselmann et al., 1973 <https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP>`_)
+  * tma spectrum for seas in finite depth (`Bouws et al., 1985 <https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP>`_)
+  * gaussian spectrum for swells (`Bunney et al., 2014 <https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114#:~:text=The%20technique%20can%20be%20summarised,method%2C%20associate%20the%20surrounding%20energy>`_)
+
+* New functions for directional spreading within the
+  `wavespectra.construct.direction` module:
+
+  * cartwright cosine-square distribution (`Cartwright, 1963 <https://cir.nii.ac.jp/crid/1573387449115327232>`_)
+  * asymmetric distribution for turning wind seas (`Bunney et al., 2014 <https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114#:~:text=The%20technique%20can%20be%20summarised,method%2C%20associate%20the%20surrounding%20energy>`_)
+
+* Methods for fitting Jonswap and Gaussian in SpecArray from existing spectra  by
+  `Paul Branson`_ (`PR4 <https://github.com/oceanum/wavespectra/pull/4>`_).
 
 Partitioning
 ~~~~~~~~~~~~
 * New partition api with several new methods:
+
   * ptm1
   * ptm2
   * ptm3
@@ -50,15 +57,16 @@ Partitioning
   * ptm5
   * bbox
   * hp01
+
 * New method to track watershed partitions `ptm1_track` by `Sebastien Dealaux`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/5>`_).
+  (`PR5 <https://github.com/oceanum/wavespectra/pull/5>`_).
 
 Stats
 ~~~~~
 * Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/3>`_).
+  (`PR1 <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
-  (`PR <https://github.com/oceanum/wavespectra/pull/1>`_).
+  (`PR1 <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Gaussian frequency width method `gw` in SpecArray.
 * Jonswap peak enhancement factor method `gamma` in SpecArray.
 * Jonswap fetch scaling coefficient method `alpha` in SpecArray.
@@ -70,6 +78,8 @@ IO
 ~~~
 * New xarray backend entrypoints for reading wavespectra datasets with xr.open_dataset.
 * New input function to read xwaves mat format.
+* New input function to read obscape buoy spectra by `Ruben de Bruin`_.
+  (`PR116 <https://github.com/wavespectra/wavespectra/pull/116>`_).
 
 Command line interface
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -83,12 +93,14 @@ Other
 
 Internal Changes
 ----------------
-* Watershed partitioning algorithm translated from fortran to C, **Fortran is no longer
-  required to install wavespectra**.
+* Watershed partitioning algorithm translated from fortran to C by `Sebastien Dealaux`_
+  (`PR121 <https://github.com/wavespectra/wavespectra/pull/121>`_). **Fortran is no
+  longer required to install wavespectra**. This also fixes a problem with trying to
+  install wavespectra in development mode.
 * SpecArray.partition now longer is a method but a namespace to access the different
   partitioning options.
-* Change ihmax default from 200 to 100 in specpart, options to redefine in partition
-  methods.
+* Change `ihmax` default from 200 to 100 in specpart (in line with WAVEWATCHIII),
+  options to redefine `ihmax` in the partition methods.
 * Allow reading WW3 and SWAN files without winds and depth available.
 * Optimised and simplified calculations in frequency and directional moments methods.
 * Rename `SpecArray.dfarr` as `SpecArray.df`.
@@ -288,13 +300,13 @@ ___________________
 
 New Features
 ------------
-* New reader for Octopus file format by `RubendeBruin`_ (`PR65 <https://github.com/wavespectra/wavespectra/pull/65>`_).
+* New reader for Octopus file format by `Ruben de Bruin`_ (`PR65 <https://github.com/wavespectra/wavespectra/pull/65>`_).
 
 Bug Fixes
 ---------
 * Fix bug in direction calculation caused by changes in xr ufuncs (`PR59 <https://github.com/wavespectra/wavespectra/pull/59>`_).
 * Fix nrecs in test octopus file.
-* Fix to zarr testing by `RubendeBruin`_ (`PR55 <https://github.com/wavespectra/wavespectra/pull/55>`_).
+* Fix to zarr testing by `Ruben de Bruin`_ (`PR55 <https://github.com/wavespectra/wavespectra/pull/55>`_).
 
 Internal Changes
 ----------------
@@ -311,13 +323,13 @@ ___________________
 New Features
 ------------
 * New option in `read_triaxys` to allow providing the magnitic declination to correct.
-* New spectral regridding capability by `RubendeBruin`_. The function is wrapped in `SpecArray.interp`
+* New spectral regridding capability by `Ruben de Bruin`_. The function is wrapped in `SpecArray.interp`
   and `SpecArray.interp_by` which mimic the behaviour in the respective counterparts from xarray.
 * Replace plot api by a simple wrapper around xarray plotting capability. The new wrapper
   no longer duplicate internal functions from xarray and should better integrate any upstream
   changes. The new api also handles logarithmic axes and masking in a more natural way 
   (`PR48 <https://github.com/wavespectra/wavespectra/pull/48>`_).
-* New Orcaflex export function by `RubendeBruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
+* New Orcaflex export function by `Ruben de Bruin`_ (`PR37 <https://github.com/wavespectra/wavespectra/pull/37>`_).
 * New `wavespectra.core.utils.unique_indices` function (unique_times will be deprecated in future releases.
 
 
@@ -329,7 +341,7 @@ Bug Fixes
 
 Internal Changes
 ----------------
-* Fixed sphinx-gallery dependency by by `RubendeBruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
+* Fixed sphinx-gallery dependency by by `Ruben de Bruin`_ (`PR41 <https://github.com/wavespectra/wavespectra/pull/41>`_).
 * Add new funwave functiont to docs.
 * Update authors list.
 * Allow pathlib objects in read_triaxys.
@@ -384,7 +396,7 @@ New Features
     * dp
     * dpm
     * dspr
-* Wavespectra conda recipe by `RubendeBruin`_.
+* Wavespectra conda recipe by `Ruben de Bruin`_.
 
 Internal Changes
 ----------------
@@ -405,7 +417,7 @@ deprecation
 * Dropped args `hs_min` and `nearest` in `SpecArray.partition`.
 
 
-.. _`RubendeBruin`: https://github.com/RubendeBruin
+.. _`Ruben de Bruin`: https://github.com/RubendeBruin
 
 
 3.7.2 (2021-01-12)
