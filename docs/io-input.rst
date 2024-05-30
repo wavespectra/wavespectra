@@ -76,6 +76,7 @@ These input functions are currently available from the main module level:
     read_netcdf
     read_ndbc
     read_ndbc_ascii
+    read_obscape
     read_octopus
     read_spotter
     read_swan
