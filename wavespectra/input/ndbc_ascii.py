@@ -27,23 +27,14 @@ def read_file(filename):
     if isinstance(col5, bytes):
         col5 = col5.decode("utf-8")
     if col5 == "mm":
-        date_columns = [0, 1, 2, 3, 4]
-        date_format = "%Y %m %d %H %M"
+        date_columns = {0: "year", 1: "month", 2: "day", 3: "hour", 4: "minute"}
     else:
-        date_columns = [0, 1, 2, 3]
-        date_format = "%Y %m %d %H"
+        date_columns = {0: "year", 1: "month", 2: "day", 3: "hour"}
     # Look for header like this: #YY  MM DD hh mm Sep_Freq  < spec_1 (freq_1) spec_2 (freq_2) spec_3 (freq_3) ... >
     if header.strip()[-1] == ">":  # Realtime file
-        df = pd.read_csv(
-            f,
-            delimiter=r"\s+",
-            compression=compressed,
-            engine="python",
-            header=None,
-            parse_dates={"time": date_columns},
-            date_format=date_format,
-            index_col=0,
-        )
+        df = pd.read_csv(f, delimiter=r"\s+", compression=compressed, header=None)
+        df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
+        df = df.iloc[:, list(date_columns.keys())[-1]+1 : ]
         freqcols = df.select_dtypes(object)  # Get all columns with the frequency
         if not (freqcols.nunique() == 1).all():
             raise IOError("NDBC file has varying frequencies in same file")
@@ -56,15 +47,11 @@ def read_file(filename):
         )
     else:
         f.seek(0, 0)
-        df = pd.read_csv(
-            f,
-            delimiter=r"\s+",
-            engine="python",
-            header=[0],
-            parse_dates={"time": date_columns},
-            date_format=date_format,
-            index_col=0,
-        )
+        df = pd.read_csv(f, delimiter=r"\s+", header=None, skiprows=1)
+        df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
+        cols = header.decode("utf-8") if isinstance(header, bytes) else header
+        df.columns = cols.split()
+        df = df.iloc[:, list(date_columns.keys())[-1]+1 : ]
     f.close()
     df.name = name
     return df
