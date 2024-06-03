@@ -610,8 +610,8 @@ class SpecArray(object):
     def gamma(self, smooth=True):
         """Jonswap peak enhancement factor gamma.
 
-        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
-        associate Pierson-Moskowitz shape.
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)`
+        and its associate Pierson-Moskowitz shape.
 
          Args:
             - smooth (bool): True for the smooth wave frequency, False for the discrete
@@ -628,8 +628,8 @@ class SpecArray(object):
     def gamma_scaled(self, smooth=True):
         """Jonswap peak enhancement factor gamma.
 
-        Represents the ratio between the peak in the frequency spectrum :math:`E(f)` and its
-        associate Pierson-Moskowitz shape.
+        Represents the ratio between the peak in the frequency spectrum :math:`E(f)`
+        and its associate Pierson-Moskowitz shape.
 
          Args:
             - smooth (bool): True for the smooth wave frequency, False for the discrete
@@ -641,13 +641,8 @@ class SpecArray(object):
         epm_fp = alpha_pm * fp**-5 * 0.2865048
         gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
 
-        p = [
-            0.0378375,
-            -0.13543292,
-            0.64087366,
-            0.32524949,
-            0.12974958,
-        ]  # polynomial approximation for gamma
+        # polynomial approximation for gamma
+        p = [0.0378375, -0.13543292, 0.64087366, 0.32524949, 0.12974958]
         gamma_scaled = 0
         for pow, c in enumerate(p[::-1]):
             gamma_scaled += c * gamma**pow
@@ -1041,7 +1036,7 @@ class SpecArray(object):
         return gamma.rename("fit_gamma")
 
     def fit_gaussian(self, smooth=True, gw0=1.5):
-        """Nonlinear fit Jonswap spectra.
+        """Nonlinear fit Gaussian spectra.
 
         Args:
             - smooth (bool): True for the smooth wave period, False for the discrete
