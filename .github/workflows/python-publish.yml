@@ -28,12 +28,10 @@ jobs:
       name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install . 'wavespectra[extra]'
+        pip install . 'wavespectra[extra,test]'
     -
       name: Test wavespectra
-      run: |
-        pip install pytest
-        py.test -s -v tests
+      run: pytest -s -v tests
     -
       name: Build package
       run: |
@@ -41,7 +39,7 @@ jobs:
         python -m build -s
     -
       name: Publish package
-      uses: pypa/gh-action-pypi-publish@v1.8.1
+      uses: pypa/gh-action-pypi-publish@v1.8.14
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
         verbose: true
