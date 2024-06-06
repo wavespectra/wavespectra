@@ -91,6 +91,10 @@ Other
 ~~~~~
 * New Spectra smoothing capability.
 
+Bug Fixes
+---------
+* Fix reading of ndbc-type dataset in read_dataset.
+
 Internal Changes
 ----------------
 * Watershed partitioning algorithm translated from fortran to C by `Sebastien Dealaux`_
@@ -107,7 +111,7 @@ Internal Changes
 * wavenuma function now takes the cyclic frequency (Hz) instead of the angular
   frequency omega.
 * Ensure spectral attributes are defined in the interp method of SpecArray.
-
+* Make `read_ndbc` return 1D spectra if any of the directional variables are missing.
 
 Deprecation
 -----------

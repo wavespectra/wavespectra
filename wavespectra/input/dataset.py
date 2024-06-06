@@ -26,7 +26,7 @@ def read_dataset(dset):
     vars_ww3 = {"frequency", "direction", "station", "efth"}
     vars_wwm = {"nfreq", "ndir", "nbstation", "AC"}
     vars_era5 = {"frequency", "direction", "d2fd"}
-    vars_ndbc = {"frequency", "direction", "spectral_wave_density"}
+    vars_ndbc = {"frequency", "spectral_wave_density"}
     vars_ncswan = {"frequency", "direction", "points", "density"}
 
     vars_dset = set(dset.variables.keys()).union(dset.dims)
