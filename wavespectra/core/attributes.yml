@@ -101,9 +101,6 @@ ATTRS:
     gamma:
         standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
         units: ""
-    gamma_scaled:
-        standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
-        units: ""
     fit_gamma:
         standard_name: sea_surface_wave_jonswap_peak_enhancement_factor
         units: ""
