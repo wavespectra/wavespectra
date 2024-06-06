@@ -3,6 +3,7 @@
 https://dods.ndbc.noaa.gov/
 
 """
+import logging
 from xarray.backends import BackendEntrypoint
 import xarray as xr
 import numpy as np
@@ -11,6 +12,8 @@ from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
 from wavespectra.core.utils import D2R
 
+
+logger = logging.getLogger(__name__)
 
 MAPPING = {
     "time": attrs.TIMENAME,
@@ -65,6 +68,10 @@ def from_ndbc(dset, directional=True, dd=10.0):
     Returns:
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
+    Note:
+        - If any of the missing variables are not available in the dataset, the
+          function will return the dataset as 1D spectra even if `directional=True`.
+
     """
     # Some datasets have different naming convention
     mapping = {}
@@ -79,6 +86,12 @@ def from_ndbc(dset, directional=True, dd=10.0):
     if "gpsLongitude" in dset.data_vars:
         mapping.update({"gpsLongitude": "longitude"})
     dset = dset.rename(mapping)
+
+    # Force it to read as nondirectional spectra if directional data isn't available
+    v = {"mean_wave_dir", "principal_wave_dir", "wave_spectrum_r1", "wave_spectrum_r2"}
+    if directional is True and v - dset.data_vars.keys():
+        logger.warning("Directional data not available. Reading as 1D spectra.")
+        directional = False
 
     dset = dset.transpose(..., "frequency")
     if directional:
