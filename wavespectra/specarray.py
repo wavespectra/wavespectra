@@ -607,7 +607,7 @@ class SpecArray(object):
         """
         return xrstats.alpha(self.oned(), smooth=smooth)
 
-    def gamma(self, smooth=True):
+    def gamma(self, smooth=True, scaled=True):
         """Jonswap peak enhancement factor gamma.
 
         Represents the ratio between the peak in the frequency spectrum :math:`E(f)`
@@ -616,39 +616,22 @@ class SpecArray(object):
          Args:
             - smooth (bool): True for the smooth wave frequency, False for the discrete
               frequency corresponding to the peak in the frequency spectrum.
+            - scaled (bool): True to apply polynomial approximation to gamma.
 
         """
         fp = self.fp(smooth=smooth)
         alpha_pm = 0.3125 * self.hs() ** 2 * fp**4
         epm_fp = alpha_pm * fp**-5 * 0.2865048
         gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        if scaled:
+            # polynomial approximation for gamma
+            p = [0.0378375, -0.13543292, 0.64087366, 0.32524949, 0.12974958]
+            gamma_scaled = 0
+            for pow, c in enumerate(p[::-1]):
+                gamma_scaled += c * gamma**pow
+            gamma = gamma_scaled
         gamma.attrs.update(self._get_cf_attributes(self._my_name()))
         return gamma.where(gamma >= 1, 1).rename(self._my_name())
-
-    def gamma_scaled(self, smooth=True):
-        """Jonswap peak enhancement factor gamma.
-
-        Represents the ratio between the peak in the frequency spectrum :math:`E(f)`
-        and its associate Pierson-Moskowitz shape.
-
-         Args:
-            - smooth (bool): True for the smooth wave frequency, False for the discrete
-              frequency corresponding to the peak in the frequency spectrum.
-
-        """
-        fp = self.fp(smooth=smooth)
-        alpha_pm = 0.3125 * self.hs() ** 2 * fp**4
-        epm_fp = alpha_pm * fp**-5 * 0.2865048
-        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
-
-        # polynomial approximation for gamma
-        p = [0.0378375, -0.13543292, 0.64087366, 0.32524949, 0.12974958]
-        gamma_scaled = 0
-        for pow, c in enumerate(p[::-1]):
-            gamma_scaled += c * gamma**pow
-
-        gamma_scaled.attrs.update(self._get_cf_attributes(self._my_name()))
-        return gamma_scaled.where(gamma_scaled >= 1, 1).rename(self._my_name())
 
     def goda(self):
         """Goda peakedness parameter.
