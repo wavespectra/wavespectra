@@ -962,12 +962,10 @@ class SpecArray(object):
         rmse = ediff / e0sum
         return rmse
 
-    def fit_jonswap(self, smooth=True, gamma0=1.5, spectra=True, params=True):
+    def fit_jonswap(self, gamma0=1.5, spectra=True, params=True):
         """Nonlinear fit Jonswap spectra.
 
         Args:
-            - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the frequency spectrum.
             - gamma0 (float): Initial guess for gamma.
             - spectra (bool): Return fitted spectra.
             - params (bool): Return fitted parameters.
@@ -989,7 +987,7 @@ class SpecArray(object):
             fit_jonswap_params,
             self.oned(),
             self.freq,
-            self.fp(smooth=smooth),
+            self.fp(smooth=True),
             self.hs(),
             gamma0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
@@ -1010,13 +1008,13 @@ class SpecArray(object):
         dsout.attrs["title"] = "Fit Jonswap spectra"
         return dsout
 
-    def fit_gaussian(self, smooth=True, gw0=1.5, spectra=True, params=True):
+    def fit_gaussian(self, gw0=1.5, spectra=True, params=True):
         """Nonlinear fit Gaussian width.
 
         Args:
-            - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the frequency spectrum.
             - gw0 (float): Initial guess for gw.
+            - spectra (bool): Return fitted spectra.
+            - params (bool): Return fitted parameters.
 
         Return:
             - dsout (Dataset): Fitted Gaussian spectra and/or Gaussian parameters peak
@@ -1035,7 +1033,7 @@ class SpecArray(object):
             fit_gaussian_params,
             self.oned(),
             self.freq,
-            self.fp(smooth=smooth),
+            self.fp(smooth=True),
             self.hs(),
             gw0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
