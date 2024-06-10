@@ -42,7 +42,7 @@ from wavespectra.core.utils import (
 from wavespectra.core import xrstats
 from wavespectra.core.fitting import (
     fit_jonswap_spectra,
-    fit_jonswap_gamma,
+    fit_jonswap_params,
     fit_gaussian_spectra,
     fit_gaussian_width,
 )
@@ -967,56 +967,53 @@ class SpecArray(object):
         rmse = ediff / e0sum
         return rmse
 
-    def fit_jonswap(self, smooth=True, gamma0=1.5):
-        """Nonlinear fit Jonswap spectra.
-
-        Args:
-            - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the frequency spectrum.
-            - gamma0 (float): Initial guess for gamma.
-
-        """
-        dsout = xr.apply_ufunc(
-            fit_jonswap_spectra,
-            self.oned(),
-            self.freq,
-            self.fp(smooth=smooth),
-            self.hs(),
-            gamma0,
-            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
-            output_core_dims=[[attrs.FREQNAME]],
-            dask="parallelized",
-            vectorize=True,
-            output_dtypes=["float32"],
-        )
-        set_spec_attributes(dsout)
-        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
-        return dsout.rename(attrs.SPEC1DNAME)
-
-    def fit_gamma(self, smooth=True, gamma0=1.5):
+    def fit_jonswap(self, smooth=True, gamma0=1.5, spectra=True, params=True):
         """Nonlinear fit Jonswap peak enhancement factor gamma.
 
         Args:
             - smooth (bool): True for the smooth wave period, False for the discrete
               period corresponding to the maxima in the frequency spectrum.
             - gamma0 (float): Initial guess for gamma.
+            - spectra (bool): Return fitted spectra.
+            - params (bool): Return fitted parameters.
+
+        Return:
+            - dsout (Dataset): Fitted Jonswap spectra and/or Jonswap parameters peak
+              frequency, significant wave height and peak enhancement factor gamma.
+
+        Note:
+            - At least one of spectra or params must be True.
 
         """
-        gamma = xr.apply_ufunc(
-            fit_jonswap_gamma,
+        from wavespectra.construct.frequency import jonswap
+
+        if not spectra and not params:
+            raise ValueError("At least one of `spectra` or `params` must be True")
+
+        fp, hs, gamma = xr.apply_ufunc(
+            fit_jonswap_params,
             self.oned(),
             self.freq,
             self.fp(smooth=smooth),
             self.hs(),
             gamma0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[], [], []],
             exclude_dims=set((attrs.FREQNAME,)),
             dask="parallelized",
             vectorize=True,
-            output_dtypes=["float32"],
+            output_dtypes=["float32", "float32", "float32"],
         )
-        gamma.attrs.update(self._get_cf_attributes("fit_gamma"))
-        return gamma.rename("fit_gamma")
+        dsout = xr.Dataset()
+        if spectra:
+            dsout["efth"] = jonswap(freq=self.freq, fp=fp, gamma=gamma, hs=hs)
+        if params:
+            dsout["fp"] = fp
+            dsout["hs"] = hs
+            dsout["gamma"] = gamma
+        set_spec_attributes(dsout)
+        dsout.attrs["title"] = "Fit Jonswap spectra"
+        return dsout
 
     def fit_gaussian(self, smooth=True, gw0=1.5):
         """Nonlinear fit Gaussian spectra.

@@ -67,9 +67,10 @@ def fit_jonswap_spectra(ef, freq, fp0, hs0, gamma0):
     return npstats.jonswap(freq, fp, hs, gamma)
 
 
-def fit_jonswap_gamma(ef, freq, fp0, hs0, gamma0):
-    """Wrapper to return only gamma from _fit_jonswap to run as ufunc."""
-    return _fit_jonswap(ef, freq, fp0, hs0, gamma0)[-1]
+def fit_jonswap_params(ef, freq, fp0, hs0, gamma0):
+    """Wrapper to return only Jonswap parameters from _fit_jonswap to run as ufunc."""
+    fp, hs, gamma = _fit_jonswap(ef, freq, fp0, hs0, gamma0)
+    return fp, hs, gamma
 
 
 def _fit_gaussian(ef, freq, fp0, hs0, gw):
