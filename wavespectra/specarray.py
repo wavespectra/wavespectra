@@ -40,12 +40,7 @@ from wavespectra.core.utils import (
     smooth_spec,
 )
 from wavespectra.core import xrstats
-from wavespectra.core.fitting import (
-    fit_jonswap_spectra,
-    fit_jonswap_params,
-    fit_gaussian_spectra,
-    fit_gaussian_width,
-)
+from wavespectra.core.fitting import fit_jonswap_params, fit_gaussian_params
 from wavespectra.plot import polar_plot
 from wavespectra.partition.partition import Partition
 
@@ -968,7 +963,7 @@ class SpecArray(object):
         return rmse
 
     def fit_jonswap(self, smooth=True, gamma0=1.5, spectra=True, params=True):
-        """Nonlinear fit Jonswap peak enhancement factor gamma.
+        """Nonlinear fit Jonswap spectra.
 
         Args:
             - smooth (bool): True for the smooth wave period, False for the discrete
@@ -1015,33 +1010,7 @@ class SpecArray(object):
         dsout.attrs["title"] = "Fit Jonswap spectra"
         return dsout
 
-    def fit_gaussian(self, smooth=True, gw0=1.5):
-        """Nonlinear fit Gaussian spectra.
-
-        Args:
-            - smooth (bool): True for the smooth wave period, False for the discrete
-              period corresponding to the maxima in the frequency spectrum.
-            - gamma0 (float): Initial guess for gamma.
-
-        """
-        dsout = xr.apply_ufunc(
-            fit_gaussian_spectra,
-            self.oned(),
-            self.freq,
-            self.fp(smooth=smooth),
-            self.hs(),
-            gw0,
-            input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
-            output_core_dims=[[attrs.FREQNAME]],
-            dask="parallelized",
-            vectorize=True,
-            output_dtypes=["float32"],
-        )
-        set_spec_attributes(dsout)
-        dsout.attrs.update(self._get_cf_attributes(attrs.SPEC1DNAME))
-        return dsout.rename(attrs.SPEC1DNAME)
-
-    def fit_gw(self, smooth=True, gw0=1.5):
+    def fit_gaussian(self, smooth=True, gw0=1.5, spectra=True, params=True):
         """Nonlinear fit Gaussian width.
 
         Args:
@@ -1049,19 +1018,40 @@ class SpecArray(object):
               period corresponding to the maxima in the frequency spectrum.
             - gw0 (float): Initial guess for gw.
 
+        Return:
+            - dsout (Dataset): Fitted Gaussian spectra and/or Gaussian parameters peak
+              frequency, significant wave height and gaussian width.
+
+        Note:
+            - At least one of spectra or params must be True.
+
         """
-        gw = xr.apply_ufunc(
-            fit_gaussian_width,
+        from wavespectra.construct.frequency import gaussian
+
+        if not spectra and not params:
+            raise ValueError("At least one of `spectra` or `params` must be True")
+
+        fp, hs, gw = xr.apply_ufunc(
+            fit_gaussian_params,
             self.oned(),
             self.freq,
             self.fp(smooth=smooth),
             self.hs(),
             gw0,
             input_core_dims=[[attrs.FREQNAME], [attrs.FREQNAME], [], [], []],
+            output_core_dims=[[], [], []],
             exclude_dims=set((attrs.FREQNAME,)),
             dask="parallelized",
             vectorize=True,
-            output_dtypes=["float32"],
+            output_dtypes=["float32", "float32", "float32"]
         )
-        gw.attrs.update(self._get_cf_attributes("fit_gw"))
-        return gw.rename("fit_gw")
+        dsout = xr.Dataset()
+        if spectra:
+            dsout["efth"] = gaussian(freq=self.freq, hs=hs, fp=fp, gw=gw)
+        if params:
+            dsout["fp"] = fp
+            dsout["hs"] = hs
+            dsout["gw"] = gw
+        set_spec_attributes(dsout)
+        dsout.attrs["title"] = "Fit Gaussian spectra"
+        return dsout

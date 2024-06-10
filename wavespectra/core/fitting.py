@@ -134,6 +134,7 @@ def fit_gaussian_spectra(ef, freq, fp0, hs0, gw0):
     return npstats.gaussian(freq, fp, hs, gw)
 
 
-def fit_gaussian_width(ef, freq, fp0, hs0, gw0):
+def fit_gaussian_params(ef, freq, fp0, hs0, gw0):
     """Wrapper to return only gw from _fit_gaussian to run as ufunc."""
-    return _fit_gaussian(ef, freq, fp0, hs0, gw0)[-1]
+    fp, hs, gw = _fit_gaussian(ef, freq, fp0, hs0, gw0)
+    return fp, hs, gw
