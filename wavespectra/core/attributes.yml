@@ -18,7 +18,7 @@ ATTRS:
         units: m2 s degree-1
     *SPEC1DNAME:
         standard_name: sea_surface_wave_variance_spectral_density
-        units: m2 s degree-1
+        units: m2 s
     *ESPECNAME:
         standard_name: sea_surface_wave_directional_energy_spectra
         units: m2
