@@ -135,6 +135,6 @@ def fit_gaussian_spectra(ef, freq, fp0, hs0, gw0):
 
 
 def fit_gaussian_params(ef, freq, fp0, hs0, gw0):
-    """Wrapper to return only gw from _fit_gaussian to run as ufunc."""
+    """Wrapper to return only Gaussian parameters from _fit_gaussian to run as ufunc."""
     fp, hs, gw = _fit_gaussian(ef, freq, fp0, hs0, gw0)
     return fp, hs, gw
