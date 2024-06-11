@@ -112,6 +112,7 @@ Internal Changes
   frequency omega.
 * Ensure spectral attributes are defined in the interp method of SpecArray.
 * Make `read_ndbc` return 1D spectra if any of the directional variables are missing.
+* Support arbitrary kwargs in the `read_dataset` reader.
 
 Deprecation
 -----------
