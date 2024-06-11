@@ -11,15 +11,16 @@ from wavespectra.specdataset import SpecDataset
 logger = logging.getLogger(__name__)
 
 
-def read_dataset(dset):
+def read_dataset(dset, **kwargs):
     """Format and attach SpecArray accessor to an existing xarray dataset.
 
     Convenience function to define the SpecArray accessor for a dataset rather than a
         file. The function guesses the original file format based on variable names.
 
     Args:
-        dset (xr.Dataset): Spectra dataset with dimensions, coordinates and data_vars
-            consistent any supported file format (currently WW3, SWAN and WWM).
+        - dset (xr.Dataset): Spectra dataset with dimensions, coordinates and data_vars
+          consistent any supported file format (currently WW3, SWAN and WWM).
+        - **kwargs: Arbitrary keyword arguments passed to the specific reader.
 
     """
     vars_wavespectra = {"freq", "dir", "site", "efth"}
@@ -52,4 +53,4 @@ def read_dataset(dset):
         raise ValueError(
             f"Cannot identify appropriate reader from dataset variables: {vars_dset}"
         )
-    return func(dset)
+    return func(dset, **kwargs)
