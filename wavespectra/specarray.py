@@ -235,26 +235,25 @@ class SpecArray(object):
         # Slice frequencies
         other = self._obj.sel(freq=slice(fmin, fmax))
 
-        # Slice directions
-        if attrs.DIRNAME in other.dims and (dmin or dmax):
-            other = self._obj.sortby([attrs.DIRNAME]).sel(dir=slice(dmin, dmax))
-
         tol = 1e-10
 
         # Interpolate at fmin
         if interpolate and fmin is not None:
-            if abs(float(other.freq[0]) - fmin) > tol:
+            if abs(float(other[attrs.FREQNAME][0]) - fmin) > tol:
                 other = xr.concat([self._interp_freq(fmin), other], dim=attrs.FREQNAME)
 
         # Interpolate at fmax
         if interpolate and fmax is not None:
-            if abs(float(other.freq[-1]) - fmax) > tol:
+            if abs(float(other[attrs.FREQNAME][-1]) - fmax) > tol:
                 other = xr.concat([other, self._interp_freq(fmax)], dim=attrs.FREQNAME)
 
-        other.freq.attrs = self._obj.freq.attrs
+        other.freq.attrs = self._obj[attrs.FREQNAME].attrs
         chunks = {attrs.FREQNAME: -1}
-        if attrs.DIRNAME in other.dims:
-            other.dir.attrs = self._obj.dir.attrs
+
+        # Slice directions
+        if attrs.DIRNAME in other.dims and (dmin or dmax):
+            other = other.sortby([attrs.DIRNAME]).sel({attrs.DIRNAME: slice(dmin, dmax)})
+            other[attrs.DIRNAME].attrs = self._obj[attrs.DIRNAME].attrs
             chunks.update({attrs.DIRNAME: -1})
 
         if rechunk:
