@@ -94,6 +94,7 @@ Other
 Bug Fixes
 ---------
 * Fix reading of ndbc-type dataset in read_dataset.
+* Fix bug in the `spec.split()` method where direction slicing was not working correctly.
 
 Internal Changes
 ----------------
