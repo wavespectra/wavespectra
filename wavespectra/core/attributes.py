@@ -2,9 +2,9 @@
 
 attrs (dict): standarised names for spectral variables, standard_names and units
 """
-# from collections import OrderedDict
 import os
 import yaml
+import xarray as xr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,8 +44,10 @@ def set_spec_attributes(dset):
     """
     Standarise CF attributes in specarray variables
     """
-    for varname, varattrs in attrs.ATTRS.items():
-        try:
-            dset[varname].attrs = varattrs
-        except Exception:
-            pass
+    if isinstance(dset, xr.DataArray):
+        if dset.name in attrs.ATTRS:
+            dset.attrs = attrs.ATTRS[dset.name]
+    elif isinstance(dset, xr.Dataset):
+        for varname in dset.data_vars:
+            if varname in attrs.ATTRS:
+                dset[varname].attrs = attrs.ATTRS[varname]

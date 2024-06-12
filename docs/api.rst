@@ -49,6 +49,9 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.gamma
    SpecArray.alpha
    SpecArray.goda
+   SpecArray.fit_jonswap
+   SpecArray.fit_gaussian
+   SpecArray.rmse
 
 **Spectral partitioning**
 
@@ -85,6 +88,7 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.to_energy
    SpecArray.interp
    SpecArray.interp_like
+   SpecArray.rotate
 
 
 SpecDataset
@@ -102,6 +106,8 @@ Output methods described in the `Output functions`_ section:
 :py:attr:`~SpecDataset.to_octopus`
 :py:attr:`~SpecDataset.to_ww3`
 :py:attr:`~SpecDataset.to_json`
+:py:attr:`~SpecDataset.to_funwave`
+:py:attr:`~SpecDataset.to_orcaflex`
 
 
 Input functions
