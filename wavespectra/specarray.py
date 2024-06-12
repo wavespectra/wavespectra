@@ -819,6 +819,25 @@ class SpecArray(object):
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
+    def rotate(self, angle) -> xr.DataArray:
+        """Rotate spectra.
+
+        Args:
+            - angle (float): Angle in degrees to rotate spectra, positive for clockwise
+              and negative for counter-clockwise rotation.
+
+        Returns:
+            - efth (DataArray): Rotated spectra.
+
+        Note:
+            - Directions are interpolated so that the rotated spectra have the same
+              directional bins as the original spectra.
+
+        """
+        dirs = self.dir.values + angle
+        dsout = self._obj.assign_coords({attrs.DIRNAME: dirs % 360})
+        return regrid_spec(dsout, dir=self.dir)
+
     def smooth(self, freq_window=3, dir_window=3):
         """Smooth spectra with a running average.
 
