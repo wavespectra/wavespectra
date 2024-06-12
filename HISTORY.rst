@@ -72,7 +72,8 @@ Stats
 * Jonswap fetch scaling coefficient method `alpha` in SpecArray.
 * Peak directional spread method `dpspr` in SpecArray.
 * Peak frequency method `fp` in SpecArray.
-* Root-mean-square wave height method `hrms` in SpecArray
+* Root-mean-square wave height method `hrms` in SpecArray.
+* Root-mean-square error method `rmse` in SpecArray.
 
 IO
 ~~~
@@ -90,6 +91,7 @@ Command line interface
 Other
 ~~~~~
 * New Spectra smoothing capability.
+* New method in SpecArray to rotate spectra.
 
 Bug Fixes
 ---------

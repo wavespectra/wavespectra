@@ -371,6 +371,8 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         scale = dset.spec.hs() ** 2 / dsout.spec.hs() ** 2
         dsout = dsout * scale
 
+    if isinstance(dsout, xr.DataArray):
+        dsout.name = "efth"
     set_spec_attributes(dsout)
     return dsout
 
