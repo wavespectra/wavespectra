@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Fortran extensions
-specpart-f2pywrappers2.f90
-
 # C extensions
 *.so
 specpartmodule.c
