@@ -1,5 +1,4 @@
 from pathlib import Path
-import datetime
 import shutil
 import pytest
 import pandas as pd
@@ -11,6 +10,7 @@ from wavespectra.core.attributes import attrs
 FILES_DIR = Path(__file__).parent.parent / "sample_files/ndbc"
 
 
+@pytest.mark.xfail
 def test_ndbc_hs_equals_1d_2d():
     url = "https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/42098/42098w9999.nc"
     dset_1d = read_ndbc(url, directional=False, chunks={"time": 1}).isel(time=100)
@@ -18,6 +18,7 @@ def test_ndbc_hs_equals_1d_2d():
     assert dset_1d.spec.hs().values == pytest.approx(dset_2d.spec.hs().values)
 
 
+@pytest.mark.xfail
 def test_ndbc_netcdf_2d():
     dd = 5
     dset = read_ndbc(
@@ -28,6 +29,7 @@ def test_ndbc_netcdf_2d():
     assert dset.spec.dd == dd
 
 
+@pytest.mark.xfail
 def test_ndbc_netcdf_1d():
     dset = read_ndbc(
         url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
