@@ -97,7 +97,7 @@ docs = [
 [tool.setuptools.package-data]
 "wavespectra.core" = ["*.yml"]
 "wavespectra.output" = ["*.yml"]
-"wavespectra.specpartc" = ["specpartc.c", "specpartc.h", "specpartc_wrap.c"]
+"wavespectra.partition.specpart" = ["specpartc.c", "specpartc.h", "specpartc_wrap.c"]
 
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
