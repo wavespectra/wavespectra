@@ -241,7 +241,7 @@ def read_tab(filename, toff=0):
     """
     df = pd.read_csv(
         filename,
-        sep="\s+",
+        sep=r"\s+",
         skiprows=[0, 1, 2, 3, 5, 6],
         parse_dates=[0],
         date_format="%Y%m%d.%H%M%S",

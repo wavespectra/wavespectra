@@ -110,7 +110,7 @@ class WavePlot:
 
         # Adjusting axes
         if isinstance(pobj, xr.plot.facetgrid.FacetGrid):
-            axes = list(pobj.axes.ravel())
+            axes = list(pobj.axs.ravel())
             cbar = pobj.cbar
         else:
             axes = [pobj.axes]
