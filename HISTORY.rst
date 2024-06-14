@@ -13,14 +13,14 @@ Releases
 ********
 
 
-4.0.0 (2024-05-DD)
+4.0.0 (2024-06-14)
 ___________________
 
 This major release brings several new features and improvements including spectra
 construction capability, a new partitioning api and replacement of the fortran
 watershed algorithm with a new translated version in C freeing wavespectra from the
 fortran dependency. The release also includes new methods for spectral statistics,
-engine drivers to open spectra files directly in xarray, and a new command line
+backend engines to open spectra files directly in xarray, and a new command line
 interface to convert between spectra file formats and create netcdf files with
 integrated spectral parameters from spectra files.
 
@@ -37,8 +37,7 @@ Spectra construction
   * tma spectrum for seas in finite depth (`Bouws et al., 1985 <https://www.researchgate.net/publication/256197895_Measurements_of_wind-wave_growth_and_swell_decay_during_the_Joint_North_Sea_Wave_Project_JONSWAP>`_)
   * gaussian spectrum for swells (`Bunney et al., 2014 <https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114#:~:text=The%20technique%20can%20be%20summarised,method%2C%20associate%20the%20surrounding%20energy>`_)
 
-* New functions for directional spreading within the
-  `wavespectra.construct.direction` module:
+* Directional spreading functions within the `wavespectra.construct.direction` module:
 
   * cartwright cosine-square distribution (`Cartwright, 1963 <https://cir.nii.ac.jp/crid/1573387449115327232>`_)
   * asymmetric distribution for turning wind seas (`Bunney et al., 2014 <https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114#:~:text=The%20technique%20can%20be%20summarised,method%2C%20associate%20the%20surrounding%20energy>`_)
