@@ -42,7 +42,7 @@ Spectra construction
   * cartwright cosine-square distribution (`Cartwright, 1963 <https://cir.nii.ac.jp/crid/1573387449115327232>`_)
   * asymmetric distribution for turning wind seas (`Bunney et al., 2014 <https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114#:~:text=The%20technique%20can%20be%20summarised,method%2C%20associate%20the%20surrounding%20energy>`_)
 
-* Methods for fitting Jonswap and Gaussian in SpecArray from existing spectra  by
+* Methods for fitting Jonswap and Gaussian in SpecArray from existing spectra by
   `Paul Branson`_ (`PR4 <https://github.com/oceanum/wavespectra/pull/4>`_).
 
 Partitioning
