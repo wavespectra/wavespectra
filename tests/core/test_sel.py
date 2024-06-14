@@ -98,7 +98,7 @@ class TestSel:
         """Assert some site needs to be found even if missing=ignore."""
         with pytest.raises(ValueError):
             dset = self.dset.spec.sel(
-                lons=np.array(self.lons)+10,
+                lons=np.array(self.lons) + 10,
                 lats=self.lats,
                 method="nearest",
                 unique=True,

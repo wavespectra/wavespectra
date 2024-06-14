@@ -70,6 +70,7 @@ def read_funwave(filename_or_obj):
 
 class FunwaveBackendEntrypoint(BackendEntrypoint):
     """Funwave backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

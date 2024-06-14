@@ -222,6 +222,7 @@ class Triaxys(object):
 
 class TRIAXYSBackendEntrypoint(BackendEntrypoint):
     """TRIAXYS backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,
@@ -231,7 +232,12 @@ class TRIAXYSBackendEntrypoint(BackendEntrypoint):
         magnetic_variation=None,
         regrid_dir=True,
     ):
-        return read_triaxys(filename_or_obj, toff=toff, magnetic_variation=magnetic_variation, regrid_dir=regrid_dir)
+        return read_triaxys(
+            filename_or_obj,
+            toff=toff,
+            magnetic_variation=magnetic_variation,
+            regrid_dir=regrid_dir,
+        )
 
     def guess_can_open(self, filename_or_obj):
         return False

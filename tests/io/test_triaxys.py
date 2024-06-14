@@ -7,25 +7,23 @@ from wavespectra import read_triaxys
 from wavespectra.core.attributes import attrs
 
 
-FILES_DIR = Path(__file__).parent.parent / 'sample_files'
+FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
 
 @pytest.fixture(scope="module")
 def dset_1d():
-    _ds = read_triaxys(str(FILES_DIR / 'triaxys.NONDIRSPEC'))
+    _ds = read_triaxys(str(FILES_DIR / "triaxys.NONDIRSPEC"))
     yield _ds
 
 
 @pytest.fixture(scope="module")
 def dset_2d():
-    _ds = read_triaxys(str(FILES_DIR / 'triaxys.DIRSPEC'))
+    _ds = read_triaxys(str(FILES_DIR / "triaxys.DIRSPEC"))
     yield _ds
 
 
 def test_hs(dset_1d, dset_2d):
-    assert dset_1d.spec.hs().values == pytest.approx(
-        dset_2d.spec.hs().values, rel=0.01
-    )
+    assert dset_1d.spec.hs().values == pytest.approx(dset_2d.spec.hs().values, rel=0.01)
 
 
 def test_magnetic_variation_only_2d():

@@ -548,6 +548,7 @@ def read_swanow(fileglob):
 
 class SWANBackendEntrypoint(BackendEntrypoint):
     """SWAN backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

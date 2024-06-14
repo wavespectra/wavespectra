@@ -8,18 +8,18 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import regrid_spec
 
 
-FILES_DIR = Path(__file__).parent.parent / 'sample_files'
+FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
 
 @pytest.fixture(scope="module")
 def dset():
-    _ds = read_triaxys(str(FILES_DIR / 'triaxys.DIRSPEC'))
+    _ds = read_triaxys(str(FILES_DIR / "triaxys.DIRSPEC"))
     yield _ds
 
 
 @pytest.fixture(scope="module")
 def dset2():
-    _ds = read_ww3(str(FILES_DIR / 'ww3file.nc'))
+    _ds = read_ww3(str(FILES_DIR / "ww3file.nc"))
     yield _ds
 
 

@@ -72,6 +72,7 @@ def from_era5(dset, freqs=None, dirs=None):
 
 class ERA5BackendEntrypoint(BackendEntrypoint):
     """ERA5 backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

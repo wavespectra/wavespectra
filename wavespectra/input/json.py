@@ -40,6 +40,7 @@ def read_json(filename_or_obj, date_format="%Y-%m-%dT%H:%M:%SZ"):
 
 class JsonBackendEntrypoint(BackendEntrypoint):
     """Jason backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

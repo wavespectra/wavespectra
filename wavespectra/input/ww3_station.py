@@ -168,6 +168,7 @@ def read_ww3_station(filename_or_fileglob):
 
 class WW3StationBackendEntrypoint(BackendEntrypoint):
     """WW3 station backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

@@ -60,12 +60,12 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
     try:
         arr = np.array(
             [[c for c in f"{s:06.0f}"] + [""] * 10 for s in other.site.values],
-            dtype="|S1"
+            dtype="|S1",
         )
     except ValueError:
         arr = np.array(
             [[c for c in f"{s:06.0f}"] + [""] * 10 for s in range(other.site.size)],
-            dtype="|S1"
+            dtype="|S1",
         )
     other["station_name"] = xr.DataArray(
         data=arr,

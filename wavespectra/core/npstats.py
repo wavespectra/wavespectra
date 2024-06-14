@@ -117,12 +117,12 @@ def alpha(spectrum, freq, fp):
     # Positions for fitting high-frequency tail
     pos = np.where((freq > 1.35 * fp) & (freq < 2.0 * fp))[0]
     if pos.size == 0:
-        pos = [freq.size-2, freq.size-1]
+        pos = [freq.size - 2, freq.size - 1]
     elif pos.size == 1:
         if pos[0] == freq.size[-1]:
-            pos = [pos[0]-1, pos[0]]
+            pos = [pos[0] - 1, pos[0]]
         else:
-            pos = [pos[0], pos[0]+1]
+            pos = [pos[0], pos[0] + 1]
     s = spectrum[pos]
     f = freq[pos]
     term1 = (2 * pi) ** 4 / g**2 / ((pos[-1] - pos[0]) + 1)

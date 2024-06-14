@@ -460,6 +460,7 @@ class Spotter:
 
 class SpotterBackendEntrypoint(BackendEntrypoint):
     """Spotter backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

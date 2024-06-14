@@ -25,6 +25,6 @@ def test_conditional(freq):
     ds_false = gaussian(**kwargs)
     ds = conditional(**kwargs)
     assert ds.equals(ds_true)
-    kwargs['cond']=False
+    kwargs["cond"] = False
     ds = conditional(**kwargs)
     assert ds.equals(ds_false)

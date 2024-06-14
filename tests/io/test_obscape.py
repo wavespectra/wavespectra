@@ -29,4 +29,3 @@ def test_read_dir_course():
     assert_allclose(s.spec.hs().values, 0.0625, rtol=1e-2)
     assert isinstance(s.time.values[0], np.datetime64)
     assert s.time.values[0] == np.datetime64("2024-04-03T09:30:00")
-

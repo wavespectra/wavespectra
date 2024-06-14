@@ -50,6 +50,7 @@ def read_xwaves(filename):
 
 class XWavesBackendEntrypoint(BackendEntrypoint):
     """XWaves backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

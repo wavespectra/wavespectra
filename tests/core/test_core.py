@@ -128,7 +128,7 @@ def test_wavelen(dset):
     wlen2 = wavelen(dset.freq, depth=50)
     wlen3 = wavelen(dset.freq, depth=None)
     assert np.sum(wlen1) < np.sum(wlen2) < np.sum(wlen3)
-    assert wlen3.values == pytest.approx(1.56 / dset.freq ** 2)
+    assert wlen3.values == pytest.approx(1.56 / dset.freq**2)
 
 
 def test_celerity(dset):

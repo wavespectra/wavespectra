@@ -10,6 +10,7 @@ from wavespectra import read_swan
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
+
 @pytest.fixture(scope="module")
 def dset():
     filename = FILES_DIR / "swanfile.spec"
@@ -92,4 +93,3 @@ def test_partition_and_reconstruct_inconsistent_number_of_partitions(dset):
             dir_name=["cartwright"],
             method_combine="max",
         )
-

@@ -81,6 +81,7 @@ def from_ww3(dset):
 
 class WW3BackendEntrypoint(BackendEntrypoint):
     """WW3 backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

@@ -78,7 +78,7 @@ def read_octopus(filename_or_obj):
             for __ in range(2):
                 next(f)
     except Exception as e:
-        raise(e)
+        raise (e)
     finally:
         f.close()
 
@@ -102,6 +102,7 @@ def read_octopus(filename_or_obj):
 
 class OctopusBackendEntrypoint(BackendEntrypoint):
     """Octopus backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

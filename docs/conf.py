@@ -127,12 +127,12 @@ html_theme_options = {
             "icon": "fab fa-github",
             "type": "fontawesome",
         }
-   ]
+    ],
 }
 
 html_sidebars = {
-  "**": ["globaltoc.html"],
-#   "**": ["sidebar-nav-bs.html", "globaltoc.html"],
+    "**": ["globaltoc.html"],
+    #   "**": ["sidebar-nav-bs.html", "globaltoc.html"],
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

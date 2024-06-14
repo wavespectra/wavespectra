@@ -10,6 +10,7 @@ from wavespectra.core.attributes import attrs
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
+
 class TestSpotterJson:
     """Test parameters Spotter JSON reader."""
 
@@ -39,7 +40,8 @@ class TestSpotterJson:
 @pytest.fixture(
     scope="module",
     params=[
-        FILES_DIR / "spotter_20210929.csv", sorted(FILES_DIR.glob("spotter*.csv"))[0],
+        FILES_DIR / "spotter_20210929.csv",
+        sorted(FILES_DIR.glob("spotter*.csv"))[0],
     ],
 )
 def dset(request):

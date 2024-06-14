@@ -133,4 +133,4 @@ def test_partition_interface(dset_full):
     dset.spec.partition
     methods = ["ptm1", "ptm2", "ptm3", "ptm4", "ptm5"]
     for method in methods:
-        assert(method in dir(dset.spec.partition))
+        assert method in dir(dset.spec.partition)

@@ -94,7 +94,9 @@ def _read_obscape_file(filename: str) -> dict:
     timestamp = metadata["Timestamp"]  # unix timestamp
 
     # convert timestamp to datetime object
-    R["utc"] = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).replace(tzinfo=None)
+    R["utc"] = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).replace(
+        tzinfo=None
+    )
 
     R["metadata"] = metadata
 

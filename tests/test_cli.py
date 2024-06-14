@@ -33,7 +33,9 @@ def test_main_convert(runner):
 def test_main_convert_format(runner, tmpdir):
     OUTFILE = str(tmpdir / "outspec.nc")
 
-    result = runner.invoke(cli.main, ["convert", "format", INFILE, ENGINE, OUTFILE, "swan"])
+    result = runner.invoke(
+        cli.main, ["convert", "format", INFILE, ENGINE, OUTFILE, "swan"]
+    )
     assert result.exit_code == 0
 
     xr.open_dataset(OUTFILE, engine="swan")
@@ -42,7 +44,9 @@ def test_main_convert_format(runner, tmpdir):
 def test_main_convert_stats(runner, tmpdir):
     OUTFILE = str(tmpdir / "outstats.nc")
 
-    result = runner.invoke(cli.main, ["convert", "stats", INFILE, ENGINE, OUTFILE, "-p", "hs", "-p", "tp"])
+    result = runner.invoke(
+        cli.main, ["convert", "stats", INFILE, ENGINE, OUTFILE, "-p", "hs", "-p", "tp"]
+    )
     assert result.exit_code == 0
 
     dset = xr.open_dataset(OUTFILE)
@@ -58,14 +62,42 @@ def test_main_reconstruct(runner):
 def test_main_reconstruct_spectra(runner, tmpdir):
     OUTFILE = str(tmpdir / "outspec.nc")
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE])
+    result = runner.invoke(
+        cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE]
+    )
     assert result.exit_code == 0
 
     result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, INFILE])
     assert isinstance(result.exception, ValueError)
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE, "-p", "3", "-d", "cartwright,cartwright,cartwright"])
+    result = runner.invoke(
+        cli.main,
+        [
+            "reconstruct",
+            "spectra",
+            INFILE,
+            ENGINE,
+            OUTFILE,
+            "-p",
+            "3",
+            "-d",
+            "cartwright,cartwright,cartwright",
+        ],
+    )
     assert result.exit_code == 0
 
-    result = runner.invoke(cli.main, ["reconstruct", "spectra", INFILE, ENGINE, OUTFILE, "-p", "3", "-f", "jonswap,jonswap,jonswap"])
+    result = runner.invoke(
+        cli.main,
+        [
+            "reconstruct",
+            "spectra",
+            INFILE,
+            ENGINE,
+            OUTFILE,
+            "-p",
+            "3",
+            "-f",
+            "jonswap,jonswap,jonswap",
+        ],
+    )
     assert result.exit_code == 0

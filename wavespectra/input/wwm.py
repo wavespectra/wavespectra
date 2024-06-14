@@ -81,6 +81,7 @@ def from_wwm(dset):
 
 class WWMBackendEntrypoint(BackendEntrypoint):
     """WWM netcdf backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,
