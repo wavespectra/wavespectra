@@ -3,26 +3,26 @@ import shutil
 import pytest
 import pandas as pd
 from tempfile import mkdtemp
+import xarray as xr
 
 from wavespectra import read_ndbc, read_ndbc_ascii
 from wavespectra.core.attributes import attrs
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files/ndbc"
+NCFILE = FILES_DIR / "42098w9999.nc"
 
 
-@pytest.mark.xfail
 def test_ndbc_hs_equals_1d_2d():
-    url = "https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/42098/42098w9999.nc"
-    dset_1d = read_ndbc(url, directional=False, chunks={"time": 1}).isel(time=100)
-    dset_2d = read_ndbc(url, directional=True, chunks={"time": 1}).isel(time=100)
+    url = NCFILE
+    dset_1d = read_ndbc(url, directional=False, chunks={"time": 1}).isel(time=-1)
+    dset_2d = read_ndbc(url, directional=True, chunks={"time": 1}).isel(time=-1)
     assert dset_1d.spec.hs().values == pytest.approx(dset_2d.spec.hs().values)
 
 
-@pytest.mark.xfail
 def test_ndbc_netcdf_2d():
     dd = 5
     dset = read_ndbc(
-        url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
+        url=NCFILE,
         directional=True,
         dd=dd,
     )
@@ -32,7 +32,7 @@ def test_ndbc_netcdf_2d():
 @pytest.mark.xfail
 def test_ndbc_netcdf_1d():
     dset = read_ndbc(
-        url="https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/32012/32012w2007.nc",
+        url=NCFILE,
         directional=False,
     )
     assert dset.spec.dir is None
