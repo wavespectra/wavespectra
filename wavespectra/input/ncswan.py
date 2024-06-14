@@ -90,6 +90,7 @@ def from_ncswan(dset):
 
 class NCSwanBackendEntrypoint(BackendEntrypoint):
     """Swan netcdf backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

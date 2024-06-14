@@ -3,7 +3,12 @@ import pytest
 import numpy as np
 
 from wavespectra import read_swan
-from wavespectra.core.xrstats import peak_wave_direction, mean_direction_at_peak_wave_period, peak_wave_period, peak_directional_spread
+from wavespectra.core.xrstats import (
+    peak_wave_direction,
+    mean_direction_at_peak_wave_period,
+    peak_wave_period,
+    peak_directional_spread,
+)
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")

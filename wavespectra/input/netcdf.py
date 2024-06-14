@@ -55,6 +55,7 @@ def read_netcdf(
 
 class NetCDFBackendEntrypoint(BackendEntrypoint):
     """Netcdf backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

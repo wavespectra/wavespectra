@@ -29,7 +29,6 @@ def test_ndbc_netcdf_2d():
     assert dset.spec.dd == dd
 
 
-@pytest.mark.xfail
 def test_ndbc_netcdf_1d():
     dset = read_ndbc(
         url=NCFILE,
@@ -52,7 +51,7 @@ class TestNDBCASCII(object):
                 FILES_DIR / "41010.swdir",
                 FILES_DIR / "41010.swdir2",
                 FILES_DIR / "41010.swr1",
-                FILES_DIR / "41010.swr2"
+                FILES_DIR / "41010.swr2",
             ]
         )
         f = open(FILES_DIR / "41010.spec", "r")

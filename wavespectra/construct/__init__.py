@@ -143,7 +143,7 @@ def partition_and_reconstruct(
         for v in ["wspd", "wdir", "dpt"]:
             if v not in dset.data_vars:
                 raise ValueError(f"Missing variable '{v}' in dset for partitioning.")
-        kw = dict(wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=parts-1)
+        kw = dict(wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=parts - 1)
     dspart = getattr(dset.spec.partition, partition_method)(**kw)
 
     # Calculating parameters

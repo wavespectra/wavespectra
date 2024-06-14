@@ -121,7 +121,9 @@ def test_radii_in_range(load_specdataset):
     with pytest.raises(ValueError):
         dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True)
     with pytest.raises(ValueError):
-        dset.efth.spec.plot(kind="contourf", rmin=0.05, rmax=0.4, as_period=True, logradius=False)
+        dset.efth.spec.plot(
+            kind="contourf", rmin=0.05, rmax=0.4, as_period=True, logradius=False
+        )
 
 
 def test_repr(load_specdataset):

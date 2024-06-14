@@ -252,7 +252,9 @@ class SpecArray(object):
 
         # Slice directions
         if attrs.DIRNAME in other.dims and (dmin or dmax):
-            other = other.sortby([attrs.DIRNAME]).sel({attrs.DIRNAME: slice(dmin, dmax)})
+            other = other.sortby([attrs.DIRNAME]).sel(
+                {attrs.DIRNAME: slice(dmin, dmax)}
+            )
             other[attrs.DIRNAME].attrs = self._obj[attrs.DIRNAME].attrs
             chunks.update({attrs.DIRNAME: -1})
 
@@ -1059,7 +1061,7 @@ class SpecArray(object):
             exclude_dims=set((attrs.FREQNAME,)),
             dask="parallelized",
             vectorize=True,
-            output_dtypes=["float32", "float32", "float32"]
+            output_dtypes=["float32", "float32", "float32"],
         )
         dsout = xr.Dataset()
         if spectra:

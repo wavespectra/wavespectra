@@ -13,13 +13,16 @@ DATADIR = Path(__file__).parent.parent / "sample_files"
         ("era5", DATADIR / "era5file.nc"),
         ("ncswan", DATADIR / "swanfile.nc"),
         # ("ndbc", "https://dods.ndbc.noaa.gov/thredds/dodsC/data/swden/42098/42098w9999.nc"),
-        ("ndbc_ascii", [
-            DATADIR / "ndbc/41010w2019part.txt.gz",
-            DATADIR / "ndbc/41010d2019part.txt.gz",
-            DATADIR / "ndbc/41010i2019part.txt.gz",
-            DATADIR / "ndbc/41010j2019part.txt.gz",
-            DATADIR / "ndbc/41010k2019part.txt.gz",
-        ]),
+        (
+            "ndbc_ascii",
+            [
+                DATADIR / "ndbc/41010w2019part.txt.gz",
+                DATADIR / "ndbc/41010d2019part.txt.gz",
+                DATADIR / "ndbc/41010i2019part.txt.gz",
+                DATADIR / "ndbc/41010j2019part.txt.gz",
+                DATADIR / "ndbc/41010k2019part.txt.gz",
+            ],
+        ),
         ("netcdf", DATADIR / "wavespectra.nc"),
         ("octopus", DATADIR / "octopusfile.oct"),
         ("spotter", DATADIR / "spotter_20210929b.csv"),

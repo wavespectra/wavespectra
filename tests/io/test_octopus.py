@@ -38,7 +38,7 @@ class TestOctopus(object):
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
     def test_write_octopus_latlon_as_dims(self):
-        ds = read_ncswan(self.ncswanfile).isel(site=0).set_coords(("lon","lat"))
+        ds = read_ncswan(self.ncswanfile).isel(site=0).set_coords(("lon", "lat"))
         ds.spec.to_octopus(os.path.join(self.tmp_dir, "spectra.oct"))
 
     def test_write_octopus_dims_ordering(self):
@@ -68,7 +68,9 @@ class TestOctopus(object):
         file = os.path.join(self.tmp_dir, "spectra.oct")
         ds.spec.to_octopus(file)
         read_back = read_octopus(file)
-        assert ds.spec.hs().values == pytest.approx(read_back.spec.hs().values, rel=1e-3)
+        assert ds.spec.hs().values == pytest.approx(
+            read_back.spec.hs().values, rel=1e-3
+        )
 
     def test_write_octopus_missing_winds_depth(self):
         ds = read_ncswan(self.ncswanfile)

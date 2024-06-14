@@ -60,11 +60,35 @@ def test_cartwright_dir_input_type(dir):
 
 def test_asymmetric_dir_freq_input_type(dir, freq):
     """Test frequency input can also list, numpy or DataArray."""
-    ds1 = asymmetric(dir=dir, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds2 = asymmetric(dir=dir, freq=freq.values, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds3 = asymmetric(dir=dir, freq=list(freq.values), dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds4 = asymmetric(dir=dir.values, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
-    ds5 = asymmetric(dir=list(dir.values), freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1)
+    ds1 = asymmetric(
+        dir=dir, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1
+    )
+    ds2 = asymmetric(
+        dir=dir, freq=freq.values, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1
+    )
+    ds3 = asymmetric(
+        dir=dir,
+        freq=list(freq.values),
+        dm=350,
+        dpm=330,
+        dspr=30,
+        dpspr=29,
+        fm=0.12,
+        fp=0.1,
+    )
+    ds4 = asymmetric(
+        dir=dir.values, freq=freq, dm=350, dpm=330, dspr=30, dpspr=29, fm=0.12, fp=0.1
+    )
+    ds5 = asymmetric(
+        dir=list(dir.values),
+        freq=freq,
+        dm=350,
+        dpm=330,
+        dspr=30,
+        dpspr=29,
+        fm=0.12,
+        fp=0.1,
+    )
     assert ds1.equals(ds2)
     assert ds1.equals(ds3)
     assert ds1.equals(ds4)

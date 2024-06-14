@@ -38,6 +38,7 @@ def read_wavespectra(filename_or_fileglob, file_format="netcdf", chunks={}):
 
 class WavespectraBackendEntrypoint(BackendEntrypoint):
     """Wavespectra backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,

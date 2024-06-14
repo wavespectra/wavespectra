@@ -86,7 +86,7 @@ def test_read_swan_bad_tabfile(dset, tmpdir):
     shutil.copy(FILENAME, tabname)
     shutil.copy(FILENAME, specname)
 
-    #ds = read_swans([specname])
+    # ds = read_swans([specname])
     ds = read_swan(specname)
     assert {"wspd", "wdir", "dpt"}.issubset(dset)
     assert not {"wspd", "wdir", "dpt"}.issubset(ds)
@@ -102,6 +102,7 @@ def test_write_swanascii_no_latlon_specify(dset, tmpdir):
     assert sorted(ds2.lon.values) == sorted(lons)
     assert sorted(ds2.lat.values) == sorted(lats)
 
+
 def test_write_swanascii_no_latlon_do_not_specify(dset, tmpdir):
     ds = dset.drop_vars(("lon", "lat"))
     filename = os.path.join(tmpdir, "spectra.swn")
@@ -110,7 +111,8 @@ def test_write_swanascii_no_latlon_do_not_specify(dset, tmpdir):
     assert list(ds2.lon.values) == list(ds2.lon.values * 0)
     assert list(ds2.lat.values) == list(ds2.lat.values * 0)
 
+
 def test_write_swanascii_latlon_as_dims_and_no_site_dim(dset, tmpdir):
-    ds = dset.isel(site=0).set_coords(("lon","lat"))
+    ds = dset.isel(site=0).set_coords(("lon", "lat"))
     filename = os.path.join(tmpdir, "spectra.swn")
     ds.spec.to_swan(filename)

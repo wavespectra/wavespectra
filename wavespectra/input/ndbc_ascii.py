@@ -34,7 +34,7 @@ def read_file(filename):
     if header.strip()[-1] == ">":  # Realtime file
         df = pd.read_csv(f, delimiter=r"\s+", compression=compressed, header=None)
         df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
-        df = df.iloc[:, list(date_columns.keys())[-1]+1 : ]
+        df = df.iloc[:, list(date_columns.keys())[-1] + 1 :]
         freqcols = df.select_dtypes(object)  # Get all columns with the frequency
         if not (freqcols.nunique() == 1).all():
             raise IOError("NDBC file has varying frequencies in same file")
@@ -51,7 +51,7 @@ def read_file(filename):
         df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
         cols = header.decode("utf-8") if isinstance(header, bytes) else header
         df.columns = cols.split()
-        df = df.iloc[:, list(date_columns.keys())[-1]+1 : ]
+        df = df.iloc[:, list(date_columns.keys())[-1] + 1 :]
     f.close()
     df.name = name
     return df
@@ -159,12 +159,9 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
 
 class NDBCASCIIBackendEntrypoint(BackendEntrypoint):
     """NDBC ASCII backend engine."""
+
     def open_dataset(
-        self,
-        filename_or_obj,
-        *,
-        drop_variables=None,
-        dirs=np.arange(0, 360, 10)
+        self, filename_or_obj, *, drop_variables=None, dirs=np.arange(0, 360, 10)
     ):
         return read_ndbc_ascii(filename_or_obj, dirs=dirs)
 

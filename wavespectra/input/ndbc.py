@@ -119,6 +119,7 @@ def from_ndbc(dset, directional=True, dd=10.0):
 
 class NDBCBackendEntrypoint(BackendEntrypoint):
     """NDBC netcdf backend engine."""
+
     def open_dataset(
         self,
         filename_or_obj,
