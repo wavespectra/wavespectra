@@ -7,8 +7,8 @@ Python library for ocean wave spectra.
 .. image:: https://img.shields.io/github/actions/workflow/status/wavespectra/wavespectra/python-publish.yml
     :target: https://github.com/wavespectra/wavespectra/actions
     :alt: GitHub Workflow Status (with event)
-.. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg
-    :target: https://coveralls.io/github/wavespectra/wavespectra
+.. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg?branch=master
+    :target: https://coveralls.io/github/wavespectra/wavespectra?branch=master
 .. image:: https://readthedocs.org/projects/wavespectra/badge/?version=latest
     :target: https://wavespectra.readthedocs.io/en/latest/
 .. image:: https://img.shields.io/pypi/v/wavespectra.svg
