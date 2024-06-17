@@ -121,7 +121,10 @@ void partition(float * spec,
 
 
 void ptsort(int iihmax, int nnspec) {
-    int i, in, iv, numv[iihmax], iaddr[iihmax], iorder[nnspec];
+    int i, in, iv;
+    int * numv = malloc(iihmax*sizeof(int));
+    int * iaddr = malloc(iihmax*sizeof(int));
+    int * iorder = malloc(nnspec*sizeof(int));
     /*--------------------------------
      * 1.  counting occurences per height bins
      *-------------------------------*/
@@ -155,7 +158,10 @@ void ptsort(int iihmax, int nnspec) {
      *----------------------------------*/
     for (i = 0; i < nnspec; i++) {
       ind[iorder[i]] = i;
-    }    
+    }
+  free(numv);
+  free(iaddr);
+  free(iorder);
 }
 
 void ptnghb() {
@@ -272,39 +278,45 @@ int int_minval(int * data, int size) {
 }
 
 
+int fifo_add(int * iq,
+	     int iq_end,
+	     int iv) {
+  *(iq + iq_end) = iv;
+  if ( iq_end > nspec-2 )
+    return 0;
+  return iq_end+1;
+}
+
+int fifo_empty(int iq_start,
+	       int iq_end) {
+  if (iq_start != iq_end)
+    return 0;
+  return 1;
+}
+
+int fifo_first(int * iq,
+	       int * iq_start) {
+  int iv = *(iq+*iq_start);
+  *iq_start = *iq_start+1;
+  if ( *iq_start > nspec -1 )
+    *iq_start = 0;
+  return iv;
+} 
+
 void pt_fld(int *imi,
 	    int *ind,
 	    int *imo,
 	    float *zp,
 	    int ihmax) {
 
-  int mask, init, iwshed, imd[nspec];
+  int mask, init, iwshed;
   int ic_label, ifict_pixel, m, ih, msave;
   int ip, i, ipp, ic_dist, iempty, ippp;
   int jl, jn, ipt, j;
-  int iq[nspec], iq_start, iq_end;
+  int iq_start, iq_end;
   float zpmax, ep1, diff;
-
-  void fifo_add(int iv) {
-    iq[iq_end] = iv;
-    iq_end++;
-    if ( iq_end > nspec-1 )
-      iq_end = 0;
-  }
-
-  int fifo_empty() {
-    if (iq_start != iq_end)
-      return 0;
-    return 1;
-  }
-
-  int fifo_first() {
-    int iv = iq[iq_start];
-    iq_start++;
-    if ( iq_start > nspec -1 )
-      iq_start = 0;
-    return iv;
-  }
+  int * iq = malloc(nspec*sizeof(int));
+  int * imd = malloc(nspec*sizeof(int));
   
   // 0.  initializations
   mask = -2;
@@ -349,7 +361,7 @@ void pt_fld(int *imi,
 	ipp = neigh[i+9*ip];
 	if ( imo[ipp] > 0 || imo[ipp] == iwshed ) {
 	  imd[ip] = 1;
-	  fifo_add (ip); // l305
+	  iq_end = fifo_add (iq, iq_end, ip); // l305
 	  break;
 	}
       }
@@ -366,17 +378,17 @@ void pt_fld(int *imi,
     //  1.b process the queue
     ic_dist = 1;
     // Mark end of fifo
-    fifo_add(ifict_pixel);
+    iq_end = fifo_add(iq, iq_end, ifict_pixel);
     for (;;) {
-      ip = fifo_first();
+      ip = fifo_first(iq, &iq_start);
       // Check for end of processing
       if ( ip == ifict_pixel ) {
-	if (fifo_empty())
+	if (fifo_empty(iq_start, iq_end))
 	  break;
 	else {
-	  fifo_add(ifict_pixel);
+	  iq_end = fifo_add(iq, iq_end, ifict_pixel);
 	  ic_dist++;
-	  ip = fifo_first();
+	  ip = fifo_first(iq, &iq_start);
 	}
       }
       // Process queue
@@ -395,7 +407,7 @@ void pt_fld(int *imi,
 	}
 	else if ( ( imo[ipp] == mask ) && (imd[ipp] == 0) ) {
 	  imd[ipp] = ic_dist +1;
-	  fifo_add(ipp);
+	  iq_end = fifo_add(iq, iq_end, ipp);
 	}
 	
       }
@@ -413,18 +425,18 @@ void pt_fld(int *imi,
       if ( imo[ip] == mask ) {
 	// ... New label for pixel
 	ic_label++;
-	fifo_add(ip);
+	iq_end = fifo_add(iq, iq_end, ip);
 	imo[ip] = ic_label;
 	// ... and all connected to it ...
 	for (;;) {
-	  if ( fifo_empty() )
+	  if ( fifo_empty(iq_start, iq_end) )
 	    break;
-	  ipp = fifo_first();
+	  ipp = fifo_first(iq, &iq_start);
 
 	  for ( i = 0; i < neigh[8+9*ipp]; i++ ) {
 	    ippp = neigh[i+9*ipp];
 	    if ( imo[ippp] == mask ) {
-	      fifo_add(ippp);
+	      iq_end = fifo_add(iq, iq_end, ippp);
 	      imo[ippp] = ic_label;
 	    }
 	  }
@@ -471,5 +483,7 @@ void pt_fld(int *imi,
     }
   }
  
-  npart = ic_label;  
+  npart = ic_label;
+  free(iq);
+  free(imd);
 }
