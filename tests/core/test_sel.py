@@ -20,8 +20,8 @@ class TestSel:
         # First two sites are exact matches, third site is in between
         self.lons = [92.00, 92.10, 92.05]
         self.lats = [19.80, 19.95, 19.88]
-        self.lons_exact = self.lons[:2]
-        self.lats_exact = self.lats[:2]
+        self.lons_exact = [float(v) for v in self.dset.lon.values[::-1]]
+        self.lats_exact = [float(v) for v in self.dset.lat.values[::-1]]
         self.lons_inexact = self.lons[-1:]
         self.lats_inexact = self.lats[-1:]
 
