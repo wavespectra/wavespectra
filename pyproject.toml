@@ -73,8 +73,8 @@ xwaves = "wavespectra.input.xwaves:XWavesBackendEntrypoint"
 
 [project.optional-dependencies]
 test = [
-  "coverage",
-  "codecov",
+  # "coverage",
+  # "codecov",
   "pytest",
   "tox",
   "ruff",
