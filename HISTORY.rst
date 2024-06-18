@@ -21,6 +21,7 @@ Internal Changes
 * Changes to specpart.c to fix compilation on Windows by `Sebastien Dealaux`_
   (`PR130 <https://github.com/wavespectra/wavespectra/pull/130>`_)
 * Fix sel tests that started to break after numpy 2.0 upgrade due to float precision.
+* Fix ncswan test that started to break after numpy 2.0 upgrade due to f5py error.
 
 
 4.0.1 (2024-06-14)
