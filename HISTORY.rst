@@ -13,6 +13,14 @@ Releases
 ********
 
 
+4.0.3 (2024-06-19)
+___________________
+
+Internal Changes
+----------------
+* Declare integers in specpart.c to fix compilation on macOS.
+
+
 4.0.2 (2024-06-18)
 ___________________
 
