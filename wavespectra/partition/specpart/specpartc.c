@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "specpartc.h"
 
-static nspec= 0, mk = -1, mth = -1, npart=0;
+static int nspec= 0, mk = -1, mth = -1, npart=0;
 /*     ----------------------------------------------------------------
 !       imi     i.a.   i   input discretized spectrum.
 !       ind     i.a.   i   sorted addresses.
