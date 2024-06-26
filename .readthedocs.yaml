@@ -16,7 +16,7 @@ build:
   tools:
     python: "3.10"
   apt_packages:
-    - gfortran
+    - gcc
 
 sphinx:
   fail_on_warning: false
