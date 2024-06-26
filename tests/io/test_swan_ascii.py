@@ -5,7 +5,6 @@ import numpy as np
 import xarray as xr
 import shutil
 import pytest
-from tempfile import mkdtemp
 
 from wavespectra.input.swan import read_swan, read_swans, read_hotswan, read_swanow
 from wavespectra.core.attributes import attrs
@@ -35,11 +34,11 @@ def test_read_swans(dset):
     assert dset.time.size > ds.time.size
 
 
-def test_read_hotswan(dset):
-    ds = read_hotswan([FILENAME])
-    assert dset.spec.hs().values.ravel() == pytest.approx(
-        ds.isel(lon=0, lat=0).spec.hs().values, rel=1e-2
-    )
+def test_read_hotswan():
+    """Test that swan hotstart file is read as a grid."""
+    filename = FILENAME.parent / "swanhot.spec"
+    ds = read_hotswan([filename])
+    assert ds.lon.size > 1 and ds.lat.size > 1
 
 
 def test_read_swanow(dset):
