@@ -12,10 +12,72 @@ spectral data formats, calculation of common integrated wave paramaters, spectra
 partitioning and spectral manipulation in a package focussed on speed and efficiency
 for large numbers of spectra.
 
+Wavespectra works by defining some :doc:`conventions <conventions>` for spectral data
+in xarray objects:
+
+.. ipython:: python
+    :okwarning:
+
+    import numpy as np
+    import xarray as xr
+    import wavespectra
+    # Spectral data in m2/Hz/degree
+    efth = np.array([0.0000e+00, 1.0942e-03, 5.8909e-02, 2.0724e-01,
+                     2.0267e-01, 1.6886e-01, 1.1980e-01, 7.7867e-02,
+                     4.9664e-02, 3.2361e-02, 2.0902e-02, 1.3622e-02,
+                     8.8645e-03, 5.6254e-03, 3.3722e-03, 2.0276e-03,
+                     1.1350e-03, 4.5993e-04, 2.0441e-04, 0.0000e+00])
+    # Frequency in Hz
+    freq = np.array([0.05 , 0.075, 0.1  , 0.125, 0.15 , 0.175, 0.2  ,
+                     0.225, 0.25 , 0.275, 0.3  , 0.325, 0.35 , 0.375,
+                     0.4  , 0.425, 0.45 , 0.475, 0.5  , 0.525])
+    # Direction in degree
+    dir = np.array([0])
+    # The DataArray and Dataset objects below are ready to use with wavespectra
+    da = xr.DataArray(
+        data=np.expand_dims(efth, 1),
+        dims=["freq", "dir"],
+        coords=dict(freq=freq, dir=dir),
+        name="efth",
+    )
+    da.spec.hs()
+    dset = da.to_dataset()
+    dset.spec.hs()
+
+The `spec` namespace
+--------------------
+
+Once wavespectra has been imported, `DataArray`_ and `Dataset`_ objects following this
+convention will have the ``spec`` accessor available, from which the functionality of
+wavespectra can be accessed.
+
+SpecArray
+~~~~~~~~~
+
+The :py:class:`~wavespectra.specarray.SpecArray` accessor extends `DataArray`_ objects
+and is the main entry point for spectral data manipulation methods.
+
+.. ipython:: python
+    :okwarning:
+
+    dset.efth.spec
+
+SpecDataset
+~~~~~~~~~~~
+
+The :py:class:`~wavespectra.specdataset.SpecDataset` accessor extends `Dataset`_ objects
+to allow accessing :py:class:`~wavespectra.specarray.SpecArray` methods directly from
+the Dataset, in addition to providing other methods such as writing spectral data files.
+
+.. ipython:: python
+    :okwarning:
+
+    dset.spec
+
 Reading spectra from files
 --------------------------
 
-Several methods are provided to read various file formats including spectral wave
+Wavespectra provides functions to read various file formats including spectral wave
 models like WAVEWATCHIII, SWAN and WWM, observation instruments such as TRIAXYS and
 SPOTTER, and industry standard formats including ERA5, NDBC, Octopus among others.
 
@@ -34,37 +96,8 @@ for direct reading of spectral data using `xarray.open_dataset`_.
 .. ipython:: python
     :okwarning:
 
-    import xarray as xr
     dset = xr.open_dataset("_static/ww3file.nc", engine="ww3")
 
-
-The `spec` namespace
---------------------
-
-Wavespectra defines a new namespace accessor called `spec` which is attached to
-`xarray`_ objects. This namespace provides access to several methods from the two main
-objects in wavespectra:
-
-* :py:class:`~wavespectra.specarray.SpecArray`
-* :py:class:`~wavespectra.specdataset.SpecDataset`
-
-which extend functionality from xarray's `DataArray`_ and `Dataset`_ respectively.
-
-SpecArray
-~~~~~~~~~
-
-.. ipython:: python
-    :okwarning:
-
-    dset.efth.spec
-
-SpecDataset
-~~~~~~~~~~~
-
-.. ipython:: python
-    :okwarning:
-
-    dset.spec
 
 Spectral wave parameters
 ------------------------
@@ -134,8 +167,8 @@ accessed from both SpecArray (`efth` variable) and SpecDataset accessors:
     plt.draw()
 
 
-interpolation
--------------
+Interpolate
+-----------
 A custom interpolation method takes care of the cyclic nature of the wave direction.
 
 .. ipython:: python
@@ -272,7 +305,6 @@ shape functions available for frequency and direction such as Jonswap and Cartwr
 .. ipython:: python
     :okwarning:
 
-    import numpy as np
     from wavespectra.construct import construct_partition
     freq = np.arange(0.03, 0.401, 0.001)
     dir = np.arange(0, 360, 1)
@@ -309,8 +341,8 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
 
     @suppress
     plt.figure(figsize=(8, 4.5))
-    p = plt.scatter(dset.lon, dset.lat, 200, dset.isel(time=0).spec.hs(), cmap="turbo", marker="v", edgecolor="k", label="Dataset points");
-    p = plt.scatter(idw.lon, idw.lat, 80, idw.isel(time=0).spec.hs(), cmap="turbo", marker="o", edgecolor="k", label="Interpolated point");
+    p = plt.scatter(dset.lon, dset.lat, s=250, c=dset.isel(time=0).spec.hs(), cmap="turbo", marker="$\u25EF$", label="Dataset points");
+    p = plt.scatter(idw.lon, idw.lat, s=80, c=idw.isel(time=0).spec.hs(), cmap="turbo", marker="o", edgecolor="k", label="Interpolated point");
 
     @suppress
     plt.legend(); plt.colorbar(p, label="Hs (m)")
