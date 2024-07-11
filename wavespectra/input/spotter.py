@@ -11,15 +11,46 @@ from pathlib import Path
 import glob
 import os
 import getpass
-import datetime
+from datetime import datetime, timezone
 import json
 import numpy as np
 import xarray as xr
 import pandas as pd
 from dateutil.parser import parse
 
-from wavespectra.specdataset import SpecDataset
+import wavespectra
 from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.construct.direction import cartwright
+
+
+PARAMETERS_CSV = {
+    "Battery Voltage": "batt_volt",
+    "Power": "power",
+    "Humidity": "humidity",
+    "Epoch Time": "time",
+    "Significant Wave Height": "hs",
+    "Peak Period": "tp",
+    "Mean Period": "tm",
+    "Peak Direction": "dpm",
+    "Peak Directional Spread": "dpspr",
+    "Mean Direction": "dm",
+    "Mean Directional Spread": "dspr",
+    "Latitude": "lat",
+    "Longitude": "lon",
+    "Wind Speed": "wspd",
+    "Wind Direction": "wdir",
+    "Surface Temperature": "sst",
+}
+
+SPECTRAL_CSV = {
+    "varianceDensity": "efth",
+    "direction": "dmf",
+    "directionalSpread": "dsprf",
+    "a1": "a1",
+    "b1": "b1",
+    "a2": "a2",
+    "b2": "b2",
+}
 
 
 def read_spotter(filename, filetype=None):
@@ -53,239 +84,110 @@ def read_spotter(filename, filetype=None):
         raise ValueError(f"filetype='{filetype}', must be either 'json' or 'csv' ")
 
 
-def _read_spotter_csv(filename):
-    """Read Spectra from Spotter CSV file.
+class SpotterCSV:
 
-    Args:
-        - filename (str): File name specifying spotter file to read.
+    def __init__(self, filename):
+        """Read Spectra from Spotter CSV file.
 
-    Returns:
-        - dset (SpecDataset): spectra dataset object read from file.
+        Args:
+            - filename (str): File name specifying spotter file to read.
 
-    """
+        """
+        self.filename = filename
 
-    # Read bulk parameters
-    dat_bulk = pd.read_csv(
-        filename,
-        index_col=3,
-        usecols=np.insert(np.arange(13), -1, [364, 365, 366]),
-    )
-    dat_bulk.index = pd.to_datetime(dat_bulk.index, unit="s")
-    dat_bulk.columns = dat_bulk.columns.str.strip()
-    dat_bulk.index.name = dat_bulk.index.name.strip()
-    b = dat_bulk.to_xarray()
+    @property
+    def cols(self) -> list:
+        """Header columns."""
+        return [c.split("(")[0].strip() for c in pd.read_csv(self.filename, nrows=0)]
 
-    # Frequency array
-    dat_f = pd.read_csv(
-        filename,
-        index_col=[],
-        usecols=np.arange(13, 13 + 38 + 1),
-    )
-    dat_f.columns = dat_f.columns.str.strip()
-    freq_array = dat_f.iloc[0].to_xarray()
-    freq_array.name = "Frequency"
+    @property
+    def freq(self) -> xr.DataArray:
+        """Frequency array."""
+        data = pd.read_csv(self.filename, usecols=self._usecols("f_"))
+        data = data.drop_duplicates()
+        if data.shape[0] > 1:
+            raise NotImplementedError(
+                "Varying frequency arrays in single file not yet supported."
+            )
+        data = data.values[0]
+        return xr.DataArray(data, coords=dict(freq=data), name="freq")
 
-    # Frequency spacing
-    dat_df = pd.read_csv(
-        filename,
-        index_col=[],
-        usecols=np.arange(13 + 38 + 1, 13 + 2 * (38 + 1)),
-    )
-    dat_df.columns = dat_df.columns.str.strip()
-    df_array = (
-        dat_df.iloc[0]
-        .to_xarray()
-        .assign_coords(dict(index=freq_array.values))
-        .rename(dict(index="Frequency"))
-    )
-    df_array.name = "df"
-    df_array.attrs["long_name"] = "Frequency spacing"
-    df_array.attrs["units"] = "Hz"
+    @property
+    def time(self) -> xr.DataArray:
+        """Times."""
+        data = self._set_header(pd.read_csv(self.filename, usecols=self._usecols("Epoch")))
+        data = data.rename(columns={"Epoch Time": "time"}).set_index("time")
+        data.index = pd.to_datetime(data.index, unit="s")
+        return xr.DataArray(data.index, coords=dict(time=data.index), name="time")
 
-    # a and b parameters
-    names = ["a1", "b1", "a2", "b2"]
-    tmp_list = []
-    for idx, name in enumerate(names):
-        dat_tmp = pd.read_csv(
-            filename,
-            index_col=[0],
-            usecols=np.insert(
-                np.arange(13 + (2 + idx) * (38 + 1), 13 + (3 + idx) * (38 + 1)), 0, 3
-            ),
-        )
-        dat_tmp.index = pd.to_datetime(dat_tmp.index, unit="s")
-        dat_tmp.columns = dat_tmp.columns.str.strip()
-        dat_tmp.index.name = dat_tmp.index.name.strip()
-        tmp_da = dat_tmp.to_xarray().to_array(dim="Frequency", name=name)
-        tmp_da = tmp_da.assign_coords({"Frequency": freq_array.values})
-        tmp_list.append(tmp_da)
+    def _set_header(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Remove units and trailling spaces from column names."""
+        df.columns = [c.split("(")[0].strip() for c in df.columns]
+        return df
 
-    ab_ds = xr.merge(tmp_list)
+    def _usecols(self, prefix: str) -> list:
+        """Return the indices of all columns that start with the prefix."""
+        return [ind for ind, val in enumerate(self.cols) if val.startswith(prefix)]
 
-    # Spectral density, spreading, etc.
-    dat_S = pd.read_csv(
-        filename,
-        index_col=[0],
-        usecols=np.insert(np.arange(13 + 6 * (38 + 1), 13 + 7 * (38 + 1)), 0, 3),
-    )
-    dat_S.index = pd.to_datetime(dat_S.index, unit="s")
-    dat_S.columns = dat_S.columns.str.strip()
-    dat_S.index.name = dat_S.index.name.strip()
-    S = dat_S.to_xarray().to_array(dim="Frequency", name="Variance density")
-    S = S.assign_coords({"Frequency": freq_array.values})
+    def _read_spectral_data(self, prefix: str, coords: dict) -> xr.DataArray:
+        data = pd.read_csv(self.filename, usecols=self._usecols(prefix))
+        return xr.DataArray(data, coords=coords)
 
-    dat_dir = pd.read_csv(
-        filename,
-        index_col=[0],
-        usecols=np.insert(np.arange(13 + 7 * (38 + 1), 13 + 8 * (38 + 1)), 0, 3),
-    )
-    dat_dir.index = pd.to_datetime(dat_dir.index, unit="s")
-    dat_dir.columns = dat_dir.columns.str.strip()
-    dat_dir.index.name = dat_dir.index.name.strip()
-    Dir = dat_dir.to_xarray().to_array(dim="Frequency", name="Direction")
-    Dir = Dir.assign_coords({"Frequency": freq_array.values})
-
-    dat_spread = pd.read_csv(
-        filename,
-        index_col=[0],
-        usecols=np.insert(np.arange(13 + 8 * (38 + 1), 13 + 9 * (38 + 1)), 0, 3),
-    )
-    dat_spread.index = pd.to_datetime(dat_spread.index, unit="s")
-    dat_spread.index.name = dat_spread.index.name.strip()
-    dat_spread.columns = dat_spread.columns.str.strip()
-    spread = dat_spread.to_xarray().to_array(dim="Frequency", name="Directional spread")
-    spread = spread.assign_coords({"Frequency": freq_array.values})
-
-    ds = xr.merge([b, ab_ds, S, Dir, spread, df_array])
-
-    ds["Epoch Time"].attrs["long_name"] = "Epoch time"
-
-    ds["Battery Voltage (V)"].attrs["units"] = "V"
-    ds["Battery Voltage (V)"].attrs["long_name"] = "Battery voltage"
-
-    ds["Power (W)"].attrs["units"] = "W"
-    ds["Power (W)"].attrs["long_name"] = "Battery power"
-
-    ds["Humidity (%rel)"].attrs["units"] = "1"
-    ds["Humidity (%rel)"].attrs["standard_name"] = "relative_humidity"
-    ds["Humidity (%rel)"].attrs["long_name"] = "Relative humidity"
-
-    ds["Significant Wave Height (m)"].attrs["units"] = "m"
-    ds["Significant Wave Height (m)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_significant_height"
-    ds["Significant Wave Height (m)"].attrs["long_name"] = "Significant wave height"
-
-    ds["Direction"].attrs["units"] = "degree"
-    ds["Direction"].attrs["long_name"] = ""
-
-    ds["Peak Period (s)"].attrs["units"] = "s"
-    ds["Peak Period (s)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_period_at_variance_spectral_density_maximum"
-    ds["Peak Period (s)"].attrs["long_name"] = "Peak period"
-
-    ds["Mean Period (s)"].attrs["units"] = "s"
-    ds["Mean Period (s)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_zero_upcrossing_period"
-    ds["Mean Period (s)"].attrs["long_name"] = "Mean period"
-
-    ds["Peak Direction (deg)"].attrs["units"] = "degree"
-    ds["Peak Direction (deg)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_from_direction_at_variance_spectral_density_maximum"
-    ds["Peak Direction (deg)"].attrs["long_name"] = "Peak direction"
-
-    ds["Peak Directional Spread (deg)"].attrs["units"] = "degree"
-    ds["Peak Directional Spread (deg)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_directional_spread_at_variance_spectral_density_maximum"
-    ds["Peak Directional Spread (deg)"].attrs["long_name"] = "Peak directional spread"
-
-    ds["Mean Direction (deg)"].attrs["units"] = "degree"
-    ds["Mean Direction (deg)"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_from_direction"
-    ds["Mean Direction (deg)"].attrs["long_name"] = "Mean direction"
-
-    ds["Mean Directional Spread (deg)"].attrs["units"] = "degree"
-    ds["Mean Directional Spread (deg)"].attrs["long_name"] = "Mean directional spread"
-
-    ds["Latitude (deg)"].attrs["units"] = "degree_north"
-    ds["Latitude (deg)"].attrs["standard_name"] = "latitude"
-    ds["Latitude (deg)"].attrs["long_name"] = "Latitude"
-
-    ds["Longitude (deg)"].attrs["units"] = "degree_east"
-    ds["Longitude (deg)"].attrs["standard_name"] = "longitude"
-    ds["Longitude (deg)"].attrs["long_name"] = "Longitude"
-
-    ds["Wind Speed (m/s)"].attrs["units"] = "m/s"
-    ds["Wind Speed (m/s)"].attrs["standard_name"] = "wind_speed"
-    ds["Wind Speed (m/s)"].attrs["long_name"] = "Wind speed"
-
-    ds["Wind Direction (deg)"].attrs["units"] = "degree"
-    ds["Wind Direction (deg)"].attrs["standard_name"] = "wind_from_direction"
-    ds["Wind Direction (deg)"].attrs["long_name"] = "Wind direction"
-
-    ds["Surface Temperature (°C)"] = 274.15 * ds["Surface Temperature (°C)"]
-    ds["Surface Temperature (°C)"].attrs["units"] = "K"
-    ds["Surface Temperature (°C)"].attrs["standard_name"] = "sea_surface_temperature"
-    ds["Surface Temperature (°C)"].attrs["long_name"] = "Surface temperature"
-
-    ds["Frequency"].attrs["units"] = "Hz"
-    ds["Frequency"].attrs["standard_name"] = "wave_frequency"
-    ds["Frequency"].attrs["long_name"] = "Frequency"
-
-    ds["Variance density"].attrs["units"] = "m2 s"
-    ds["Variance density"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_variance_spectral_density"
-    ds["Variance density"].attrs["long_name"] = "Spectral density"
-
-    ds["Directional spread"].attrs["units"] = "degree"
-    ds["Directional spread"].attrs[
-        "standard_name"
-    ] = "sea_surface_wave_directional_spread"
-    ds["Directional spread"].attrs["long_name"] = "Directional spreading"
-
-    ds.attrs["Conventions"] = "CF-1.8"
-    ds.attrs["source"] = f"Sofar Spotter buoy, {filename}"
-    ds.attrs[
-        "history"
-    ] = f"generated {datetime.datetime.now().strftime('%Y-%m-%d @ %H:%M:%S')} by {getpass.getuser()}"
-    ds.attrs[
-        "references"
-    ] = "https://content.sofarocean.com/hubfs/Technical_Reference_Manual.pdf"
-
-    ds = ds.rename(
-        {
-            "Epoch Time": "time",
-            "Frequency": "freq",
-            "Battery Voltage (V)": "batter_voltage",
-            "Variance density": "efth",
-            "Direction": "dir",
-            "Power (W)": "battery_power",
-            "Humidity (%rel)": "humidity",
-            "Significant Wave Height (m)": "Hm0",
-            "Peak Period (s)": "Tp",
-            "Mean Period (s)": "Tm",
-            "Peak Direction (deg)": "peak_dir",
-            "Peak Directional Spread (deg)": "peak_spread",
-            "Mean Direction (deg)": "mean_dir",
-            "Mean Directional Spread (deg)": "mean_spread",
-            "Directional spread": "spread",
-            "Latitude (deg)": "lat",
-            "Longitude (deg)": "lon",
-            "Wind Speed (m/s)": "wspd",
-            "Wind Direction (deg)": "wdir",
-            "Surface Temperature (°C)": "temperature",
+    def _set_attributes(self, dset: xr.Dataset) -> xr.Dataset:
+        set_spec_attributes(dset)
+        dset.attrs = {
+            "title": f"Spotter buoy spectral data from {Path(self.filename).name}",
+            "source": "Spotter wave buoy",
+            "history": f"Generated by wavespectra v{wavespectra.__version__}",
+            "date_created": f"{datetime.now(timezone.utc)}",
+            "creator_name": getpass.getuser(),
+            "references": "https://content.sofarocean.com/hubfs/Technical_Reference_Manual.pdf",
         }
-    )
+        return dset
 
-    ds = ds.sortby("time")
+    def read_spectra(self) -> xr.Dataset:
+        """Read spectral data"""
+        dset = xr.Dataset()
+        coords = {"time": self.time, "freq": self.freq}
+        for var in SPECTRAL_CSV.keys():
+            dset[var] = self._read_spectral_data(var + "_", coords)
+        return dset.rename(SPECTRAL_CSV)
 
-    return ds
+    def read_params(self) -> xr.Dataset:
+        """Read bulk parameters."""
+        usecols = [ind for ind, val in enumerate(self.cols) if val in PARAMETERS_CSV]
+        data = pd.read_csv(self.filename, usecols=usecols)
+        data = self._set_header(data).rename(columns=PARAMETERS_CSV)
+        data = data.set_index("time")
+        data.index = pd.to_datetime(data.index, unit="s")
+        return data.to_xarray()
+
+    def read(self, dd: float = None) -> xr.Dataset:
+        """Read spotter file as wavespectra dataset.
+
+        Args:
+            - dd (float): Directional spacing if 2D spectra are desired.
+
+        Returns:
+            - dset (SpecDataset): wavespectra dataset object.
+
+        """
+        dset = xr.merge([self.read_spectra(), self.read_params()])
+        dset = dset.sortby("time")
+        if dd is not None:
+            dir = np.arange(0, 360, dd)
+            dir = xr.DataArray(dir, coords=dict(dir=dir), name="dir")
+            cos2 = cartwright(dir=dir, dm=dset.dmf, dspr=dset.dsprf)
+            dset["efth"] = dset.efth * cos2
+        set_spec_attributes(dset)
+        return self._set_attributes(dset).sortby("time")
+
+
+def _read_spotter_csv(filename):
+    """Read Spectra from Spotter CSV file."""
+    spot = SpotterCSV(filename)
+    dset = spot.read(dd=2)
+    return dset
 
 
 def _read_spotter_json(filename):
@@ -338,10 +240,6 @@ class Spotter:
             raise NotImplementedError(
                 "Varying frequency arrays between spotter files not yet supported."
             )
-        if not self._is_unique([dset.dir.values for dset in dsets]):
-            raise NotImplementedError(
-                "Varying direction arrays between spotter files not yet supported."
-            )
         # Concatenating datasets from multiple files
         self.dset = xr.concat(dsets, dim="time")
         return self.dset
@@ -381,15 +279,19 @@ class Spotter:
 
     def _construct_dataset(self):
         """Construct wavespectra dataset."""
-        self.dset = xr.DataArray(
-            data=self.efth, coords=self.coords, dims=self.dims, name=attrs.SPECNAME
-        ).to_dataset()
-        self.dset[attrs.LATNAME] = xr.DataArray(
-            data=self.latitude, coords={"time": self.dset.time}, dims=("time")
-        )
-        self.dset[attrs.LONNAME] = xr.DataArray(
-            data=self.longitude, coords={"time": self.dset.time}, dims=("time")
-        )
+        self.dset = xr.Dataset()
+        # Spectral data
+        self.dset["efth"] = xr.DataArray(self.varianceDensity, coords=self.coords2)
+        # Time-varying cordinates
+        self.dset[attrs.LATNAME] = xr.DataArray(self.latitude, coords=self.coords1)
+        self.dset[attrs.LONNAME] = xr.DataArray(self.longitude, coords=self.coords1)
+        # Directional parameters
+        self.dset["dmf"] = xr.DataArray(self.direction, coords=self.coords2)
+        self.dset["dsprf"] = xr.DataArray(self.directionalSpread, coords=self.coords2)
+        # Bulk parameters
+        for name, var in self.params.items():
+            if hasattr(self, name):
+                self.dset[var] = xr.DataArray(getattr(self, name), coords=self.coords1)
         set_spec_attributes(self.dset)
         return self.dset
 
@@ -403,17 +305,25 @@ class Spotter:
             raise OSError(f"Not a Spotter Spectra file: {self.filename}")
 
     @property
+    def params(self):
+        """Mapping of spotter to wavespectra bulk parameters."""
+        return {
+            "significantWaveHeight": "hs",
+            "peakPeriod": "tp",
+            "meanPeriod": "tm",
+            "peakDirection": "dpm",
+            "peakDirectionalSpread": "dpspr",
+            "meanDirection": "dm",
+            "meanDirectionalSpread": "dspr",
+        }
+
+    @property
     def time(self):
         """The time coordinate values."""
         return [
             parse(time).replace(tzinfo=None) - datetime.timedelta(hours=self.toff)
             for time in self.timestamp
         ]
-
-    @property
-    def efth(self):
-        """The Variance density data values."""
-        return [np.expand_dims(varden, axis=1) for varden in self.varianceDensity]
 
     @property
     def freq(self):
@@ -430,18 +340,14 @@ class Spotter:
         return [0.0]
 
     @property
-    def dims(self):
-        """The dataset dimensions."""
-        return (attrs.TIMENAME, attrs.FREQNAME, attrs.DIRNAME)
+    def coords1(self):
+        """The dataset coordinates for timeseries."""
+        return {attrs.TIMENAME: self.time}
 
     @property
-    def coords(self):
-        """The dataset coordinates."""
-        return {
-            attrs.TIMENAME: self.time,
-            attrs.FREQNAME: self.freq,
-            attrs.DIRNAME: self.dir,
-        }
+    def coords2(self):
+        """The dataset coordinates for spectra."""
+        return {attrs.TIMENAME: self.time, attrs.FREQNAME: self.freq}
 
     @property
     def filenames(self):
