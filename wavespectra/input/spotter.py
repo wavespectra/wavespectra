@@ -67,7 +67,7 @@ PARAMETERS_JSON = {
     "windSpeed": "wspd",
     "windDirection": "wdir",
     "surfaceTemperature": "sst",
-    # "timestamp": "time",
+    "timestamp": "time",
 }
 
 
@@ -275,7 +275,7 @@ class SpotterJson(Spotter):
     def read_params(self) -> xr.Dataset:
         """Read bulk parameters."""
         data = pd.DataFrame(self.data["waves"]).rename(columns=PARAMETERS_JSON)
-        return data.set_index(self.time.to_series()).to_xarray()
+        return data.drop("time", axis=1).set_index(self.time.to_series()).to_xarray()
 
     def read_spectra(self) -> xr.Dataset:
         """Read spectral data"""
