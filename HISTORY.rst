@@ -13,8 +13,16 @@ Releases
 ********
 
 
-4.0.4 (2024-07-DD)
+4.1.0 (2024-07-DD)
 ___________________
+
+New Features
+------------
+* Allow reading spotter buoy files as 2D spectra (`PR134 <https://github.com/wavespectra/wavespectra/pull/134>`_).
+
+Internal Changes
+----------------
+* Changes to the csv and json spotter readers to optimise and standardise them.
 
 
 4.0.3 (2024-06-19)
