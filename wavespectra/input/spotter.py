@@ -39,7 +39,6 @@ PARAMETERS_CSV = {
     "Battery Voltage": "batt_volt",
     "Power": "power",
     "Humidity": "humidity",
-    "Epoch Time": "time",
     "Significant Wave Height": "hs",
     "Peak Period": "tp",
     "Mean Period": "tm",
@@ -131,7 +130,7 @@ def read_spotter(filename_or_fileglob, filetype=None, dd=2.0) -> xr.Dataset:
     reader = globals()[f"_read_spotter_{filetype}"]
     dslist = []
     for filename in filenames:
-        dslist.append(reader(filename))
+        dslist.append(reader(filename, dd))
     return xr.concat(dslist, dim="time")
 
 
@@ -190,60 +189,43 @@ class Spotter(ABC):
 
 
 class SpotterCSV(Spotter):
-    """Read spectra from Spotter CSV file."""
+    """Read Spectra from Spotter Json file."""
 
-    @property
-    def cols(self) -> list:
-        """Header columns."""
-        return [c.split("(")[0].strip() for c in pd.read_csv(self.filename, nrows=0)]
+    @cached_property
+    def data(self) -> dict:
+        """The data content in the csv file."""
+        data = pd.read_csv(self.filename)
+        data.columns = [c.split("(")[0].strip() for c in data.columns]
+        return data
 
-    @property
+    @cached_property
+    def time(self) -> xr.DataArray:
+        """Time coord."""
+        data = pd.to_datetime(self.data["Epoch Time"], unit="s")
+        return xr.DataArray(data, coords=dict(time=data), name="time")
+
+    @cached_property
     def freq(self) -> xr.DataArray:
-        """Frequency array."""
-        data = pd.read_csv(self.filename, usecols=self._usecols("f_"))
-        data = data.drop_duplicates()
+        """Frequency coord."""
+        data = self.data.filter(regex=r"^f_\d+").drop_duplicates()
         if data.shape[0] > 1:
             raise NotImplementedError("Varying frequency arrays not yet supported")
         data = data.values[0]
         return xr.DataArray(data, coords=dict(freq=data), name="freq")
 
-    @property
-    def time(self) -> xr.DataArray:
-        """Times."""
-        data = self._set_header(pd.read_csv(self.filename, usecols=self._usecols("Epoch")))
-        data = data.rename(columns={"Epoch Time": "time"}).set_index("time")
-        data.index = pd.to_datetime(data.index, unit="s")
-        return xr.DataArray(data.index, coords=dict(time=data.index), name="time")
-
-    def _set_header(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Remove units and trailling spaces from column names."""
-        df.columns = [c.split("(")[0].strip() for c in df.columns]
-        return df
-
-    def _usecols(self, prefix: str) -> list:
-        """Return the indices of all columns that start with the prefix."""
-        return [ind for ind, val in enumerate(self.cols) if val.startswith(prefix)]
-
-    def _read_spectral_data(self, prefix: str, coords: dict) -> xr.DataArray:
-        data = pd.read_csv(self.filename, usecols=self._usecols(prefix))
-        return xr.DataArray(data, coords=coords)
+    def read_params(self) -> xr.Dataset:
+        """Read bulk parameters."""
+        pattern = '|'.join(f'^{prefix}' for prefix in PARAMETERS_CSV)
+        data = self.data.filter(regex=pattern).rename(columns=PARAMETERS_CSV)
+        return data.set_index(self.time.to_series()).to_xarray()
 
     def read_spectra(self) -> xr.Dataset:
         """Read spectral data"""
-        dset = xr.Dataset()
         coords = {"time": self.time, "freq": self.freq}
-        for var in SPECTRAL.keys():
-            dset[var] = self._read_spectral_data(var + "_", coords)
-        return dset.rename(SPECTRAL)
-
-    def read_params(self) -> xr.Dataset:
-        """Read bulk parameters."""
-        usecols = [ind for ind, val in enumerate(self.cols) if val in PARAMETERS_CSV]
-        data = pd.read_csv(self.filename, usecols=usecols)
-        data = self._set_header(data).rename(columns=PARAMETERS_CSV)
-        data = data.set_index("time")
-        data.index = pd.to_datetime(data.index, unit="s")
-        return data.to_xarray()
+        dset = xr.Dataset()
+        for col, var in SPECTRAL.items():
+            dset[var] = xr.DataArray(self.data.filter(regex=f"{col}_"), coords=coords)
+        return dset
 
 
 class SpotterJson(Spotter):
