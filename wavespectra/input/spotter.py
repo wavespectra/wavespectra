@@ -28,7 +28,7 @@ SPECTRAL = {
 }
 
 PARAMETERS_CSV = {
-    "Battery Voltage": "batt_volt",
+    "Battery Voltage": "battery",
     "Power": "power",
     "Humidity": "humidity",
     "Significant Wave Height": "hs",
@@ -59,6 +59,13 @@ PARAMETERS_JSON = {
     "windDirection": "wdir",
     "surfaceTemperature": "sst",
     "timestamp": "time",
+}
+
+METADATA = {
+    "battery": {"standard_name": "battery_voltage", "units": "V"},
+    "power": {"standard_name": "power", "units": "W"},
+    "humidity": {"standard_name": "relative_humidity", "units": "%"},
+    "sst": {"standard_name": "sea_surface_temperature", "units": "degC"},
 }
 
 
@@ -177,6 +184,10 @@ class Spotter(ABC):
             cos2 = cartwright(dir=dir, dm=dset.dmf, dspr=dset.dsprf)
             dset["efth"] = dset.efth * cos2
         set_spec_attributes(dset)
+        # Extra non-waves attributes
+        for key, value in METADATA.items():
+            if key in dset:
+                dset[key].attrs = value
         return self._set_attributes(dset)
 
 
