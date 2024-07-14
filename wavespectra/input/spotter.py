@@ -1,27 +1,19 @@
-"""Read SWAN spectra files.
+"""Read Spotter buoy files."""
 
-Functions:
-    read_spotter: Read Spectra from Spotter JSON file
-    read_spotters: Read multiple spotter files into single Dataset
-
-"""
 from xarray.backends import BackendEntrypoint
 from abc import ABC, abstractmethod
 from functools import cached_property
-import types
 from pathlib import Path
 import glob
-import os
 import getpass
 from datetime import datetime, timezone
 import json
 import numpy as np
 import xarray as xr
 import pandas as pd
-from dateutil.parser import parse
 
 import wavespectra
-from wavespectra.core.attributes import attrs, set_spec_attributes
+from wavespectra.core.attributes import set_spec_attributes
 from wavespectra.construct.direction import cartwright
 
 
@@ -215,7 +207,7 @@ class SpotterCSV(Spotter):
 
     def read_params(self) -> xr.Dataset:
         """Read bulk parameters."""
-        pattern = '|'.join(f'^{prefix}' for prefix in PARAMETERS_CSV)
+        pattern = "|".join(f"^{prefix}" for prefix in PARAMETERS_CSV)
         data = self.data.filter(regex=pattern).rename(columns=PARAMETERS_CSV)
         return data.set_index(self.time.to_series()).to_xarray()
 
