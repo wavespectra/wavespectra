@@ -69,7 +69,7 @@ METADATA = {
 }
 
 
-def _read_spotter_csv(filename, dd=2.0) -> xr.Dataset:
+def _read_spotter_csv(filename, dd=5.0) -> xr.Dataset:
     """Read Spectra from Spotter CSV file.
 
     Args:
@@ -82,7 +82,7 @@ def _read_spotter_csv(filename, dd=2.0) -> xr.Dataset:
     return dset
 
 
-def _read_spotter_json(filename, dd=2.0) -> xr.Dataset:
+def _read_spotter_json(filename, dd=5.0) -> xr.Dataset:
     """Read Spectra from Spotter JSON file.
 
     Args:
@@ -95,7 +95,7 @@ def _read_spotter_json(filename, dd=2.0) -> xr.Dataset:
     return dset
 
 
-def read_spotter(filename_or_fileglob, filetype=None, dd=2.0) -> xr.Dataset:
+def read_spotter(filename_or_fileglob, filetype=None, dd=5.0) -> xr.Dataset:
     """Read Spectra from Spotter file.
 
     Args:
@@ -116,6 +116,8 @@ def read_spotter(filename_or_fileglob, filetype=None, dd=2.0) -> xr.Dataset:
         filenames = filename_or_fileglob
     else:
         filenames = sorted(glob.glob(filename_or_fileglob))
+        if not filenames:
+            raise ValueError(f"No files found for '{filename_or_fileglob}'")
 
     # Infer filetype from filename
     if filetype is None:
