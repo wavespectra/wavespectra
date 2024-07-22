@@ -138,7 +138,7 @@ def read_spotter(filename_or_fileglob, filetype=None, dd=5.0) -> xr.Dataset:
 class Spotter(ABC):
     """Base class for reading spotter files."""
 
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         """Read Spectra from Spotter CSV file.
 
         Args:
@@ -167,6 +167,10 @@ class Spotter(ABC):
             "creator_name": getpass.getuser(),
             "references": "https://content.sofarocean.com/hubfs/Technical_Reference_Manual.pdf",
         }
+        # Extra non-waves attributes
+        for key, value in METADATA.items():
+            if key in dset:
+                dset[key].attrs = value
         return dset
 
     def read(self, dd: float = None) -> xr.Dataset:
@@ -185,11 +189,6 @@ class Spotter(ABC):
             dir = xr.DataArray(dir, coords=dict(dir=dir), name="dir")
             cos2 = cartwright(dir=dir, dm=dset.dmf, dspr=dset.dsprf)
             dset["efth"] = dset.efth * cos2
-        set_spec_attributes(dset)
-        # Extra non-waves attributes
-        for key, value in METADATA.items():
-            if key in dset:
-                dset[key].attrs = value
         return self._set_attributes(dset)
 
 
@@ -197,7 +196,7 @@ class SpotterCSV(Spotter):
     """Read Spectra from Spotter Json file."""
 
     @cached_property
-    def data(self) -> dict:
+    def data(self) -> pd.DataFrame:
         """The data content in the csv file."""
         data = pd.read_csv(self.filename)
         data.columns = [c.split("(")[0].strip() for c in data.columns]
