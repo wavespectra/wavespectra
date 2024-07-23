@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import datetime
 
 import numpy as np
+from matplotlib import pyplot as plt
 from numpy.testing import assert_allclose
 
 from wavespectra import read_awac
@@ -328,6 +329,16 @@ def test_awac():
     D = AWAC_EXAMPLE_DATA.replace('\n','')
     D = D.replace('$','\n$')
 
-    data = read_awac(D.split('\n'))
+    data = read_awac(D.split('\n'), enforce_S0_zero = True)
 
-    print(data)
+    S = data.isel(time=2).efth
+
+    plt.imshow(S)
+
+    plt.xlabel('i-direction')
+    plt.ylabel('i-frequency')
+    plt.colorbar()
+    plt.show()
+
+    # plot the second spectrum in polar form:
+    # data.isel(time=2).spec.plot()  # plot the second spectrum

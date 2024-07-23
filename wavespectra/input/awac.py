@@ -5,6 +5,8 @@ https://www.nortekgroup.com/
 questions:
 --------------
 [1.] What is the timezone?
+[2.] Frequency grid of spectra and fourier coefficients are not the same, how to handle this?  --> now using the grid from the fourier coefficients and assuming that the first n frequencies are the same for the spectum
+[3.] Note: in the example data the energy at the first frequency is extremely high compared to the others. Is this normal?
 
 revision history:
 -----------------
@@ -91,20 +93,26 @@ B2new = -sin(2*dr)*A2 + cos(2*dr)*B2;
  end
 
 """
+import datetime
 import warnings
 
 import numpy as np
+
+import xarray as xr
+from wavespectra.core.attributes import set_spec_attributes
+
+
 
 def parse_awac_nmea(lines):
 
     # scan to find frequency grid
     freq = None
     for line in lines:
-        if line.startswith("$PNORE"):
+        if line.startswith("$PNORF"):
             blocks = line.split(',')
-            fstart = float(blocks[4])
-            fstep = float(blocks[5])
-            fn = int(blocks[6])
+            fstart = float(blocks[5])
+            fstep = float(blocks[6])
+            fn = int(blocks[7])
 
             freq = fstart + np.linspace(start=0, stop=fn*fstep, num=fn, endpoint=True)
 
@@ -112,12 +120,6 @@ def parse_awac_nmea(lines):
 
     if freq is None:
         raise ValueError("Can not determine frequency grid, $PNORE field not found")
-
-
-    # hard-coded
-    DirRes = 4
-
-    dDir = np.arange(start = 0, stop = (2*np.pi - np.pi * DirRes / 180), step = np.pi * DirRes / 180)
 
     A1 = None
     A2 = None
@@ -166,7 +168,9 @@ def parse_awac_nmea(lines):
         yield timestamp, freq, A1, A2, B1, B2, S
 
 
-def read_awac(lines):
+def read_awac(lines,
+              enforce_S0_zero = False,
+              dir_res = 4,):
     data = [R for R in parse_awac_nmea(lines)]
 
     # each line of data contains a timestamp, freq, A1, A2, B1, B2, S
@@ -179,4 +183,63 @@ def read_awac(lines):
         warnings.warn(f"Last spectrum of AWAC data incomplete, removed with timestamp {data[0][0]}")
         data = data[:-1]
 
-    return data
+
+    # convert to directional spectra
+
+    dDir = np.arange(start = 0, stop = (2*np.pi - np.pi * dir_res / 180), step = np.pi * dir_res / 180)
+
+    efth = []
+    times = []
+
+    for timestamp, freq, A1, A2, B1, B2, S in data:
+        # %(conversion from Cart to Compass)
+        A1temp = A1
+        B1temp = B1
+        A1 = -B1temp
+        B1 = -A1temp
+        A2 = -A2
+        B2 = B2
+
+        if enforce_S0_zero:
+            S[0] = 0
+
+        # Direction From
+        dr = np.pi
+        A1new = np.cos(dr) * A1 + np.sin(dr) * B1
+        B1new = -np.sin(dr) * A1 + np.cos(dr) * B1
+        A2new = np.cos(2 * dr) * A2 + np.sin(2 * dr) * B2
+        B2new = -np.sin(2 * dr) * A2 + np.cos(2 * dr) * B2
+
+        # Now apply maximum entropy method to remove negative energy
+        DirFieldOLD = np.zeros((len(freq), len(dDir)))
+        for j in range(len(freq)):
+            for dd in range(len(dDir)):
+                dNewdir = np.pi / 2 - dDir[dd]
+                entry =  (A1new[j] * np.cos(dNewdir) + B1new[j] * np.sin(dNewdir) + A2new[j] * np.cos(2 * dNewdir) + B2new[j] * np.sin(2 * dNewdir)) * S[j]
+                DirFieldOLD[j, dd] = entry
+
+        efth.append(DirFieldOLD / (100**2)) # convert to m2/Hz
+
+        times.append(datetime.datetime.strptime(timestamp, "%m%d%y%H%M%S"))
+
+
+    dir_degrees = np.degrees(dDir)
+    freq = data[0][1]
+
+    ds = xr.DataArray(
+        data=efth,
+        coords={"time": times, "freq": freq, "dir": dir_degrees},
+        dims=("time", "freq", "dir"),
+        name="efth",
+    ).to_dataset()
+
+    # Set attributes
+    set_spec_attributes(ds)
+
+    # add site dimension
+    ds["site"] = [0]
+
+    return ds
+
+
+
