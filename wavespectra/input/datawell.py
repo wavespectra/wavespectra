@@ -150,9 +150,9 @@ def read_datawell(filename_or_fileglob, dd=5.0, lon=None, lat=None) -> xr.Datase
 
     # Slice lon and lat so they are not a function of time
     if lon is not None:
-        dset[attrs.LONNAME] = dset.lon.isel(time=0, drop=True)
+        dset[attrs.LONNAME] = dset[attrs.LONNAME].isel(time=0, drop=True)
     if lat is not None:
-        dset[attrs.LONNAME] = dset.lat.isel(time=0, drop=True)
+        dset[attrs.LATNAME] = dset[attrs.LATNAME].isel(time=0, drop=True)
 
     return dset
 
