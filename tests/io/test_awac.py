@@ -333,15 +333,8 @@ def test_awac():
 
     S = data.isel(time=0).efth
 
-
-    #
-    # plt.imshow(S)
-    #
-    # plt.xlabel('i-direction')
-    # plt.ylabel('i-frequency')
-    # plt.colorbar()
-    # plt.show()
-
     # plot the second spectrum in polar form:
-    data.isel(time=2).spec.plot()  # plot the second spectrum
+    import matplotlib.cm as cm
+    cmap =cm.get_cmap("viridis")
+    data.isel(time=0).spec.plot(cmap = cmap)  # plot the second spectrum
     plt.show()

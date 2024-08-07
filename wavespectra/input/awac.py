@@ -95,6 +95,35 @@ B2new = -sin(2*dr)*A2 + cos(2*dr)*B2;
     end
  end
 
+ --OR--
+
+
+% Now apply maximum entropy method to remove negative energy
+for j=1:length(freq)
+  c1 = A1new(j) + 1i*B1new(j);
+  c2 = A2new(j) + 1i*B2new(j);
+  %c1 = A1new(ii,j) + i*B1new(ii,j);
+  %c2 = A2new(ii,j) + i*B2new(ii,j);
+
+  fi1 = (c1 - c2*conj(c1)) / (1 - abs(c1)*abs(c1));
+  fi2 = c2 - c1*fi1;
+
+  % This little gem switches from cart2compass
+  for dd = 1:length(dDir)
+     dNewdir = pi/2 - dDir(dd);
+     %dNewdir = dDir(dd);
+
+     numer = 1 - fi1*conj(c1) - fi2*conj(c2);
+     %denom = 1 - fi1*exp(-i*dDir(dd)) - fi2*exp(-2.0*i*dDir(dd));
+     denom = 1 - fi1*exp(-1i*dNewdir) - fi2*exp(-2.0*1i*dNewdir);
+     DirField(j,dd) = real(numer/(abs(denom)*abs(denom)))/(2.0*pi)*Spec(ii,j)*pi*DirRes/180;
+
+     %Pure Fourier coef soln w/o ME
+     DirFieldOLD(j,dd) = (A1new(j)*cos(dNewdir) + B1new(j)*sin(dNewdir) + A2new(j)*cos(2*dNewdir) + B2new(j)*sin(2*dNewdir))*Spec(ii,j);
+  end
+end
+
+
 """
 import datetime
 import warnings
@@ -132,6 +161,7 @@ def parse_awac_nmea(lines):
     timestamp = None
 
     for line in lines:
+        line = line.split('*')[0]
 
         # new timestamp?
         TS = None
@@ -139,7 +169,6 @@ def parse_awac_nmea(lines):
             TS = line[10:16] + line[17:23]
         elif line.startswith("$PNORE"):
             TS = line[7:13] + line[14:20]
-
 
         if TS is not None:
             if TS != timestamp:
@@ -154,18 +183,23 @@ def parse_awac_nmea(lines):
                 S = None
 
         if line.startswith("$PNORF"):
+            # remove the checksum
             blocks = line.split(',')
             if blocks[1] == 'A1':
-                A1 = np.array([float(x) for x in blocks[7:-1]])
+                A1 = np.array([float(x) for x in blocks[7:]])
             elif blocks[1] == 'A2':
-                A2 = np.array([float(x) for x in blocks[7:-1]])
+                A2 = np.array([float(x) for x in blocks[7:]])
             elif blocks[1] == 'B1':
-                B1 = np.array([float(x) for x in blocks[7:-1]])
+                B1 = np.array([float(x) for x in blocks[7:]])
             elif blocks[1] == 'B2':
-                B2 = np.array([float(x) for x in blocks[7:-1]])
+                B2 = np.array([float(x) for x in blocks[7:]])
         elif line.startswith("$PNORE"):
             blocks = line.split(',')
-            S = np.array([float(x) for x in blocks[6:-1]])
+            n = int(blocks[6])
+            S = np.array([float(x) for x in blocks[7:]])
+            if len(S) != n:
+                warnings.warn(f"Number of frequencies in spectrum does not match number of frequencies expected {n} got {len(S)}")
+
 
     if A1 is not None:
         yield timestamp, freq, A1, A2, B1, B2, S
