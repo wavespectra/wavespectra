@@ -329,16 +329,19 @@ def test_awac():
     D = AWAC_EXAMPLE_DATA.replace('\n','')
     D = D.replace('$','\n$')
 
-    data = read_awac(D.split('\n'), enforce_S0_zero = True)
+    data = read_awac(D.split('\n'))
 
-    S = data.isel(time=2).efth
+    S = data.isel(time=0).efth
 
-    plt.imshow(S)
 
-    plt.xlabel('i-direction')
-    plt.ylabel('i-frequency')
-    plt.colorbar()
-    plt.show()
+    #
+    # plt.imshow(S)
+    #
+    # plt.xlabel('i-direction')
+    # plt.ylabel('i-frequency')
+    # plt.colorbar()
+    # plt.show()
 
     # plot the second spectrum in polar form:
-    # data.isel(time=2).spec.plot()  # plot the second spectrum
+    data.isel(time=2).spec.plot()  # plot the second spectrum
+    plt.show()

@@ -5,8 +5,11 @@ https://www.nortekgroup.com/
 questions:
 --------------
 [1.] What is the timezone?
-[2.] Frequency grid of spectra and fourier coefficients are not the same, how to handle this?  --> now using the grid from the fourier coefficients and assuming that the first n frequencies are the same for the spectum
+    --> Depends on device configuration
+[2.] Frequency grid of spectra and fourier coefficients are not the same, how to handle this?
+    --> now using the grid from the fourier coefficients and assuming that the first n frequencies are the same for the spectum
 [3.] Note: in the example data the energy at the first frequency is extremely high compared to the others. Is this normal?
+    --> No it is not.
 
 revision history:
 -----------------
@@ -169,7 +172,6 @@ def parse_awac_nmea(lines):
 
 
 def read_awac(lines,
-              enforce_S0_zero = False,
               dir_res = 4,):
     data = [R for R in parse_awac_nmea(lines)]
 
@@ -186,6 +188,7 @@ def read_awac(lines,
 
     # convert to directional spectra
 
+
     dDir = np.arange(start = 0, stop = (2*np.pi - np.pi * dir_res / 180), step = np.pi * dir_res / 180)
 
     efth = []
@@ -200,9 +203,6 @@ def read_awac(lines,
         A2 = -A2
         B2 = B2
 
-        if enforce_S0_zero:
-            S[0] = 0
-
         # Direction From
         dr = np.pi
         A1new = np.cos(dr) * A1 + np.sin(dr) * B1
@@ -211,14 +211,27 @@ def read_awac(lines,
         B2new = -np.sin(2 * dr) * A2 + np.cos(2 * dr) * B2
 
         # Now apply maximum entropy method to remove negative energy
-        DirFieldOLD = np.zeros((len(freq), len(dDir)))
+        # Initialize the directional field
+        DirField = np.zeros((len(freq), len(dDir)))
+
+        # Apply maximum entropy method to remove negative energy
         for j in range(len(freq)):
+
+            c1 = A1new[j] + 1j * B1new[j]
+            c2 = A2new[j] + 1j * B2new[j]
+
+            fi1 = (c1 - c2 * np.conj(c1)) / (1 - np.abs(c1) * np.abs(c1))
+            fi2 = c2 - c1 * fi1
+
             for dd in range(len(dDir)):
                 dNewdir = np.pi / 2 - dDir[dd]
-                entry =  (A1new[j] * np.cos(dNewdir) + B1new[j] * np.sin(dNewdir) + A2new[j] * np.cos(2 * dNewdir) + B2new[j] * np.sin(2 * dNewdir)) * S[j]
-                DirFieldOLD[j, dd] = entry
+                numer = 1 - fi1 * np.conj(c1) - fi2 * np.conj(c2)
+                denom = 1 - fi1 * np.exp(-1j * dNewdir) - fi2 * np.exp(-2.0 * 1j * dNewdir)
+                DirField[j, dd] = np.real(numer / (np.abs(denom) * np.abs(denom))) / (2.0 * np.pi) * S[
+                    j] * np.pi * dir_res / 180
 
-        efth.append(DirFieldOLD / (100**2)) # convert to m2/Hz
+
+        efth.append(DirField / (100**2)) # convert to m2/Hz
 
         times.append(datetime.datetime.strptime(timestamp, "%m%d%y%H%M%S"))
 
