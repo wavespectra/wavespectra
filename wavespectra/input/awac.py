@@ -2,18 +2,15 @@
 
 https://www.nortekgroup.com/
 
-questions:
---------------
-[1.] What is the timezone?
-    --> Depends on device configuration
-[2.] Frequency grid of spectra and fourier coefficients are not the same, how to handle this?
-    --> now using the grid from the fourier coefficients and assuming that the first n frequencies are the same for the spectum
-[3.] Note: in the example data the energy at the first frequency is extremely high compared to the others. Is this normal?
-    --> No it is not.
+The spectra are reconstructed from the Fourier coefficients using the maximum entropy method to remove negative energy.
+Normalization is applied per frequency to keep energy over directions identical to energy in non-directional spectrum
+The 2D spectral data is scaled to the significant wave height (Hs) given in the wave parameters.
+
+The time is returned as read from the timestamps. The time-zone depends on the configuration of the device and is not included in the output.
 
 revision history:
 -----------------
-2024-07-23 : First version - Ruben de Bruin
+2024-08-15 : First version - Ruben de Bruin
 
 
 Data description and example data:
@@ -59,6 +56,36 @@ N+6 Energy Density [frequency N] (cm2/Hz) dddd.ddd
 $PNORE,050120,000101,3,0.02,0.01,98,0.063,0.029,0.020,0.182,2.671,5.169,6.311,4.587,2.876,1.802,1.817,1.
 442,1.163,0.878,0.653,0.575,0.549,0.409,0.306,0.195,0.184,0.167,0.159,0.119,0.105,0.085,0.072,0.052,0.053,0.045,0.034,0.025,0.022,0.018,0.018,0.018,0.014,0.011,0.008,0.008,0.008,0.007,0.006,0.006,0.005,0.005,0.005,0.005,0.005,0.004,0.003,0.003,0.002,0.003,0.002,0.002,0.002,0.001,0.002,0.002,0.002,0.002,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.000,0.000,0.000,0.000,0.000,0.000*75
 
+Wave Parameters:
+
+Field Description Form
+0 Identifier “$PNORW”
+1 Date MMDDYY
+2 Time hhmmss
+3 Spectrum basis type (0=pressure, 1=velocity,3=AST)
+4 Processing method (1=PUV, 2=SUV, 3=MLM,4=MLMST)
+5 Hm0 (m) dd.dd
+6 H3 (m) dd.dd
+7 H10 (m) dd.dd
+8 Hmax (m) dd.dd
+9 Tm02 (s) dd.dd
+10 Tp (s) dd.dd
+11 Tz (s) dd.dd
+12 DirTp (deg) ddd.dd
+13 SprTp (deg) ddd.dd
+14 Main Direction (deg) ddd.dd
+15 Unidirectivity Index dd.dd
+16 Mean pressure (dbar) dd.dd
+17 Number of no detects n
+18 Number of bad detects n
+19 Near surface Current speed (m/s) dd.dd
+20 Near surface Current direction (deg) ddd.dd
+21 Error Code hhhh
+22 Checksum (hex) *hh
+
+Example:
+$PNORW,073010,051001,3,4,0.55,0.51,0.63,0.82,2.76,3.33,2.97,55.06,78.91,337.62,0.48,22.35,0,1,0.
+27,129.11,0000*4E
 
 Reconstructing a spectrum from these coefficients
 --------------------------------------------------
@@ -134,11 +161,58 @@ import xarray as xr
 from wavespectra.core.attributes import set_spec_attributes
 
 
+def read_awac(filename):
+    with open(filename, 'r') as f:
+        lines = [line for line in f.read().split('\n')]
+    return read_awac_strings(lines)
+
+def parse_awac_nmnea_wave_parameters(lines):
+    for line in lines:
+        if line.startswith("$PNORW"):
+            blocks = line.split(',')
+            timestamp = blocks[1] + blocks[2]
+            Hm0 = float(blocks[5])
+            H3 = float(blocks[6])
+            H10 = float(blocks[7])
+            Hmax = float(blocks[8])
+            Tm02 = float(blocks[9])
+            Tp = float(blocks[10])
+            Tz = float(blocks[11])
+            DirTp = float(blocks[12])
+            SprTp = float(blocks[13])
+            MainDir = float(blocks[14])
+            UnidirectivityIndex = float(blocks[15])
+            MeanPressure = float(blocks[16])
+            NearSurfaceCurrentSpeed = float(blocks[19])
+            NearSurfaceCurrentDirection = float(blocks[20])
+
+            # yield as dict
+            yield {
+                "timestamp": timestamp,
+                "Hm0": Hm0,
+                "H3": H3,
+                "H10": H10,
+                "Hmax": Hmax,
+                "Tm02": Tm02,
+                "Tp": Tp,
+                "Tz": Tz,
+                "DirTp": DirTp,
+                "SprTp": SprTp,
+                "MainDir": MainDir,
+                "UnidirectivityIndex": UnidirectivityIndex,
+                "MeanPressure": MeanPressure,
+                "NearSurfaceCurrentSpeed": NearSurfaceCurrentSpeed,
+                "NearSurfaceCurrentDirection": NearSurfaceCurrentDirection
+            }
+
+
 
 def parse_awac_nmea(lines):
 
     # scan to find frequency grid
     freq = None
+
+    # read spectral frequencies from PNORF
     for line in lines:
         if line.startswith("$PNORF"):
             blocks = line.split(',')
@@ -151,6 +225,23 @@ def parse_awac_nmea(lines):
             break
 
     if freq is None:
+        raise ValueError("Can not determine frequency grid, $PNORF field not found")
+
+    # read spectral frequencies from PNORE
+    ok = False
+    for line in lines:
+        if line.startswith("$PNORE"):
+            blocks = line.split(',')
+            fstart2 = float(blocks[4])
+            fstep2 = float(blocks[5])
+
+            # assert that the frequency grid is the same
+            assert fstart == fstart2, "Frequency start does not match between $PNORF and $PNORE"
+            assert fstep == fstep2, "Frequency step does not match between $PNORF and $PNORE"
+
+            ok = True
+            break
+    if not ok:
         raise ValueError("Can not determine frequency grid, $PNORE field not found")
 
     A1 = None
@@ -158,6 +249,7 @@ def parse_awac_nmea(lines):
     B1 = None
     B2 = None
     S = None
+    Hs = None
     timestamp = None
 
     for line in lines:
@@ -169,11 +261,15 @@ def parse_awac_nmea(lines):
             TS = line[10:16] + line[17:23]
         elif line.startswith("$PNORE"):
             TS = line[7:13] + line[14:20]
+        elif line.startswith("$PNORW"):
+            blocks = line.split(',')
+            TS = blocks[1] + blocks[2]
+
 
         if TS is not None:
             if TS != timestamp:
                 if A1 is not None:
-                    yield timestamp, freq, A1, A2, B1, B2, S
+                    yield timestamp, freq, A1, A2, B1, B2, S, Hs
 
                 timestamp = TS
                 A1 = None
@@ -181,32 +277,45 @@ def parse_awac_nmea(lines):
                 B1 = None
                 B2 = None
                 S = None
+                Hs = None
 
         if line.startswith("$PNORF"):
             # remove the checksum
             blocks = line.split(',')
             if blocks[1] == 'A1':
-                A1 = np.array([float(x) for x in blocks[7:]])
+                if A1 is not None:
+                    warnings.warn(f"Duplicate A1 spectrum found for timestamp {timestamp}")
+                A1 = np.array([float(x) for x in blocks[8:]])
             elif blocks[1] == 'A2':
-                A2 = np.array([float(x) for x in blocks[7:]])
+                if A2 is not None:
+                    warnings.warn(f"Duplicate A2 spectrum found for timestamp {timestamp}")
+                A2 = np.array([float(x) for x in blocks[8:]])
             elif blocks[1] == 'B1':
-                B1 = np.array([float(x) for x in blocks[7:]])
+                if B1 is not None:
+                    warnings.warn(f"Duplicate B1 spectrum found for timestamp {timestamp}")
+                B1 = np.array([float(x) for x in blocks[8:]])
             elif blocks[1] == 'B2':
-                B2 = np.array([float(x) for x in blocks[7:]])
+                if B2 is not None:
+                    warnings.warn(f"Duplicate B2 spectrum found for timestamp {timestamp}")
+                B2 = np.array([float(x) for x in blocks[8:]])
         elif line.startswith("$PNORE"):
             blocks = line.split(',')
             n = int(blocks[6])
             S = np.array([float(x) for x in blocks[7:]])
             if len(S) != n:
                 warnings.warn(f"Number of frequencies in spectrum does not match number of frequencies expected {n} got {len(S)}")
-
+        elif line.startswith("$PNORW"):
+            blocks = line.split(',')
+            Hs = float(blocks[5])
 
     if A1 is not None:
-        yield timestamp, freq, A1, A2, B1, B2, S
+        yield timestamp, freq, A1, A2, B1, B2, S, Hs
 
 
-def read_awac(lines,
-              dir_res = 4,):
+def read_awac_strings(lines,
+              nDirs = 90,):
+    """Parses AWAC NMEA data into directional spectra."""
+
     data = [R for R in parse_awac_nmea(lines)]
 
     # each line of data contains a timestamp, freq, A1, A2, B1, B2, S
@@ -221,21 +330,29 @@ def read_awac(lines,
 
 
     # convert to directional spectra
+    dDir = np.linspace(0, 2 * np.pi, num=nDirs, endpoint=False)
+    dir_step = dDir[1] - dDir[0]
 
-
-    dDir = np.arange(start = 0, stop = (2*np.pi - np.pi * dir_res / 180), step = np.pi * dir_res / 180)
 
     efth = []
     times = []
 
-    for timestamp, freq, A1, A2, B1, B2, S in data:
+
+    for timestamp, freq, aA1, aA2, aB1, aB2, S, Hs in data:
         # %(conversion from Cart to Compass)
-        A1temp = A1
-        B1temp = B1
-        A1 = -B1temp
-        B1 = -A1temp
-        A2 = -A2
-        B2 = B2
+        # A1temp = A1.copy()
+        # B1temp = B1.copy()
+        #
+        # print('A1 = [' + ','.join([str(a) for a in aA1]) + ']')
+        # print('A2 = [' + ','.join([str(a) for a in aA2]) + ']')
+        # print('B1 = [' + ','.join([str(a) for a in aB1]) + ']')
+        # print('B2 = [' + ','.join([str(a) for a in aB2]) + ']')
+        # print('S = [' + ','.join([str(a) for a in S]) + ']')
+
+        A1 = - aB1.copy()
+        B1 = -aA1.copy()
+        A2 = -aA2.copy()
+        B2 = aB2.copy()
 
         # Direction From
         dr = np.pi
@@ -249,26 +366,93 @@ def read_awac(lines,
         DirField = np.zeros((len(freq), len(dDir)))
 
         # Apply maximum entropy method to remove negative energy
-        for j in range(len(freq)):
+        for iFreq in range(len(freq)):
 
-            c1 = A1new[j] + 1j * B1new[j]
-            c2 = A2new[j] + 1j * B2new[j]
+            c1 = A1new[iFreq] + 1j * B1new[iFreq]
+            c2 = A2new[iFreq] + 1j * B2new[iFreq]
 
             fi1 = (c1 - c2 * np.conj(c1)) / (1 - np.abs(c1) * np.abs(c1))
             fi2 = c2 - c1 * fi1
 
+            # print(f"c1 = {c1}")
+            # print(f"c2 = {c2}")
+            # print(f"fi1 = {fi1}")
+            # print(f"fi2 = {fi2}")
+
+            factors = []
             for dd in range(len(dDir)):
+
                 dNewdir = np.pi / 2 - dDir[dd]
                 numer = 1 - fi1 * np.conj(c1) - fi2 * np.conj(c2)
                 denom = 1 - fi1 * np.exp(-1j * dNewdir) - fi2 * np.exp(-2.0 * 1j * dNewdir)
-                DirField[j, dd] = np.real(numer / (np.abs(denom) * np.abs(denom))) / (2.0 * np.pi) * S[
-                    j] * np.pi * dir_res / 180
+
+                dir_factor = np.real(numer / (np.abs(denom) * np.abs(denom)))
+
+                scale1 = 1 / (2 * np.pi)
+                scale2 = dir_step
+
+                scale = scale1 * scale2
+
+                factor = scale * dir_factor
+
+                DirField[iFreq, dd] = factor * S[iFreq]
+                #
+                # print("======================")
+                # print(f"dd = {dd + 1}")
+                # print(f"dNewdir = {dNewdir}")
+                # print(f"numer = {numer}")
+                # print(f"denom = {denom}")
+                # print(f"dir_factor = {dir_factor}")
+
+                factors.append(factor)
+
+            # all factors should add up to 1.0, scale accordingly
+            # print(f"Sum of factors = {np.sum(factors)}")
+            # if np.sum(factors) > 1.1:
+            #     print('Warning: sum of factors is larger than 1.0')
+
+            directional_scaling = 1.0 / np.sum(factors)
+            DirField[iFreq] *= directional_scaling
+
+        # Calculate m0 of the spectrum
+        Sd = [np.sum(DirField[iFreq]) for iFreq in range(len(freq))]
+        m0 = np.trapz(Sd, freq)
+        Hs_spectrum = 4 * np.sqrt(m0)
+
+        # print('Hs = ' + str(Hs_spectrum) + ' == ' + str(Hs))
+
+        # scale the spectrum to the given Hs
+        DirField *= (Hs / Hs_spectrum)**2
+
+        Sd = [np.sum(DirField[iFreq]) for iFreq in range(len(freq))]
+        m0 = np.trapz(Sd, freq)
+        Hs_spectrum = 4 * np.sqrt(m0)
+        # print(f"Hs = {Hs_spectrum}")
+
+        #
+        # Hss.append(4 * np.sqrt(m0))
+
+        # import matplotlib.pyplot as plt
+        # plt.plot(Sd, label='Directional spectrum integrated over all directions')
+        # plt.plot(S,  label='1D spectrum')
+        # plt.legend()
+        # plt.show()
 
 
-        efth.append(DirField / (100**2)) # convert to m2/Hz
+        # in wavespecrta we work in:
+        # m
+        # Hz
+        # degrees
+        # m2/Hz so that is already ok
+        dir_step_deg = np.degrees(dir_step)
+        efth.append(DirField/dir_step_deg)
 
-        times.append(datetime.datetime.strptime(timestamp, "%m%d%y%H%M%S"))
+        ts = datetime.datetime.strptime(timestamp, "%m%d%y%H%M%S")
+        assert ts.tzinfo is None
+        times.append(ts)
 
+    # from matplotlib import pyplot as plt
+    # plt.plot(Hss, label = 'integrated directional spectra')
 
     dir_degrees = np.degrees(dDir)
     freq = data[0][1]
