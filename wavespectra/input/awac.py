@@ -419,24 +419,13 @@ def read_awac_strings(lines,
         m0 = np.trapz(Sd, freq)
         Hs_spectrum = 4 * np.sqrt(m0)
 
-        # print('Hs = ' + str(Hs_spectrum) + ' == ' + str(Hs))
-
-        # scale the spectrum to the given Hs
-        DirField *= (Hs / Hs_spectrum)**2
-
-        Sd = [np.sum(DirField[iFreq]) for iFreq in range(len(freq))]
-        m0 = np.trapz(Sd, freq)
-        Hs_spectrum = 4 * np.sqrt(m0)
-        # print(f"Hs = {Hs_spectrum}")
-
-        #
-        # Hss.append(4 * np.sqrt(m0))
-
-        # import matplotlib.pyplot as plt
-        # plt.plot(Sd, label='Directional spectrum integrated over all directions')
-        # plt.plot(S,  label='1D spectrum')
-        # plt.legend()
-        # plt.show()
+        # scale the spectrum to the given Hs IF Hs_spectrum is not zero
+        if Hs_spectrum == 0:
+            if Hs > 0:
+                warnings.warn(
+                    f"Spectrum with timestamp {timestamp} has zero significant wave height, can not scale to Hs = {Hs}m")
+        else:
+            DirField *= (Hs / Hs_spectrum) ** 2
 
 
         # in wavespecrta we work in:
