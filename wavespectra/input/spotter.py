@@ -4,6 +4,7 @@ from xarray.backends import BackendEntrypoint
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
+import copy
 import glob
 import getpass
 from datetime import datetime, timezone
@@ -109,11 +110,11 @@ def read_spotter(filename_or_fileglob, filetype=None, dd=5.0) -> xr.Dataset:
 
     """
     # Ensure a list of files
-    filenames = Path(filename_or_fileglob)
-    if filenames.is_file():
-        filenames = [filename_or_fileglob]
-    elif isinstance(filename_or_fileglob, list):
+    filenames = copy.deepcopy(filename_or_fileglob)
+    if isinstance(filename_or_fileglob, list):
         filenames = filename_or_fileglob
+    elif Path(filenames).is_file():
+        filenames = [filename_or_fileglob]
     else:
         filenames = sorted(glob.glob(filename_or_fileglob))
         if not filenames:
