@@ -163,7 +163,7 @@ from wavespectra.core.attributes import set_spec_attributes
 
 
 def read_awac(filename):
-    """Read Spectra from Nortec AWAC file.
+    """Read Spectra from Nortec AWAC NMEA file.
 
     The spectra are reconstructed from the Fourier coefficients using the maximum
     entropy method to remove negative energy. Normalisation is applied per frequency to
