@@ -1,62 +1,53 @@
-# import os
 from pathlib import Path
+import numpy as np
 import pytest
-from tempfile import mkdtemp
 
 from wavespectra import read_spotter
-from wavespectra.input.spotter import Spotter
-from wavespectra.core.attributes import attrs
 
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
 
-class TestSpotterJson:
-    """Test parameters Spotter JSON reader."""
-
-    @classmethod
-    def setup_class(self):
-        """Setup class."""
-        infile = FILES_DIR / "spotter_20180214.json"
-        self.spot = Spotter(infile)
-        self.spot.run()
-        self.dset = read_spotter(infile)
-
-    @pytest.mark.parametrize(
-        "wavespectra_name, spotter_name, kwargs",
-        [
-            ("hs", "significantWaveHeight", {}),
-            ("tp", "peakPeriod", {"smooth": False}),
-            ("tm01", "meanPeriod", {}),
-        ],
-    )
-    def test_stats(self, wavespectra_name, spotter_name, kwargs):
-        """Assert that stat calculated from wavespectra matches the one read from spotter."""
-        wavespectra = getattr(self.dset.spec, wavespectra_name)(**kwargs).values
-        spotter = getattr(self.spot, spotter_name)
-        assert wavespectra == pytest.approx(spotter, rel=1e-1)
+@pytest.fixture(scope="module")
+def csv_file():
+    yield sorted(FILES_DIR.glob("spotter*.csv"))[0]
 
 
-@pytest.fixture(
-    scope="module",
-    params=[
-        FILES_DIR / "spotter_20210929.csv",
-        sorted(FILES_DIR.glob("spotter*.csv"))[0],
-    ],
-)
-def dset(request):
-    return read_spotter(request.param)
+@pytest.fixture(scope="module")
+def json_file():
+    yield sorted(FILES_DIR.glob("spotter*.json"))[0]
+
+
+def test_read_single_file_as_1d(csv_file):
+    dset = read_spotter(csv_file, dd=None)
+    assert dir not in dset.dims
+
+
+def test_read_single_file_as_2d(json_file):
+    dset = read_spotter(json_file, dd=5.0)
+    assert np.diff(dset.dir.values).min() == 5
+
+
+def test_read_multiple_files(csv_file):
+    dset1 = read_spotter(csv_file, dd=5.0)
+    dset2 = read_spotter([csv_file, csv_file], dd=5.0)
+    assert dset2.time.size == 2 * dset1.time.size
 
 
 @pytest.mark.parametrize(
-    "wavespectra_name, spotter_name, kwargs",
+    "stat, kwargs",
     [
-        ("hs", "Hm0", {}),
-        ("tp", "Tp", {"smooth": False}),
-        ("tm01", "Tm", {}),
+        ("hs", {}),
+        ("tp", {"smooth": False}),
+        ("dpm", {}),
     ],
 )
-def test_read_spotter_csv(dset, wavespectra_name, spotter_name, kwargs):
-    wavespectra = getattr(dset.spec, wavespectra_name)(**kwargs).values
-    spotter = getattr(dset, spotter_name)
-    assert wavespectra == pytest.approx(spotter, rel=1e-1)
+def test_stats(stat, kwargs):
+    """Assert that stat calculated from wavespectra matches the one read from spotter."""
+    filenames = sorted(FILES_DIR.glob("spotter*"))
+    for filename in filenames:
+        dset = read_spotter(filename)
+        param_wavespectra = getattr(dset.spec, stat)(**kwargs).values
+        param_spotter = dset[stat].values
+        assert param_wavespectra == pytest.approx(param_spotter, rel=1e-1)
+
