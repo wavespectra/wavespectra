@@ -65,6 +65,7 @@ These input functions are currently available from the main module level:
     :nosignatures:
     :toctree: generated/
 
+    read_awac
     read_dataset
     read_era5
     read_funwave
