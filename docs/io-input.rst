@@ -67,6 +67,7 @@ These input functions are currently available from the main module level:
 
     read_awac
     read_dataset
+    read_datawell
     read_era5
     read_funwave
     read_json

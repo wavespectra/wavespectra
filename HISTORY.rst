@@ -13,11 +13,13 @@ Releases
 ********
 
 
-4.1.0 (2024-07-DD)
+4.1.0 (2024-09-09)
 ___________________
 
 New Features
 ------------
+* New reader for Nortec AWAC files by `Ruben de Bruin`_ (`PR137 <https://github.com/wavespectra/wavespectra/pull/137>`_).
+* New reader for Datawell buoy files (`PR135 <https://github.com/wavespectra/wavespectra/pull/135>`_).
 * Allow reading spotter buoy files as 2D spectra (`PR134 <https://github.com/wavespectra/wavespectra/pull/134>`_).
 
 Internal Changes
