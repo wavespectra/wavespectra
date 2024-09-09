@@ -152,6 +152,7 @@ end
 
 
 """
+
 import datetime
 import warnings
 
@@ -162,14 +163,30 @@ from wavespectra.core.attributes import set_spec_attributes
 
 
 def read_awac(filename):
-    with open(filename, 'r') as f:
-        lines = [line for line in f.read().split('\n')]
+    """Read Spectra from Nortec AWAC file.
+
+    The spectra are reconstructed from the Fourier coefficients using the maximum
+    entropy method to remove negative energy. Normalisation is applied per frequency to
+    keep energy over directions identical to energy in non-directional spectrum. The 2D
+    spectral data is scaled to the significant wave height (Hs) given in the wave
+    parameters.
+
+    Args:
+        - filename (str): path to AWAC file.
+
+    Returns:
+        - dset (SpecDataset): spectra dataset object read from file.
+
+    """
+    with open(filename, "r") as f:
+        lines = [line for line in f.read().split("\n")]
     return read_awac_strings(lines)
+
 
 def parse_awac_nmnea_wave_parameters(lines):
     for line in lines:
         if line.startswith("$PNORW"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             timestamp = blocks[1] + blocks[2]
             Hm0 = float(blocks[5])
             H3 = float(blocks[6])
@@ -202,9 +219,8 @@ def parse_awac_nmnea_wave_parameters(lines):
                 "UnidirectivityIndex": UnidirectivityIndex,
                 "MeanPressure": MeanPressure,
                 "NearSurfaceCurrentSpeed": NearSurfaceCurrentSpeed,
-                "NearSurfaceCurrentDirection": NearSurfaceCurrentDirection
+                "NearSurfaceCurrentDirection": NearSurfaceCurrentDirection,
             }
-
 
 
 def parse_awac_nmea(lines):
@@ -215,12 +231,12 @@ def parse_awac_nmea(lines):
     # read spectral frequencies from PNORF
     for line in lines:
         if line.startswith("$PNORF"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             fstart = float(blocks[5])
             fstep = float(blocks[6])
             fn = int(blocks[7])
 
-            freq = fstart + np.linspace(start=0, stop=fn*fstep, num=fn, endpoint=True)
+            freq = fstart + np.linspace(start=0, stop=fn * fstep, num=fn, endpoint=True)
 
             break
 
@@ -231,13 +247,17 @@ def parse_awac_nmea(lines):
     ok = False
     for line in lines:
         if line.startswith("$PNORE"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             fstart2 = float(blocks[4])
             fstep2 = float(blocks[5])
 
             # assert that the frequency grid is the same
-            assert fstart == fstart2, "Frequency start does not match between $PNORF and $PNORE"
-            assert fstep == fstep2, "Frequency step does not match between $PNORF and $PNORE"
+            assert (
+                fstart == fstart2
+            ), "Frequency start does not match between $PNORF and $PNORE"
+            assert (
+                fstep == fstep2
+            ), "Frequency step does not match between $PNORF and $PNORE"
 
             ok = True
             break
@@ -253,7 +273,7 @@ def parse_awac_nmea(lines):
     timestamp = None
 
     for line in lines:
-        line = line.split('*')[0]
+        line = line.split("*")[0]
 
         # new timestamp?
         TS = None
@@ -262,9 +282,8 @@ def parse_awac_nmea(lines):
         elif line.startswith("$PNORE"):
             TS = line[7:13] + line[14:20]
         elif line.startswith("$PNORW"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             TS = blocks[1] + blocks[2]
-
 
         if TS is not None:
             if TS != timestamp:
@@ -281,39 +300,51 @@ def parse_awac_nmea(lines):
 
         if line.startswith("$PNORF"):
             # remove the checksum
-            blocks = line.split(',')
-            if blocks[1] == 'A1':
+            blocks = line.split(",")
+            if blocks[1] == "A1":
                 if A1 is not None:
-                    warnings.warn(f"Duplicate A1 spectrum found for timestamp {timestamp}")
+                    warnings.warn(
+                        f"Duplicate A1 spectrum found for timestamp {timestamp}"
+                    )
                 A1 = np.array([float(x) for x in blocks[8:]])
-            elif blocks[1] == 'A2':
+            elif blocks[1] == "A2":
                 if A2 is not None:
-                    warnings.warn(f"Duplicate A2 spectrum found for timestamp {timestamp}")
+                    warnings.warn(
+                        f"Duplicate A2 spectrum found for timestamp {timestamp}"
+                    )
                 A2 = np.array([float(x) for x in blocks[8:]])
-            elif blocks[1] == 'B1':
+            elif blocks[1] == "B1":
                 if B1 is not None:
-                    warnings.warn(f"Duplicate B1 spectrum found for timestamp {timestamp}")
+                    warnings.warn(
+                        f"Duplicate B1 spectrum found for timestamp {timestamp}"
+                    )
                 B1 = np.array([float(x) for x in blocks[8:]])
-            elif blocks[1] == 'B2':
+            elif blocks[1] == "B2":
                 if B2 is not None:
-                    warnings.warn(f"Duplicate B2 spectrum found for timestamp {timestamp}")
+                    warnings.warn(
+                        f"Duplicate B2 spectrum found for timestamp {timestamp}"
+                    )
                 B2 = np.array([float(x) for x in blocks[8:]])
         elif line.startswith("$PNORE"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             n = int(blocks[6])
             S = np.array([float(x) for x in blocks[7:]])
             if len(S) != n:
-                warnings.warn(f"Number of frequencies in spectrum does not match number of frequencies expected {n} got {len(S)}")
+                warnings.warn(
+                    f"Number of frequencies in spectrum does not match number of frequencies expected {n} got {len(S)}"
+                )
         elif line.startswith("$PNORW"):
-            blocks = line.split(',')
+            blocks = line.split(",")
             Hs = float(blocks[5])
 
     if A1 is not None:
         yield timestamp, freq, A1, A2, B1, B2, S, Hs
 
 
-def read_awac_strings(lines,
-              nDirs = 90,):
+def read_awac_strings(
+    lines,
+    nDirs=90,
+):
     """Parses AWAC NMEA data into directional spectra."""
 
     data = [R for R in parse_awac_nmea(lines)]
@@ -322,21 +353,22 @@ def read_awac_strings(lines,
     # the first and last line may contain Nones for A1, A2, B1, B2, S if the file was incomplete. In that case we remove them
 
     if any(x is None for x in data[0]):
-        warnings.warn(f"First spectrum of AWAC data incomplete, removed spectrum with timestamp {data[0][0]}")
+        warnings.warn(
+            f"First spectrum of AWAC data incomplete, removed spectrum with timestamp {data[0][0]}"
+        )
         data = data[1:]
     if any(x is None for x in data[-1]):
-        warnings.warn(f"Last spectrum of AWAC data incomplete, removed with timestamp {data[0][0]}")
+        warnings.warn(
+            f"Last spectrum of AWAC data incomplete, removed with timestamp {data[0][0]}"
+        )
         data = data[:-1]
-
 
     # convert to directional spectra
     dDir = np.linspace(0, 2 * np.pi, num=nDirs, endpoint=False)
     dir_step = dDir[1] - dDir[0]
 
-
     efth = []
     times = []
-
 
     for timestamp, freq, aA1, aA2, aB1, aB2, S, Hs in data:
         # %(conversion from Cart to Compass)
@@ -349,7 +381,7 @@ def read_awac_strings(lines,
         # print('B2 = [' + ','.join([str(a) for a in aB2]) + ']')
         # print('S = [' + ','.join([str(a) for a in S]) + ']')
 
-        A1 = - aB1.copy()
+        A1 = -aB1.copy()
         B1 = -aA1.copy()
         A2 = -aA2.copy()
         B2 = aB2.copy()
@@ -384,7 +416,9 @@ def read_awac_strings(lines,
 
                 dNewdir = np.pi / 2 - dDir[dd]
                 numer = 1 - fi1 * np.conj(c1) - fi2 * np.conj(c2)
-                denom = 1 - fi1 * np.exp(-1j * dNewdir) - fi2 * np.exp(-2.0 * 1j * dNewdir)
+                denom = (
+                    1 - fi1 * np.exp(-1j * dNewdir) - fi2 * np.exp(-2.0 * 1j * dNewdir)
+                )
 
                 dir_factor = np.real(numer / (np.abs(denom) * np.abs(denom)))
 
@@ -423,10 +457,10 @@ def read_awac_strings(lines,
         if Hs_spectrum == 0:
             if Hs > 0:
                 warnings.warn(
-                    f"Spectrum with timestamp {timestamp} has zero significant wave height, can not scale to Hs = {Hs}m")
+                    f"Spectrum with timestamp {timestamp} has zero significant wave height, can not scale to Hs = {Hs}m"
+                )
         else:
             DirField *= (Hs / Hs_spectrum) ** 2
-
 
         # in wavespecrta we work in:
         # m
@@ -434,7 +468,7 @@ def read_awac_strings(lines,
         # degrees
         # m2/Hz so that is already ok
         dir_step_deg = np.degrees(dir_step)
-        efth.append(DirField/dir_step_deg)
+        efth.append(DirField / dir_step_deg)
 
         ts = datetime.datetime.strptime(timestamp, "%m%d%y%H%M%S")
         assert ts.tzinfo is None
@@ -460,6 +494,3 @@ def read_awac_strings(lines,
     ds["site"] = [0]
 
     return ds
-
-
-
