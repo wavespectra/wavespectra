@@ -6,7 +6,11 @@ from matplotlib import pyplot as plt
 from numpy.testing import assert_allclose
 
 from wavespectra import read_awac
-from wavespectra.input.awac import parse_awac_nmnea_wave_parameters, parse_awac_nmea, read_awac_strings
+from wavespectra.input.awac import (
+    parse_awac_nmnea_wave_parameters,
+    parse_awac_nmea,
+    read_awac_strings,
+)
 
 AWAC_EXAMPLE_DATA = """
 $PNORF,B1,043020,234101,3,0.02,0.01,48,0.0762,0.0898,0.1479,0.2516,0.3469,0.3753,0.3995,0.4218,0.4327,0.4195,0.4219,0.4277,0.3751,0.3772,0.3213,0.2881,0.1973,0.1583,0.1560,0.0968,0.0370,-0.0486,-0.0142,-0.0233,0.0005,0.0251,0.0542,0.0543,-0.0205,0.0079,-0.0293,0.0759,0.1088,0.1308,0.1418,0.0951,0.0528,0.0034,-0.0025,-9.0000,-9.0000,-9.0000,-9.0000,-9.0000,-9.0000,-9.0000,-9.0000,-9.0000*02
@@ -326,43 +330,46 @@ FILES_DIR = Path(__file__).parent.parent / "sample_files"
 
 
 def give_expected_Hs():
-    D = AWAC_EXAMPLE_DATA.replace('\n', '')
-    D = D.replace('$', '\n$')
+    D = AWAC_EXAMPLE_DATA.replace("\n", "")
+    D = D.replace("$", "\n$")
 
     Hs = []
 
-    for d in parse_awac_nmnea_wave_parameters(D.split('\n')):
-        Hs.append(d['Hm0'])
+    for d in parse_awac_nmnea_wave_parameters(D.split("\n")):
+        Hs.append(d["Hm0"])
 
     return Hs
 
+
 def give_expected_Tp():
-    D = AWAC_EXAMPLE_DATA.replace('\n', '')
-    D = D.replace('$', '\n$')
+    D = AWAC_EXAMPLE_DATA.replace("\n", "")
+    D = D.replace("$", "\n$")
 
     Tp = []
 
-    for d in parse_awac_nmnea_wave_parameters(D.split('\n')):
-        Tp.append(d['Tp'])
+    for d in parse_awac_nmnea_wave_parameters(D.split("\n")):
+        Tp.append(d["Tp"])
 
     return Tp
 
-def test_awac_Hs():
-    D = AWAC_EXAMPLE_DATA.replace('\n', '')
-    D = D.replace('$', '\n$')
 
-    data = read_awac_strings(D.split('\n'))
+def test_awac_Hs():
+    D = AWAC_EXAMPLE_DATA.replace("\n", "")
+    D = D.replace("$", "\n$")
+
+    data = read_awac_strings(D.split("\n"))
 
     Hs_expected = give_expected_Hs()
     Hs_actual = data.spec.hs().values
 
     assert_allclose(Hs_actual, Hs_expected, rtol=1e-1)
 
-def test_awac_Tp():
-    D = AWAC_EXAMPLE_DATA.replace('\n', '')
-    D = D.replace('$', '\n$')
 
-    data = read_awac_strings(D.split('\n'))
+def test_awac_Tp():
+    D = AWAC_EXAMPLE_DATA.replace("\n", "")
+    D = D.replace("$", "\n$")
+
+    data = read_awac_strings(D.split("\n"))
 
     Tp_expected = give_expected_Tp()
     Tp_actual = data.spec.tp().values
@@ -378,6 +385,7 @@ def test_awac_Hs_file():
 
     assert_allclose(Hs_actual, Hs_expected, rtol=1e-1)
 
+
 def test_awac_Tp_file():
     data = read_awac(FILES_DIR / "nortec_awac.nmea")
 
@@ -387,17 +395,16 @@ def test_awac_Tp_file():
     assert_allclose(Tp_actual, Tp_expected, rtol=1e-1)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # clean data
-    D = AWAC_EXAMPLE_DATA.replace('\n','')
-    D = D.replace('$','\n$')
+    D = AWAC_EXAMPLE_DATA.replace("\n", "")
+    D = D.replace("$", "\n$")
 
-    spectra = read_awac_strings(D.split('\n'))
+    spectra = read_awac_strings(D.split("\n"))
 
     for t in spectra.time:
         plt.figure()
-        spectra.sel(time=t).spec.plot(cmap='viridis_r')
+        spectra.sel(time=t).spec.plot(cmap="viridis_r")
 
     plt.show()
