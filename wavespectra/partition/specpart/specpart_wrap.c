@@ -1,30 +1,30 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
-#include "specpartc.h"
+#include "specpart.h"
 
-static PyObject * specpartc(PyObject *self, PyObject *args);
+static PyObject * specpart(PyObject *self, PyObject *args);
 
 /* ==== Set up the methods table ====================== */
-static PyMethodDef specpartc_methods[] = {
-  {"partition", specpartc, METH_VARARGS, "Description"},
+static PyMethodDef specpart_methods[] = {
+  {"partition", specpart, METH_VARARGS, "Description"},
   {NULL, NULL, 0, NULL}
 };
 
-static struct PyModuleDef specpartc_definition  = { 
+static struct PyModuleDef specpart_definition  = { 
     PyModuleDef_HEAD_INIT,
-    "specpartc",
+    "specpart",
     "A Python module that prints 'hello world' from C code.",
     -1, 
-    specpartc_methods
+    specpart_methods
 };
 
-PyMODINIT_FUNC PyInit_specpartc(void) {
+PyMODINIT_FUNC PyInit_specpart(void) {
   Py_Initialize();
   import_array();
-  return PyModule_Create(&specpartc_definition);
+  return PyModule_Create(&specpart_definition);
 }
 
-static PyObject * specpartc(PyObject *self, PyObject *args)
+static PyObject * specpart(PyObject *self, PyObject *args)
 {
   PyArrayObject *specin, *ipartout;  // The python objects to be extracted from the args
   float * spec;

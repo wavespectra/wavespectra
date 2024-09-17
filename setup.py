@@ -5,10 +5,10 @@ setup(
     name="wavespectra",
     ext_modules=[
         Extension(
-            name="wavespectra.partition.specpartc",
+            name="wavespectra.partition.specpart",
             sources=[
-                "wavespectra/partition/specpart/specpartc_wrap.c",
-                "wavespectra/partition/specpart/specpartc.c",
+                "wavespectra/partition/specpart/specpart_wrap.c",
+                "wavespectra/partition/specpart/specpart.c",
             ],
             include_dirs=[get_numpy_include()],
         )
