@@ -3,7 +3,7 @@ from itertools import combinations
 import numpy as np
 import xarray as xr
 
-from wavespectra.partition import specpartc
+from wavespectra.partition import specpart
 from wavespectra.core.utils import (
     set_spec_attributes,
     regrid_spec,
@@ -829,7 +829,7 @@ def np_ptm1(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Wind sea mask
@@ -909,7 +909,7 @@ def np_ptm2(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Wind sea mask
@@ -979,7 +979,7 @@ def np_ptm3(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
@@ -1051,7 +1051,7 @@ def np_hp01(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
@@ -1144,7 +1144,7 @@ def np_hp01_wseabins(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries
@@ -1240,7 +1240,7 @@ def np_hp01_wseafrac_wseabins(
 
     """
     # Use smooth spectrum to define morphological boundaries
-    watershed_map = specpartc.partition(spectrum_smooth.astype(np.float32), ihmax)
+    watershed_map = specpart.partition(spectrum_smooth.astype(np.float32), ihmax)
     nparts = watershed_map.max()
 
     # Assign partitioned arrays from raw spectrum and morphological boundaries

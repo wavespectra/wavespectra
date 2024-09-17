@@ -1,7 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "specpartc.h"
+#include "specpart.h"
 
 static int nspec= 0, mk = -1, mth = -1, npart=0;
 /*     ----------------------------------------------------------------
