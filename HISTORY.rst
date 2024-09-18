@@ -13,6 +13,14 @@ Releases
 ********
 
 
+4.1.1 (2024-09-18)
+___________________
+
+Internal Changes
+----------------
+* Rename specpartc to specpart to try and fix inconsistencies in module definition.
+
+
 4.1.0 (2024-09-09)
 ___________________
 
