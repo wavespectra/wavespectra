@@ -13,6 +13,20 @@ Releases
 ********
 
 
+4.2.0 (2024-11-13)
+___________________
+
+Breaking Changes
+----------------
+* Remove `dset_lons` / `dset_lats` variables from the select methods. These variables
+  were not necessary and were only defined to support some legacy chunking issues.
+
+Internal Changes
+----------------
+* Support datasets with different coordinate names in the select module.
+* Support lons/lats specified as scalars in the `SpecDataset.sel` method.
+
+
 4.1.1 (2024-09-18)
 ___________________
 
