@@ -124,8 +124,6 @@ class SpecDataset(metaclass=Plugin):
         lats,
         method="idw",
         tolerance=2.0,
-        dset_lons=None,
-        dset_lats=None,
         **kwargs,
     ):
         """Select stations near or at locations defined by (lons, lats) vector.
@@ -140,10 +138,6 @@ class SpecDataset(metaclass=Plugin):
                 * None: Only exact matches.
             - tolerance (float): Maximum distance between locations and original stations
               for inexact matches.
-            - dset_lons (array): Longitude of stations in dset, not required but could
-              help improove speed.
-            - dset_lats (array): Latitude of stations in dset, not required but could
-              help improove speed.
             - kwargs: Extra keywargs to pass to the respective sel function
               (i.e., `sel_nearest`, `sel_idw`).
 
@@ -154,9 +148,6 @@ class SpecDataset(metaclass=Plugin):
             - `tolerance` behaves differently with methods 'idw' and 'nearest'. In 'idw'
               sites with no neighbours within `tolerance` are masked whereas in
               'nearest' an exception is raised.
-            - `dset_lons`, `dset_lats` are not required but can improve performance when
-              `dset` is chunked with site=1 (expensive to access site coords) and
-              improve precision if projected coors are provided at high latitudes.
 
         """
         funcs = {
@@ -173,18 +164,11 @@ class SpecDataset(metaclass=Plugin):
             )
         if method is None:
             kwargs.update({"exact": True})
-        # Providing station coordinates is a lot more efficient for chunked datasets
-        if dset_lons is None:
-            dset_lons = self.dset[attrs.LONNAME].values
-        if dset_lats is None:
-            dset_lats = self.dset[attrs.LATNAME].values
         dsout = func(
             dset=self.dset,
             lons=lons,
             lats=lats,
             tolerance=tolerance,
-            dset_lons=dset_lons,
-            dset_lats=dset_lats,
             **kwargs,
         )
         return dsout
