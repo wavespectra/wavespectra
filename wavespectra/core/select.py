@@ -1,4 +1,5 @@
 """Interpolate stations."""
+
 import logging
 
 import numpy as np
@@ -16,24 +17,34 @@ class Coordinates:
         dset (xr.Dataset): Dataset object to slice from.
         lons (array): Longitudes to slice.
         lats (array): Latitudes to slice.
-        dset_lons (array): Dataset longitudes for optimising.
-        dset_lats (array): Dataset latitudes for optimising.
+        sitename (str): Name of site dimension.
+        lonname (str): Name of longitude coordinate.
+        latname (str): Name of latitude coordinate.
 
     """
 
-    def __init__(self, dset, lons, lats, dset_lons=None, dset_lats=None):
+    def __init__(
+        self,
+        dset,
+        lons,
+        lats,
+        sitename=attrs.SITENAME,
+        lonname=attrs.LONNAME,
+        latname=attrs.LATNAME,
+    ):
+        # Ensure arrays
+        lons = lons if not np.isscalar(lons) else [lons]
+        lats = lats if not np.isscalar(lats) else [lats]
+
         self.dset = dset
         self._lons = np.array(lons)
         self.lats = np.array(lats)
+        self.sitename = sitename
+        self.lonname = lonname
+        self.latname = latname
 
-        if dset_lons is None:
-            self.dset_lons = dset[attrs.LONNAME].values
-        else:
-            self.dset_lons = dset_lons
-        if dset_lats is None:
-            self.dset_lats = dset[attrs.LATNAME].values
-        else:
-            self.dset_lats = dset_lats
+        self.dset_lons = dset[self.lonname].values
+        self.dset_lats = dset[self.latname].values
 
         self._validate()
 
@@ -46,9 +57,9 @@ class Coordinates:
         """Few input checks."""
         assert len(self._lons) == len(self.lats), "lons and lats must have same size."
         if (
-            attrs.LONNAME in self.dset.dims
-            or attrs.LATNAME in self.dset.dims
-            or attrs.SITENAME not in self.dset.dims
+            self.lonname in self.dset.dims
+            or self.latname in self.dset.dims
+            or self.sitename not in self.dset.dims
         ):
             raise NotImplementedError("sel only supports stations not gridded data.")
 
@@ -143,9 +154,10 @@ def sel_nearest(
     tolerance=2.0,
     unique=False,
     exact=False,
-    dset_lons=None,
-    dset_lats=None,
     missing="raise",
+    sitename=attrs.SITENAME,
+    lonname=attrs.LONNAME,
+    latname=attrs.LATNAME,
 ):
     """Select sites from nearest distance.
 
@@ -156,11 +168,12 @@ def sel_nearest(
         tolerance (float): Maximum distance to use site for interpolation.
         unique (bool): Only returns unique sites in case of repeated inexact matches.
         exact (bool): Require exact matches.
-        dset_lons (array): Longitude of stations in dset.
-        dset_lats (array): Latitude of stations in dset.
         missing (str): Action to take if no site is found within tolerance:
             - 'raise': raise an error
             - 'ignore': skip site
+        sitename (str): Name of site dimension.
+        lonname (str): Name of longitude coordinate.
+        latname (str): Name of latitude coordinate.
 
     Returns:
         Selected SpecDataset at locations defined by (lons, lats).
@@ -172,7 +185,7 @@ def sel_nearest(
 
     """
     coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+        dset, lons=lons, lats=lats, sitename=sitename, lonname=lonname, latname=latname
     )
 
     station_ids = []
@@ -207,19 +220,26 @@ def sel_nearest(
             f"No site in dataset found within tolerance={tolerance} deg of any site "
             f"{list(zip(coords.lons, coords.lats))}"
         )
-    dsout = dset.isel(**{attrs.SITENAME: station_ids})
+    dsout = dset.isel(**{sitename: station_ids})
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
         dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
-    dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
+    dsout = dsout.assign_coords({sitename: np.arange(len(station_ids))})
 
     return dsout
 
 
 def sel_idw(
-    dset, lons, lats, tolerance=2.0, max_sites=4, dset_lons=None, dset_lats=None
+    dset,
+    lons,
+    lats,
+    tolerance=2.0,
+    max_sites=4,
+    sitename=attrs.SITENAME,
+    lonname=attrs.LONNAME,
+    latname=attrs.LATNAME,
 ):
     """Select sites from inverse distance weighting.
 
@@ -229,8 +249,9 @@ def sel_idw(
         lats (array): Latitude of sites to interpolate spectra at.
         tolerance (float): Maximum distance to use site for interpolation.
         max_sites (int): Maximum number of neighbour sites to use for interpolation.
-        dset_lons (array): Longitude of stations in dset.
-        dset_lats (array): Latitude of stations in dset.
+        sitename (str): Name of site dimension.
+        lonname (str): Name of longitude coordinate.
+        latname (str): Name of latitude coordinate.
 
     Returns:
         Selected SpecDataset at locations defined by (lons, lats).
@@ -242,10 +263,10 @@ def sel_idw(
 
     """
     coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+        dset, lons=lons, lats=lats, sitename=sitename, lonname=lonname, latname=latname
     )
 
-    mask = dset.isel(site=0, drop=True) * np.nan
+    mask = dset.isel({sitename: 0}, drop=True) * np.nan
     dsout = []
     for lon, lat in zip(coords.lons, coords.lats):
         closest_ids, closest_dist = coords.nearer(lon, lat, tolerance, max_sites)
@@ -271,23 +292,23 @@ def sel_idw(
             sumfac = float(1.0 / sum(factors))
             ind = indices.pop(0)
             fac = factors.pop(0)
-            weighted = float(fac) * dset.isel(site=ind, drop=True)
+            weighted = float(fac) * dset.isel({sitename: ind}, drop=True)
             for ind, fac in zip(indices, factors):
-                weighted += float(fac) * dset.isel(site=ind, drop=True)
+                weighted += float(fac) * dset.isel({sitename: ind}, drop=True)
             if len(indices) > 0:
                 weighted *= sumfac
             dsout.append(weighted)
 
     # Concat sites into dataset
-    dsout = xr.concat(dsout, dim=attrs.SITENAME)
+    dsout = xr.concat(dsout, dim=sitename)
     for dvar in dsout.data_vars:
         if set(dsout[dvar].dims) == set(dset[dvar].dims):
             dsout[dvar] = dsout[dvar].transpose(*dset[dvar].dims)
 
     # Redefining coordinates and variables
-    dsout[attrs.SITENAME] = np.arange(len(coords.lons))
-    dsout[attrs.LONNAME] = ((attrs.SITENAME), coords.lons)
-    dsout[attrs.LATNAME] = ((attrs.SITENAME), coords.lats)
+    dsout[sitename] = np.arange(len(coords.lons))
+    dsout[lonname] = ((sitename), coords.lons)
+    dsout[latname] = ((sitename), coords.lats)
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
@@ -299,7 +320,15 @@ def sel_idw(
     return dsout
 
 
-def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
+def sel_bbox(
+    dset,
+    lons,
+    lats,
+    tolerance=0.0,
+    sitename=attrs.SITENAME,
+    lonname=attrs.LONNAME,
+    latname=attrs.LATNAME,
+):
     """Select sites within bbox.
 
     Args:
@@ -307,8 +336,9 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
         lons (array): Longitude of sites to interpolate spectra at.
         lats (array): Latitude of sites to interpolate spectra at.
         tolerance (float): Extend bbox extents by.
-        dset_lons (array): Longitude of stations in dset.
-        dset_lats (array): Latitude of stations in dset.
+        sitename (str): Name of site dimension.
+        lonname (str): Name of longitude coordinate.
+        latname (str): Name of latitude coordinate.
 
     Returns:
         Selected SpecDataset within bbox defined by:
@@ -321,7 +351,7 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
 
     """
     coords = Coordinates(
-        dset, lons=lons, lats=lats, dset_lons=dset_lons, dset_lats=dset_lats
+        dset, lons=lons, lats=lats, sitename=sitename, lonname=lonname, latname=latname
     )
 
     minlon = min(coords.lons) - tolerance
@@ -359,12 +389,12 @@ def sel_bbox(dset, lons, lats, tolerance=0.0, dset_lons=None, dset_lats=None):
             f"[{max(coords._lons) + tolerance}, {maxlat}])"
         )
 
-    dsout = dset.isel(**{attrs.SITENAME: station_ids})
+    dsout = dset.isel(**{sitename: station_ids})
 
     # Return longitudes in the convention provided
     if coords.consistent is False:
         dsout.lon.values = coords._swap_longitude_convention(dsout.lon.values)
 
-    dsout = dsout.assign_coords({attrs.SITENAME: np.arange(len(station_ids))})
+    dsout = dsout.assign_coords({sitename: np.arange(len(station_ids))})
 
     return dsout
