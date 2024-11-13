@@ -25,6 +25,7 @@ Internal Changes
 ----------------
 * Support datasets with different coordinate names in the select module.
 * Support lons/lats specified as scalars in the `SpecDataset.sel` method.
+* Add new github workflow to test the package on push on different OS with different python versions.
 
 
 4.1.1 (2024-09-18)
