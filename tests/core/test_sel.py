@@ -31,6 +31,16 @@ class TestSel:
         with pytest.raises(NotImplementedError):
             dset.spec.sel(lons=self.lons, lats=self.lats, method="idw")
 
+    def test_dset_sel_scalars(self):
+        """Assert that scalars for lons/lats is now supported."""
+        dset1 = self.dset.spec.sel(
+            lons=[self.lons[0]], lats=[self.lats[0]], method="idw", tolerance=1.0
+        )
+        dset2 = self.dset.spec.sel(
+            lons=self.lons[0], lats=self.lats[0], method="idw", tolerance=1.0
+        )
+        assert dset1.equals(dset2)
+
     def test_dset_sel_idw(self):
         """Assert that sel/idw method runs."""
         dset = self.dset.spec.sel(
@@ -209,8 +219,6 @@ class TestSelCoordinatesConventions:
             lons=[351],
             lats=[31],
             tolerance=5.0,
-            dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values,
         )
         assert ds.lon == 350
 
@@ -271,8 +279,6 @@ class TestSelCoordinatesConventions:
             lons=[-10, 10],
             lats=[-35, 35],
             tolerance=0.0,
-            dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values,
         )
         assert np.array_equal(ds.lon.values, dset.lon.values)
 
@@ -286,8 +292,6 @@ class TestSelCoordinatesConventions:
             lons=[-11, 11],
             lats=[-35, 35],
             tolerance=0.0,
-            dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values,
         )
         assert np.array_equal(
             sorted(ds.lon.values % 360), sorted(dset.lon.values % 360)
@@ -303,7 +307,5 @@ class TestSelCoordinatesConventions:
             lons=[345, 355],
             lats=[-35, 35],
             tolerance=0.0,
-            dset_lons=dset.lon.values,
-            dset_lats=dset.lat.values,
         )
         assert ds.lon.values[0] == 350
