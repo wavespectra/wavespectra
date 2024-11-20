@@ -26,7 +26,7 @@ MAPPING = {
 }
 
 
-def read_ndbc(url, directional=True, dd=10.0, chunks={}):
+def read_ndbc(url, directional=True, dd=10.0, chunks={}, weight_coeff: bool = False):
     """Read Spectra from NDBC netCDF format.
 
     Args:
@@ -35,6 +35,8 @@ def read_ndbc(url, directional=True, dd=10.0, chunks={}):
         - dd (float): Directional resolution for 2D spectra (deg).
         - chunks (dict): Chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions.
+        - weight_coef (bool): Weight the coefficient to avoid negative value
+          in spectrum.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from NDBC file.
@@ -48,22 +50,29 @@ def read_ndbc(url, directional=True, dd=10.0, chunks={}):
 
     """
     dset = xr.open_dataset(url).chunk(chunks)
-    return from_ndbc(dset, directional=directional, dd=dd)
+    return from_ndbc(dset, directional=directional, dd=dd, weight_coeff=weight_coeff)
 
 
-def _construct_spectra(ef, swd1, swd2, swr1, swr2, dir):
+def _construct_spectra(ef, swd1, swd2, swr1, swr2, dir, weight_coeff: bool = False):
     """Construct 2D spectra."""
-    d = 0.5 + swr1 * np.cos(D2R * (dir - swd1)) + swr2 * np.cos(2 * D2R * (dir - swd2))
+    if weight_coeff:
+        d = 0.5 + 2 / 3 * swr1 * np.cos(D2R * (dir - swd1)) + \
+            1 / 6 * swr2 * np.cos(2 * D2R * (dir - swd2))
+    else:
+        d = 0.5 + swr1 * np.cos(D2R * (dir - swd1)) + swr2 * \
+            np.cos(2 * D2R * (dir - swd2))
     return ef * d * D2R / np.pi
 
 
-def from_ndbc(dset, directional=True, dd=10.0):
+def from_ndbc(dset, directional=True, dd=10.0, weight_coeff: bool = False):
     """Format NDBC netcdf dataset to implement the wavespectra accessor.
 
     Args:
         - dset (xr.Dataset): Dataset created from a NDBC netcdf file.
         - directional (bool): Constructs 2D spectra if True, returns 1D if False.
         - dd (float): Directional resolution for 2D spectra (deg).
+        - weight_coef (bool): Weight the coefficient to avoid negative value
+          in spectrum.
 
     Returns:
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
@@ -103,6 +112,7 @@ def from_ndbc(dset, directional=True, dd=10.0):
             swr1=dset.wave_spectrum_r1,
             swr2=dset.wave_spectrum_r2,
             dir=xr.DataArray(dirs, dims=(attrs.DIRNAME,), coords={attrs.DIRNAME: dirs}),
+            weight_coeff=weight_coeff,
         )
     else:
         dset = dset.spectral_wave_density
