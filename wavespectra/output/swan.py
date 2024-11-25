@@ -41,7 +41,8 @@ def to_swan(
     """
     # If grid reshape into site, otherwise ensure there is site dim to iterate over
     dset = self._check_and_stack_dims()
-    ntime = min(ntime or dset.time.size, dset.time.size)
+    time_size = dset.time.size if "time" in dset.dims else 1
+    ntime = min(ntime or time_size, time_size)
 
     # Handle datasets with missing lon/lat
     for arr, name in zip((lons, lats), (attrs.LONNAME, attrs.LATNAME)):
@@ -55,7 +56,7 @@ def to_swan(
     # Ensure time dimension exists
     is_time = attrs.TIMENAME in dset[attrs.SPECNAME].dims
     if not is_time:
-        dset = dset.expand_dims({attrs.TIMENAME: [None]})
+        dset[attrs.SPECNAME] = dset[attrs.SPECNAME].expand_dims({attrs.TIMENAME: [None]})
         times = dset[attrs.TIMENAME].values
     else:
         times = dset[attrs.TIMENAME].to_index().to_pydatetime()
