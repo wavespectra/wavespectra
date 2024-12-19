@@ -5,6 +5,7 @@ Hovmoller diagram of spectra timeseries
 Integrate spectra and plot as Hovmoller diagram
 
 """
+
 import matplotlib.pyplot as plt
 import cmocean
 from wavespectra import read_ww3

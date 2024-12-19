@@ -5,6 +5,7 @@ Faceting capability
 Faceting capability from xarray is supported
 
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from wavespectra import read_era5

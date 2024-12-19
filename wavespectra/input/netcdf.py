@@ -1,4 +1,5 @@
 """Read generic netCDF spectra files."""
+
 from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset

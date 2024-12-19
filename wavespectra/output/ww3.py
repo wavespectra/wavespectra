@@ -1,4 +1,5 @@
 """Native WAVEWATCH3 output plugin."""
+
 import os
 import yaml
 import numpy as np

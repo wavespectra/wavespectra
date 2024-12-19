@@ -5,6 +5,7 @@ Spectrum as pcolormesh
 Pcolor type plot of wave spectrum
 
 """
+
 import matplotlib.pyplot as plt
 import cmocean
 from wavespectra import read_era5

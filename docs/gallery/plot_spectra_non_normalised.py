@@ -5,6 +5,7 @@ Energy density values
 Show actual energy density rather than normalised values
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 

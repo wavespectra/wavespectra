@@ -1,4 +1,5 @@
 """Unit testing for SpecDataset wrapper around DataArray."""
+
 import os
 import pytest
 import numpy as np

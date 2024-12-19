@@ -6,6 +6,7 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
 (excluding some that are manipulated in wavespectra such as `ax`, `x` and others):
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 

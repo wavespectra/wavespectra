@@ -3,6 +3,7 @@
 https://dods.ndbc.noaa.gov/
 
 """
+
 import logging
 from xarray.backends import BackendEntrypoint
 import xarray as xr
@@ -56,11 +57,17 @@ def read_ndbc(url, directional=True, dd=10.0, chunks={}, weight_coeff: bool = Fa
 def _construct_spectra(ef, swd1, swd2, swr1, swr2, dir, weight_coeff: bool = False):
     """Construct 2D spectra."""
     if weight_coeff:
-        d = 0.5 + 2 / 3 * swr1 * np.cos(D2R * (dir - swd1)) + \
-            1 / 6 * swr2 * np.cos(2 * D2R * (dir - swd2))
+        d = (
+            0.5
+            + 2 / 3 * swr1 * np.cos(D2R * (dir - swd1))
+            + 1 / 6 * swr2 * np.cos(2 * D2R * (dir - swd2))
+        )
     else:
-        d = 0.5 + swr1 * np.cos(D2R * (dir - swd1)) + swr2 * \
-            np.cos(2 * D2R * (dir - swd2))
+        d = (
+            0.5
+            + swr1 * np.cos(D2R * (dir - swd1))
+            + swr2 * np.cos(2 * D2R * (dir - swd2))
+        )
     return ef * d * D2R / np.pi
 
 

@@ -1,4 +1,5 @@
 """Read and write swan spectra files"""
+
 from pathlib import Path
 import re
 import gzip

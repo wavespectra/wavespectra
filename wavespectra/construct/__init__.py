@@ -23,6 +23,7 @@ References:
   geophysical research 69: 5181-5190.
 
 """
+
 import xarray as xr
 import wavespectra
 from wavespectra.core.attributes import attrs, set_spec_attributes

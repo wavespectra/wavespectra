@@ -1,4 +1,5 @@
 """OCTOPUS output plugin."""
+
 import gzip
 import numpy as np
 import xarray as xr

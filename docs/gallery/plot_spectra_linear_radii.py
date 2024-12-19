@@ -5,6 +5,7 @@ Linear radii
 Radii are shown on a logarithmic scale by default but can also be shown on a linear scale
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 

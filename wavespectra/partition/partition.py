@@ -1,4 +1,5 @@
 """Partitioning interface."""
+
 from itertools import combinations
 import numpy as np
 import xarray as xr

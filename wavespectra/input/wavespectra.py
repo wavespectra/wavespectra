@@ -1,4 +1,5 @@
 """Read netCDF or ZARR formatted with wavespectra conventions."""
+
 from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset

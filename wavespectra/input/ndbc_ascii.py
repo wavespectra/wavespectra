@@ -57,8 +57,9 @@ def read_file(filename):
     return df
 
 
-def construct_spectra(spden, swdir1, swdir2, swr1, swr2, dirs,
-                      weight_coeff: bool = False):
+def construct_spectra(
+    spden, swdir1, swdir2, swr1, swr2, dirs, weight_coeff: bool = False
+):
     dirmat = dirs.reshape((1, 1, -1))
     if weight_coeff:
         D_fd = (
@@ -163,9 +164,9 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10), weight_coeff: bool = F
             dims=(attrs.TIMENAME),
             name=attrs.SPECNAME,
         )
-        dset[
-            "Sep_Freq"
-        ] = sfreq  # Add the NDBC defined separation frequency for realtime diagnostics
+        dset["Sep_Freq"] = (
+            sfreq  # Add the NDBC defined separation frequency for realtime diagnostics
+        )
     dset = dset.sortby(
         "time", ascending=True
     )  # Realtime data is in reversed time order

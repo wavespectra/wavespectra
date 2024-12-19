@@ -1,4 +1,5 @@
 """Wave spectra stats on numpy arrays sourced by apply_ufuncs."""
+
 import numpy as np
 from scipy.constants import g, pi
 

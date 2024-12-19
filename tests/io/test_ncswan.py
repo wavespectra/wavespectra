@@ -25,7 +25,7 @@ class TestNcSwan(object):
 
     def test_ncswan(self):
         ds_wavespectra = read_ncswan(self.filename)
-        ds_xarray = xr.open_dataset(self.filename)            
+        ds_xarray = xr.open_dataset(self.filename)
         assert ds_xarray.hs.values == pytest.approx(
             ds_wavespectra.spec.hs().values, rel=0.01
         )

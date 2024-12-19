@@ -5,6 +5,7 @@ Calculate and plot Hs
 Plots Hs calculated from spectra dataset
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_ww3
 

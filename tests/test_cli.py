@@ -1,4 +1,5 @@
 """Test model wrapper."""
+
 from pathlib import Path
 import pytest
 import xarray as xr

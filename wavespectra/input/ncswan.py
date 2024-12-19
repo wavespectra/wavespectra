@@ -1,4 +1,5 @@
 """Read Native SWAN netCDF spectra files."""
+
 from xarray.backends import BackendEntrypoint
 import numpy as np
 

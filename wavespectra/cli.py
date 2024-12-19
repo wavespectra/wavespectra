@@ -1,4 +1,5 @@
 """Console script for wavespectra."""
+
 from pathlib import Path
 import click
 import yaml

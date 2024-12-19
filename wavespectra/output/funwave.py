@@ -1,4 +1,5 @@
 """FUNWAVE output plugin."""
+
 import os
 from zipfile import ZipFile, ZIP_DEFLATED
 from io import StringIO

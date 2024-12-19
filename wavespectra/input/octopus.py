@@ -1,4 +1,5 @@
 """Read Octopus spectra files."""
+
 from xarray.backends import BackendEntrypoint
 import gzip
 import datetime

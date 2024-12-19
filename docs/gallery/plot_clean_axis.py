@@ -5,6 +5,7 @@ Faceting with clean axes
 Removing axes could help visualising patterns in multiple plots
 
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import cmocean
