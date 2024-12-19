@@ -1,4 +1,5 @@
 """Read directional spectra from WW3 station output file."""
+
 from xarray.backends import BackendEntrypoint
 from collections import OrderedDict
 import re

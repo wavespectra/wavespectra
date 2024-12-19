@@ -1,4 +1,5 @@
 """Testing the SpecArray accessor."""
+
 import os
 import numpy as np
 import xarray as xr

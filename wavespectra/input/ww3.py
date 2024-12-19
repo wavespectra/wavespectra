@@ -1,4 +1,5 @@
 """Read Native WW3 spectra files."""
+
 from xarray.backends import BackendEntrypoint
 
 from wavespectra.specdataset import SpecDataset

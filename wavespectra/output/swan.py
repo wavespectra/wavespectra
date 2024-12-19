@@ -1,4 +1,5 @@
 """SWAN ASCII output plugin."""
+
 import numpy as np
 from wavespectra.core.attributes import attrs
 from wavespectra.core.swan import SwanSpecFile
@@ -56,7 +57,9 @@ def to_swan(
     # Ensure time dimension exists
     is_time = attrs.TIMENAME in dset[attrs.SPECNAME].dims
     if not is_time:
-        dset[attrs.SPECNAME] = dset[attrs.SPECNAME].expand_dims({attrs.TIMENAME: [None]})
+        dset[attrs.SPECNAME] = dset[attrs.SPECNAME].expand_dims(
+            {attrs.TIMENAME: [None]}
+        )
         times = dset[attrs.TIMENAME].values
     else:
         times = dset[attrs.TIMENAME].to_index().to_pydatetime()

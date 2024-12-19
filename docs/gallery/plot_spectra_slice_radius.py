@@ -5,6 +5,7 @@ Control radius extent
 Radius extent can be defined from `rmin` and `rmax` parameters
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 

@@ -1,4 +1,5 @@
 """Frequency spectral shapes."""
+
 import numpy as np
 import xarray as xr
 from scipy.constants import g, pi
@@ -32,9 +33,7 @@ def pierson_moskowitz(freq, fp, alpha=0.0081, hs=None, **kwargs):
     if not isinstance(freq, xr.DataArray):
         freq = to_coords(freq, "freq")
 
-    dsout = (
-        alpha * g**2 / (2 * pi) ** 4 / freq**5 * np.exp(-1.25 * (freq / fp) ** -4)
-    )
+    dsout = alpha * g**2 / (2 * pi) ** 4 / freq**5 * np.exp(-1.25 * (freq / fp) ** -4)
 
     if hs is not None:
         dsout = scaled(dsout, hs)

@@ -1,4 +1,5 @@
 """Generic netCDF output plugin."""
+
 from wavespectra.core.attributes import attrs
 
 

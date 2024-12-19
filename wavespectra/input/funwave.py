@@ -1,4 +1,5 @@
 """Read Funwave 2D Wave Maker files"""
+
 from xarray.backends import BackendEntrypoint
 import numpy as np
 import xarray as xr

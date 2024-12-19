@@ -5,6 +5,7 @@ Logarithmic contours
 Logarithmic contour levels are only default for normalised spectra but they can be still manually specified
 
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from wavespectra import read_era5

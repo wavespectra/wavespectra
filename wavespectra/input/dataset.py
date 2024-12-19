@@ -1,4 +1,5 @@
 """Construct the SpecArray accessor from existing dataset from known format."""
+
 import logging
 
 from wavespectra.input.ww3 import from_ww3

@@ -1,4 +1,5 @@
 """Json output plugin."""
+
 import json
 
 

@@ -1,4 +1,5 @@
 """Unit testing for stats methods in SpecArray."""
+
 import os
 import pytest
 import datetime

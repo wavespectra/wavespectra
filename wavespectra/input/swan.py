@@ -7,6 +7,7 @@ Functions:
     read_swanow: Read SWAN nowcast from fileglob, keep overlapping dates
         from most recent files.
 """
+
 from xarray.backends import BackendEntrypoint
 from pathlib import Path
 import os

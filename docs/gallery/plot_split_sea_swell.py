@@ -5,6 +5,7 @@ Frequency-split parameters
 Split spectra and plot parameters
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_ww3
 

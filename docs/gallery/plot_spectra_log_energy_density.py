@@ -6,6 +6,7 @@ The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated b
 can be achieved by calculating the :math:`\log{E_{d}(f,d)}` beforehand:
 
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import cmocean

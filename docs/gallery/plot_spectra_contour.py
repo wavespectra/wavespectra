@@ -5,6 +5,7 @@ Spectrum as contour
 Contour type plot of wave spectrum
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 

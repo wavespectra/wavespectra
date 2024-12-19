@@ -50,4 +50,3 @@ def test_stats(stat, kwargs):
         param_wavespectra = getattr(dset.spec, stat)(**kwargs).values
         param_spotter = dset[stat].values
         assert param_wavespectra == pytest.approx(param_spotter, rel=1e-1)
-

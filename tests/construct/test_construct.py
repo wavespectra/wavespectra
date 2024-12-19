@@ -1,4 +1,5 @@
 """Unit testing for stats methods in SpecArray."""
+
 from pathlib import Path
 import pytest
 import numpy as np

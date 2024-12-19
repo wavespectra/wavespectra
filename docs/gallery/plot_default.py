@@ -5,6 +5,7 @@ Default arguments
 Plot of wave spectrum with default options
 
 """
+
 import matplotlib.pyplot as plt
 from wavespectra import read_era5
 
