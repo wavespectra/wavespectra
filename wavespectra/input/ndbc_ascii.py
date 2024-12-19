@@ -57,22 +57,34 @@ def read_file(filename):
     return df
 
 
-def construct_spectra(spden, swdir1, swdir2, swr1, swr2, dirs):
+def construct_spectra(spden, swdir1, swdir2, swr1, swr2, dirs,
+                      weight_coeff: bool = False):
     dirmat = dirs.reshape((1, 1, -1))
-    D_fd = (
-        IPI
-        * (
-            0.5
-            + swr1 * np.cos(D2R * (dirmat - swdir1))
-            + swr2 * np.cos(2 * D2R * (dirmat - swdir2))
+    if weight_coeff:
+        D_fd = (
+            IPI
+            * (
+                0.5
+                + 2 / 3 * swr1 * np.cos(D2R * (dirmat - swdir1))
+                + 1 / 6 * swr2 * np.cos(2 * D2R * (dirmat - swdir2))
+            )
+            * D2R
         )
-        * D2R
-    )
+    else:
+        D_fd = (
+            IPI
+            * (
+                0.5
+                + swr1 * np.cos(D2R * (dirmat - swdir1))
+                + swr2 * np.cos(2 * D2R * (dirmat - swdir2))
+            )
+            * D2R
+        )
     S = spden * D_fd
     return S
 
 
-def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
+def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10), weight_coeff: bool = False):
     """Read spectra from NDBC wave buoy ASCII files.
 
     Both the history and realtime formats are supported. Realtime formats are decribed
@@ -87,6 +99,8 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
           automatically detected.
         - dirs (array): vector of directional bins for spectral reconstruction.
         - attrs (dict): additional global attributes.
+        - weight_coef (bool): Weight the coefficient to avoid negative value
+          in spectrum.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from NDBC buoy file(s).
@@ -133,6 +147,7 @@ def read_ndbc_ascii(filename, dirs=np.arange(0, 360, 10)):
             df_swr1.values.reshape(spshape),
             df_swr2.values.reshape(spshape),
             dirs,
+            weight_coeff=weight_coeff,
         )
     coords = OrderedDict(
         ((attrs.TIMENAME, times), (attrs.FREQNAME, freqs), (attrs.DIRNAME, dirs))
