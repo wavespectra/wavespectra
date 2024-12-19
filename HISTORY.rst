@@ -13,6 +13,25 @@ Releases
 ********
 
 
+4.3.0 (2024-12-20)
+___________________
+
+New Features
+------------
+* New `weight_coeff` option in the ndbc readers to avoid negative energy density in the
+  2D spectra by `lubyant`_ (`PR143 <https://github.com/wavespectra/wavespectra/pull/143>`_).
+
+.. _`lubyant`: https://github.com/lubyant
+
+
+4.2.1 (2024-11-26)
+___________________
+
+Internal Changes
+----------------
+* Bug fixes to allow writing swan ascii files from spectra with no time or site dims.
+
+
 4.2.0 (2024-11-13)
 ___________________
 
