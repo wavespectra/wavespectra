@@ -15,6 +15,21 @@ D2R = np.pi / 180.0
 R2D = 180.0 / np.pi
 
 
+def create_frequencies(f0: float, nf: int, df: float = 1.1) -> np.ndarray:
+    """Create an array of logarithmically spaced frequencies.
+
+    Args:
+        - f0 (float): First frequency value in Hz (e.g., 0.03453)
+        - nf (int): Number of frequencies to generate
+        - df (float, optional): Multiplicative increment between frequencies. Defaults to 1.1.
+
+    Returns:
+        - np.ndarray: Array of frequencies in Hz
+
+    """
+    return f0 * (df ** np.arange(nf))
+
+
 def angle(dir1, dir2):
     """Relative angle between two directions.
 
