@@ -278,6 +278,8 @@ Internal core functions and objects
    :nosignatures:
    :toctree: generated/
 
+   core.utils.create_frequencies
+   core.utils.waveage
    core.utils.wavelen
    core.utils.wavenuma
    core.utils.celerity
@@ -288,7 +290,13 @@ Internal core functions and objects
    core.utils.uv_to_spddir
    core.utils.interp_spec
    core.utils.flatten_list
+   core.utils.scaled
+   core.utils.check_same_coordinates
+   core.utils.load_function
+   core.utils.to_coords
    core.utils.regrid_spec
+   core.utils.smooth_spec
+   core.utils.is_overlap
 
 **swan module**
 
