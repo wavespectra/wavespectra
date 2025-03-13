@@ -21,7 +21,7 @@ MAPPING = {
 }
 
 
-def read_era5(filename_or_fileglob, chunks={}, f0=0.03453, df=1.1):
+def read_era5(filename_or_fileglob, chunks={}, f0=0.03453, df=1.1, as_site=False):
     """Read Spectra from ECMWF ERA5 netCDF format.
 
     Args:
@@ -32,6 +32,7 @@ def read_era5(filename_or_fileglob, chunks={}, f0=0.03453, df=1.1):
           xr.open_mfdataset documentation).
         - f0 (float): First frequency value in Hz (e.g., 0.03453)
         - df (float): Multiplicative increment between frequencies.
+        - as_site (bool): If True locations are defined by 1D site dimension.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from netcdf file.
@@ -46,16 +47,17 @@ def read_era5(filename_or_fileglob, chunks={}, f0=0.03453, df=1.1):
     """
 
     dset = xr.open_dataset(filename_or_fileglob).chunk(chunks)
-    return from_era5(dset, f0=f0, df=df)
+    return from_era5(dset, f0=f0, df=df, as_site=as_site)
 
 
-def from_era5(dset, f0=0.03453, df=1.1):
+def from_era5(dset, f0=0.03453, df=1.1, as_site=False):
     """Format ERA5 netcdf dataset to receive wavespectra accessor.
 
     Args:
         - dset (xr.Dataset): Dataset created from a ERA5 netcdf file.
         - f0 (float): First frequency value in Hz (e.g., 0.03453)
         - df (float): Multiplicative increment between frequencies.
+        - as_site (bool): If True locations are defined by 1D site dimension.
 
     Returns:
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
@@ -66,7 +68,7 @@ def from_era5(dset, f0=0.03453, df=1.1):
     dset = dset.rename(mapping).reset_coords(drop=True)
 
     # Convert ERA5 format to wavespectra format
-    dset[attrs.SPECNAME] = 10**dset[attrs.SPECNAME] * np.pi / 180
+    dset[attrs.SPECNAME] = 10 ** dset[attrs.SPECNAME] * np.pi / 180
     dset[attrs.SPECNAME] = dset[attrs.SPECNAME].fillna(0)
 
     # Assign the logarithmic frequency grid
@@ -75,6 +77,14 @@ def from_era5(dset, f0=0.03453, df=1.1):
     # Assign the coming-from direction grid
     dd = 360 / dset[attrs.DIRNAME].size
     dset[attrs.DIRNAME] = ((np.arange(0, 360, dd) + dd / 2) + 180) % 360
+
+    # Stack lat/lon dimensions if as_site is True
+    if as_site:
+        dset = (
+            dset.stack(site=[attrs.LATNAME, attrs.LONNAME], create_index=False)
+            .reset_coords()
+            .transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
+        )
 
     # Setting standard attributes
     set_spec_attributes(dset)
@@ -92,6 +102,7 @@ class ERA5BackendEntrypoint(BackendEntrypoint):
         drop_variables=None,
         f0=0.03453,
         df=1.1,
+        as_site=False,
     ):
         return read_era5(filename_or_obj, f0=f0, df=df)
 
