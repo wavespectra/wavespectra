@@ -1,14 +1,25 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
 
 import numpy as np
+import xarray as xr
 from xarray.backends import BackendEntrypoint
 
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.input.netcdf import read_netcdf
 
 
 DEFAULT_FREQS = np.full(30, 0.03453) * (1.1 ** np.arange(0, 30))
 DEFAULT_DIRS = (np.arange(7.5, 352.5 + 15, 15) + 180) % 360
+MAPPING = {
+    "time": attrs.TIMENAME,
+    "valid_time": attrs.TIMENAME,
+    "frequency": attrs.FREQNAME,
+    "frequencyNumber": attrs.FREQNAME,
+    "direction": attrs.DIRNAME,
+    "directionNumber": attrs.DIRNAME,
+    "d2fd": attrs.SPECNAME,
+    "longitude": attrs.LONNAME,
+    "latitude": attrs.LATNAME,
+}
 
 
 def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
@@ -34,16 +45,7 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
 
     """
 
-    dset = read_netcdf(
-        filename_or_fileglob,
-        specname="d2fd",
-        freqname="frequency",
-        dirname="direction",
-        lonname="longitude",
-        latname="latitude",
-        timename="time",
-        chunks=chunks,
-    )
+    dset = xr.open_dataset(filename_or_fileglob).chunk(chunks)
     return from_era5(dset, freqs=freqs, dirs=dirs)
 
 
@@ -58,9 +60,12 @@ def from_era5(dset, freqs=None, dirs=None):
 
     """
 
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in dset.variables}
+    dset = dset.rename(mapping).reset_coords(drop=True)
+
     # Convert ERA5 format to wavespectra format
-    dset = 10**dset * np.pi / 180
-    dset = dset.fillna(0)
+    dset[attrs.SPECNAME] = 10**dset[attrs.SPECNAME] * np.pi / 180
+    dset[attrs.SPECNAME] = dset[attrs.SPECNAME].fillna(0)
 
     dset[attrs.FREQNAME] = freqs if freqs else DEFAULT_FREQS
     dset[attrs.DIRNAME] = dirs if dirs else DEFAULT_DIRS
