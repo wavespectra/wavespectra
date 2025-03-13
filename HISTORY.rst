@@ -13,6 +13,14 @@ Releases
 ********
 
 
+4.3.1 (2025-03-13)
+___________________
+
+New Features
+------------
+* Support ERA5 netcdf files with the new cds api.
+
+
 4.3.0 (2024-12-20)
 ___________________
 
