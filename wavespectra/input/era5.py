@@ -1,17 +1,27 @@
 """Read ERA5 2D Wave Spectra NetCDF files"""
 
 import numpy as np
+import xarray as xr
 from xarray.backends import BackendEntrypoint
 
+from wavespectra.core.utils import create_frequencies
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.input.netcdf import read_netcdf
 
 
-DEFAULT_FREQS = np.full(30, 0.03453) * (1.1 ** np.arange(0, 30))
-DEFAULT_DIRS = (np.arange(7.5, 352.5 + 15, 15) + 180) % 360
+MAPPING = {
+    "time": attrs.TIMENAME,
+    "valid_time": attrs.TIMENAME,
+    "frequency": attrs.FREQNAME,
+    "frequencyNumber": attrs.FREQNAME,
+    "direction": attrs.DIRNAME,
+    "directionNumber": attrs.DIRNAME,
+    "d2fd": attrs.SPECNAME,
+    "longitude": attrs.LONNAME,
+    "latitude": attrs.LATNAME,
+}
 
 
-def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
+def read_era5(filename_or_fileglob, chunks={}, f0=0.03453, df=1.1, as_site=False):
     """Read Spectra from ECMWF ERA5 netCDF format.
 
     Args:
@@ -20,50 +30,61 @@ def read_era5(filename_or_fileglob, chunks={}, freqs=None, dirs=None):
         - chunks (dict): chunk sizes for dimensions in dataset. By default
           dataset is loaded using single chunk for all dimensions (see
           xr.open_mfdataset documentation).
-        - freqs (list): list of frequencies. By default use all 30 ERA5 frequencies.
-        - dirs (list): list of directions. By default use all 24 ERA5 directions.
+        - f0 (float): First frequency value in Hz (e.g., 0.03453)
+        - df (float): Multiplicative increment between frequencies.
+        - as_site (bool): If True locations are defined by 1D site dimension.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from netcdf file.
 
     Note:
-        - Frequency and diirection coordinates seem to have only integer positions
-          which is why they are allowed to be specified as a parameter.
+        - This reader also supports ECMWF spectra from the operational forecast.
+        - Documentation describing how to construct the spectral grid can be found at
+          https://www.ecmwf.int/en/forecasts/documentation-and-support/2d-wave-spectra.
         - If file is large to fit in memory, consider specifying chunks for
-          'time' and/or 'station' dims.
+          'time' and/or 'latitude/longitude' dims.
 
     """
 
-    dset = read_netcdf(
-        filename_or_fileglob,
-        specname="d2fd",
-        freqname="frequency",
-        dirname="direction",
-        lonname="longitude",
-        latname="latitude",
-        timename="time",
-        chunks=chunks,
-    )
-    return from_era5(dset, freqs=freqs, dirs=dirs)
+    dset = xr.open_dataset(filename_or_fileglob).chunk(chunks)
+    return from_era5(dset, f0=f0, df=df, as_site=as_site)
 
 
-def from_era5(dset, freqs=None, dirs=None):
+def from_era5(dset, f0=0.03453, df=1.1, as_site=False):
     """Format ERA5 netcdf dataset to receive wavespectra accessor.
 
     Args:
-        - dset (xr.Dataset): Dataset created from a SWAN netcdf file.
+        - dset (xr.Dataset): Dataset created from a ERA5 netcdf file.
+        - f0 (float): First frequency value in Hz (e.g., 0.03453)
+        - df (float): Multiplicative increment between frequencies.
+        - as_site (bool): If True locations are defined by 1D site dimension.
 
     Returns:
         - Formated dataset with the SpecDataset accessor in the `spec` namespace.
 
     """
 
-    # Convert ERA5 format to wavespectra format
-    dset = 10**dset * np.pi / 180
-    dset = dset.fillna(0)
+    mapping = {k: v for k, v in MAPPING.items() if k != v and k in dset.variables}
+    dset = dset.rename(mapping).reset_coords(drop=True)
 
-    dset[attrs.FREQNAME] = freqs if freqs else DEFAULT_FREQS
-    dset[attrs.DIRNAME] = dirs if dirs else DEFAULT_DIRS
+    # Convert ERA5 format to wavespectra format
+    dset[attrs.SPECNAME] = 10 ** dset[attrs.SPECNAME] * np.pi / 180
+    dset[attrs.SPECNAME] = dset[attrs.SPECNAME].fillna(0)
+
+    # Assign the logarithmic frequency grid
+    dset[attrs.FREQNAME] = create_frequencies(f0, dset[attrs.FREQNAME].size, df)
+
+    # Assign the coming-from direction grid
+    dd = 360 / dset[attrs.DIRNAME].size
+    dset[attrs.DIRNAME] = ((np.arange(0, 360, dd) + dd / 2) + 180) % 360
+
+    # Stack lat/lon dimensions if as_site is True
+    if as_site:
+        dset = (
+            dset.stack(site=[attrs.LATNAME, attrs.LONNAME], create_index=False)
+            .reset_coords()
+            .transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME, attrs.DIRNAME)
+        )
 
     # Setting standard attributes
     set_spec_attributes(dset)
@@ -79,10 +100,11 @@ class ERA5BackendEntrypoint(BackendEntrypoint):
         filename_or_obj,
         *,
         drop_variables=None,
-        freqs=None,
-        dirs=None,
+        f0=0.03453,
+        df=1.1,
+        as_site=False,
     ):
-        return read_era5(filename_or_obj, freqs=freqs, dirs=dirs)
+        return read_era5(filename_or_obj, f0=f0, df=df)
 
     def guess_can_open(self, filename_or_obj):
         return False

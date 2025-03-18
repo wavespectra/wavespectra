@@ -13,6 +13,26 @@ Releases
 ********
 
 
+4.4.0 (2025-03-13)
+___________________
+
+New Features
+------------
+* Support ERA5 netcdf files from the new cds api which have different naming conventions.
+* New utils function to calculate a logarithmic frequency array.
+* Generalise the generation of the spectral coordinates in read_era5 to support different
+  spectral grids, e.g., files from the operational ECMWF wave model.
+
+Breaking Changes
+----------------
+* read_era5 no longer supports the `freqs` and `dirs` arguments. It now accepts `f0` and
+  `df` arguments, defaulting to 0.03453 and 1.1, respectively.
+
+Internal Changes
+----------------
+* Update documentation to include missing util functions.
+
+
 4.3.0 (2024-12-20)
 ___________________
 
