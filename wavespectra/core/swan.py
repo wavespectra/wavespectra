@@ -180,8 +180,10 @@ class SwanSpecFile(object):
         # Location
         strout += "{:40}{}\n".format("LONLAT", "locations in spherical coordinates")
         strout += "{:>6d}{:34}{}\n".format(len(self.x), "", "number of locations")
+        x_vals = np.squeeze(self.x)
+        y_vals = np.squeeze(self.y)
         for x, y in zip(self.x, self.y):
-            strout += "{:2}{:<0.6f}{:2}{:<0.6f}\n".format("", x, "", y)
+            strout += "{:2}{:<0.6f}{:2}{:<0.6f}\n".format("", float(x), "", float(y))
         # Frequency
         strout += "{:40}{}\n".format("AFREQ", "absolute frequencies in Hz")
         strout += "{:6d}{:34}{}\n".format(len(self.freqs), "", "number of frequencies")
