@@ -82,7 +82,7 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
         if var_name in other:
             other[var_name].attrs = var_attrs
     if "time" in other:
-        other.time.encoding["units"] = TIME_UNITS
+        other.time.encoding.update(dtype="float64", units=TIME_UNITS)
         times = other.time.to_index().to_pydatetime()
         other.attrs.update(
             {
