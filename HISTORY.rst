@@ -12,6 +12,23 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.4.1 (2025-04-18)
+___________________
+
+Bug Fixes
+---------
+* Fix issue with writing coordinates to swan ascii file by `Murex93`_
+  (`PR150 <https://github.com/wavespectra/wavespectra/pull/150>`_)
+
+Internal Changes
+----------------
+* Replace np.trapz with np.trapzoid to remove deprecation warning
+* Set float64 dtype in time encoding when writing ww3 netcdf files to silence warning
+* Support Python 3.13
+* Drop support for Python 3.8
+
+.. _`Murex93`: https://github.com/murex93
+
 
 4.4.0 (2025-03-25)
 ___________________
