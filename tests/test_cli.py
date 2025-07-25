@@ -20,13 +20,13 @@ def runner():
 
 
 def test_main(runner):
-    result = runner.invoke(cli.main)
+    result = runner.invoke(cli.main, "--help")
     assert result.exit_code == 0
     assert "main" in result.output
 
 
 def test_main_convert(runner):
-    result = runner.invoke(cli.main, "convert")
+    result = runner.invoke(cli.main, ["convert", "--help"])
     assert result.exit_code == 0
     assert "convert" in result.output
 
@@ -55,7 +55,7 @@ def test_main_convert_stats(runner, tmpdir):
 
 
 def test_main_reconstruct(runner):
-    result = runner.invoke(cli.main, "reconstruct")
+    result = runner.invoke(cli.main, ["reconstruct", "--help"])
     assert result.exit_code == 0
     assert "reconstruct" in result.output
 
