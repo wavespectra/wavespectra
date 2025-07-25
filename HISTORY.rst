@@ -12,6 +12,19 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.4.2 (2025-07-25)
+___________________
+
+Bug Fixes
+---------
+* Replace np.trapzoid with scipy's version in the awac reader to avoid issues with numpy 2.0
+* Fix broken cli tests
+
+Internal Changes
+----------------
+* Add deepwiki badge
+
+
 4.4.1 (2025-04-18)
 ___________________
 
