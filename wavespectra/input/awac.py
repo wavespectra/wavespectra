@@ -155,10 +155,10 @@ end
 
 import datetime
 import warnings
-
 import numpy as np
-
 import xarray as xr
+from scipy.integrate import trapezoid
+
 from wavespectra.core.attributes import set_spec_attributes
 
 
@@ -450,7 +450,7 @@ def read_awac_strings(
 
         # Calculate m0 of the spectrum
         Sd = [np.sum(DirField[iFreq]) for iFreq in range(len(freq))]
-        m0 = np.trapezoid(Sd, freq)
+        m0 = trapezoid(Sd, freq)
         Hs_spectrum = 4 * np.sqrt(m0)
 
         # scale the spectrum to the given Hs IF Hs_spectrum is not zero
