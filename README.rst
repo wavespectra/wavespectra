@@ -1,200 +1,267 @@
+===========
 wavespectra
 ===========
-Python library for ocean wave spectra.
 
 .. image:: https://deepwiki.com/badge.svg
    :target: https://deepwiki.com/wavespectra/wavespectra
    :alt: Ask DeepWiki
+
 .. image:: https://zenodo.org/badge/205463939.svg
    :target: https://zenodo.org/badge/latestdoi/205463939
+   :alt: DOI
+
 .. image:: https://img.shields.io/github/actions/workflow/status/wavespectra/wavespectra/python-publish.yml
-    :target: https://github.com/wavespectra/wavespectra/actions
-    :alt: GitHub Workflow Status (with event)
+   :target: https://github.com/wavespectra/wavespectra/actions
+   :alt: Build Status
+
 .. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg?branch=master
-    :target: https://coveralls.io/github/wavespectra/wavespectra?branch=master
+   :target: https://coveralls.io/github/wavespectra/wavespectra?branch=master
+   :alt: Coverage
+
 .. image:: https://readthedocs.org/projects/wavespectra/badge/?version=latest
-    :target: https://wavespectra.readthedocs.io/en/latest/
+   :target: https://wavespectra.readthedocs.io/en/latest/
+   :alt: Documentation
+
 .. image:: https://img.shields.io/pypi/v/wavespectra.svg
-    :target: https://pypi.org/project/wavespectra/
+   :target: https://pypi.org/project/wavespectra/
+   :alt: PyPI
+
 .. image:: https://img.shields.io/pypi/dm/wavespectra
-    :target: https://pypistats.org/packages/wavespectra
-    :alt: PyPI - Downloads
+   :target: https://pypistats.org/packages/wavespectra
+   :alt: Downloads
+
 .. image:: https://anaconda.org/conda-forge/wavespectra/badges/version.svg
-    :target: https://anaconda.org/conda-forge/wavespectra
-.. image:: https://anaconda.org/conda-forge/wavespectra/badges/platforms.svg
-    :target: https://anaconda.org/conda-forge/wavespectra
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/python/black
+   :target: https://anaconda.org/conda-forge/wavespectra
+   :alt: Conda
+
 .. image:: https://img.shields.io/pypi/pyversions/wavespectra
-    :target: https://pypi.org/project/wavespectra/
-    :alt: PyPI - Python Version
+   :target: https://pypi.org/project/wavespectra/
+   :alt: Python
 
-Main contents:
---------------
-* SpecArray_: extends xarray's `DataArray`_ with methods to manipulate wave spectra and calculate spectral statistics.
-* SpecDataset_: wrapper around `SpecArray`_ with methods for selecting and saving spectra in different formats.
+**Python library for ocean wave spectral data analysis and processing**
 
-Documentation:
---------------
-The documentation is hosted on ReadTheDocs at https://wavespectra.readthedocs.io/en/latest/.
+Wavespectra is a powerful, open-source Python library built on top of `xarray`_ for working with ocean wave spectral data [1](#1-0) . It provides comprehensive tools for reading, analysing, manipulating, and visualising wave spectra from various sources including numerical models and buoy observations.
 
-Install:
---------
-Where to get it
-~~~~~~~~~~~~~~~
-The source code is currently hosted on GitHub at: https://github.com/wavespectra/wavespectra
+.. _xarray: https://xarray.pydata.org/
 
-Binary installers for the latest released version are available at the `Python package index`_.
+Key Features
+============
 
-Install from pypi
-~~~~~~~~~~~~~~~~~
-.. code:: bash
+- **Unified Data Model**: Built on xarray with standardised conventions for wave spectral data
+- **Extensive I/O Support**: Read/write 15+ formats including WW3, SWAN, ERA5, NDBC, and more
+- **Rich Analysis Tools**: 60+ methods for wave parameter calculation, spectral partitioning, construction, and transformations
+- **Flexible Visualisation**: Polar plots, time series, and spatial maps with matplotlib integration
+- **High Performance**: Leverages dask for efficient processing of large datasets
+- **Extensible**: Plugin architecture for custom readers and analysis methods
 
-   # Default install, miss some dependencies and functionality
-   pip install wavespectra
+Quick Start
+===========
 
-   # Complete install
-   pip install wavespectra[extra]
+Installation
+------------
 
-Install from conda
-~~~~~~~~~~~~~~~~~~~
-.. code:: bash
+Install from PyPI [2](#1-1) :
 
-    # wavespectra is available in the conda-forge channel
-    conda install -c conda-forge wavespectra
+.. code-block:: console
 
-Install from sources
-~~~~~~~~~~~~~~~~~~~~
-Install requirements. Navigate to the base root of wavespectra_ and execute:
+   # Basic installation
+   $ pip install wavespectra
 
-.. code:: bash
+   # Full installation with all optional dependencies
+   $ pip install wavespectra[extra]
 
-   # Default install, miss some dependencies and functionality
-   pip install -r requirements/default.txt
+Or from conda-forge [3](#1-2) :
 
-   # Also, for complete install
-   pip install -r requirements/extra.txt
+.. code-block:: console
 
-Then install wavespectra:
+   $ conda install -c conda-forge wavespectra
 
-.. code:: bash
+Basic Usage
+-----------
 
-   python setup.py install
+.. code-block:: python
 
-   # Run pytest integration
-   python setup.py test
-
-Alternatively, to install in `development mode`_:
-
-.. code:: bash
-
-   pip install -e .
-
-Code structure:
----------------
-The two main classes SpecArray_ and SpecDataset_ are defined as `xarray accessors`_. The accessors are registered on xarray's DataArray_ and Dataset_ respectively as a new namespace called `spec`.
-
-To use methods in the accessor classes simply import the classes into your code and they will be available to your xarray.Dataset or xarray.DataArray instances through the `spec` attribute, e.g.
-
-.. code:: python
-
-   import datetime
-   import numpy as np
    import xarray as xr
-
+   import numpy as np
+   from wavespectra import read_swan
    from wavespectra.specarray import SpecArray
    from wavespectra.specdataset import SpecDataset
 
-   coords = {'time': [datetime.datetime(2017,01,n+1) for n in range(2)],
-             'freq': [0.05,0.1],
-             'dir': np.arange(0,360,120)}
-   efth = xr.DataArray(data=np.random.rand(2,2,3),
-                       coords=coords,
-                       dims=('time','freq', 'dir'),
-                       name='efth')
+   # Read wave spectra from various formats
+   dset = read_swan("spectra.swn")  # SWAN format
+   # dset = xr.open_dataset("era5.nc", engine="era5")  # ERA5 reanalysis
+   # dset = xr.open_dataset("ww3.nc", engine="ww3")    # WAVEWATCH III
 
-   In [1]: efth
-   Out[1]:
-   <xarray.DataArray (time: 2, freq: 2, dir: 3)>
-   array([[[ 0.100607,  0.328229,  0.332708],
-           [ 0.532   ,  0.665938,  0.177731]],
+   # Calculate wave parameters
+   hs = dset.spec.hs()          # Significant wave height
+   tp = dset.spec.tp()          # Peak period  
+   dm = dset.spec.dm()          # Mean direction
+   dspr = dset.spec.dspr()      # Directional spreading
 
-          [[ 0.469371,  0.002963,  0.627179],
-           [ 0.004523,  0.682717,  0.09766 ]]])
-   Coordinates:
-     * freq     (freq) float64 0.05 0.1
-     * dir      (dir) int64 0 120 240
-     * time     (time) datetime64[ns] 2017-01-01 2017-01-02
+   # Multiple parameters at once
+   stats = dset.spec.stats(["hs", "tp", "dm", "dspr"])
 
-   In [2]: efth.spec
-   Out[2]:
-   <SpecArray (time: 2, freq: 2, dir: 3)>
-   array([[[ 0.100607,  0.328229,  0.332708],
-           [ 0.532   ,  0.665938,  0.177731]],
+   # Spectral transformations
+   spectrum_1d = dset.spec.oned()                    # Convert to 1D
+   subset = dset.spec.split(fmin=0.05, fmax=0.5)     # Frequency subset
+   rotated = dset.spec.rotate(angle=15)              # Rotate directions
+   interpolated = dset.spec.interp(freq=new_freq)    # Interpolate
 
-          [[ 0.469371,  0.002963,  0.627179],
-           [ 0.004523,  0.682717,  0.09766 ]]])
-   Coordinates:
-     * freq     (freq) float64 0.05 0.1
-     * dir      (dir) int64 0 120 240
-     * time     (time) datetime64[ns] 2017-01-01 2017-01-02
+   # Visualisation
+   dset.spec.plot(kind="contourf", figsize=(8, 6))   # Polar plot
 
-   In [3]: efth.spec.hs()
-   Out[3]:
-   <xarray.DataArray 'hs' (time: 2)>
-   array([ 10.128485,   9.510618])
-   Coordinates:
-     * time     (time) datetime64[ns] 2017-01-01 2017-01-02
-   Attributes:
-       standard_name: sea_surface_wave_significant_height
-       units: m
+Working with Different Data Sources
+-----------------------------------
 
-SpecDataset provides a wrapper around the methods in SpecArray. For instance, these produce same result:
+.. code-block:: python
 
-.. code:: python
+   # Numerical model outputs
+   ww3_data = xr.open_dataset("ww3_output.nc", engine="ww3")
+   swan_data = read_swan("swan_output.swn")
+   era5_data = xr.open_dataset("era5_waves.nc", engine="era5")
 
-   In [4]: dset = efth.to_dataset(name='efth')
+   # Buoy observations  
+   ndbc_data = xr.open_dataset("ndbc_data.nc", engine="ndbc")
+   triaxys_data = xr.open_dataset("triaxys.nc", engine="triaxys")
 
-   In [5]: tm01 = dset.spec.tm01()
+   # All use the same analysis interface
+   for dataset in [ww3_data, swan_data, era5_data]:
+       hs = dataset.spec.hs()
+       tp = dataset.spec.tp()
 
-   In [6]: tm01.identical(dset.efth.spec.tm01())
-   Out[6]: True
+Advanced Analysis
+-----------------
 
-Data requirements:
-------------------
+.. code-block:: python
 
-SpecArray_ methods require DataArray_ to have the following attributes:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- wave frequency coordinate in `Hz` named as `freq` (required).
-- wave frequency coordinate in `Hz` named as `freq` (required).
-- wave direction coordinate in `degree` (coming from) named as `dir` (optional for 1D, required for 2D spectra).
-- wave energy density data in `m2/Hz/degree` (2D) or `m2/Hz` (1D) named as `efth`
+   # Spectral partitioning
+   partitions = dset.spec.partition.ptm1(wspd=10, wdir=270, parts=3)
 
-SpecDataset_ methods require xarray's Dataset_ to have the following attributes:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- spectra DataArray named as `efth`, complying with the above specifications
+   # Wave physics calculations
+   celerity = dset.spec.celerity(depth=50)           # Wave speed
+   wavelength = dset.spec.wavelen(depth=50)          # Wavelength
+   stokes_drift = dset.spec.uss()                    # Stokes drift
 
-Examples:
----------
+   # Spectral fitting
+   jonswap_params = dset.spec.fit_jonswap()          # Fit JONSWAP spectrum
 
-Define and plot spectra history from example SWAN_ spectra file:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Data Requirements
+=================
 
-.. code:: python
+Wavespectra expects xarray objects with specific coordinate and variable naming [4](#1-3) :
 
-   from wavespectra import read_swan
+**Required coordinates:**
 
-   dset = read_swan('/source/wavespectra/tests/manus.spec')
-   spec_hist = dset.isel(lat=0, lon=0).sel(freq=slice(0.05,0.2)).spec.oned().T
-   spec_hist.plot.contourf(levels=10)
+- ``freq``: Wave frequency in Hz
+- ``dir``: Wave direction in degrees (for 2D spectra)
 
-.. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
-.. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py
-.. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
-.. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
-.. _readspec: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/readspec.py
-.. _xarray accessors: http://xarray.pydata.org/en/stable/internals.html?highlight=accessor
-.. _SWAN: http://swanmodel.sourceforge.net/online_doc/swanuse/node50.html
-.. _Python package index: https://pypi.python.org/pypi/wavespectra
-.. _wavespectra: https://github.com/wavespectra/wavespectra
-.. _development mode: https://pip.pypa.io/en/latest/reference/pip_install/#editable-installs
+**Required variables:**
+
+- ``efth``: Wave energy density in m²/Hz/degree (2D) or m²/Hz (1D)
+
+**Optional variables:**
+
+- ``wspd``: Wind speed in m/s
+- ``wdir``: Wind direction in degrees  
+- ``dpt``: Water depth in metres
+
+Supported Formats
+=================
+
+Input and output Formats
+------------------------
+
+- **Wave Models**: WAVEWATCH III, SWAN, WWM, FUNWAVE, OrcaFlex
+- **Reanalysis**: ERA5, ERA-Interim, ECMWF
+- **Observations**: NDBC, TRIAXYS, Spotter, Octopus, AWAC
+- **Generic**: NetCDF, JSON, CSV
+
+Documentation
+=============
+
+Full documentation is available at `wavespectra.readthedocs.io`_
+
+- `Installation Guide`_
+- `Quick Start Tutorial`_
+- `API Reference`_
+- `Example Gallery`_
+
+.. _wavespectra.readthedocs.io: https://wavespectra.readthedocs.io/en/latest/
+.. _Installation Guide: https://wavespectra.readthedocs.io/en/latest/install.html
+.. _Quick Start Tutorial: https://wavespectra.readthedocs.io/en/latest/quickstart.html
+.. _API Reference: https://wavespectra.readthedocs.io/en/latest/api.html
+.. _Example Gallery: https://wavespectra.readthedocs.io/en/latest/gallery.html
+
+Development
+===========
+
+Contributing
+------------
+
+We welcome contributions! Please see our `Contributing Guide`_ for details.
+
+.. _Contributing Guide: https://wavespectra.readthedocs.io/en/latest/contributing.html
+
+Development Installation
+------------------------
+
+.. code-block:: console
+
+   $ git clone https://github.com/wavespectra/wavespectra.git
+   $ cd wavespectra
+   $ pip install -e .[extra,test,docs]
+
+Running Tests
+------------- [5](#1-4) 
+
+.. code-block:: console
+
+   $ pytest tests
+
+Building Documentation
+---------------------- [6](#1-5) 
+
+.. code-block:: console
+
+   $ make docs
+
+Citation
+========
+
+If you use wavespectra in your research, please cite:
+
+.. code-block:: bibtex
+
+
+   @software{wavespectra,
+     author = {Guedes, Rafael and Durrant, Tom and de Bruin, Ruben and Perez, Jorge and Iannucci, Matthew and seboceanum and Harrington, John and others},
+     title = {wavespectra: Python library for ocean wave spectral data},
+     url = {https://github.com/wavespectra/wavespectra},
+     doi = {10.5281/zenodo.15238968}
+   }
+
+Licence
+=======
+
+This project is licenced under the MIT Licence - see the `LICENSE`_ file for details.
+
+.. _LICENSE: LICENSE.txt
+
+Support
+=======
+
+- **Documentation**: `wavespectra.readthedocs.io`_
+- **Issues**: `GitHub Issues`_
+- **Discussions**: `GitHub Discussions`_
+
+.. _GitHub Issues: https://github.com/wavespectra/wavespectra/issues
+.. _GitHub Discussions: https://github.com/wavespectra/wavespectra/discussions
+
+History
+=======
+
+Wavespectra was originally developed at `Metocean Solutions`_ and was open-sourced in April 2018 [7](#1-6) . The project transitioned to community development in July 2019 under the `wavespectra GitHub organisation`_.
+
+.. _Metocean Solutions: https://www.metocean.co.nz/
+.. _wavespectra GitHub organisation: https://github.com/wavespectra
+
