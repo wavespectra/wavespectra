@@ -147,7 +147,7 @@ def read_datawell(filename_or_fileglob, dd=5.0, lon=None, lat=None) -> xr.Datase
     dslist = []
     for filename in filenames:
         dslist.append(Datawell(filename, lon=lon, lat=lat).read(dd=dd))
-    dset = xr.concat(dslist, dim="time").sortby("time")
+    dset = xr.concat(dslist, dim="time", data_vars="all").sortby("time")
 
     # Slice lon and lat so they are not a function of time
     if lon is not None:

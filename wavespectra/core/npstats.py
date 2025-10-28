@@ -235,7 +235,7 @@ def jonswap(freq, fpeak, hsig, gamma=3.3, alpha=0.0081, sigma_a=0.07, sigma_b=0.
 
 
 def gaussian(freq, fpeak, hsig, gw):
-    """Gaussian frequency spectrum (Bunney et al., 2014).
+    r"""Gaussian frequency spectrum (Bunney et al., 2014).
 
     Args:
         - freq (1darray): Frequency array (Hz).
