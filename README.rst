@@ -40,7 +40,7 @@ wavespectra
 
 **Python library for ocean wave spectral data analysis and processing**
 
-Wavespectra is a powerful, open-source Python library built on top of `xarray`_ for working with ocean wave spectral data [1](#1-0) . It provides comprehensive tools for reading, analysing, manipulating, and visualising wave spectra from various sources including numerical models and buoy observations.
+Wavespectra is a powerful, open-source Python library built on top of `xarray`_ for working with ocean wave spectral data. It provides comprehensive tools for reading, analysing, manipulating, and visualising wave spectra from various sources including numerical models and buoy observations.
 
 .. _xarray: https://xarray.pydata.org/
 
@@ -50,7 +50,7 @@ Key Features
 - **Unified Data Model**: Built on xarray with standardised conventions for wave spectral data
 - **Extensive I/O Support**: Read/write 15+ formats including WW3, SWAN, ERA5, NDBC, and more
 - **Rich Analysis Tools**: 60+ methods for wave parameter calculation, spectral partitioning, construction, and transformations
-- **Flexible Visualisation**: Polar plots, time series, and spatial maps with matplotlib integration
+- **Flexible Visualisation**: Polar spectral plots with matplotlib integration
 - **High Performance**: Leverages dask for efficient processing of large datasets
 - **Extensible**: Plugin architecture for custom readers and analysis methods
 
@@ -60,7 +60,7 @@ Quick Start
 Installation
 ------------
 
-Install from PyPI [2](#1-1) :
+Install from PyPI:
 
 .. code-block:: console
 
@@ -70,7 +70,7 @@ Install from PyPI [2](#1-1) :
    # Full installation with all optional dependencies
    $ pip install wavespectra[extra]
 
-Or from conda-forge [3](#1-2) :
+Or from conda-forge:
 
 .. code-block:: console
 
@@ -82,10 +82,7 @@ Basic Usage
 .. code-block:: python
 
    import xarray as xr
-   import numpy as np
    from wavespectra import read_swan
-   from wavespectra.specarray import SpecArray
-   from wavespectra.specdataset import SpecDataset
 
    # Read wave spectra from various formats
    dset = read_swan("spectra.swn")  # SWAN format
@@ -94,7 +91,7 @@ Basic Usage
 
    # Calculate wave parameters
    hs = dset.spec.hs()          # Significant wave height
-   tp = dset.spec.tp()          # Peak period  
+   tp = dset.spec.tp()          # Peak period
    dm = dset.spec.dm()          # Mean direction
    dspr = dset.spec.dspr()      # Directional spreading
 
@@ -120,7 +117,7 @@ Working with Different Data Sources
    swan_data = read_swan("swan_output.swn")
    era5_data = xr.open_dataset("era5_waves.nc", engine="era5")
 
-   # Buoy observations  
+   # Buoy observations
    ndbc_data = xr.open_dataset("ndbc_data.nc", engine="ndbc")
    triaxys_data = xr.open_dataset("triaxys.nc", engine="triaxys")
 
@@ -148,7 +145,7 @@ Advanced Analysis
 Data Requirements
 =================
 
-Wavespectra expects xarray objects with specific coordinate and variable naming [4](#1-3) :
+Wavespectra expects xarray objects with specific coordinate and variable naming:
 
 **Required coordinates:**
 
@@ -162,13 +159,13 @@ Wavespectra expects xarray objects with specific coordinate and variable naming 
 **Optional variables:**
 
 - ``wspd``: Wind speed in m/s
-- ``wdir``: Wind direction in degrees  
+- ``wdir``: Wind direction in degrees
 - ``dpt``: Water depth in metres
 
 Supported Formats
 =================
 
-Input and output Formats
+Input and Output Formats
 ------------------------
 
 - **Wave Models**: WAVEWATCH III, SWAN, WWM, FUNWAVE, OrcaFlex
@@ -212,14 +209,14 @@ Development Installation
    $ pip install -e .[extra,test,docs]
 
 Running Tests
-------------- [5](#1-4) 
+-------------
 
 .. code-block:: console
 
    $ pytest tests
 
 Building Documentation
----------------------- [6](#1-5) 
+----------------------
 
 .. code-block:: console
 
@@ -232,9 +229,8 @@ If you use wavespectra in your research, please cite:
 
 .. code-block:: bibtex
 
-
    @software{wavespectra,
-     author = {Guedes, Rafael and Durrant, Tom and de Bruin, Ruben and Perez, Jorge and Iannucci, Matthew and seboceanum and Harrington, John and others},
+     author = {Guedes, Rafael and Durrant, Tom and de Bruin, Ruben and Perez, Jorge and Iannucci, Matthew and Delaux, Sebastien and Harrington, John and others},
      title = {wavespectra: Python library for ocean wave spectral data},
      url = {https://github.com/wavespectra/wavespectra},
      doi = {10.5281/zenodo.15238968}
@@ -256,12 +252,3 @@ Support
 
 .. _GitHub Issues: https://github.com/wavespectra/wavespectra/issues
 .. _GitHub Discussions: https://github.com/wavespectra/wavespectra/discussions
-
-History
-=======
-
-Wavespectra was originally developed at `Metocean Solutions`_ and was open-sourced in April 2018 [7](#1-6) . The project transitioned to community development in July 2019 under the `wavespectra GitHub organisation`_.
-
-.. _Metocean Solutions: https://www.metocean.co.nz/
-.. _wavespectra GitHub organisation: https://github.com/wavespectra
-
