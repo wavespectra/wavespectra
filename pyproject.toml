@@ -105,7 +105,12 @@ version = {attr = "wavespectra.__version__"}
 [tool.ruff]
 line-length = 88
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]
 "wavespectra/specdataset.py" = ["F401"]
 "wavespectra/input/ww3.py" = ["F401"]

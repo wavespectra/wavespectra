@@ -38,7 +38,6 @@ class TestToOrcaflex(object):
         )
 
     def test_write_to_orcaflex(self):
-
         try:
             import OrcFxAPI
 
@@ -65,7 +64,6 @@ class TestToOrcaflex(object):
         self.example_single_time.spec.to_orcaflex(m)
 
     def test_compare_spectra(self):
-
         import matplotlib.pyplot as plt
 
         try:

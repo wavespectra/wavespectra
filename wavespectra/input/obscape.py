@@ -180,7 +180,6 @@ def read_obscape(filename_or_fileglob):
 
 
 def _get_timestamp(stem):
-
     try:
         year = int(stem[:4])
         month = int(stem[4:6])
@@ -227,7 +226,6 @@ def _get_obs_files(directory, start_date=None, end_date=None):
     files = directory.glob("*.csv")
     R = []
     for file in files:
-
         timestamp = _get_timestamp(file.stem)
 
         if start_date is not None:
