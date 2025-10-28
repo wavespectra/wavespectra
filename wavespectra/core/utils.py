@@ -368,7 +368,7 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
             to_concat.append(lowest)
 
         if len(to_concat) > 1:
-            dsout = xr.concat(to_concat, dim="dir")
+            dsout = xr.concat(to_concat, dim="dir", data_vars="all")
 
         # Interpolate directions
         dsout = dsout.interp(dir=dir, assume_sorted=True)
@@ -378,7 +378,7 @@ def regrid_spec(dset, freq=None, dir=None, maintain_m0=True):
         if freq.min() < dsout.freq.min():
             fzero = 0 * dsout.isel(freq=0)
             fzero["freq"] = 0
-            dsout = xr.concat([fzero, dsout], dim="freq")
+            dsout = xr.concat([fzero, dsout], dim="freq", data_vars="all")
 
         # Interpolate frequencies
         dsout = dsout.interp(freq=freq, assume_sorted=False, kwargs={"fill_value": 0})
@@ -433,7 +433,7 @@ def smooth_spec(dset, freq_window=3, dir_window=3):
         left = left.assign_coords({attrs.DIRNAME: left[attrs.DIRNAME] - 360})
         right = dsout.isel(**{attrs.DIRNAME: slice(0, window)})
         right = right.assign_coords({attrs.DIRNAME: right[attrs.DIRNAME] + 360})
-        dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME)
+        dsout = xr.concat([left, dsout, right], dim=attrs.DIRNAME, data_vars="all")
 
     # Smooth
     dim = {attrs.FREQNAME: freq_window, attrs.DIRNAME: dir_window}
