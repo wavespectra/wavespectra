@@ -2,7 +2,7 @@
 Logarithmic energy density
 ==========================
 
-The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result 
+The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result
 can be achieved by calculating the :math:`\log{E_{d}(f,d)}` beforehand:
 
 """

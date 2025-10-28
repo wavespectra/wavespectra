@@ -224,7 +224,6 @@ def parse_awac_nmnea_wave_parameters(lines):
 
 
 def parse_awac_nmea(lines):
-
     # scan to find frequency grid
     freq = None
 
@@ -252,12 +251,12 @@ def parse_awac_nmea(lines):
             fstep2 = float(blocks[5])
 
             # assert that the frequency grid is the same
-            assert (
-                fstart == fstart2
-            ), "Frequency start does not match between $PNORF and $PNORE"
-            assert (
-                fstep == fstep2
-            ), "Frequency step does not match between $PNORF and $PNORE"
+            assert fstart == fstart2, (
+                "Frequency start does not match between $PNORF and $PNORE"
+            )
+            assert fstep == fstep2, (
+                "Frequency step does not match between $PNORF and $PNORE"
+            )
 
             ok = True
             break
@@ -399,7 +398,6 @@ def read_awac_strings(
 
         # Apply maximum entropy method to remove negative energy
         for iFreq in range(len(freq)):
-
             c1 = A1new[iFreq] + 1j * B1new[iFreq]
             c2 = A2new[iFreq] + 1j * B2new[iFreq]
 
@@ -413,7 +411,6 @@ def read_awac_strings(
 
             factors = []
             for dd in range(len(dDir)):
-
                 dNewdir = np.pi / 2 - dDir[dd]
                 numer = 1 - fi1 * np.conj(c1) - fi2 * np.conj(c2)
                 denom = (
