@@ -136,7 +136,7 @@ def tma(
 
 
 def gaussian(freq, hs, fp, gw, **kwargs):
-    """Gaussian frequency spectrum (Bunney et al., 2014).
+    r"""Gaussian frequency spectrum (Bunney et al., 2014).
 
     Args:
         - freq (DataArray): Frequency array (Hz).
