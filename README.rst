@@ -49,7 +49,9 @@ Key Features
 
 - **Unified Data Model**: Built on xarray with standardised conventions for wave spectral data
 - **Extensive I/O Support**: Read/write 15+ formats including WW3, SWAN, ERA5, NDBC, and more
-- **Rich Analysis Tools**: 60+ methods for wave parameter calculation, spectral partitioning, construction, and transformations
+- **Rich Analysis Tools**: 60+ methods for wave parameter calculation and spectral transformations
+- **Spectral Partitioning**: Separate wind sea and swell using multiple algorithms (PTM1-5, watershed, wave age)
+- **Spectral Construction**: Create synthetic spectra using parametric forms (JONSWAP, TMA, Gaussian, Pierson-Moskowitz)
 - **Flexible Visualisation**: Polar spectral plots with matplotlib integration
 - **High Performance**: Leverages dask for efficient processing of large datasets
 - **Extensible**: Plugin architecture for custom readers and analysis methods
@@ -129,18 +131,80 @@ Working with Different Data Sources
 Advanced Analysis
 -----------------
 
+Spectral Partitioning
+~~~~~~~~~~~~~~~~~~~~~
+
+Separate spectra into wind sea and swell components using various methods:
+
 .. code-block:: python
 
-   # Spectral partitioning
-   partitions = dset.spec.partition.ptm1(wspd=10, wdir=270, parts=3)
+   # PTM1: Watershed partitioning with wind sea identification
+   partitions = dset.spec.partition.ptm1(
+       wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=2
+   )
+   
+   # PTM3: Simple ordering by wave height (no wind/depth needed)
+   partitions = dset.spec.partition.ptm3(parts=3)
+   
+   # PTM4: Wave age criterion to separate wind sea from swell
+   partitions = dset.spec.partition.ptm4(
+       wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, agefac=1.7
+   )
+   
+   # PTM1_TRACK: Track partitions from unique wave systems over time
+   # Useful for following the evolution of individual swell events
+   partitions = dset.spec.partition.ptm1_track(
+       wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=2
+   )
 
-   # Wave physics calculations
+Spectral Construction
+~~~~~~~~~~~~~~~~~~~~~
+
+Create synthetic spectra from parametric forms:
+
+.. code-block:: python
+
+   from wavespectra.construct.frequency import jonswap, tma, gaussian
+   from wavespectra.construct.direction import cartwright
+   from wavespectra.construct import construct_partition
+   
+   # Create JONSWAP spectrum for developing seas
+   freq = np.arange(0.03, 0.4, 0.01)
+   spectrum = jonswap(freq=freq, hs=2.5, fp=0.1, gamma=3.3)
+   
+   # Create TMA spectrum for finite depth
+   spectrum_shallow = tma(freq=freq, hs=2.0, fp=0.1, dep=15)
+   
+   # Create 2D spectrum by combining frequency and directional components
+   dir = np.arange(0, 360, 10)
+   spectrum_2d = jonswap(freq=freq, hs=2.5, fp=0.1) * cartwright(dir=dir, dm=270, dspr=30)
+   
+   # Or use construct_partition for a complete 2D spectrum
+   spectrum_2d = construct_partition(
+       freq_name="jonswap",
+       dir_name="cartwright",
+       freq_kwargs={"freq": freq, "hs": 2.5, "fp": 0.1, "gamma": 3.3},
+       dir_kwargs={"dir": dir, "dm": 270, "dspr": 30}
+   )
+
+Spectral Fitting
+~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Fit parametric forms to existing spectra
+   jonswap_params = dset.spec.fit_jonswap()          # Fit JONSWAP spectrum
+
+Wave Physics
+~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Calculate wave physics parameters
    celerity = dset.spec.celerity(depth=50)           # Wave speed
    wavelength = dset.spec.wavelen(depth=50)          # Wavelength
    stokes_drift = dset.spec.uss()                    # Stokes drift
 
-   # Spectral fitting
-   jonswap_params = dset.spec.fit_jonswap()          # Fit JONSWAP spectrum
 
 Data Requirements
 =================
@@ -180,12 +244,14 @@ Full documentation is available at `wavespectra.readthedocs.io`_
 
 - `Installation Guide`_
 - `Quick Start Tutorial`_
+- `Spectral Construction`_
 - `API Reference`_
 - `Example Gallery`_
 
 .. _wavespectra.readthedocs.io: https://wavespectra.readthedocs.io/en/latest/
 .. _Installation Guide: https://wavespectra.readthedocs.io/en/latest/install.html
 .. _Quick Start Tutorial: https://wavespectra.readthedocs.io/en/latest/quickstart.html
+.. _Spectral Construction: https://wavespectra.readthedocs.io/en/latest/construction.html
 .. _API Reference: https://wavespectra.readthedocs.io/en/latest/api.html
 .. _Example Gallery: https://wavespectra.readthedocs.io/en/latest/gallery.html
 
