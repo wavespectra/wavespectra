@@ -396,7 +396,6 @@ def test_awac_Tp_file():
 
 
 if __name__ == "__main__":
-
     # clean data
     D = AWAC_EXAMPLE_DATA.replace("\n", "")
     D = D.replace("$", "\n$")

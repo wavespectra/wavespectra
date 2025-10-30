@@ -503,7 +503,7 @@ class SpecArray(object):
         a = (mom_sin * self.df).sum(dim=attrs.FREQNAME)
         b = (mom_cos * self.df).sum(dim=attrs.FREQNAME)
         e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
-        dspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e))) ** 0.5
+        dspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e.where(e > 0)))) ** 0.5
         dspr.attrs.update(self._get_cf_attributes(self._my_name()))
         return dspr.rename(self._my_name())
 
@@ -522,7 +522,7 @@ class SpecArray(object):
         a = mom_sin * self.df
         b = mom_cos * self.df
         e = self.oned() * self.df
-        fdspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e))) ** 0.5
+        fdspr = (2 * R2D**2 * (1 - ((a**2 + b**2) ** 0.5 / e.where(e > 0)))) ** 0.5
         return fdspr.rename(f"fdspr{mom:0.0f}")
 
     def dpspr(self, mom=1):

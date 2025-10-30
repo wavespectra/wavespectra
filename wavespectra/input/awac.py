@@ -155,10 +155,10 @@ end
 
 import datetime
 import warnings
-
 import numpy as np
-
 import xarray as xr
+from scipy.integrate import trapezoid
+
 from wavespectra.core.attributes import set_spec_attributes
 
 
@@ -224,7 +224,6 @@ def parse_awac_nmnea_wave_parameters(lines):
 
 
 def parse_awac_nmea(lines):
-
     # scan to find frequency grid
     freq = None
 
@@ -252,12 +251,12 @@ def parse_awac_nmea(lines):
             fstep2 = float(blocks[5])
 
             # assert that the frequency grid is the same
-            assert (
-                fstart == fstart2
-            ), "Frequency start does not match between $PNORF and $PNORE"
-            assert (
-                fstep == fstep2
-            ), "Frequency step does not match between $PNORF and $PNORE"
+            assert fstart == fstart2, (
+                "Frequency start does not match between $PNORF and $PNORE"
+            )
+            assert fstep == fstep2, (
+                "Frequency step does not match between $PNORF and $PNORE"
+            )
 
             ok = True
             break
@@ -399,7 +398,6 @@ def read_awac_strings(
 
         # Apply maximum entropy method to remove negative energy
         for iFreq in range(len(freq)):
-
             c1 = A1new[iFreq] + 1j * B1new[iFreq]
             c2 = A2new[iFreq] + 1j * B2new[iFreq]
 
@@ -413,7 +411,6 @@ def read_awac_strings(
 
             factors = []
             for dd in range(len(dDir)):
-
                 dNewdir = np.pi / 2 - dDir[dd]
                 numer = 1 - fi1 * np.conj(c1) - fi2 * np.conj(c2)
                 denom = (
@@ -450,7 +447,7 @@ def read_awac_strings(
 
         # Calculate m0 of the spectrum
         Sd = [np.sum(DirField[iFreq]) for iFreq in range(len(freq))]
-        m0 = np.trapezoid(Sd, freq)
+        m0 = trapezoid(Sd, freq)
         Hs_spectrum = 4 * np.sqrt(m0)
 
         # scale the spectrum to the given Hs IF Hs_spectrum is not zero

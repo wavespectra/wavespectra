@@ -69,8 +69,9 @@ class TestIO(object):
                 )
         else:
             print(
-                "No output method defined for {}, "
-                "skipping output tests".format(filename)
+                "No output method defined for {}, skipping output tests".format(
+                    filename
+                )
             )
 
     @pytest.mark.parametrize(

@@ -12,6 +12,23 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.4.2 (2025-10-30)
+___________________
+
+Bug Fixes
+---------
+* Replace np.trapzoid with scipy's version in the awac reader to avoid issues with numpy 2.0
+  (`PR152 <https://github.com/wavespectra/wavespectra/pull/152>`_)
+* Fix broken cli tests
+
+Internal Changes
+----------------
+* Add deepwiki badge
+* Remove incompatible autodoc dependency to support Python 3.11+
+* Address deprecation warnings
+* Several improvements to the README file
+
+
 4.4.1 (2025-04-18)
 ___________________
 
