@@ -18,6 +18,7 @@ ___________________
 Bug Fixes
 ---------
 * Replace np.trapzoid with scipy's version in the awac reader to avoid issues with numpy 2.0
+  (`PR152 <https://github.com/wavespectra/wavespectra/pull/152>`_)
 * Fix broken cli tests
 
 Internal Changes
