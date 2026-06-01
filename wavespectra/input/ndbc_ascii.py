@@ -35,7 +35,12 @@ def read_file(filename):
         df = pd.read_csv(f, delimiter=r"\s+", compression=compressed, header=None)
         df.index = pd.to_datetime(df[date_columns.keys()].rename(columns=date_columns))
         df = df.iloc[:, list(date_columns.keys())[-1] + 1 :]
-        freqcols = df.select_dtypes(include=["object", "str"])  # Get all columns with the frequency
+        try:
+            # pandas 3+: "str" selects StringDtype columns; "object" selects legacy string columns
+            freqcols = df.select_dtypes(include=["object", "str"])
+        except TypeError:
+            # pandas 2: "str" is not a recognised dtype — object covers string columns
+            freqcols = df.select_dtypes(include=["object"])
         if not (freqcols.nunique() == 1).all():
             raise IOError("NDBC file has varying frequencies in same file")
         freqs = freqcols.iloc[0].apply(
