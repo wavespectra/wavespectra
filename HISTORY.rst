@@ -12,6 +12,23 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.4.3 (2026-06-02)
+___________________
+
+Bug Fixes
+---------
+* Fix ``ValueError`` when reading SWAN spectra files with optional location names in the
+  ``LONLAT``/``LOCATIONS`` header block by `gaoflow`_
+  (`PR156 <https://github.com/wavespectra/wavespectra/pull/156>`_)
+
+Internal Changes
+----------------
+* Fix pandas 4 deprecation warning in NDBC ASCII reader by passing ``include=["object", "str"]``
+  to ``select_dtypes`` instead of bare ``object``
+
+.. _`gaoflow`: https://github.com/gaoflow
+
+
 4.4.2 (2025-10-30)
 ___________________
 
