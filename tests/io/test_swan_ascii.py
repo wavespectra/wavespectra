@@ -59,6 +59,51 @@ def test_read_swan_multiple_locations(dset, tmpdir):
     assert ds1.equals(ds2)
 
 
+def test_read_swan_named_locations(dset, tmpdir):
+    """Locations may carry an optional name after the coordinates (#84).
+
+    SWAN allows the names of locations to be written behind the two coordinates
+    in the header; these are ignored by SWAN when reading the file. ``read_swan``
+    must skip such trailing names instead of trying to parse them as floats.
+    """
+    reference = tmpdir / "swanfile.spec"
+    named = tmpdir / "swanfile_named.spec"
+    ds = xr.concat([dset, dset, dset], dim="site")
+    ds["site"] = [1, 2, 3]
+    ds.spec.to_swan(reference)
+
+    # Append a location name to every coordinate line of the locations block.
+    lines = Path(reference).read_text().splitlines()
+    out = []
+    in_locs = False
+    nlocs = 0
+    for line in lines:
+        header = line.split()[0] if line.split() else ""
+        if header in ("LONLAT", "LOCATIONS"):
+            in_locs = True
+            nlocs = -1  # next line is the count
+            out.append(line)
+            continue
+        if in_locs and nlocs == -1:
+            nlocs = int(line.split()[0])
+            out.append(line)
+            continue
+        if in_locs and nlocs > 0:
+            out.append(line.rstrip() + f"    station_{nlocs}")
+            nlocs -= 1
+            if nlocs == 0:
+                in_locs = False
+            continue
+        out.append(line)
+    Path(named).write_text("\n".join(out) + "\n")
+
+    ds_ref = read_swan(reference, as_site=True)
+    ds_named = read_swan(named, as_site=True)
+    assert np.array_equal(ds_named.lon.values, ds_ref.lon.values)
+    assert np.array_equal(ds_named.lat.values, ds_ref.lat.values)
+    assert ds_ref.equals(ds_named)
+
+
 @pytest.mark.filterwarnings("ignore::UserWarning")
 def test_read_swan_inconsistent_times(dset, tmpdir):
     """Test spectra is read without winds and depth if times are inconsistent."""

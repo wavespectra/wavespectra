@@ -69,9 +69,12 @@ class SwanSpecFile(object):
                 "LOCATIONS", True
             )
             for ip in locs:
-                xy = [float(val) for val in ip.split()]
-                self.x.append(xy[0])
-                self.y.append(xy[1])
+                # Only the first two tokens are the x/y coordinates. SWAN allows
+                # an optional location name to follow them in the header, which
+                # is ignored by SWAN when reading the file (see #84).
+                xy = ip.split()
+                self.x.append(float(xy[0]))
+                self.y.append(float(xy[1]))
             self.x = np.array(self.x)
             self.y = np.array(self.y)
             self.afreq = self._read_header("AFREQ", True)
