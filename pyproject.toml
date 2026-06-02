@@ -136,7 +136,7 @@ line-ending = "auto"
 github_url = "https://github.com/wavespectra/wavespectra/"
 
 [tool.tbump.version]
-current = "4.4.2"
+current = "4.4.3"
 regex = '''
   (?P<major>\d+)
   \.(?P<minor>\d+)
