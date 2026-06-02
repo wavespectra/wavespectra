@@ -78,6 +78,7 @@ extra = [
     "gcsfs",
     "h5netcdf",
     "netCDF4",
+    "tbump",
     "zarr",
 ]
 docs = [
