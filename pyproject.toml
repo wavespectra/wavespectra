@@ -132,6 +132,24 @@ line-ending = "auto"
 "wavespectra/input/wavespectra.py" = ["F401"]
 "wavespectra/input/xwaves.py" = ["F401"]
 
+[tool.tbump]
+github_url = "https://github.com/wavespectra/wavespectra/"
+
+[tool.tbump.version]
+current = "4.4.2"
+regex = '''
+  (?P<major>\d+)
+  \.(?P<minor>\d+)
+  \.(?P<patch>\d+)
+  '''
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
+
+[[tool.tbump.file]]
+src = "wavespectra/__init__.py"
+
 [tool.tox]
 legacy_tox_ini = """
     [tox]
