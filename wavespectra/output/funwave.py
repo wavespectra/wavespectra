@@ -33,6 +33,46 @@ def to_funwave(
           zip archive defined by replacing the extension of `filename` by ".zip".
 
     """
+    _write_funwave(self, filename, clip, funwave_spectrum)
+
+
+def to_funwave_new(
+    self,
+    filename,
+    clip=True,
+    phases=True,
+):
+    """Write spectra in Funwave WK_NEW_DATA2D wavemaker format.
+
+    Args:
+        - filename (str): Name for output Funwave file.
+        - clip (bool): Clip directions outside [-90, 90] range in cartesian convention.
+        - phases (bool): Write random phases for each wave component, if False the
+          phase block is omitted and Funwave generates random phases itself.
+
+    Note:
+        - Format description: https://fengyanshi.github.io/build/html/wavemaker_coherence.html.
+        - Unlike the gridded WK_DATA2D format written by `to_funwave`, this format
+          describes individual wave components, one per spectral bin.
+        - Directions converted from  wavespectra (0N, CW, from) to Cartesian (0E, CCW, to).
+        - Funwave only deals with directions in the [-90, 90] range in cartesian
+          convention (components outside it are discarded by the model), use
+          clip=True to clip spectra outside that range.
+        - Both 2D :math:`E(f,d)` and 1d :math:`E(f)` spectra are supported.
+        - If the SpecArray has more than one spectrum, multiple files are created in a
+          zip archive defined by replacing the extension of `filename` by ".zip".
+
+    """
+    _write_funwave(
+        self,
+        filename,
+        clip,
+        lambda darr, fname: funwave_new_spectrum(darr, fname, phases=phases),
+    )
+
+
+def _write_funwave(self, filename, clip, spectrum_writer):
+    """Write one or multiple spectra using the given single-spectrum writer."""
     darr = self.efth.copy(deep=True)
 
     # Convert directions to Cartesian, going-to convention
@@ -50,7 +90,7 @@ def to_funwave(
 
     if not stack_dims or dimsizes == {1}:
         # Single spectrum in object, write directly to txt file
-        funwave_spectrum(darr, filename)
+        spectrum_writer(darr, filename)
 
     else:
         # Multiple spectra in object, write each txt file in a zip archive
@@ -71,7 +111,7 @@ def to_funwave(
                 # Write spectrum to zip archive
                 fname = os.path.basename(fpath) + "-" + prefix + fext
                 logger.debug(f"Write {fname} to {zipname}")
-                spectrum = funwave_spectrum(darr, None).getvalue()
+                spectrum = spectrum_writer(darr, None).getvalue()
                 zstream.writestr(fname, spectrum)
 
 
@@ -113,6 +153,75 @@ def funwave_spectrum(darr, filename):
     else:
         np.savetxt(s, amp, fmt="%12.8f", delimiter="")
         np.savetxt(s, phi, fmt="%12.3f", delimiter="")
+
+    # Save to file
+    if filename is not None:
+        with open(filename, "w") as fid:
+            fid.write(s.getvalue())
+
+    return s
+
+
+def funwave_new_spectrum(darr, filename, phases=True):
+    """Funwave WK_NEW_DATA2D spectrum memory buffer.
+
+    Args:
+        darr (SpecArray): Spectrum to write (only `freq`, `dir` dims are allowed).
+        filename (str): Name of file to save spectrum to, choose `None` if you don't
+            want to save it to file but only return the memory buffer.
+        phases (bool): Write random phases for each wave component, if False the
+            phase block is omitted and Funwave generates random phases itself.
+
+    Returns:
+        StringIO memory buffer with spectrum object.
+
+    Note:
+        The file describes one wave component per spectral bin, with blocks of
+        frequency (Hz), direction (degrees, cartesian) and amplitude (m) values,
+        optionally followed by a block of phases (degrees):
+
+        .. code-block:: none
+
+            NumFreq
+            PeakPeriod
+            Freq(1..NumFreq)
+            Dire(1..NumFreq)
+            Amp(1..NumFreq)
+            Phase(1..NumFreq)
+
+    """
+    # Ensure direction dim exists for 1D spectrum and has value 0
+    if attrs.DIRNAME not in darr.dims:
+        darr = darr.expand_dims({attrs.DIRNAME: [0]}, axis=-1)
+    elif darr[attrs.DIRNAME].size == 1:
+        darr = darr.assign_coords({attrs.DIRNAME: [0]})
+
+    # Component amplitudes from spectral bins
+    amp = np.sqrt(darr * darr.spec.df * darr.spec.dd * 8) / 2
+    amp = amp.transpose(attrs.FREQNAME, attrs.DIRNAME)
+
+    # Unpack bins into individual wave components
+    freq, dire = np.meshgrid(
+        darr[attrs.FREQNAME].values, darr[attrs.DIRNAME].values, indexing="ij"
+    )
+    freq = freq.ravel()
+    dire = dire.ravel()
+    amp = amp.values.ravel()
+    nc = freq.size
+
+    # Peak wave period
+    tp = float(darr.spec.tp())
+
+    # Create spectrum in memory buffer
+    s = StringIO()
+    s.write(f"{nc:>5d}   - NumFreq\n")
+    s.write(f"{tp:>10.3f}   - PeakPeriod\n")
+    s.write(nc * "%10.5f   - Freq\n" % tuple(freq))
+    s.write(nc * "%10.3f   - Dire\n" % tuple(dire))
+    s.write(nc * "%12.8f   - Amp\n" % tuple(amp))
+    if phases:
+        phi = np.random.uniform(0, 360.0, nc)
+        s.write(nc * "%12.3f   - Phase\n" % tuple(phi))
 
     # Save to file
     if filename is not None:

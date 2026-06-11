@@ -38,6 +38,7 @@ These output functions are currently available as methods of :py:class:`~wavespe
     :toctree: generated/
 
     SpecDataset.to_funwave
+    SpecDataset.to_funwave_new
     SpecDataset.to_json
     SpecDataset.to_netcdf
     SpecDataset.to_octopus

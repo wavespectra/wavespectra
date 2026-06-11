@@ -12,6 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.5.0 (unreleased)
+___________________
+
+New Features
+------------
+* New ``to_funwave_new`` writer to save spectra as individual wave components in the
+  format expected by the FUNWAVE-TVD ``WK_NEW_DATA2D`` wavemaker (`WaveCompFile`),
+  supporting optional phases, direction clipping, 1D spectra and zip archives for
+  multiple spectra.
+
+
 4.4.3 (2026-06-02)
 ___________________
 

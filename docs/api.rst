@@ -107,6 +107,7 @@ Output methods described in the `Output functions`_ section:
 :py:attr:`~SpecDataset.to_ww3`
 :py:attr:`~SpecDataset.to_json`
 :py:attr:`~SpecDataset.to_funwave`
+:py:attr:`~SpecDataset.to_funwave_new`
 :py:attr:`~SpecDataset.to_orcaflex`
 
 
@@ -174,6 +175,7 @@ Output functions
    SpecDataset.to_ww3
    SpecDataset.to_json
    SpecDataset.to_funwave
+   SpecDataset.to_funwave_new
    SpecDataset.to_orcaflex
 
 
