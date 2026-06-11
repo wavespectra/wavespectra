@@ -70,6 +70,7 @@ These input functions are currently available from the main module level:
     read_datawell
     read_era5
     read_funwave
+    read_funwave_new
     read_json
     read_ncswan
     read_ndbc

@@ -144,6 +144,7 @@ Input functions
    read_ndbc_ascii
    read_json
    read_funwave
+   read_funwave_new
    read_xwaves
    read_dataset
    read_wavespectra

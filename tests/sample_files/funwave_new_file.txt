@@ -1,0 +1,10 @@
+  2        - NumFreq
+  8.0      - PeakPeriod  
+  0.125    - Freq
+  0.125    - Freq
+ 12.000    - Dire
+-12.000    - Dire
+  0.3	   - Amp
+  0.3	   - Amp
+  0.0	   - Phase
+ 20.0      - Phase

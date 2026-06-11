@@ -21,6 +21,9 @@ New Features
   format expected by the FUNWAVE-TVD ``WK_NEW_DATA2D`` wavemaker (`WaveCompFile`),
   supporting optional phases, direction clipping, 1D spectra and zip archives for
   multiple spectra.
+* New ``read_funwave_new`` reader to reconstruct gridded spectra from FUNWAVE-TVD
+  ``WK_NEW_DATA2D`` wave component files, also available as the ``funwave_new``
+  engine in ``xr.open_dataset``.
 
 
 4.4.3 (2026-06-02)

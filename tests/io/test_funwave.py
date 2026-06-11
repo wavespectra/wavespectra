@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 from zipfile import ZipFile
 
-from wavespectra import read_funwave, read_ww3
+from wavespectra import read_funwave, read_funwave_new, read_ww3
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -20,6 +20,7 @@ class TestFunwave:
         """Setup class."""
         self.tmp_dir = mkdtemp()
         self.filename = os.path.join(FILES_DIR, "funwavefile.txt")
+        self.filename_new = os.path.join(FILES_DIR, "funwave_new_file.txt")
         self.dsww3 = read_ww3(os.path.join(FILES_DIR, "ww3file.nc"))
 
     @classmethod
@@ -142,6 +143,52 @@ class TestFunwave:
         assert os.path.isfile(zipname)
         assert self._files_in_zip(zipname) == np.prod(
             self.dsww3.efth.isel(freq=0, dir=0).shape
+        )
+
+    def test_new_data2d_read_official_example(self):
+        """Read the two-wave example file from the Funwave repository.
+
+        Two components with amplitude 0.3 m and directions +-12 deg cartesian,
+        from simple_cases/wave_coherence/Case_DATA2D_2Waves.
+
+        """
+        dset = read_funwave_new(self.filename_new)
+        assert dset.freq.size == 1
+        assert sorted(dset.dir.values) == [258.0, 282.0]
+        assert float(dset.tp) == 8.0
+        hs = 4 * np.sqrt(2 * 0.3**2 / 2)
+        assert float(dset.spec.hs(tail=False)) == pytest.approx(hs, rel=1e-6)
+
+    def test_new_data2d_read(self):
+        """
+        * Write single wave component file from ww3 file.
+        * Read it back and compare stats from original and new datasets.
+        """
+        filename = os.path.join(self.tmp_dir, "fw_new_roundtrip.txt")
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True)
+        dset0.spec.to_funwave_new(filename, clip=False)
+        dset1 = read_funwave_new(filename)
+        xr.testing.assert_allclose(
+            dset0.spec.stats(["hs", "tp", "dpm"]),
+            dset1.spec.stats(["hs", "tp", "dpm"]),
+            rtol=1e-3,
+        )
+
+    def test_new_data2d_read_1d(self):
+        """
+        * Write oned wave component file from ww3 file.
+        * Read it back and check stats and dimension consistency.
+        """
+        filename = os.path.join(self.tmp_dir, "fw_new_roundtrip_1d.txt")
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned().to_dataset()
+        dset0.spec.to_funwave_new(filename, clip=False)
+        dset1 = read_funwave_new(filename)
+        assert dset1.spec.dd == 1
+        assert dset1.spec.dir is None
+        xr.testing.assert_allclose(
+            dset0.spec.stats(["hs", "tp"]),
+            dset1.spec.stats(["hs", "tp"]),
+            rtol=1e-3,
         )
 
     def test_new_data2d_1d(self):
