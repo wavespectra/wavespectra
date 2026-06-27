@@ -134,7 +134,9 @@ def funwave_spectrum(darr, filename):
         darr = darr.assign_coords({attrs.DIRNAME: [0]})
 
     # Amplitudes and phases
-    amp = np.sqrt(darr * darr.spec.df * darr.spec.dd * 8) / 2
+    # Clip to >=0 before sqrt: interpolation/rotation can leave tiny negative
+    # energy (~1e-21) from float cancellation, which would yield NaN amplitudes.
+    amp = np.sqrt(np.maximum(darr * darr.spec.df * darr.spec.dd * 8, 0.0)) / 2
     amp = amp.transpose()
     nd, nf = amp.shape
     phi = np.random.uniform(0, 1, (nd, nf)) * 360.0
@@ -197,7 +199,9 @@ def funwave_new_spectrum(darr, filename, phases=True):
         darr = darr.assign_coords({attrs.DIRNAME: [0]})
 
     # Component amplitudes from spectral bins
-    amp = np.sqrt(darr * darr.spec.df * darr.spec.dd * 8) / 2
+    # Clip to >=0 before sqrt: interpolation/rotation can leave tiny negative
+    # energy (~1e-21) from float cancellation, which would yield NaN amplitudes.
+    amp = np.sqrt(np.maximum(darr * darr.spec.df * darr.spec.dd * 8, 0.0)) / 2
     amp = amp.transpose(attrs.FREQNAME, attrs.DIRNAME)
 
     # Unpack bins into individual wave components

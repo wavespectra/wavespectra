@@ -202,6 +202,28 @@ class TestFunwave:
         hs = 4 * np.sqrt(np.sum(amp**2 / 2))
         assert hs == pytest.approx(float(dset0.spec.hs(tail=False)), rel=1e-4)
 
+    def test_negative_energy_no_nan(self):
+        """Tiny negative energy must not produce NaN amplitudes.
+
+        Interpolation / rotation of spectra can leave bins with tiny negative
+        energy (~1e-21) from float cancellation. As amplitudes are computed via
+        sqrt(efth ...), those must be clipped to avoid NaN in the output.
+        """
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).copy(deep=True)
+        dset0["efth"][0, 0] = -1.0e-21
+
+        # Gridded format
+        filename = os.path.join(self.tmp_dir, "fw_neg.txt")
+        dset0.spec.to_funwave(filename, clip=False)
+        with open(filename) as fid:
+            assert "nan" not in fid.read().lower()
+
+        # Wave component (WK_NEW_DATA2D) format
+        filename_new = os.path.join(self.tmp_dir, "fw_new_neg.txt")
+        dset0.spec.to_funwave_new(filename_new, clip=False)
+        _, _, _, _, amp, _ = self._read_new_data2d(filename_new)
+        assert not np.isnan(amp).any()
+
     def test_1d(self):
         """
         * Write oned funwave spectrum from ww3 file.
