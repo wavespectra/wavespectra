@@ -12,7 +12,7 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-4.5.1 (unreleased)
+4.5.1 (2026-06-27)
 ___________________
 
 Bug Fixes
