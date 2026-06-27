@@ -12,7 +12,17 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-4.5.0 (unreleased)
+4.5.1 (unreleased)
+___________________
+
+Bug Fixes
+---------
+* Clip energy to non-negative before the ``sqrt`` in the ``to_funwave`` and
+  ``to_funwave_new`` writers so that tiny negative energy left by interpolation or
+  rotation (float cancellation, ~1e-21) no longer produces ``NaN`` amplitudes.
+
+
+4.5.0 (2026-06-16)
 ___________________
 
 New Features
