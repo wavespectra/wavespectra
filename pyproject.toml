@@ -73,7 +73,7 @@ ww3_station = "wavespectra.input.ww3_station:WW3StationBackendEntrypoint"
 xwaves = "wavespectra.input.xwaves:XWavesBackendEntrypoint"
 
 [project.optional-dependencies]
-test = ["pytest", "tox", "ruff"]
+test = ["pytest", "pytest-cov", "ruff"]
 extra = [
     "fsspec",
     "gcsfs",
@@ -150,22 +150,3 @@ tag_template = "v{new_version}"
 
 [[tool.tbump.file]]
 src = "wavespectra/__init__.py"
-
-[tool.tox]
-legacy_tox_ini = """
-    [tox]
-    min_version = 4.0
-    env_list =
-      py38
-      py39
-      py310
-
-    [testenv]
-    deps = wavespectra[extra, test]
-    commands = pytest tests
-
-    [testenv:flake8]
-    basepython = python
-    deps = flake8
-    commands = flake8 wavespectra
-"""

@@ -10,12 +10,12 @@ wavespectra
    :target: https://zenodo.org/badge/latestdoi/205463939
    :alt: DOI
 
-.. image:: https://img.shields.io/github/actions/workflow/status/wavespectra/wavespectra/python-publish.yml
+.. image:: https://img.shields.io/github/actions/workflow/status/wavespectra/wavespectra/testing.yml?branch=main
    :target: https://github.com/wavespectra/wavespectra/actions
    :alt: Build Status
 
-.. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg?branch=master
-   :target: https://coveralls.io/github/wavespectra/wavespectra?branch=master
+.. image:: https://coveralls.io/repos/github/wavespectra/wavespectra/badge.svg?branch=main
+   :target: https://coveralls.io/github/wavespectra/wavespectra?branch=main
    :alt: Coverage
 
 .. image:: https://readthedocs.org/projects/wavespectra/badge/?version=latest

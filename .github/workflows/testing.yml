@@ -4,6 +4,31 @@ on:
   push:
 
 jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    # Non-blocking for now: surfaces violations without failing the build.
+    # Flip `continue-on-error` to false once the existing violations are cleaned up.
+    continue-on-error: true
+    steps:
+    -
+      name: Checkout repo
+      uses: actions/checkout@v4
+    -
+      name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    -
+      name: Install ruff
+      run: python -m pip install ruff
+    -
+      name: Lint with ruff
+      run: ruff check wavespectra tests
+    -
+      name: Check formatting with ruff
+      run: ruff format --check wavespectra tests
+
   build-and-test:
     name: Build and test
     runs-on: ${{ matrix.os }}
@@ -21,6 +46,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        cache: pip
     -
       name: Install dependencies
       run: |
@@ -28,4 +54,11 @@ jobs:
         pip install . 'wavespectra[extra,test]'
     -
       name: Test package
-      run: pytest -s -v tests
+      run: pytest -s -v --cov=wavespectra --cov-report=xml --cov-report=term tests
+    -
+      name: Upload coverage to Coveralls
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+      uses: coverallsapp/github-action@v2
+      with:
+        file: coverage.xml
+        format: cobertura
