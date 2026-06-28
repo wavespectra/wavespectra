@@ -11,9 +11,9 @@ The methods differ in how they specify some Jonswap parameters.
 
     * Default :math:`\gamma=3.3`.
 
-    * Default :math:`\sigma_a=0.7`.
+    * Default :math:`\sigma_a=0.07`.
 
-    * Default :math:`\sigma_b=0.9`.
+    * Default :math:`\sigma_b=0.09`.
 
     * :math:`\alpha=\frac{5\pi^4}{g^2}Hs^2f_{p}^{4}`
 
@@ -80,7 +80,7 @@ Reconstruct from method 1
     :okexcept:
     :okwarning:
 
-    freq_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.7, sigma_b=0.9, alpha=ds.alpha)}
+    freq_kwargs = {**kw, **dict(gamma=3.3, sigma_a=0.07, sigma_b=0.09, alpha=ds.alpha)}
     method1 = construct_partition(freq_name, dir_name, freq_kwargs, dir_kwargs)
     method1 = method1.max(dim="part")
 
