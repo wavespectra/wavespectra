@@ -15,9 +15,7 @@ ______________________
     @suppress
     from wavespectra import read_ww3
     @suppress
-    from wavespectra import fit_pierson_moskowitz, fit_jonswap, fit_tma, fit_gaussian
-    @suppress
-    from wavespectra.directional import cartwright, bunney
+    from wavespectra.construct.direction import cartwright, asymmetric
     @suppress
     from wavespectra.construct import construct_partition
 
@@ -127,7 +125,7 @@ partitioning and reconstructing existing spectra in a convenient way:
     @suppress
     plt.tight_layout()
 
-    @savefig original_vs_cartwright_vs_bunney.png
+    @savefig original_vs_cartwright_vs_asymmetric.png
     plt.draw()
 
 
