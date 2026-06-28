@@ -652,7 +652,7 @@ class Partition:
             fmin = bbox.get("fmin", float(ds.freq.min())) or float(ds.freq.min())
             fmax = bbox.get("fmax", float(ds.freq.max())) or float(ds.freq.max())
             dmin = bbox.get("dmin", float(ds.dir.min())) or float(ds.dir.min())
-            dmax = bbox.get("dmax", float(ds.dir.min())) or float(ds.dir.max())
+            dmax = bbox.get("dmax", float(ds.dir.max())) or float(ds.dir.max())
 
             if fmin >= fmax:
                 raise ValueError(f"fmin {fmin} Hz >= fmax {fmax} Hz")
