@@ -104,7 +104,7 @@ class ERA5BackendEntrypoint(BackendEntrypoint):
         df=1.1,
         as_site=False,
     ):
-        return read_era5(filename_or_obj, f0=f0, df=df)
+        return read_era5(filename_or_obj, f0=f0, df=df, as_site=as_site)
 
     def guess_can_open(self, filename_or_obj):
         return False
