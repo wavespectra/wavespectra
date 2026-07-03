@@ -73,7 +73,7 @@ ww3_station = "wavespectra.input.ww3_station:WW3StationBackendEntrypoint"
 xwaves = "wavespectra.input.xwaves:XWavesBackendEntrypoint"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "ruff"]
+test = ["pytest", "pytest-cov", "pytest-timeout", "ruff"]
 extra = [
     "fsspec",
     "gcsfs",
