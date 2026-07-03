@@ -1,5 +1,7 @@
 """Generic netCDF output plugin."""
 
+import dask
+
 from wavespectra.core.attributes import attrs
 
 
@@ -36,4 +38,9 @@ def to_netcdf(
         )
     if attrs.TIMENAME in other:
         other.time.encoding.update(time_encoding)
-    other.to_netcdf(filename, format=ncformat, encoding=encoding)
+    # Force the single-threaded dask scheduler for the write: computing a lazy
+    # (dask-backed) dataset while writing it to netCDF can intermittently
+    # deadlock on the netCDF4/HDF5 global lock under the default threaded
+    # scheduler. Serialising the write avoids the cross-thread lock contention.
+    with dask.config.set(scheduler="single-threaded"):
+        other.to_netcdf(filename, format=ncformat, encoding=encoding)

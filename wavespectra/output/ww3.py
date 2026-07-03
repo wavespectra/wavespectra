@@ -2,6 +2,7 @@
 
 import os
 import yaml
+import dask
 import numpy as np
 import xarray as xr
 
@@ -112,5 +113,9 @@ def to_ww3(self, filename, ncformat="NETCDF4", compress=False):
             # "format_version": f"wavespectra-{__version__}"
         }
     )
-    # Dumping
-    other.to_netcdf(filename)
+    # Dumping. Force the single-threaded dask scheduler for the write: computing
+    # a lazy (dask-backed) dataset while writing it to netCDF can intermittently
+    # deadlock on the netCDF4/HDF5 global lock under the default threaded
+    # scheduler. Serialising the write avoids the cross-thread lock contention.
+    with dask.config.set(scheduler="single-threaded"):
+        other.to_netcdf(filename)
