@@ -1,11 +1,9 @@
 """Testing the SpecArray accessor."""
 
 import os
-import numpy as np
 import xarray as xr
 import pytest
 
-from wavespectra import SpecArray
 from wavespectra import _import_functions
 
 

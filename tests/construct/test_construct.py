@@ -58,7 +58,7 @@ def test_construct_partition(freq, dir):
 
 
 def test_partition_and_reconstruct_one_fit_all_partitions(dset):
-    dsout = partition_and_reconstruct(
+    partition_and_reconstruct(
         dset,
         parts=4,
         freq_name="jonswap",
@@ -68,7 +68,7 @@ def test_partition_and_reconstruct_one_fit_all_partitions(dset):
 
 
 def test_partition_and_reconstruct_one_fit_per_partition(dset):
-    dsout = partition_and_reconstruct(
+    partition_and_reconstruct(
         dset,
         parts=4,
         freq_name=["jonswap", "jonswap", "jonswap", "jonswap"],
@@ -79,7 +79,7 @@ def test_partition_and_reconstruct_one_fit_per_partition(dset):
 
 def test_partition_and_reconstruct_inconsistent_number_of_partitions(dset):
     with pytest.raises(ValueError):
-        dsout = partition_and_reconstruct(
+        partition_and_reconstruct(
             dset,
             parts=4,
             freq_name=["jonswap", "jonswap"],
@@ -87,7 +87,7 @@ def test_partition_and_reconstruct_inconsistent_number_of_partitions(dset):
             method_combine="max",
         )
     with pytest.raises(ValueError):
-        dsout = partition_and_reconstruct(
+        partition_and_reconstruct(
             dset,
             parts=4,
             freq_name="jonswap",

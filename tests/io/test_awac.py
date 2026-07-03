@@ -1,14 +1,11 @@
 from pathlib import Path
-from datetime import datetime
 
-import numpy as np
 from matplotlib import pyplot as plt
 from numpy.testing import assert_allclose
 
 from wavespectra import read_awac
 from wavespectra.input.awac import (
     parse_awac_nmnea_wave_parameters,
-    parse_awac_nmea,
     read_awac_strings,
 )
 

@@ -1,7 +1,6 @@
 import pytest
 from pathlib import Path
 import numpy as np
-import xarray as xr
 
 from wavespectra import read_ww3
 from wavespectra.partition.partition import (
@@ -157,7 +156,6 @@ class TestPTM2(BasePTM):
 
     def test_partition_class(self):
         swells = 2
-        combine = False
         self.out = self._exec(swells=swells)
         dspart = self.pt.ptm2(
             wspd=self.dset.wspd,
@@ -309,7 +307,7 @@ class TestHP01(BasePTM):
             swells=swells,
         )
         hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
-        # assert hs_dspart == pytest.approx(self.hs_from_partitions, rel=1e-2)
+        assert hs_dspart == pytest.approx(self.hs_from_partitions, rel=1e-2)
 
     # def test_smoothing(self):
     #     swells = 2
@@ -362,12 +360,12 @@ class TestBbox(BasePTM):
             dict(fmin=0.15, fmax=0.3, dmin=None, dmax=None),
         ]
         with pytest.raises(ValueError):
-            ds = self.pt.bbox(bboxes=bboxes)
+            self.pt.bbox(bboxes=bboxes)
 
     def test_freq_increasing(self):
         bboxes = [dict(fmin=0.2, fmax=0.1, dmin=None, dmax=None)]
         with pytest.raises(ValueError):
-            ds = self.pt.bbox(bboxes=bboxes)
+            self.pt.bbox(bboxes=bboxes)
 
 
 class TestPartitionAndTrack(BasePTM):
@@ -383,7 +381,7 @@ class TestPartitionAndTrack(BasePTM):
             swells=swells,
         )
         stats = dspart.spec.stats(["fp", "dpm"]).load()
-        part_ids = track_partitions(stats, wspd=self.dset.wspd)
+        track_partitions(stats, wspd=self.dset.wspd)
 
     def test_class(self):
         swells = 2

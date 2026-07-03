@@ -15,7 +15,6 @@ class TestDatasetWrapper(object):
     @classmethod
     def setup_class(self):
         """Read test spectra from file."""
-        here = os.path.dirname(os.path.abspath(__file__))
         self.swanspec = read_swan(os.path.join(FILES_DIR, "swanfile.spec"))
 
     @pytest.mark.parametrize(

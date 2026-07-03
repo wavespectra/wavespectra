@@ -5,7 +5,6 @@ import pytest
 from tempfile import mkdtemp
 
 from wavespectra import read_ncswan
-from wavespectra.core.attributes import attrs
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 

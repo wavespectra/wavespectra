@@ -27,7 +27,7 @@ def freq():
 def test_cartwright(dir):
     dm = 90
     dspr = 30
-    gth = cartwright(dir, dm, dspr)
+    cartwright(dir, dm, dspr)
 
 
 def test_cartwright_under_90(dir):

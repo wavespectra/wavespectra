@@ -1,10 +1,7 @@
 from pathlib import Path
-import shutil
 import pytest
-from tempfile import mkdtemp
 
 from wavespectra import read_triaxys
-from wavespectra.core.attributes import attrs
 
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"

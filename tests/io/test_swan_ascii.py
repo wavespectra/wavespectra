@@ -3,11 +3,9 @@ import os
 import shutil
 import numpy as np
 import xarray as xr
-import shutil
 import pytest
 
 from wavespectra.input.swan import read_swan, read_swans, read_hotswan, read_swanow
-from wavespectra.core.attributes import attrs
 
 
 FILENAME = Path(__file__).parent / "../sample_files/swanfile.spec"

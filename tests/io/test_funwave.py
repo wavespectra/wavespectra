@@ -33,7 +33,7 @@ class TestFunwave:
         return count
 
     def test_read(self):
-        dset = read_funwave(self.filename)
+        read_funwave(self.filename)
 
     def test_write_single(self):
         """

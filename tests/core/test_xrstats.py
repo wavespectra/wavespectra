@@ -1,6 +1,5 @@
 import os
 import pytest
-import numpy as np
 
 from wavespectra import read_swan
 from wavespectra.core.xrstats import (
@@ -23,24 +22,24 @@ def dset():
 
 
 def test_peak_wave_direction(dset):
-    dp = peak_wave_direction(dset)
-    dp = peak_wave_direction(dset.efth)
+    peak_wave_direction(dset)
+    peak_wave_direction(dset.efth)
     with pytest.raises(ValueError):
-        dp = peak_wave_direction(dset.spec.oned())
+        peak_wave_direction(dset.spec.oned())
 
 
 def test_mean_direction_at_peak_wave_period(dset):
-    dpm = mean_direction_at_peak_wave_period(dset)
-    dpm = mean_direction_at_peak_wave_period(dset.efth)
+    mean_direction_at_peak_wave_period(dset)
+    mean_direction_at_peak_wave_period(dset.efth)
     with pytest.raises(ValueError):
-        dpm = mean_direction_at_peak_wave_period(dset.spec.oned())
+        mean_direction_at_peak_wave_period(dset.spec.oned())
 
 
 def test_peak_wave_period(dset):
-    tp = peak_wave_period(dset)
-    tp = peak_wave_period(dset.efth)
+    peak_wave_period(dset)
+    peak_wave_period(dset.efth)
 
 
-def peak_directional_spread(dset):
-    dpspr = peak_directional_spread(dset)
-    dpspr = peak_directional_spread(dset.efth)
+def test_peak_directional_spread(dset):
+    peak_directional_spread(dset)
+    peak_directional_spread(dset.efth)

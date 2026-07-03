@@ -62,7 +62,7 @@ class TestSel:
     def test_dset_sel_bbox_outside(self):
         """Assert that sel/bbox method raises for bbox outside dataset."""
         with pytest.raises(ValueError):
-            dset = self.dset.spec.sel(
+            self.dset.spec.sel(
                 lons=[10, 20],
                 lats=[-90, -85],
                 method="bbox",
@@ -86,7 +86,7 @@ class TestSel:
     def test_dset_sel_nearest_dont_tolerate_missing(self):
         """Assert missing values raise by default."""
         with pytest.raises(AssertionError):
-            dset = self.dset.spec.sel(
+            self.dset.spec.sel(
                 lons=self.lons,
                 lats=self.lats,
                 method="nearest",
@@ -96,7 +96,7 @@ class TestSel:
 
     def test_dset_sel_nearest_tolerate_missing(self):
         """Assert missing values are ignored if specified."""
-        dset = self.dset.spec.sel(
+        self.dset.spec.sel(
             lons=self.lons,
             lats=self.lats,
             method="nearest",
@@ -108,7 +108,7 @@ class TestSel:
     def test_dset_sel_nearest_at_least_one(self):
         """Assert some site needs to be found even if missing=ignore."""
         with pytest.raises(ValueError):
-            dset = self.dset.spec.sel(
+            self.dset.spec.sel(
                 lons=np.array(self.lons) + 10,
                 lats=self.lats,
                 method="nearest",
@@ -119,11 +119,9 @@ class TestSel:
 
     def test_dset_sel_none(self):
         """Assert that sel/none method runs."""
-        dset = self.dset.spec.sel(
-            lons=self.lons_exact, lats=self.lats_exact, method=None
-        )
+        self.dset.spec.sel(lons=self.lons_exact, lats=self.lats_exact, method=None)
         with pytest.raises(AssertionError):
-            dset = self.dset.spec.sel(lons=self.lons, lats=self.lats, method=None)
+            self.dset.spec.sel(lons=self.lons, lats=self.lats, method=None)
 
     def test_tolerance(self):
         """Test tolerance is working as expected."""
@@ -273,7 +271,6 @@ class TestSelCoordinatesConventions:
         dset = self.dset.copy(deep=True)
         dset["lon"].values = [-10, 10]
         dset["lat"].values = [30, 30]
-        lon = -9
 
         ds = dset.spec.sel(
             method="bbox",

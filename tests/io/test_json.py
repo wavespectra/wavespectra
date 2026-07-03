@@ -2,20 +2,14 @@ import os
 import shutil
 import pytest
 from tempfile import mkdtemp
-import xarray as xr
 
-from wavespectra.core.attributes import attrs
 from wavespectra import (
     read_swan,
     read_netcdf,
     read_ww3,
-    read_octopus,
     read_ncswan,
     read_triaxys,
-    read_wwm,
-    read_dataset,
     read_era5,
-    read_wavespectra,
     read_json,
 )
 

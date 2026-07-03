@@ -2,7 +2,6 @@
 
 import os
 import pytest
-import datetime
 import numpy as np
 import xarray as xr
 
@@ -106,8 +105,8 @@ def test_uv_to_dir():
 
 
 def test_flatten_list():
-    l = [1, [2, 3], [4], [5, 6, 7]]
-    assert flatten_list(l, []) == list(range(1, 8))
+    nested = [1, [2, 3], [4], [5, 6, 7]]
+    assert flatten_list(nested, []) == list(range(1, 8))
 
 
 def test_scaled(dset):
@@ -164,9 +163,9 @@ def test_interp_spec(dset):
 
 
 def test_load_function():
-    func = load_function("wavespectra.construct.frequency", "jonswap", prefix="")
-    func = load_function("wavespectra.construct.direction", "cartwright")
+    load_function("wavespectra.construct.frequency", "jonswap", prefix="")
+    load_function("wavespectra.construct.direction", "cartwright")
     with pytest.raises(AttributeError):
-        func = load_function("wavespectra.construct.frequency", "not_defined")
+        load_function("wavespectra.construct.frequency", "not_defined")
     with pytest.raises(AttributeError):
-        func = load_function("wavespectra.construct.direction", "not_defined")
+        load_function("wavespectra.construct.direction", "not_defined")

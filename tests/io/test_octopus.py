@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import xarray as xr
 import shutil
 import pytest
 from tempfile import mkdtemp
@@ -27,7 +26,7 @@ class TestOctopus(object):
         shutil.rmtree(self.tmp_dir)
 
     def test_read_octopus(self):
-        ds = read_octopus(self.octopusfile)
+        read_octopus(self.octopusfile)
 
     def test_write_octopus(self):
         ds = read_ncswan(self.ncswanfile)

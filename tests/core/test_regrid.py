@@ -2,9 +2,7 @@ import pytest
 from pathlib import Path
 import numpy as np
 
-import wavespectra
 from wavespectra import read_triaxys, read_ww3
-from wavespectra.core.attributes import attrs
 from wavespectra.core.utils import regrid_spec
 
 

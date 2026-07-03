@@ -3,10 +3,8 @@ import shutil
 import pytest
 import pandas as pd
 from tempfile import mkdtemp
-import xarray as xr
 
 from wavespectra import read_ndbc, read_ndbc_ascii
-from wavespectra.core.attributes import attrs
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files/ndbc"
 NCFILE = FILES_DIR / "42098w9999.nc"

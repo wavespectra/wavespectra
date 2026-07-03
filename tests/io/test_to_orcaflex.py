@@ -1,12 +1,9 @@
 import os
-import shutil
 import pytest
-from tempfile import mkdtemp
 import xarray as xr
 import numpy as np
 
 from wavespectra import read_triaxys
-from wavespectra.core.attributes import attrs
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -42,7 +39,7 @@ class TestToOrcaflex(object):
             import OrcFxAPI
 
             m = OrcFxAPI.Model()
-        except:
+        except Exception:
             print("Orcaflex test skipped because no license or no api")
             return
 
@@ -57,7 +54,7 @@ class TestToOrcaflex(object):
             import OrcFxAPI
 
             m = OrcFxAPI.Model()
-        except:
+        except Exception:
             print("Orcaflex test skipped because no license or no api")
             return
 
@@ -70,7 +67,7 @@ class TestToOrcaflex(object):
             import OrcFxAPI
 
             m = OrcFxAPI.Model()
-        except:
+        except Exception:
             print("Orcaflex test skipped because no license or no api")
             return
 
@@ -86,7 +83,7 @@ class TestToOrcaflex(object):
         plt.plot(t[1000:2000], e[1000:2000], linewidth=0.5)
         plt.show()
 
-        from scipy.signal import welch, periodogram
+        from scipy.signal import welch
 
         dt = t[1] - t[0]
         f, p = welch(e, 1 / dt)

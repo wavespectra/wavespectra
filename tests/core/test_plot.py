@@ -84,24 +84,14 @@ def test_multi(load_specdataset):
 
 def test_with_ticklabels(load_specdataset):
     dset = load_specdataset.isel(site=0, time=0)
-    pobj = dset.efth.spec.plot(
-        kind="contourf", show_theta_labels=True, show_radii_labels=True
-    )
-    xlabels_pos = [tick.get_position() for tick in pobj.axes.get_xticklabels()]
-    ylabels_pos = [tick.get_position() for tick in pobj.axes.get_yticklabels()]
-    # assert set(xlabels_pos) == {(0, 0)}
-    # assert set(ylabels_pos) == {(0, 0)}
+    dset.efth.spec.plot(kind="contourf", show_theta_labels=True, show_radii_labels=True)
 
 
 def test_without_ticklabels(load_specdataset):
     dset = load_specdataset.isel(site=0, time=0)
-    pobj = dset.efth.spec.plot(
+    dset.efth.spec.plot(
         kind="contourf", show_theta_labels=False, show_radii_labels=False
     )
-    xlabels_pos = [tick.get_position() for tick in pobj.axes.get_xticklabels()]
-    ylabels_pos = [tick.get_position() for tick in pobj.axes.get_yticklabels()]
-    # assert set(xlabels_pos) != {(0, 0)}
-    # assert set(ylabels_pos) != {(0, 0)}
 
 
 def test_default_contourf_log_colour(load_specdataset):

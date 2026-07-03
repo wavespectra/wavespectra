@@ -3,12 +3,6 @@
 
 """Tests for `wavespectra` package."""
 
-import pytest
-
-from click.testing import CliRunner
-
-from wavespectra import cli
-
 
 # @pytest.fixture
 # def response():
