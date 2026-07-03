@@ -57,7 +57,7 @@ class TestSel:
             method="bbox",
             tolerance=0.0,
         )
-        dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
+        assert dset[attrs.SITENAME].size == self.dset[attrs.SITENAME].size
 
     def test_dset_sel_bbox_outside(self):
         """Assert that sel/bbox method raises for bbox outside dataset."""
@@ -183,13 +183,14 @@ class TestSelCoordinatesConventions:
         lons = [0, 50]
         lats = [30, 30]
         coords = Coordinates(dset, lons=lons, lats=lats)
-        dset.equals(coords.dset)
-        np.array_equal(lons, coords.lons)
-        np.array_equal(lats, coords.lats)
-        np.array_equal(coords.dset_lons, dset.lon.values)
-        np.array_equal(coords.dset_lats, dset.lat.values)
-        coords.consistent is False
-        coords.distance(dset.lon[0], dset.lat[0])
+        assert dset.equals(coords.dset)
+        assert np.array_equal(lons, coords.lons)
+        assert np.array_equal(lats, coords.lats)
+        assert np.array_equal(coords.dset_lons, dset.lon.values)
+        assert np.array_equal(coords.dset_lats, dset.lat.values)
+        assert coords.consistent is False
+        # Distance from a dataset point to itself is zero
+        assert coords.distance(dset.lon[0], dset.lat[0])[0] == 0
 
     def test_nearest_both_180(self):
         """Test nearest with both dataset and slice in [-180 <--> 180]."""

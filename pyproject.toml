@@ -111,6 +111,11 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
+[tool.ruff.lint]
+# B015/B018: flag comparisons/expressions whose result is discarded, which in
+# tests almost always means a forgotten `assert`.
+extend-select = ["B015", "B018"]
+
 [tool.ruff.lint.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]
 "wavespectra/specdataset.py" = ["F401"]

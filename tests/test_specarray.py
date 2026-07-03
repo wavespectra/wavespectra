@@ -40,10 +40,10 @@ def test_interp_freq(dset):
 
 def test_split(dset):
     ds = dset.spec.split(fmin=0.1, fmax=0.2, dmin=0, dmax=15)
-    ds.freq.min() == 0.1
-    ds.freq.max() == 0.2
-    ds.dir.min() == 0
-    ds.dir.max() == 15
+    assert float(ds.freq.min()) >= 0.1
+    assert float(ds.freq.max()) <= 0.2
+    assert float(ds.dir.min()) >= 0
+    assert float(ds.dir.max()) <= 15
     with pytest.raises(ValueError):
         dset.spec.split(fmin=0.2, fmax=0.1)
     with pytest.raises(ValueError):
@@ -129,7 +129,6 @@ def test_one_frequency_bin(dset):
 
 def test_partition_interface(dset_full):
     dset = dset_full
-    dset.spec.partition
     methods = ["ptm1", "ptm2", "ptm3", "ptm4", "ptm5"]
     for method in methods:
         assert method in dir(dset.spec.partition)
