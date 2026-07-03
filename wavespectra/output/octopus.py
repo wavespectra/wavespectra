@@ -201,7 +201,6 @@ def to_octopus(
                 )
 
                 # Spectra
-                specdump = ""
                 fid.write(("freq," + fmt + "anspec\n").format(*freqs))
                 np.savetxt(fid, ds["energy"], fmt=fmt2, delimiter=",")
                 fid.write(("fSpec," + fmt + "\n").format(*ds["fSpec"]))

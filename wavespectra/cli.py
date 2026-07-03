@@ -6,9 +6,7 @@ import yaml
 import xarray as xr
 from dask.diagnostics.progress import ProgressBar
 
-from wavespectra.core.utils import load_function
 from wavespectra.construct import partition_and_reconstruct
-from wavespectra.core.utils import load_function
 
 
 def file_reader(function):
