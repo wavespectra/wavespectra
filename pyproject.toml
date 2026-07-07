@@ -54,6 +54,8 @@ dynamic = ["version"]
 wavespectra = "wavespectra.cli:main"
 
 [project.entry-points."xarray.backends"]
+awac = "wavespectra.input.awac:AWACBackendEntrypoint"
+datawell = "wavespectra.input.datawell:DatawellBackendEntrypoint"
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
 funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
 funwave_new = "wavespectra.input.funwave_new:FunwaveNewBackendEntrypoint"
@@ -62,6 +64,7 @@ ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
 ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
 ndbc_ascii = "wavespectra.input.ndbc_ascii:NDBCASCIIBackendEntrypoint"
 netcdf = "wavespectra.input.netcdf:NetCDFBackendEntrypoint"
+obscape = "wavespectra.input.obscape:ObscapeBackendEntrypoint"
 octopus = "wavespectra.input.octopus:OctopusBackendEntrypoint"
 spotter = "wavespectra.input.spotter:SpotterBackendEntrypoint"
 swan = "wavespectra.input.swan:SWANBackendEntrypoint"

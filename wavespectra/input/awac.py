@@ -153,6 +153,7 @@ end
 
 """
 
+from xarray.backends import BackendEntrypoint
 import datetime
 import warnings
 import numpy as np
@@ -491,3 +492,22 @@ def read_awac_strings(
     ds["site"] = [0]
 
     return ds
+
+
+class AWACBackendEntrypoint(BackendEntrypoint):
+    """AWAC backend engine."""
+
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_awac(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Nortek AWAC NMEA spectra files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"
