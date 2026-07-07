@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import numpy as np
 import xarray as xr
+from xarray.backends import BackendEntrypoint
 
 from wavespectra.core.attributes import set_spec_attributes
 
@@ -263,3 +264,22 @@ def read_obscape_dir(directory, start_date=None, end_date=None):
     files = _get_obs_files(directory, start_date, end_date)
 
     return read_obscape(files)
+
+
+class ObscapeBackendEntrypoint(BackendEntrypoint):
+    """Obscape backend engine."""
+
+    def open_dataset(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+    ):
+        return read_obscape(filename_or_obj)
+
+    def guess_can_open(self, filename_or_obj):
+        return False
+
+    description = "Open Obscape wave buoy csv files as a wavespectra dataset."
+
+    url = "https://github.com/wavespectra/wavespectra"

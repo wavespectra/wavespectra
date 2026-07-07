@@ -166,9 +166,11 @@ class DatawellBackendEntrypoint(BackendEntrypoint):
         filename_or_obj,
         *,
         drop_variables=None,
-        filetype=None,
+        dd=5.0,
+        lon=None,
+        lat=None,
     ):
-        return read_datawell(filename_or_obj, filetype=filetype)
+        return read_datawell(filename_or_obj, dd=dd, lon=lon, lat=lat)
 
     def guess_can_open(self, filename_or_obj):
         return False

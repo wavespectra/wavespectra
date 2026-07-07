@@ -54,6 +54,8 @@ dynamic = ["version"]
 wavespectra = "wavespectra.cli:main"
 
 [project.entry-points."xarray.backends"]
+awac = "wavespectra.input.awac:AWACBackendEntrypoint"
+datawell = "wavespectra.input.datawell:DatawellBackendEntrypoint"
 era5 = "wavespectra.input.era5:ERA5BackendEntrypoint"
 funwave = "wavespectra.input.funwave:FunwaveBackendEntrypoint"
 funwave_new = "wavespectra.input.funwave_new:FunwaveNewBackendEntrypoint"
@@ -62,6 +64,7 @@ ncswan = "wavespectra.input.ncswan:NCSwanBackendEntrypoint"
 ndbc = "wavespectra.input.ndbc:NDBCBackendEntrypoint"
 ndbc_ascii = "wavespectra.input.ndbc_ascii:NDBCASCIIBackendEntrypoint"
 netcdf = "wavespectra.input.netcdf:NetCDFBackendEntrypoint"
+obscape = "wavespectra.input.obscape:ObscapeBackendEntrypoint"
 octopus = "wavespectra.input.octopus:OctopusBackendEntrypoint"
 spotter = "wavespectra.input.spotter:SpotterBackendEntrypoint"
 swan = "wavespectra.input.swan:SWANBackendEntrypoint"
@@ -121,6 +124,15 @@ skip = ["*-musllinux*"]
 test-requires = ["pytest", "netCDF4"]
 test-command = "pytest {project}/tests/test_partition.py -q"
 build-verbosity = 1
+
+[tool.pytest.ini_options]
+norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", "broken"]
+filterwarnings = [
+    # netCDF4-python sets the .shape attribute on numpy arrays, which numpy
+    # 2.5 deprecated; it surfaces through xarray's netCDF4 backend whenever a
+    # netCDF file is written. Third-party issue, nothing to fix in wavespectra.
+    "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 88

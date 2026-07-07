@@ -126,6 +126,7 @@ Input functions
    read_netcdf
    read_era5
    read_ndbc
+   read_wavespectra
 
 \* These functions also support Zarr files
 
@@ -136,19 +137,20 @@ Input functions
    :nosignatures:
    :toctree: generated/
 
-   read_swan
-   read_triaxys
-   read_spotter
-   read_octopus
+   read_awac
    read_dataset
-   read_ndbc_ascii
-   read_json
+   read_datawell
    read_funwave
    read_funwave_new
-   read_xwaves
-   read_dataset
-   read_wavespectra
+   read_json
+   read_ndbc_ascii
+   read_obscape
+   read_octopus
+   read_spotter
+   read_swan
+   read_triaxys
    read_ww3_station
+   read_xwaves
 
 **Convenience SWAN ASCII input functions**
 
