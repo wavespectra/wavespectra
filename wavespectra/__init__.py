@@ -10,8 +10,8 @@ import warnings
 try:
     from wavespectra.specdataset import SpecDataset
     from wavespectra.specarray import SpecArray
-except ImportError:
-    warnings.warn("Cannot import accessors at the main module level")
+except ImportError as exc:
+    warnings.warn(f"Cannot import accessors at the main module level:\n{exc}")
 
 
 __version__ = "4.5.1"
@@ -26,16 +26,18 @@ def _import_functions(pkgname="input", prefix="read"):
 
     Example:
         - wavespectra.input.swan.read_swan
-        - wavespectra.fit.jonswap.fit_jonswap
+
+    Import failures (e.g. a missing optional dependency) are reported as
+    warnings rather than raised, so the package remains importable; the
+    corresponding function is simply not made available.
 
     """
-    import os
-    import glob
     from importlib import import_module
+    from pathlib import Path
 
-    here = os.path.dirname(os.path.abspath(__file__))
-    for filename in glob.glob1(os.path.join(here, pkgname), "*.py"):
-        module = os.path.splitext(filename)[0]
+    here = Path(__file__).parent
+    for path in sorted((here / pkgname).glob("*.py")):
+        module = path.stem
         if module == "__init__":
             continue
         func_name = f"{prefix}_{module}"
@@ -44,7 +46,10 @@ def _import_functions(pkgname="input", prefix="read"):
                 import_module(f"wavespectra.{pkgname}.{module}"), func_name
             )
         except Exception as exc:
-            print(f"Cannot import reading function {func_name} because:\n{exc}")
+            warnings.warn(
+                f"Cannot import function {func_name} from module "
+                f"wavespectra.{pkgname}.{module}:\n{exc}"
+            )
 
 
 _import_functions(pkgname="input", prefix="read")
