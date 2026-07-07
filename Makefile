@@ -45,19 +45,19 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '__pycache__' -exec rm -fr {} +
 
 clean-test: ## remove test and coverage artifacts
-	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint: ## check style with flake8
-	flake8 wavespectra tests
+lint: ## check style with ruff
+	ruff check wavespectra tests
+	ruff format --check wavespectra tests
+
+format: ## format code with ruff
+	ruff format wavespectra tests
 
 test: ## run tests quickly with the default Python
-	py.test
-
-test-all: ## run tests on every Python version with tox
-	tox
+	pytest tests
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source wavespectra -m pytest
@@ -76,13 +76,9 @@ docs: ## generate Sphinx HTML documentation, including API docs
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
-release: dist ## package and upload a release
-	twine upload dist/*
-
-dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+dist: clean ## build source distribution (wheels are built and published by CI)
+	python -m build --sdist
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	pip install .
