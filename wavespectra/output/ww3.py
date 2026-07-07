@@ -23,10 +23,8 @@ MAPPING = {
     "wnd": attrs.WSPDNAME,
 }
 
-VAR_ATTRIBUTES = yaml.load(
-    open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ww3.yml")),
-    Loader=yaml.Loader,
-)
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "ww3.yml")) as f:
+    VAR_ATTRIBUTES = yaml.load(f, Loader=yaml.Loader)
 TIME_UNITS = VAR_ATTRIBUTES["time"].pop("units")
 
 
