@@ -106,6 +106,15 @@ docs = [
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
 
+[tool.pytest.ini_options]
+norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", "broken"]
+filterwarnings = [
+    # netCDF4-python sets the .shape attribute on numpy arrays, which numpy
+    # 2.5 deprecated; it surfaces through xarray's netCDF4 backend whenever a
+    # netCDF file is written. Third-party issue, nothing to fix in wavespectra.
+    "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
+]
+
 [tool.ruff]
 line-length = 88
 
