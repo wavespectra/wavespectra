@@ -57,7 +57,7 @@ jobs:
       uses: actions/checkout@v4
     -
       name: Build and test wheels
-      uses: pypa/cibuildwheel@v3
+      uses: pypa/cibuildwheel@v4.1.0
       # Build/test/skip configuration lives in [tool.cibuildwheel] in pyproject.toml
     -
       name: Upload wheels
