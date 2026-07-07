@@ -111,6 +111,9 @@ version = {attr = "wavespectra.__version__"}
 [tool.cibuildwheel]
 # CPython versions matching the supported range in the classifiers.
 build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*"]
+# 64-bit only: 32-bit Windows wheels would be built by default, but core
+# dependencies (e.g. matplotlib) no longer ship win32 wheels to test against.
+archs = ["auto64"]
 # Skip musl-based linux; can be added later if there is demand.
 skip = ["*-musllinux*"]
 # Test every built wheel by running the partition test module, which
