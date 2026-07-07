@@ -393,3 +393,71 @@ class TestPartitionAndTrack(BasePTM):
         )
         assert "part_id" in dspart
         assert "npart_id" in dspart
+
+
+class TestSpecpartKernel:
+    """Regression tests for the specpart C extension (GH issue #142).
+
+    The original C wrapper read the input buffer assuming C-contiguous
+    float32 data, silently producing wrong partition maps for transposed
+    or otherwise strided inputs (e.g. datasets stored with dims
+    (..., dir, freq)). The wrapper now converts any input to a
+    C-contiguous float32 array, matching the behaviour of the f2py
+    wrapper around the original Fortran code.
+    """
+
+    @classmethod
+    def setup_class(cls):
+        from wavespectra.partition import specpart
+
+        cls.specpart = specpart
+        cls.dset = read_ww3(HERE / "sample_files/ww3file.nc")
+        cls.spec = np.ascontiguousarray(
+            cls.dset.isel(time=0, site=0).efth.values, dtype=np.float32
+        )
+        cls.expected = specpart.partition(cls.spec, 200)
+
+    def test_input_layout_and_dtype_invariance(self):
+        """Same values in any layout / real dtype must give the same map."""
+        variants = {
+            "float64": self.spec.astype(np.float64),
+            "F-ordered float32": np.asfortranarray(self.spec),
+            "F-ordered float64": np.asfortranarray(self.spec.astype(np.float64)),
+            "transposed view": np.ascontiguousarray(self.spec.T).T,
+            "sliced view": np.pad(self.spec, ((1, 1), (1, 1)))[1:-1, 1:-1],
+        }
+        for name, variant in variants.items():
+            assert np.array_equal(variant, self.spec), name
+            result = self.specpart.partition(variant, 200)
+            assert np.array_equal(result, self.expected), name
+
+    def test_ptm1_dataset_layout_invariance(self):
+        """ptm1 must give the same result for (..., dir, freq) datasets."""
+        ds1 = self.dset
+        ds2 = ds1.transpose("time", "site", "dir", "freq")
+        kwargs = dict(wspd=ds1.wspd, wdir=ds1.wdir, dpt=ds1.dpt, ihmax=200)
+        hs1 = ds1.spec.partition.ptm1(**kwargs).spec.hs().load()
+        hs2 = ds2.spec.partition.ptm1(**kwargs).spec.hs().load()
+        assert np.allclose(hs1.values, hs2.values, equal_nan=True)
+
+    def test_invalid_inputs_raise(self):
+        with pytest.raises(ValueError):
+            self.specpart.partition(np.zeros((2, 3, 4), dtype=np.float32), 100)
+        with pytest.raises(ValueError):
+            self.specpart.partition(self.spec, 1)
+
+    def test_flat_spectrum_no_partitions(self):
+        ipart = self.specpart.partition(np.zeros((25, 24), dtype=np.float32), 100)
+        assert ipart.max() == 0
+
+    def test_thread_consistency(self):
+        """The kernel is reentrant; concurrent calls must agree."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        def work(_):
+            return np.array_equal(
+                self.specpart.partition(self.spec, 200), self.expected
+            )
+
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            assert all(ex.map(work, range(200)))
