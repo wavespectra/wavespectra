@@ -3,6 +3,14 @@ name: Python Packaging and docker build
 on:
   release:
     types: [published]
+  workflow_dispatch:
+  # Build (but never publish) wheels when packaging files change, so wheel
+  # breakage is caught in the PR rather than at release time.
+  pull_request:
+    paths:
+      - '.github/workflows/python-publish.yml'
+      - 'pyproject.toml'
+      - 'setup.py'
 
 env:
   REGISTRY: ghcr.io
@@ -13,14 +21,9 @@ permissions:
   packages: write
 
 jobs:
-  pypi-release:
-    name: Publish release to PyPI
+  test:
+    name: Test the library
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/wavespectra
-    permissions:
-      id-token: write
     steps:
     -
       name: Checkout repo
@@ -29,7 +32,8 @@ jobs:
       name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12'
+        cache: pip
     -
       name: Install dependencies
       run: |
@@ -37,12 +41,65 @@ jobs:
         pip install . 'wavespectra[extra,test]'
     -
       name: Test wavespectra
-      run: pytest -s -v tests
+      run: pytest -s -v --timeout=300 --timeout-method=thread tests
+
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Native runners for every arch so the built wheels are also tested.
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-latest, windows-latest]
+    steps:
     -
-      name: Build package
-      run: |
-        pip install build
-        python -m build -s
+      name: Checkout repo
+      uses: actions/checkout@v4
+    -
+      name: Build and test wheels
+      uses: pypa/cibuildwheel@v3
+      # Build/test/skip configuration lives in [tool.cibuildwheel] in pyproject.toml
+    -
+      name: Upload wheels
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-${{ matrix.os }}
+        path: wheelhouse/*.whl
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+    -
+      name: Checkout repo
+      uses: actions/checkout@v4
+    -
+      name: Build sdist
+      run: pipx run build --sdist
+    -
+      name: Upload sdist
+      uses: actions/upload-artifact@v4
+      with:
+        name: sdist
+        path: dist/*.tar.gz
+
+  pypi-release:
+    name: Publish release to PyPI
+    if: github.event_name == 'release'
+    needs: [test, build-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/wavespectra
+    permissions:
+      id-token: write
+    steps:
+    -
+      name: Download all distributions
+      uses: actions/download-artifact@v4
+      with:
+        path: dist
+        merge-multiple: true
     -
       name: Publish package
       uses: pypa/gh-action-pypi-publish@release/v1

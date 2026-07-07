@@ -103,6 +103,17 @@ docs = [
 [tool.setuptools.dynamic]
 version = {attr = "wavespectra.__version__"}
 
+[tool.cibuildwheel]
+# CPython versions matching the supported range in the classifiers.
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*"]
+# Skip musl-based linux; can be added later if there is demand.
+skip = ["*-musllinux*"]
+# Test every built wheel by running the partition test module, which
+# exercises the compiled specpart extension end to end.
+test-requires = ["pytest", "netCDF4"]
+test-command = "pytest {project}/tests/test_partition.py -q"
+build-verbosity = 1
+
 [tool.ruff]
 line-length = 88
 
