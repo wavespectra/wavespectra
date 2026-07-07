@@ -15,8 +15,18 @@ Releases
 4.5.2 (unreleased)
 ___________________
 
+New Features
+------------
+* New ``awac``, ``datawell`` and ``obscape`` engines for ``xr.open_dataset``,
+  completing the xarray backend registration of all wavespectra readers.
+* Binary wheels published for CPython 3.9-3.13 on Linux (x86_64, aarch64), macOS
+  (x86_64, arm64) and Windows (amd64), so installing wavespectra no longer requires a
+  C compiler.
+
 Bug Fixes
 ---------
+* Fix ``DatawellBackendEntrypoint`` passing an unsupported ``filetype`` argument to
+  ``read_datawell``, which made ``xr.open_dataset(..., engine="datawell")`` unusable.
 * Fix silent corruption of watershed partitions for spectra that are not C-contiguous
   in memory, e.g. datasets stored with dims ``(..., dir, freq)``. The ``specpart`` C
   extension wrapper now converts any input dtype and memory layout at the boundary,
@@ -49,6 +59,13 @@ Internal Changes
   reconstruction page, fix broken imports in the reconstruction examples, remove the
   orphaned library page and enable ``sphinx.ext.napoleon`` so Google-style docstrings
   render properly in the API reference.
+* Report reader import failures with ``warnings.warn`` instead of printing to stdout,
+  including the module name and the original error; new parity tests ensure every
+  reader module keeps a top-level ``read_*`` function, a registered xarray engine and
+  a backend signature consistent with its reader.
+* Reconcile the reader listings in the API documentation with the available readers
+  (add missing ``read_awac``, ``read_datawell``, ``read_obscape`` and
+  ``read_wavespectra`` entries, remove a duplicate).
 
 .. _`daniel-caichac-DHI`: https://github.com/daniel-caichac-DHI
 
