@@ -81,6 +81,7 @@ These input functions are currently available from the main module level:
     read_spotter
     read_swan
     read_triaxys
+    read_wavespectra
     read_ww3
     read_ww3_station
     read_wwm
