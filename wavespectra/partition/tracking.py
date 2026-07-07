@@ -210,7 +210,7 @@ def np_track_partitions(
 
     # Assuming that the time step is constant across the dataset
     # calculate dt in seconds
-    dt = float(np.diff(times[:2]) / np.timedelta64(1, "s"))
+    dt = float((times[1] - times[0]) / np.timedelta64(1, "s"))
 
     # Calculate maximum delta fp for sea partitions
     # as it is a function of wind speed this is a data array
