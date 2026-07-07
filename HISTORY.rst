@@ -410,7 +410,7 @@ ___________________
 New Features
 ------------
 * Allow ignoring missing sites within tolerance in the `nearest` method
-(`PR102 <https://github.com/wavespectra/wavespectra/pull/102>`_).
+  (`PR102 <https://github.com/wavespectra/wavespectra/pull/102>`_).
 
 Internal Changes
 ----------------
@@ -1076,7 +1076,7 @@ Internal Changes
 3.0 (2018-03-05)
 __________________
 
-**This major release marks the migration from the predecessor** `pyspectra`** library,
+**This major release marks the migration from the predecessor pyspectra library,
 as well as the open-sourcing of wavespectra and first PyPI release.**
 
 New Features
