@@ -12,6 +12,47 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+4.5.2 (unreleased)
+___________________
+
+Bug Fixes
+---------
+* Fix silent corruption of watershed partitions for spectra that are not C-contiguous
+  in memory, e.g. datasets stored with dims ``(..., dir, freq)``. The ``specpart`` C
+  extension wrapper now converts any input dtype and memory layout at the boundary,
+  matching the behaviour of the f2py wrapper around the pre-v4 Fortran code. Reported
+  by `daniel-caichac-DHI`_
+  (`GH142 <https://github.com/wavespectra/wavespectra/issues/142>`_,
+  `PR160 <https://github.com/wavespectra/wavespectra/pull/160>`_).
+* Fix intermittent deadlock when writing dask-backed spectra to netCDF in ``to_ww3``
+  and ``to_netcdf`` by forcing the single-threaded dask scheduler during the write,
+  avoiding cross-thread contention on the netCDF4/HDF5 global lock.
+* Fix ``as_site`` argument silently ignored when reading ERA5 spectra through the
+  xarray backend entrypoint (``xr.open_dataset(..., engine="era5", as_site=True)``).
+* Fix wrong default upper direction bound ``dmax`` in the ``bbox`` partition method.
+
+Internal Changes
+----------------
+* Rewrite the ``specpart`` C extension without global state, making it reentrant and
+  thread-safe under dask's threaded scheduler; release the GIL during computation,
+  validate inputs, raise proper Python exceptions instead of exiting, and fix a memory
+  leak. The rewritten kernel is verified to produce partition maps bit-identical to
+  the pre-v4 Fortran implementation over 1420 comparison cases (see
+  ``wavespectra/partition/specpart/ANALYSIS.md``).
+* Run ruff linting and coverage reporting in CI; add pip caching and a per-test
+  timeout so hanging tests fail fast with a traceback; remove the unused tox and
+  flake8 configurations.
+* Clean up lint findings across the source and test suite; restore disabled test
+  assertions (HP01 Hs conservation, ``peak_directional_spread``) and fix
+  Pierson-Moskowitz test tolerances that previously asserted nothing.
+* Documentation fixes: correct JONSWAP ``sigma_a``/``sigma_b`` values in the Zieger
+  reconstruction page, fix broken imports in the reconstruction examples, remove the
+  orphaned library page and enable ``sphinx.ext.napoleon`` so Google-style docstrings
+  render properly in the API reference.
+
+.. _`daniel-caichac-DHI`: https://github.com/daniel-caichac-DHI
+
+
 4.5.1 (2026-06-27)
 ___________________
 
