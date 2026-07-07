@@ -50,7 +50,8 @@ jobs:
       fail-fast: false
       matrix:
         # Native runners for every arch so the built wheels are also tested.
-        os: [ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-latest, windows-latest]
+        # macos-15-intel is the Intel runner label (macos-13 was retired).
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-15-intel, macos-latest, windows-latest]
     steps:
     -
       name: Checkout repo

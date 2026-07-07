@@ -95,6 +95,11 @@ docs = [
     "sphinx-gallery",
 ]
 
+[tool.setuptools.packages.find]
+# Explicit include so stray top-level directories created at build time
+# (e.g. cibuildwheel's wheelhouse/) don't break flat-layout auto-discovery.
+include = ["wavespectra*"]
+
 [tool.setuptools.package-data]
 "wavespectra.core" = ["*.yml"]
 "wavespectra.output" = ["*.yml"]
