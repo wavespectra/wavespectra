@@ -1,5 +1,10 @@
-Spectra reconstruction
-______________________
+.. image:: _static/wavespectra_logo.png
+    :width: 150 px
+    :align: right
+
+==============
+Reconstruction
+==============
 
 
 .. ipython:: python
@@ -21,11 +26,11 @@ ______________________
 
 
 Spectra with multiple wave systems can be reconstructed by fitting spectral shapes
-and directional distributions to individual wave partitions and combining them together.
+and directional distributions to individual wave partitions and combining them.
 
 
-The example below uses the :meth:`~wavespectra.construct.direction.cartwright`
-spreading and the :meth:`~wavespectra.construct.frequency.jonswap` shape with default
+The example below uses the :func:`~wavespectra.construct.direction.cartwright`
+spreading and the :func:`~wavespectra.construct.frequency.jonswap` shape with default
 values for :math:`\sigma_a=0.07` and :math:`\sigma_b=0.09`, :math:`\gamma` calculated
 from the :meth:`~wavespectra.SpecArray.gamma` method and :math:`\alpha` calculated from
 the :meth:`~wavespectra.SpecArray.alpha` method.
@@ -130,3 +135,6 @@ partitioning and reconstructing existing spectra in a convenient way:
 
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114
+
+
+.. include:: zieger.rst

@@ -2,12 +2,9 @@
     :width: 150 px
     :align: right
 
-==============
-Input & Output
-==============
-
+=====
 Input
------
+=====
 
 .. py:module:: wavespectra.input
 
@@ -40,8 +37,8 @@ from their full module path, e.g.
 
     from wavespectra.input.swan import read_hotswan
 
-Backends engines
-~~~~~~~~~~~~~~~~
+Backend engines
+---------------
 
 Backend engines are provided to seamlessly access wavespectra datasets through the
 `xarray.open_dataset`_ function. These engines are designated by their respective
@@ -55,7 +52,7 @@ Backend engines are provided to seamlessly access wavespectra datasets through t
     dset.spec
 
 Available readers
-~~~~~~~~~~~~~~~~~
+-----------------
 
 These input functions are currently available from the main module level:
 
@@ -101,19 +98,17 @@ imported from their full module path:
 .. note::
 
     Wavespectra supports different data formats including ``NetCDF``, ``ASCII``,
-    ``JSON``. netcdf-type datasets, i.e. those that can be open with xarray's
-    open_dataset_ and open_mfdataset_ functions, can also be prescribed in ``ZARR``
+    ``JSON``. NetCDF-type datasets, i.e. those that can be opened with xarray's
+    open_dataset_ and open_mfdataset_ functions, can also be provided in ``Zarr``
     format (wavespectra uses xarray's open_zarr_ function behind the scenes to open
-    these files). Functions that support ZARR have a ``file_format`` argument option.
+    these files). Functions that support Zarr have a ``file_format`` argument option.
 
-    Files in ``ZARR`` format can be open from both local and remote (bucket) stores.
-    Files in ``NetCDF`` format can be open from remote (i.e., bucket) stores when they
+    Files in ``Zarr`` format can be opened from both local and remote (bucket) stores.
+    Files in ``NetCDF`` format can be opened from remote (i.e., bucket) stores when they
     are opened using ``fsspec``.
 
 .. _open_dataset: https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
 .. _open_mfdataset: https://docs.xarray.dev/en/stable/generated/xarray.open_mfdataset.html
 .. _open_zarr: https://docs.xarray.dev/en/stable/generated/xarray.open_zarr.html
 .. _xarray.open_dataset: https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
-.. _wavespectra.input: https://github.com/wavespectra/wavespectra/tree/master/wavespectra/input
-
-.. include:: io-output.rst
+.. _wavespectra.input: https://github.com/wavespectra/wavespectra/tree/main/wavespectra/input

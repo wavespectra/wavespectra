@@ -23,7 +23,7 @@ Wavespectra accessors
 SpecArray
 ---------
 
-All methods in :py:class:`SpecArray` accessor are also available from  :py:class:`SpecDataset`.
+All methods in the :py:class:`SpecArray` accessor are also available from :py:class:`SpecDataset`.
 
 **Integrated spectral parameters**
 
@@ -89,6 +89,11 @@ All methods in :py:class:`SpecArray` accessor are also available from  :py:class
    SpecArray.interp
    SpecArray.interp_like
    SpecArray.rotate
+   SpecArray.smooth
+   SpecArray.uss
+   SpecArray.uss_x
+   SpecArray.uss_y
+   SpecArray.mss
 
 
 SpecDataset
@@ -100,7 +105,7 @@ SpecDataset
 
    SpecDataset.sel
 
-Output methods described in the `Output functions`_ section:
+Output methods described in the :ref:`api:Output functions` section:
 :py:attr:`~SpecDataset.to_swan`
 :py:attr:`~SpecDataset.to_netcdf`
 :py:attr:`~SpecDataset.to_octopus`
@@ -163,8 +168,6 @@ Input functions
    input.swan.read_swanow
 
 
-.. _`Output functions`:
-
 Output functions
 ----------------
 
@@ -219,12 +222,7 @@ Internal core functions and objects
    partition.tracking.match_consecutive_partitions
    partition.tracking.np_track_partitions
    partition.tracking.track_partitions
-   partition.hanson_and_phillips_2001._partition_stats
-   partition.hanson_and_phillips_2001._is_contiguous
-   partition.hanson_and_phillips_2001._frequency_resolution
-   partition.hanson_and_phillips_2001._plot_partitions
    partition.hanson_and_phillips_2001.spread_hp01
-   partition.hanson_and_phillips_2001._combine_last
    partition.hanson_and_phillips_2001.combine_partitions_hp01
 
 **attributes module**

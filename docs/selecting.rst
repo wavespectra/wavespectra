@@ -7,14 +7,14 @@ Selecting
 =========
 
 Wavespectra complements xarray's selecting_ and interpolating_ functionality with functions to select and
-interpolate from ``site`` (1D) coordinates. The functions are defined in :py:mod:`wavespectra.core.select`
+interpolate from ``site`` (1D) coordinates. The functions are defined in the :py:mod:`wavespectra.core.select`
 module and can be accessed via the :py:meth:`~wavespectra.specdataset.SpecDataset.sel` method from the
 :py:class:`~wavespectra.specarray.SpecArray` and :py:class:`~wavespectra.specdataset.SpecDataset` accessors.
 
 .. note::
 
     The select methods in wavespectra are designed to work with 1D spatial coordinates
-    only which is typically the case for spectral data. For 2D, gridded coordinates,
+    only, which is typically the case for spectral data. For 2D, gridded coordinates,
     use xarray's native indexing and interpolation methods.
 
 
@@ -37,7 +37,7 @@ Select from nearest sites.
 
 Inverse distance weighting
 --------------------------
-Interpolate at exact locations via inverse distance weighting algorithm.
+Interpolate at exact locations via the inverse distance weighting algorithm.
 
 .. ipython:: python
     :okwarning:
@@ -51,7 +51,7 @@ Interpolate at exact locations via inverse distance weighting algorithm.
 
 Bounding box
 ------------
-Select all sites withing bounding box.
+Select all sites within the bounding box.
 
 .. ipython:: python
     :okwarning:

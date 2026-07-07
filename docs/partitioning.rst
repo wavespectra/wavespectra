@@ -6,14 +6,14 @@
 Partitioning
 ============
 
-A new partitioning api has been implemented in Wavespectra version 4. Previously, two
-methods were available in :class:`~wavespectra.specarray.SpecArray` for spectral
-partitioning, the `split` method for threshold-based frequency splits and the
-`partition` method for the watershed partitioning based on `Hanson et al. (2009)`_
-and implemented in spectral wave models such as WW3 and SWAN.
+Spectral partitioning splits the wave spectrum into components such as wind sea and
+swells, so integrated parameters can be calculated for each individual wave system.
+Most methods in wavespectra are based on the watershed algorithm of
+`Hanson et al. (2009)`_ implemented in spectral wave models such as WW3 and SWAN.
 
-In version 4, :meth:`~wavespectra.specarray.SpecArray.partition` became a namespace of
-the `spec` accessor from which several partitioning methods are now available including:
+The partitioning methods are available from the ``spec.partition`` namespace (in
+version 4 this namespace replaced the previous ``partition`` method, see
+:doc:`migration`):
 
 - :meth:`~wavespectra.partition.partition.Partition.ptm1`
 - :meth:`~wavespectra.partition.partition.Partition.ptm1_track`
@@ -30,11 +30,62 @@ tracks and merges spectral partitions in time).
 
 The `HP01` method is an attempt to implement the merging of nearby swell partitions
 (in spectral space) described in `Hanson and Phillips (2001)`_. However, the
-implementation is still under development and may not work as expected (contribution is
+implementation is still under development and may not work as expected (contributions are
 welcome).
 
 The `BBOX` method is a custom method to split the energy
-density inside and outside a defined bounding box in spectral space. 
+density inside and outside a defined bounding box in spectral space.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 14 46 20 20
+
+   * - Method
+     - Description
+     - Classifies wind sea / swell
+     - Requires wind and depth
+   * - ``ptm1``
+     - Watershed with all wind-sea partitions combined into partition 0
+     - yes
+     - yes
+   * - ``ptm1_track``
+     - As ``ptm1``, with swell partitions tracked and merged in time
+     - yes
+     - yes
+   * - ``ptm2``
+     - As ``ptm1``, with a secondary wind sea split from the swell partitions
+     - yes
+     - yes
+   * - ``ptm3``
+     - Plain watershed partitions, no wind-sea classification
+     - no
+     - no
+   * - ``ptm4``
+     - Wave-age split into one wind sea and one swell, no watershed
+     - yes
+     - yes
+   * - ``ptm5``
+     - Frequency-threshold split, no watershed
+     - no
+     - no
+   * - ``hp01``
+     - Watershed with merging of nearby swells (experimental)
+     - yes
+     - yes
+   * - ``bbox``
+     - Split inside/outside a bounding box in spectral space
+     - no
+     - no
+
+Some parameters are shared by several methods:
+
+* ``agefac``: Wave age factor used in the wind-sea criterion; spectral bins whose
+  celerity is smaller than ``agefac`` times the local wind speed component are
+  considered under wind forcing.
+* ``wscut``: Wind-sea fraction cutoff; watershed partitions whose wind-forced energy
+  fraction exceeds this value are classified as wind sea.
+* ``ihmax``: Number of discrete levels used to bin the spectra in the watershed
+  algorithm.
 
 
 .. ipython:: python
@@ -68,7 +119,7 @@ order of decreasing wave height.
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm1.png
+    @savefig partitioning_ptm1.png
     plt.draw()
 
 Smoothing the spectra before partitioning can help to avoid spurious partitions as
@@ -87,7 +138,7 @@ suggested by `Portilla et al. (2009)`_.
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm1_smooth.png
+    @savefig partitioning_ptm1_smooth.png
     plt.draw()
 
 
@@ -108,7 +159,7 @@ Some watershed parameters are exposed to the user for tuning the partitioning al
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm1_tuning.png
+    @savefig partitioning_ptm1_tuning.png
     plt.draw()
 
 
@@ -116,9 +167,9 @@ PTM2
 ____
 
 PTM2 works in a similar way to PTM1 by identifying a primary wind sea (assigned to
-partition 0) and one or more swell components. In this method however all the swell
-partitions are checked for the influence of wind-sea with energy within spectral bins
-within the wind-sea range (as defined by a wave age criterion) removed and combined
+partition 0) and one or more swell components. In this method, however, all swell
+partitions are checked for wind-sea influence: energy in spectral bins within the
+wind-sea range (defined by a wave age criterion) is removed and combined
 into a secondary wind-sea partition (assigned to partition 1). The remaining swell
 partitions are then assigned in order of decreasing wave height from partition 2 onwards.
 This implies PTM2 has an extra partition compared to PTM1.
@@ -135,7 +186,7 @@ This implies PTM2 has an extra partition compared to PTM1.
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm2.png
+    @savefig partitioning_ptm2.png
     plt.draw()
 
 
@@ -156,16 +207,16 @@ dataset.
     dspart = dset.spec.partition.ptm3(parts=3)
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm3.png
+    @savefig partitioning_ptm3.png
     plt.draw()
 
 
 PTM4
 ____
 PTM4 uses the wave age criterion derived from the local wind speed to split the spectrum
-into a wind-sea and single swell partition. In this case waves with a celerity greater
+into wind-sea and a single swell partition. In this case waves with a celerity greater
 than the directional component of the local wind speed are considered to be freely
-propogating swell (i.e. unforced by the wind). This is similar to the method commonly
+propagating swell (i.e. unforced by the wind). This is similar to the method commonly
 used to generate wind-sea and swell from the WAM model.
 
 .. ipython:: python
@@ -180,7 +231,7 @@ used to generate wind-sea and swell from the WAM model.
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm4.png
+    @savefig partitioning_ptm4.png
     plt.draw()
 
 The wind sea region used to partition the spectra in PTM4 can be calculated
@@ -210,7 +261,7 @@ partitions have zero-values outside the defined frequency ranges. Conversely, th
 :meth:`~wavespectra.specarray.SpecArray.split` method returns a single partition with
 frequencies truncated to the defined ranges. Notice there could be slight differences
 when integrating the partitions generated by these two methods since in PTM5 there will
-be an "area" at one of the frequency adges adjacent to the zero-values.
+be an "area" at one of the frequency edges adjacent to the zero-values.
 
 .. ipython:: python
     :okwarning:
@@ -219,7 +270,7 @@ be an "area" at one of the frequency adges adjacent to the zero-values.
     dspart = dset.spec.partition.ptm5(fcut=0.1)
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_ptm5.png
+    @savefig partitioning_ptm5.png
     plt.draw()
 
 
@@ -265,7 +316,7 @@ result is the same as the PTM1 method.
     )
     dspart.isel(time=0, site=0, drop=True).spec.plot(col="part");
 
-    @savefig partitionint_hp01.png
+    @savefig partitioning_hp01.png
     plt.draw()
 
 
@@ -290,7 +341,7 @@ with the addition of a couple of extra data variables `part_id` and `npart_id`:
 
 These variables track the id of all unique wave systems identified over the time range
 of the input spectra dataset and can be used to combine these systems to yield
-consistent timeseries.
+consistent time series.
 
 Compare the original partitions with no tracking:
 

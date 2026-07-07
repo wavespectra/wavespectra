@@ -1,6 +1,6 @@
 """
-Hovmoller diagram of spectra timeseries
-=======================================
+Hovmoller diagram of spectra time series
+===========================================
 
 Integrate spectra and plot as Hovmoller diagram
 

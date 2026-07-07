@@ -2,7 +2,7 @@
 Faceting with clean axes
 ========================
 
-Removing axes could help visualising patterns in multiple plots
+Removing axes can help to visualise patterns across multiple plots.
 
 """
 

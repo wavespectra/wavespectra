@@ -1,8 +1,9 @@
-Zieger approach
-----------------
+Zieger reconstruction recipes
+-----------------------------
 
-Zieger defined three spectra reconstruction options based on Cartwright spread and Jonswap fits.
-The methods differ in how they specify some Jonswap parameters.
+Stefan Zieger proposed three recipes to reconstruct spectra from partitioned wave
+parameters, based on the Cartwright spreading and Jonswap shapes. The methods differ
+in how they specify some of the Jonswap parameters.
 
 .. admonition:: Method 1
     :class: note
@@ -41,7 +42,7 @@ The methods differ in how they specify some Jonswap parameters.
     * Otherwise same as method 2.
 
 
-Below are examples on how to implement the methods defined from Zieger from wavespectra.
+Below are examples of how to implement the methods proposed by Zieger using wavespectra.
 
 First define some input data:
 
@@ -52,6 +53,7 @@ First define some input data:
     import numpy as np
     import xarray as xr
     from wavespectra import read_ww3
+    from wavespectra.construct import construct_partition
 
     # Reading and partitioning existing spectrum
     dset = read_ww3("_static/ww3file.nc").isel(time=0, site=-1, drop=True).sortby("dir")
