@@ -119,3 +119,6 @@ ENV/
 
 # Coverall config
 .coveralls.yml
+# Local working files not part of the repository
+CLAUDE.md
+notebooks/
