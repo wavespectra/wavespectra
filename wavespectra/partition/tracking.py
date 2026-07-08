@@ -13,9 +13,11 @@ def dfp_wsea(wspd: float, fp: float, dt: float, scaling: float = 1.0) -> float:
 
     Parameters
     ----------
-    wspd: xr.DataArray
+    wspd: float
         Wind speed (m/s)
-    t: float
+    fp: float
+        Peak wave frequency (Hz)
+    dt: float
         Time duration (s)
     scaling: float
         Scaling parameter
@@ -39,21 +41,23 @@ def dfp_swell(dt: float, distance: float = 1e6) -> float:
 
     Parameters
     ----------
-    dt: xr.DataArray
-        Time difference
-    distance: xr.DataArray
+    dt: float
+        Time difference (s)
+    distance: float
         Distance to the swell source (m)
 
     """
     return dt * g / (4 * pi * distance)
 
 
-def match_consecutive_partitions(
-    fp, dpm, dfp_sea_max, dfp_swell_max, ddpm_sea_max, ddpm_swell_max
-):
+def match_consecutive_partitions(fp, dpm, dfp_max, dfp_min, ddpm_max):
     """
     Match partitions of consecutive spectra based on evolution of peak frequency
     and peak direction.
+
+    Candidate pairs within the thresholds are assigned in ascending order of
+    their normalised distance in frequency-direction space so that the closest
+    pairs are always matched first, independently of partition ordering.
 
     Parameters
     ----------
@@ -63,20 +67,21 @@ def match_consecutive_partitions(
     dpm: np.ndarray
         Array containing the mean peak wave direction for all partitions and
         the two consecutive time steps. Shape (npartitions, 2).
-    dfp_sea_max: float
-        Maximum delta fp for sea partitions.
-    dfp_swell_max: float
-        Maximum delta fp for swell partitions.
-    ddpm_sea_max: float
-        Maximum delta dpm for sea partitions.
-    ddpm_swell_max: float
-        Maximum delta dpm for swell partitions.
+    dfp_max: np.ndarray
+        Maximum (most positive) delta fp for a match onto each partition of the
+        previous time step, shape (npartitions,).
+    dfp_min: np.ndarray
+        Minimum (most negative) delta fp for a match onto each partition of the
+        previous time step, shape (npartitions,).
+    ddpm_max: np.ndarray
+        Maximum absolute delta dpm for a match onto each partition of the
+        previous time step, shape (npartitions,).
 
     Returns
     -------
     matches: np.ndarray
         Array of matches between partitions of consecutive spectra.
-        Array contains value in nth position contains the partition number in
+        The value in the nth position contains the partition number in
         the previous time step that matches the partition number n in the
         current time step.
         -999 is for nans and -888 is for partitions that have no match.
@@ -84,7 +89,7 @@ def match_consecutive_partitions(
     """
 
     # Initialise matches to -999
-    matches = np.ones_like(fp[:, 0], dtype="int16") * -999
+    matches = np.ones_like(fp[:, 0], dtype="int32") * -999
 
     # Calculation distance between partitions of the two consecutive time steps
     # Calculate angle difference between current and previous partition
@@ -105,48 +110,31 @@ def match_consecutive_partitions(
         fp[:, 0].reshape((1, -1)), fp.shape[0], axis=0
     )
 
-    # Pick angle threshold based on partition type
-    ddpm_max = np.array([ddpm_sea_max] + [ddpm_swell_max] * (dpm.shape[0] - 1))
-    # If the partition was a sea partition we expect a negative delta
-    # hence we use the swell partition maximum delta as a maximum threshold
-    dfp_max = np.array([dfp_swell_max] * fp.shape[0])
-    # Minimum threshold is based on the sea/swell partition maximum delta
-    # depending on the partition type
-    dfp_min = np.array([dfp_sea_max] + [-dfp_swell_max] * (fp.shape[0] - 1))
+    # For all partition matches which are within the thresholds calculate the
+    # distance between the two partitions as the sum of normalised dfp and ddpm,
+    # the thresholds are aligned with the previous partitions (columns)
+    with np.errstate(invalid="ignore"):
+        within = (ddpm < ddpm_max) & (dfp < dfp_max) & (dfp > dfp_min)
+        partition_distance = np.where(
+            within,
+            np.abs(dfp) / np.maximum(dfp_max, np.abs(dfp_min)) + ddpm / ddpm_max,
+            np.inf,
+        )
 
-    # For all partition matches which are within the thresholds
-    # calculate the distance between the two partitions the sum
-    # of normalized dfp and ddpm
-    partition_distance = np.where(
-        np.logical_and(ddpm < ddpm_max, np.logical_and(dfp < dfp_max, dfp > dfp_min)),
-        (np.abs(dfp) / np.maximum(dfp_max, np.abs(dfp_min)) + ddpm / ddpm_max),
-        999,
-    )
+    # Partitions with no energy at each time step cannot be matched
+    partition_distance[np.isnan(fp[:, 1]), :] = np.inf
+    partition_distance[:, np.isnan(fp[:, 0])] = np.inf
 
-    # Those are all the partitions in the previous time step that have energy
-    available = [
-        ip for ip, fp_is_not_nan in enumerate(~np.isnan(fp[:, 0])) if fp_is_not_nan
-    ]
+    # Mark all energetic partitions in the current time step as unmatched
+    matches[~np.isnan(fp[:, 1])] = -888
 
-    # Loop over all partitions in the current time step
-    for ip_curr, fp_curr in enumerate(fp[:, 1]):
-        if ~np.isnan(fp_curr):
-            # Find all possible matches for the current partition sorted by increasing distance
-            part_matches = sorted(
-                [
-                    (ip_prev, d)
-                    for ip_prev, d in enumerate(partition_distance[ip_curr, :])
-                    if d != 999 and ip_prev in available
-                ],
-                key=lambda x: x[-1],
-            )
-
-            # If no match found, create new partition to track
-            if len(part_matches) == 0:
-                matches[ip_curr] = -888
-            else:  # If match found mark it and remove it from the available list
-                matches[ip_curr] = part_matches[0][0]
-                available.remove(part_matches[0][0])
+    # Assign candidate pairs globally in ascending order of distance so that
+    # the closest pairs are matched first
+    icurr, iprev = np.nonzero(partition_distance < np.inf)
+    order = np.argsort(partition_distance[icurr, iprev], kind="stable")
+    for ic, ip in zip(icurr[order], iprev[order]):
+        if matches[ic] == -888 and ip not in matches:
+            matches[ic] = ip
 
     return matches
 
@@ -155,11 +143,12 @@ def np_track_partitions(
     times,
     fp,
     dpm,
-    wspd,
+    wspd=None,
     ddpm_sea_max=30,
     ddpm_swell_max=20,
     dfp_sea_scaling=1,
     dfp_swell_source_distance=1e6,
+    nsea=1,
 ):
     """
     Track partitions at a site in a series of consecutive spectra based on
@@ -180,11 +169,11 @@ def np_track_partitions(
     times: np.ndarray
         Array containing the time stamps of the spectra statistics.
     fp: np.ndarray
-        Array containing the peak wave frequency.
+        Array containing the peak wave frequency with shape (npart, ntime).
     dpm: np.ndarray
-        Array containing the mean peak wave direction.
+        Array containing the peak wave direction with shape (npart, ntime).
     wspd: np.ndarray
-        Wind speed at 10 metres (m/s).
+        Wind speed at 10 metres (m/s), required if nsea > 0.
     ddpm_sea_max: float
         Maximum delta dpm for sea partitions.
         Default is 30 degrees.
@@ -197,76 +186,92 @@ def np_track_partitions(
     dfp_swell_source_distance: float
         Distance to the swell source (m) for the rate of change of the swell peak wave
         frequency. Default is 1e6 m.
+    nsea: int
+        Number of leading partitions that represent wind seas, e.g., 1 for
+        partitions from the ptm1 and hp01 methods, 2 for the ptm2 method and 0
+        for the ptm3 method whose partitions are not classified. Wind-sea
+        matching thresholds are applied to the first nsea partitions and swell
+        thresholds to the remaining ones.
 
     Returns
     -------
-    part_ids: np.ndarray
-        Array containing the partition ids for each partition and each time step.
+    track_ids: np.ndarray
+        Array containing the track ids for each partition and each time step.
         -999 is for nans.
-    n_parts: int
-        Number of partitions tracked.
+    ntracks: int
+        Number of wave systems tracked.
+
+    Notes
+    -----
+    The time step is evaluated for each pair of consecutive spectra so records
+    with gaps or irregular sampling use matching thresholds consistent with the
+    actual time elapsed.
 
     """
+    if np.any(np.diff(times) <= np.timedelta64(0, "s")):
+        raise ValueError("times must be strictly increasing to track partitions")
+    nsea = min(nsea, fp.shape[0])
+    if nsea > 0 and wspd is None:
+        raise ValueError("wspd is required to track wind sea partitions (nsea > 0)")
 
-    # Assuming that the time step is constant across the dataset
-    # calculate dt in seconds
-    dt = float((times[1] - times[0]) / np.timedelta64(1, "s"))
-
-    # Calculate maximum delta fp for sea partitions
-    # as it is a function of wind speed this is a data array
-    dfp_sea_max = dfp_wsea(wspd=wspd, fp=fp[0, :], dt=dt, scaling=dfp_sea_scaling)
-
-    # Calculate maximum delta fp for swell partitions
-    # it is a scalar
-    dfp_swell_max = dfp_swell(dt=dt, distance=dfp_swell_source_distance)
+    npart = fp.shape[0]
+    ddpm_max = np.array([ddpm_sea_max] * nsea + [ddpm_swell_max] * (npart - nsea))
 
     # Calculate local matches (match partitions between consecutive time steps)
     # -999 is for nans and -888 is for partitions that have no match
-    # This has more potential to be parallelised but the way the xarray dataset
-    # rolling window work makes it non trivial
-    part_ids = np.hstack(
-        [np.ones((fp.shape[0], 1), dtype="int16") * -999]
-        + [
+    matches = [np.ones((npart, 1), dtype="int32") * -999]
+    for it in range(1, times.shape[0]):
+        dt = float((times[it] - times[it - 1]) / np.timedelta64(1, "s"))
+        dfp_swell_max = dfp_swell(dt=dt, distance=dfp_swell_source_distance)
+        # The delta fp thresholds are asymmetric for wind seas: fp is expected
+        # to decrease under growing seas at the fetch-limited rate, and to only
+        # increase slowly under decaying seas at the swell dispersion rate
+        dfp_min = np.full(npart, -dfp_swell_max)
+        for ip in range(nsea):
+            dfp_min[ip] = dfp_wsea(
+                wspd=wspd[it - 1], fp=fp[ip, it - 1], dt=dt, scaling=dfp_sea_scaling
+            )
+        dfp_max = np.full(npart, dfp_swell_max)
+        matches.append(
             match_consecutive_partitions(
                 fp=fp[:, it - 1 : it + 1],
                 dpm=dpm[:, it - 1 : it + 1],
-                dfp_sea_max=dfp_sea_max[it - 1],
-                dfp_swell_max=dfp_swell_max,
-                ddpm_sea_max=ddpm_sea_max,
-                ddpm_swell_max=ddpm_swell_max,
+                dfp_max=dfp_max,
+                dfp_min=dfp_min,
+                ddpm_max=ddpm_max,
             ).reshape((-1, 1))
-            for it in range(1, times.shape[0])
-        ]
-    )
+        )
+    track_ids = np.hstack(matches)
 
-    # Turn the local matches into global matches
-    part_id = 0  # Partitions are numbered from 0
+    # Turn the local matches into global track ids
+    track_id = 0  # Tracks are numbered from 0
 
     # Number the partitions in the first time step
     for ip, vfp in enumerate(fp[:, 0]):
         if ~np.isnan(vfp):
-            part_ids[ip, 0] = part_id
-            part_id += 1
+            track_ids[ip, 0] = track_id
+            track_id += 1
 
-    # Propagate the partition ids through time
+    # Propagate the track ids through time
     for it in range(1, times.size):
         for ip in range(fp.shape[0]):
-            if part_ids[ip, it] == -888:
-                part_ids[ip, it] = part_id
-                part_id += 1
-            elif part_ids[ip, it] != -999:
-                part_ids[ip, it] = part_ids[part_ids[ip, it], it - 1]
+            if track_ids[ip, it] == -888:
+                track_ids[ip, it] = track_id
+                track_id += 1
+            elif track_ids[ip, it] != -999:
+                track_ids[ip, it] = track_ids[track_ids[ip, it], it - 1]
 
-    return part_ids, part_id
+    return track_ids, track_id
 
 
 def track_partitions(
     stats,
-    wspd,
+    wspd=None,
     ddpm_sea_max=30,
     ddpm_swell_max=20,
     dfp_sea_scaling=1,
     dfp_swell_source_distance=1e6,
+    nsea=1,
 ):
     """
     Track partitions in a series of consecutive spectra based on
@@ -287,7 +292,8 @@ def track_partitions(
     stats: xr.Dataset
         Statistics of the spectral partitions. Requires fp and dpm.
     wspd: xr.DataArray
-        Wind speed (m/s). Time/site should match that of stats.
+        Wind speed (m/s), required if nsea > 0. Time/site should match that
+        of stats.
     ddpm_sea_max: float
         Maximum delta dpm for sea partitions.
         Default is 30 degrees.
@@ -300,16 +306,28 @@ def track_partitions(
     dfp_swell_source_distance: float
         Distance to the swell source (m) for the rate of change of the swell peak wave
         frequency. Default is 1e6 m.
+    nsea: int
+        Number of leading partitions that represent wind seas, e.g., 1 for
+        partitions from the ptm1 and hp01 methods, 2 for the ptm2 method and 0
+        for the ptm3 method whose partitions are not classified. Wind-sea
+        matching thresholds are applied to the first nsea partitions and swell
+        thresholds to the remaining ones.
 
     Returns
     -------
-    part_ids: xr.Dataset
-        Dataset containing the partition ids for each partition and each time step.
+    tracks: xr.Dataset
+        Dataset with the `track_id` of each partition at each time step and the
+        number of wave systems tracked `ntracks`.
 
     """
+    if nsea > 0 and wspd is None:
+        raise ValueError("wspd is required to track wind sea partitions (nsea > 0)")
+    if wspd is None:
+        # Placeholder so the wind can be broadcast by apply_ufunc, not used
+        wspd = xr.full_like(stats["fp"].isel(part=0, drop=True), np.nan)
 
     # Track partitions
-    part_ids, npart_id = xr.apply_ufunc(
+    track_id, ntracks = xr.apply_ufunc(
         np_track_partitions,
         stats.time,
         stats.fp,
@@ -319,6 +337,7 @@ def track_partitions(
         ddpm_swell_max,
         dfp_sea_scaling,
         dfp_swell_source_distance,
+        nsea,
         input_core_dims=[
             ["time"],
             ["part", "time"],
@@ -328,29 +347,33 @@ def track_partitions(
             [],
             [],
             [],
+            [],
         ],
         output_core_dims=[["part", "time"], []],
         vectorize=True,
         dask="parallelized",
-        output_dtypes=[np.int16, "int"],
+        output_dtypes=[np.int32, "int"],
         dask_gufunc_kwargs={"allow_rechunk": True},
     )
 
     # Finalise output
-    part_ids = part_ids.to_dataset(name="part_id")
-    part_ids["npart_id"] = npart_id
+    tracks = track_id.to_dataset(name="track_id")
+    tracks["ntracks"] = ntracks
 
     # Add metadata
-    part_ids.part_id.attrs = {
-        "long_name": "Partition ID",
+    tracks.track_id.attrs = {
+        "long_name": "Wave system track ID",
         "units": "1",
-        "description": "ID of tracked partition",
+        "description": (
+            "ID of the tracked wave system each partition belongs to, "
+            "-999 for null partitions"
+        ),
         "_FillValue": -999,
     }
-    part_ids.npart_id.attrs = {
-        "long_name": "Number of partitions",
+    tracks.ntracks.attrs = {
+        "long_name": "Number of wave systems",
         "units": "1",
-        "description": "Number of partitions tracked for a given non-spectral dim",
+        "description": "Number of wave systems tracked over the time series",
     }
 
-    return part_ids
+    return tracks

@@ -409,20 +409,72 @@ class TestPartitionAndTrack(BasePTM):
         stats = dspart.spec.stats(["fp", "dpm"]).load()
         track_partitions(stats, wspd=self.dset.wspd)
 
-    def test_class(self):
-        swells = 2
-        dspart = self.pt.ptm1_track(
-            wspd=self.dset.wspd,
-            wdir=self.dset.wdir,
-            dpt=self.dset.dpt,
-            swells=swells,
-        )
-        assert "part_id" in dspart
-        assert "npart_id" in dspart
+    def _track(self, method, **kwargs):
+        dspart = self.pt.track(method=method, swells=2, **kwargs)
+        assert "track_id" in dspart
+        assert "ntracks" in dspart
         # Force the computation: the tracking kernel runs lazily under dask
         # and never executes if only variable existence is checked.
         dspart = dspart.load()
-        assert (dspart.npart_id.values > 0).all()
+        assert (dspart.ntracks.values > 0).all()
+        # Partitions assigned to a track are all non-null
+        assert ((dspart.track_id < 0) | (dspart.spec.hs() > 0)).all()
+        return dspart
+
+    def test_track_ptm1(self):
+        self._track("ptm1", wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt)
+
+    def test_track_ptm2(self):
+        self._track("ptm2", wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt)
+
+    def test_track_ptm3_no_wind(self):
+        dspart = self.pt.track(method="ptm3", parts=3)
+        assert "track_id" in dspart
+        dspart = dspart.load()
+        assert (dspart.ntracks.values > 0).all()
+
+    def test_track_hp01(self):
+        self._track("hp01", wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt)
+
+    def test_track_hp01_no_wind(self):
+        with pytest.warns(UserWarning):
+            dspart = self.pt.track(method="hp01", swells=2)
+        dspart = dspart.load()
+        assert (dspart.ntracks.values > 0).all()
+
+    def test_track_invalid_method(self):
+        with pytest.raises(ValueError):
+            self.pt.track(method="ptm4")
+
+    def test_track_requires_wspd_for_sea(self):
+        dspart = self.pt.ptm1(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=2,
+        )
+        stats = dspart.spec.stats(["fp", "dpm"]).load()
+        with pytest.raises(ValueError):
+            track_partitions(stats, wspd=None, nsea=1)
+        track_partitions(stats, wspd=None, nsea=0)
+
+    def test_track_unsorted_times_raise(self):
+        from wavespectra.partition.tracking import np_track_partitions
+
+        dspart = self.pt.ptm1(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=2,
+        )
+        stats = dspart.spec.stats(["fp", "dpm"]).isel(site=0).load()
+        with pytest.raises(ValueError):
+            np_track_partitions(
+                times=stats.time.values[::-1],
+                fp=stats.fp.values.T,
+                dpm=stats.dpm.values.T,
+                wspd=self.dset.wspd.isel(site=0).values,
+            )
 
 
 class TestSpecpartKernel:

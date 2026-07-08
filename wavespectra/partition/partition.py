@@ -69,8 +69,8 @@ class Partition:
           Phillips (2001) and Hanson et al. (2009). Useful for noisy measured spectra which the watershed
           algorithm tends to over-segment, and to prescribe an exact number of output partitions.
         - bbox: BBOX partitions the spectra based on user-defined bounding boxes in frequency-direction space.
-        - ptm1_track: Partition spectra using the PTM1 method and track the partitions using the evolution of
-          peak frequency and peak direction in time.
+        - track: Partition spectra using any of the ptm1, ptm2, ptm3 or hp01 methods and track
+          the partitions using the evolution of peak frequency and peak direction in time.
 
     References:
         - Hanson and Phillips (2001), Automated Analysis of Ocean Surface Directional Wave Spectra,
@@ -825,100 +825,115 @@ class Partition:
 
         return dsout.fillna(0.0)
 
-    def ptm1_track(
+    def track(
         self,
-        wspd,
-        wdir,
-        dpt,
-        agefac=DEFAULTS["agefac"],
-        wscut=DEFAULTS["wscut"],
-        swells=DEFAULTS["swells"],
-        smooth=DEFAULTS["smooth"],
-        freq_window=DEFAULTS["window"],
-        dir_window=DEFAULTS["window"],
-        ihmax=DEFAULTS["ihmax"],
+        wspd=None,
+        wdir=None,
+        dpt=None,
+        method="ptm1",
         ddpm_sea_max=30,
         ddpm_swell_max=20,
         dfp_sea_scaling=1,
         dfp_swell_source_distance=1e6,
+        **kwargs,
     ):
-        """Partition and combine spectra from the same wave system over time.
+        """Partition the spectra and track the wave systems over time.
 
-        Partition spectra using the PTM1 method and track the partitions
-        using the evolution of peak frequency and peak direction. Partitions are
-        matched with the closest partition in the frequency-direction space of the
-        previous time step for which the difference in direction with less than
-        ddpm_max and the difference in peak frequency is less than dfp_max. ddpm_max
-        differs for sea and swell partitions and is set manually. dfp_max also differs
-        for sea and swell partitions. In the case of sea partitions it is a function of
-        wind speed and is set to the rate of change of the wind-sea peak wave frequency
-        estimated from fetch-limited relationships, (Ewans & Kibblewhite, 1986). In the
-        case of swell partitions it is set to the rate of change of the swell peak wave
-        frequency based on the swell dispersion relationship derived by
-        Snodgrass et al (1966) assuming the distance to the source is 1e6 m.
+        Partition spectra using any of the watershed partitioning methods and
+        track the partitions using the evolution of peak frequency and peak
+        direction. Partitions are matched with the closest partition in the
+        frequency-direction space of the previous time step for which the
+        difference in direction is less than ddpm_max and the difference in
+        peak frequency is less than dfp_max. ddpm_max differs for sea and swell
+        partitions and is set manually. dfp_max also differs for sea and swell
+        partitions. In the case of sea partitions it is a function of wind
+        speed and is set to the rate of change of the wind-sea peak wave
+        frequency estimated from fetch-limited relationships (Ewans &
+        Kibblewhite, 1986). In the case of swell partitions it is set to the
+        rate of change of the swell peak wave frequency based on the swell
+        dispersion relationship derived by Snodgrass et al (1966) assuming the
+        distance to the source is 1e6 m.
 
         Args:
-            - wspd (xr.DataArray): Wind speed DataArray.
-            - wdir (xr.DataArray): Wind direction DataArray.
-            - dpt (xr.DataArray): Depth DataArray.
-            - swells (int): Number of swell partitions to compute. If None, the
-              number required to hold all swells detected from all spectra is
-              used, which doubles the compute time and triggers an eager
-              computation on dask datasets.
-            - agefac (float): Age factor.
-            - wscut (float): Wind sea fraction cutoff.
-            - smooth (bool): Compute watershed boundaries from smoothed spectra
-              as described in Portilla et al., 2009.
-            - freq_window (int): Size of running window along `freq` for smoothing spectra.
-            - dir_window (int): Size of running window along `dir` for smoothing spectra.
-            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
-            - ddpm_sea_max (float): Maximum peak direction difference for wind sea partition.
-              Default is 30 degrees.
-            - ddpm_swell_max (float): Maximum peak direction difference for swell partitions.
-              Default is 20 degrees.
-            - dfp_sea_scaling (float): Scaling factor for maximum peak frequency difference
-              for wind sea partition. Default is 1.
-            - dfp_swell_source_distance (float): Distance to source for swell peak frequency
-              difference. Default is 1e6 m.
+            - wspd (xr.DataArray): Wind speed DataArray, required by the ptm1
+              and ptm2 methods and optional for hp01.
+            - wdir (xr.DataArray): Wind direction DataArray, as above.
+            - dpt (xr.DataArray): Depth DataArray, as above.
+            - method (str): Partitioning method to track partitions from,
+              one of "ptm1", "ptm2", "ptm3" or "hp01". The ptm4, ptm5 and bbox
+              methods define partitions as fixed spectral regions whose
+              identity is already continuous in time, so there is nothing
+              to track.
+            - ddpm_sea_max (float): Maximum peak direction difference for wind sea
+              partitions. Default is 30 degrees.
+            - ddpm_swell_max (float): Maximum peak direction difference for swell
+              partitions. Default is 20 degrees.
+            - dfp_sea_scaling (float): Scaling factor for maximum peak frequency
+              difference for wind sea partitions. Default is 1.
+            - dfp_swell_source_distance (float): Distance to source for swell peak
+              frequency difference. Default is 1e6 m.
+            - kwargs: Further arguments passed to the partitioning method, e.g.
+              `swells`, `agefac`, `wscut`, `smooth` or the hp01 combining
+              parameters.
 
         Returns:
             - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
-              where the 0th index are the wind sea and remaining indices are the swells
-              sorted by descending order of Hs. Plus array `part_id` containing an integer
-              representing the partition id for each time step and partition. Plus array
-              `npart_id` containing the existing partition ids.
+              ordered according to the partitioning method, plus the variable
+              `track_id` identifying the wave system each partition belongs to at
+              each time step and the variable `ntracks` with the number of wave
+              systems tracked.
+
+        Note:
+            - Wind sea partitions (partition 0 in ptm1 and hp01, partitions 0
+              and 1 in ptm2) are matched with wind-sea thresholds and the
+              remaining partitions with swell thresholds. The ptm3 partitions
+              are not classified and are all matched with swell thresholds,
+              which makes wind inputs optional for that method.
+            - The time step is evaluated for each pair of consecutive spectra
+              so records with gaps or irregular sampling use matching
+              thresholds consistent with the actual time elapsed.
 
         """
+        wind_kwargs = {"wspd": wspd, "wdir": wdir, "dpt": dpt}
+        if method in ("ptm1", "ptm2"):
+            check_same_coordinates(wspd, wdir, dpt)
+            nsea = 1 if method == "ptm1" else 2
+        elif method == "hp01":
+            # hp01 skips the wind sea classification without wind inputs
+            if wspd is None or wdir is None or dpt is None:
+                wind_kwargs = {}
+                nsea = 0
+            else:
+                nsea = 1
+        elif method == "ptm3":
+            # ptm3 partitions are not classified, tracking does not need wind
+            wind_kwargs = {}
+            nsea = 0
+        else:
+            raise ValueError(
+                f"Cannot track partitions from method '{method}', "
+                "available methods are 'ptm1', 'ptm2', 'ptm3' and 'hp01'"
+            )
 
         # Do the partitioning
-        dspart = self.ptm1(
-            wspd=wspd,
-            wdir=wdir,
-            dpt=dpt,
-            agefac=agefac,
-            wscut=wscut,
-            swells=swells,
-            smooth=smooth,
-            freq_window=freq_window,
-            dir_window=dir_window,
-            ihmax=ihmax,
-        )
+        dspart = getattr(self, method)(**wind_kwargs, **kwargs)
 
         # Calculate peak frequency and peak direction
         stats = dspart.spec.stats(["fp", "dpm"])
 
         # Track partitions
-        part_ids = track_partitions(
+        tracks = track_partitions(
             stats,
-            wspd=wspd,
+            wspd=wspd if nsea > 0 else None,
             ddpm_sea_max=ddpm_sea_max,
             ddpm_swell_max=ddpm_swell_max,
             dfp_sea_scaling=dfp_sea_scaling,
             dfp_swell_source_distance=dfp_swell_source_distance,
+            nsea=nsea,
         )
 
-        # Add partition ids to partition data and return
-        return xr.merge([dspart, part_ids])
+        # Add track ids to partition data and return
+        return xr.merge([dspart, tracks])
 
 
 def np_ptm1(
