@@ -104,6 +104,45 @@ class Partition:
         dsout.attrs = attrs.ATTRS[attrs.SPECNAME]
         return dsout
 
+    def _detect_nparts(self, func, *args, input_core_dims, nparts_fixed):
+        """Number of partition slots required to hold all detected partitions.
+
+        The size of the output `part` dimension must be known before the
+        partitioning runs. When the number of partitions is not prescribed,
+        this method runs the partitioning function over all spectra without a
+        prescribed number and returns the largest number of partitions
+        detected, excluding the `nparts_fixed` leading partitions (e.g. the
+        wind sea) the function always outputs.
+
+        Args:
+            - func (callable): Partitioning function to run, e.g. `np_ptm1`.
+            - args: Positional arguments of `func` with the number of
+              partitions argument set to None.
+            - input_core_dims (list): Core dimensions of each argument as
+              passed to xr.apply_ufunc.
+            - nparts_fixed (int): Number of fixed leading partitions in the
+              output of `func` to exclude from the count.
+
+        Returns:
+            - nparts (int): Largest number of non-fixed partitions detected
+              from all spectra, at least 1.
+
+        """
+
+        def nparts(*args):
+            return np.int64(func(*args).shape[0] - nparts_fixed)
+
+        counts = xr.apply_ufunc(
+            nparts,
+            *args,
+            input_core_dims=input_core_dims,
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=["int64"],
+            dask_gufunc_kwargs={"allow_rechunk": True},
+        )
+        return max(int(counts.max()), 1)
+
     def ptm1(
         self,
         wspd,
@@ -128,7 +167,10 @@ class Partition:
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
-            - swells (int): Number of swell partitions to compute.
+            - swells (int): Number of swell partitions to compute. If None, the
+              number required to hold all swells detected from all spectra is
+              used, which doubles the compute time and triggers an eager
+              computation on dask datasets.
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
@@ -158,9 +200,7 @@ class Partition:
         else:
             dset_smooth = self.dset
 
-        # Partitioning full spectra
-        dsout = xr.apply_ufunc(
-            np_ptm1,
+        args = [
             self.dset,
             dset_smooth,
             self.dset.freq,
@@ -170,21 +210,39 @@ class Partition:
             dpt,
             agefac,
             wscut,
+        ]
+        input_core_dims = [
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ]
+
+        # Detect the number of swells required if not prescribed
+        if swells is None:
+            swells = self._detect_nparts(
+                np_ptm1,
+                *args,
+                None,
+                ihmax,
+                input_core_dims=input_core_dims,
+                nparts_fixed=1,
+            )
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_ptm1,
+            *args,
             swells,
             ihmax,
-            input_core_dims=[
-                ["freq", "dir"],
-                ["freq", "dir"],
-                ["freq"],
-                ["dir"],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-            ],
+            input_core_dims=input_core_dims,
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -233,7 +291,10 @@ class Partition:
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
-            - swells (int): Number of swell partitions to compute.
+            - swells (int): Number of swell partitions to compute. If None, the
+              number required to hold all swells detected from all spectra is
+              used, which doubles the compute time and triggers an eager
+              computation on dask datasets.
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
@@ -263,9 +324,7 @@ class Partition:
         else:
             dset_smooth = self.dset
 
-        # Partitioning full spectra
-        dsout = xr.apply_ufunc(
-            np_ptm2,
+        args = [
             self.dset,
             dset_smooth,
             self.dset.freq,
@@ -275,21 +334,39 @@ class Partition:
             dpt,
             agefac,
             wscut,
+        ]
+        input_core_dims = [
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ]
+
+        # Detect the number of swells required if not prescribed
+        if swells is None:
+            swells = self._detect_nparts(
+                np_ptm2,
+                *args,
+                None,
+                ihmax,
+                input_core_dims=input_core_dims,
+                nparts_fixed=2,
+            )
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_ptm2,
+            *args,
             swells,
             ihmax,
-            input_core_dims=[
-                ["freq", "dir"],
-                ["freq", "dir"],
-                ["freq"],
-                ["dir"],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-            ],
+            input_core_dims=input_core_dims,
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -330,7 +407,10 @@ class Partition:
         information and can be used with any spectral dataset.
 
         Args:
-            - parts (int): Number of partitions to keep.
+            - parts (int): Number of partitions to keep. If None, the number
+              required to hold all partitions detected from all spectra is
+              used, which doubles the compute time and triggers an eager
+              computation on dask datasets.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - freq_window (int): Size of running window along `freq` for smoothing spectra.
@@ -354,23 +434,34 @@ class Partition:
         else:
             dset_smooth = self.dset
 
+        args = [self.dset, dset_smooth, self.dset.freq, self.dset.dir]
+        input_core_dims = [
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+        ]
+
+        # Detect the number of partitions required if not prescribed
+        if parts is None:
+            parts = self._detect_nparts(
+                np_ptm3,
+                *args,
+                None,
+                ihmax,
+                input_core_dims=input_core_dims,
+                nparts_fixed=0,
+            )
+
         # Partitioning full spectra
         dsout = xr.apply_ufunc(
             np_ptm3,
-            self.dset,
-            dset_smooth,
-            self.dset.freq,
-            self.dset.dir,
+            *args,
             parts,
             ihmax,
-            input_core_dims=[
-                ["freq", "dir"],
-                ["freq", "dir"],
-                ["freq"],
-                ["dir"],
-                [],
-                [],
-            ],
+            input_core_dims=input_core_dims,
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -584,65 +675,8 @@ class Partition:
                 agefac,
             )
 
-        # The output size must be known upfront, if the number of swells is not
-        # prescribed run a first pass to detect how many are required to hold
-        # all combined swells from all spectra
-        if swells is None:
-
-            def nswells(*args):
-                return np.int64(np_hp01(*args).shape[0] - 1)
-
-            counts = xr.apply_ufunc(
-                nswells,
-                self.dset,
-                dset_smooth,
-                windseamask,
-                self.dset.freq,
-                self.dset.dir,
-                wscut,
-                None,
-                kappa,
-                zeta,
-                angle_max,
-                hs_min,
-                noise_a,
-                noise_b,
-                ihmax,
-                combine_extra_swells,
-                input_core_dims=[
-                    ["freq", "dir"],
-                    ["freq", "dir"],
-                    ["freq", "dir"],
-                    ["freq"],
-                    ["dir"],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                    [],
-                ],
-                vectorize=True,
-                dask="parallelized",
-                output_dtypes=["int64"],
-                dask_gufunc_kwargs={"allow_rechunk": True},
-            )
-            swells = max(int(counts.max()), 1)
-
-        # Partitioning full spectra
-        dsout = xr.apply_ufunc(
-            np_hp01,
-            self.dset,
-            dset_smooth,
-            windseamask,
-            self.dset.freq,
-            self.dset.dir,
-            wscut,
-            swells,
+        args = [self.dset, dset_smooth, windseamask, self.dset.freq, self.dset.dir]
+        args_after_swells = [
             kappa,
             zeta,
             angle_max,
@@ -651,23 +685,45 @@ class Partition:
             noise_b,
             ihmax,
             combine_extra_swells,
-            input_core_dims=[
-                ["freq", "dir"],
-                ["freq", "dir"],
-                ["freq", "dir"],
-                ["freq"],
-                ["dir"],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-            ],
+        ]
+        input_core_dims = [
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ]
+
+        # Detect the number of swells required if not prescribed
+        if swells is None:
+            swells = self._detect_nparts(
+                np_hp01,
+                *args,
+                wscut,
+                None,
+                *args_after_swells,
+                input_core_dims=input_core_dims,
+                nparts_fixed=1,
+            )
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_hp01,
+            *args,
+            wscut,
+            swells,
+            *args_after_swells,
+            input_core_dims=input_core_dims,
             output_core_dims=[["part", "freq", "dir"]],
             vectorize=True,
             dask="parallelized",
@@ -802,7 +858,10 @@ class Partition:
             - wspd (xr.DataArray): Wind speed DataArray.
             - wdir (xr.DataArray): Wind direction DataArray.
             - dpt (xr.DataArray): Depth DataArray.
-            - swells (int): Number of swell partitions to compute.
+            - swells (int): Number of swell partitions to compute. If None, the
+              number required to hold all swells detected from all spectra is
+              used, which doubles the compute time and triggers an eager
+              computation on dask datasets.
             - agefac (float): Age factor.
             - wscut (float): Wind sea fraction cutoff.
             - smooth (bool): Compute watershed boundaries from smoothed spectra

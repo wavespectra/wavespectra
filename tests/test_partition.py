@@ -71,6 +71,20 @@ class TestPTM1(BasePTM):
         assert self.out.shape[0] == 3
         assert self.hs_full == pytest.approx(self.hs_from_partitions)
 
+    def test_request_all_partitions_class(self):
+        """swells=None detects the required number of partitions."""
+        dspart = self.pt.ptm1(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=None,
+        )
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
+        # No swell slot is null across all spectra
+        hs_swells = dspart.isel(part=slice(1, None)).spec.hs()
+        assert (hs_swells > 0).any(["time", "site"]).all()
+
     def test_request_less_partitions(self):
         swells = 2
         self.out = self._exec(swells=swells)
@@ -142,6 +156,20 @@ class TestPTM2(BasePTM):
         assert self.out.shape[0] == 4
         assert self.hs_full == pytest.approx(self.hs_from_partitions)
 
+    def test_request_all_partitions_class(self):
+        """swells=None detects the required number of partitions."""
+        dspart = self.pt.ptm2(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            swells=None,
+        )
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
+        # No swell slot is null across all spectra
+        hs_swells = dspart.isel(part=slice(2, None)).spec.hs()
+        assert (hs_swells > 0).any(["time", "site"]).all()
+
     def test_request_less_partitions(self):
         swells = 2
         self.out = self._exec(swells=swells)
@@ -198,6 +226,14 @@ class TestPTM3(BasePTM):
     def test_request_all_partitions(self):
         self.out = self._exec(parts=None)
         assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_request_all_partitions_class(self):
+        """parts=None detects the required number of partitions."""
+        dspart = self.pt.ptm3(parts=None, smooth=False)
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
+        # No partition slot is null across all spectra
+        assert (dspart.spec.hs() > 0).any(["time", "site"]).all()
 
     def test_request_less_partitions(self):
         parts = 2

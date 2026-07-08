@@ -90,6 +90,11 @@ Some parameters are shared by several methods:
   fraction exceeds this value are classified as wind sea.
 * ``ihmax``: Number of discrete levels used to bin the spectra in the watershed
   algorithm.
+* ``swells`` (``parts`` in ``ptm3``): Number of partition slots in the output
+  ``part`` dimension; smaller partitions are dropped (or combined in ``hp01``) and
+  missing slots are null-padded. Setting it to None sizes the output from the
+  largest number of partitions detected across all spectra, at the cost of an extra
+  pass over the data.
 
 
 .. ipython:: python
