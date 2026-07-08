@@ -377,3 +377,108 @@ def track_partitions(
     }
 
     return tracks
+
+
+def wave_systems(dspart, min_duration=1):
+    """Remap tracked partitions onto a wave_system dimension.
+
+    Reorganise a dataset of tracked partitions, as returned by the `track`
+    partitioning method, so that each tracked wave system occupies its own
+    index along a new `wave_system` dimension in place of `part`. Each system
+    carries values along the entire time axis, taken from whichever partition
+    holds the system at each time step and null elsewhere, so the time series
+    of any wave system can be extracted with a plain selection, e.g.
+    `dsout.isel(wave_system=5)`.
+
+    Parameters
+    ----------
+    dspart: xr.Dataset
+        Tracked partitioned dataset with the `efth` and `track_id` variables,
+        as returned by the `track` partitioning method.
+    min_duration: int
+        Minimum number of time steps a wave system must span to be included
+        in the output. The default of 1 keeps all tracked systems.
+
+    Returns
+    -------
+    dsout: xr.Dataset
+        Dataset with the spectra of each tracked wave system along the
+        `wave_system` dimension, null where the system does not exist, and
+        the variable `track_id` mapping each wave system back to its id in
+        the input dataset.
+
+    Notes
+    -----
+    - Systems are ordered chronologically by their first appearance.
+    - Wave systems are tracked independently at each site so the same
+      `wave_system` index at different sites corresponds to different,
+      physically unrelated systems. The size of the `wave_system` dimension
+      accommodates the site with the most systems and the extra entries at
+      the other sites are null, with `track_id` set to -999.
+    - The spectra remapping is lazy on dask datasets but the track ids must
+      be computed upfront to define the size of the output.
+
+    """
+    from wavespectra.core.attributes import attrs, set_spec_attributes
+
+    track_id = dspart.track_id.compute()
+    extra_dims = [d for d in track_id.dims if d not in ("part", "time")]
+    tid = track_id.transpose("part", "time", *extra_dims).values
+    npart, ntime = tid.shape[:2]
+    shape_extra = tid.shape[2:]
+    tid = tid.reshape(npart, ntime, -1)
+
+    # Map each wave system onto the partition index holding it at each time,
+    # independently for each extra (non-time) dim such as site
+    indexers = []
+    system_ids = []
+    for ie in range(tid.shape[-1]):
+        ids, counts = np.unique(tid[..., ie][tid[..., ie] >= 0], return_counts=True)
+        ids = ids[counts >= min_duration]
+        indexer = np.full((ids.size, ntime), -1, dtype="int64")
+        for isys, id_ in enumerate(ids):
+            ipart, itime = np.nonzero(tid[..., ie] == id_)
+            indexer[isys, itime] = ipart
+        indexers.append(indexer)
+        system_ids.append(ids)
+
+    # Pad so all extra dims share the same number of wave systems
+    nsystems = max(ids.size for ids in system_ids)
+    indexer = np.full((nsystems, ntime, tid.shape[-1]), -1, dtype="int64")
+    ids = np.full((nsystems, tid.shape[-1]), -999, dtype="int32")
+    for ie in range(tid.shape[-1]):
+        indexer[: indexers[ie].shape[0], :, ie] = indexers[ie]
+        ids[: system_ids[ie].size, ie] = system_ids[ie]
+
+    # Remap the spectra onto the wave_system dimension, this is lazy on dask
+    # data as it uses vectorised indexing
+    dims = ("wave_system", "time", *extra_dims)
+    coords = {"time": dspart.time}
+    coords.update({d: dspart[d] for d in extra_dims if d in dspart.coords})
+    indexer = xr.DataArray(
+        indexer.reshape((nsystems, ntime, *shape_extra)), dims=dims, coords=coords
+    )
+    efth = dspart[attrs.SPECNAME].isel(part=indexer.clip(min=0)).where(indexer >= 0)
+
+    # Finalise output
+    dsout = efth.to_dataset(name=attrs.SPECNAME)
+    dsout["track_id"] = xr.DataArray(
+        ids.reshape((nsystems, *shape_extra)),
+        dims=("wave_system", *extra_dims),
+    )
+    dsout["wave_system"] = np.arange(nsystems)
+    set_spec_attributes(dsout)
+    dsout.track_id.attrs = {
+        "long_name": "Wave system track ID",
+        "units": "1",
+        "description": (
+            "ID of each wave system in the tracked partitioned dataset, "
+            "-999 for null padding entries"
+        ),
+        "_FillValue": -999,
+    }
+    dsout.wave_system.attrs = {
+        "long_name": "Wave system",
+        "description": "Tracked wave systems ordered by first appearance",
+    }
+    return dsout

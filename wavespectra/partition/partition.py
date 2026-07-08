@@ -20,7 +20,7 @@ from wavespectra.core.utils import (
 from wavespectra.core.attributes import attrs
 from wavespectra.core import npstats
 from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
-from wavespectra.partition.tracking import track_partitions
+from wavespectra.partition.tracking import track_partitions, wave_systems
 
 
 DEFAULTS = {
@@ -835,6 +835,8 @@ class Partition:
         ddpm_swell_max=20,
         dfp_sea_scaling=1,
         dfp_swell_source_distance=1e6,
+        systems=False,
+        min_duration=1,
         **kwargs,
     ):
         """Partition the spectra and track the wave systems over time.
@@ -872,6 +874,15 @@ class Partition:
               difference for wind sea partitions. Default is 1.
             - dfp_swell_source_distance (float): Distance to source for swell peak
               frequency difference. Default is 1e6 m.
+            - systems (bool): If True, remap the output onto a `wave_system`
+              dimension in place of `part` so that each tracked wave system
+              occupies its own index and carries values along the entire time
+              axis, null where the system does not exist. If False (default),
+              return the partitioned spectra with the `track_id` variable
+              identifying the wave system of each partition at each time step.
+            - min_duration (int): Minimum number of time steps a wave system
+              must span to be included in the `systems=True` output. The
+              default of 1 keeps all tracked systems.
             - kwargs: Further arguments passed to the partitioning method, e.g.
               `swells`, `agefac`, `wscut`, `smooth` or the hp01 combining
               parameters.
@@ -881,7 +892,10 @@ class Partition:
               ordered according to the partitioning method, plus the variable
               `track_id` identifying the wave system each partition belongs to at
               each time step and the variable `ntracks` with the number of wave
-              systems tracked.
+              systems tracked. If `systems` is True the spectra are instead
+              organised along a `wave_system` dimension replacing `part`, with
+              the `track_id` variable mapping each wave system back to its id
+              in the `systems=False` output.
 
         Note:
             - Wind sea partitions (partition 0 in ptm1 and hp01, partitions 0
@@ -892,6 +906,14 @@ class Partition:
             - The time step is evaluated for each pair of consecutive spectra
               so records with gaps or irregular sampling use matching
               thresholds consistent with the actual time elapsed.
+            - Wave systems are tracked independently at each site so with
+              `systems=True` the same `wave_system` index at different sites
+              corresponds to different, physically unrelated systems, and the
+              `wave_system` dimension is sized by the site with the most
+              systems with null padding entries at the other sites.
+            - The spectra remapping with `systems=True` is lazy on dask
+              datasets but the track ids must be computed upfront to define
+              the size of the output.
 
         """
         wind_kwargs = {"wspd": wspd, "wdir": wdir, "dpt": dpt}
@@ -932,8 +954,14 @@ class Partition:
             nsea=nsea,
         )
 
-        # Add track ids to partition data and return
-        return xr.merge([dspart, tracks])
+        # Add track ids to partition data
+        dsout = xr.merge([dspart, tracks])
+
+        # Remap onto the wave_system dimension
+        if systems:
+            dsout = wave_systems(dsout, min_duration=min_duration)
+
+        return dsout
 
 
 def np_ptm1(

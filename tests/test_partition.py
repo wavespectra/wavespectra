@@ -476,6 +476,57 @@ class TestPartitionAndTrack(BasePTM):
                 wspd=self.dset.wspd.isel(site=0).values,
             )
 
+    def _track_kwargs(self):
+        return dict(
+            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, swells=2
+        )
+
+    def test_track_systems(self):
+        compact = self.pt.track(method="ptm1", **self._track_kwargs()).load()
+        systems = self.pt.track(
+            method="ptm1", systems=True, **self._track_kwargs()
+        ).load()
+        assert "wave_system" in systems.dims
+        assert "part" not in systems.dims
+        assert systems.wave_system.size == int(compact.ntracks.max())
+        # The total energy at each time step is preserved by the remapping
+        hs_systems = (systems.spec.hs() ** 2).sum("wave_system") ** 0.5
+        hs_compact = (compact.spec.hs() ** 2).sum("part") ** 0.5
+        assert np.allclose(hs_systems.values, hs_compact.values, rtol=1e-5)
+        # Each system exists over a single contiguous time window
+        alive = systems.efth.notnull().any(["freq", "dir"])
+        for a in alive.stack(k=["site", "wave_system"]).transpose("k", "time").values:
+            if a.any():
+                assert np.all(np.diff(np.flatnonzero(a)) == 1)
+        # Padding entries for sites with fewer systems are null with id -999
+        null_systems = ~alive.any("time")
+        assert bool(((systems.track_id == -999) == null_systems).all())
+
+    def test_track_systems_min_duration(self):
+        systems = self.pt.track(
+            method="ptm1", systems=True, **self._track_kwargs()
+        ).load()
+        filtered = self.pt.track(
+            method="ptm1", systems=True, min_duration=3, **self._track_kwargs()
+        ).load()
+        assert filtered.wave_system.size < systems.wave_system.size
+        alive = filtered.efth.notnull().any(["freq", "dir"]).sum("time")
+        assert bool(((filtered.track_id < 0) | (alive >= 3)).all())
+
+    def test_track_systems_lazy(self):
+        dset = self.dset.chunk({"time": 3})
+        systems = dset.spec.partition.track(
+            method="ptm1",
+            systems=True,
+            wspd=dset.wspd,
+            wdir=dset.wdir,
+            dpt=dset.dpt,
+            swells=2,
+        )
+        # The spectra remapping is lazy on dask data
+        assert hasattr(systems.efth.data, "dask")
+        assert bool(systems.load().efth.notnull().any())
+
 
 class TestSpecpartKernel:
     """Regression tests for the specpart C extension (GH issue #142).
