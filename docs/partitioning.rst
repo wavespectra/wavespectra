@@ -387,6 +387,35 @@ regions whose identity is already continuous in time, so they are not available 
 tracking. The `ptm3` method has no wind sea classification, all partitions are matched
 with the swell thresholds and wind inputs are not required.
 
+Setting `systems=True` remaps the output onto a `wave_system` dimension in place of
+`part`, so that each tracked wave system occupies its own index and carries values
+along the entire time axis, null where the system does not exist. The time series of
+any wave system can then be extracted with a plain selection:
+
+.. ipython:: python
+    :okwarning:
+
+    dsys = dset.spec.partition.track(
+        wspd=dset.wspd,
+        wdir=dset.wdir,
+        dpt=dset.dpt,
+        method="ptm1",
+        systems=True,
+    )
+    dsys
+    dsys.spec.hs().plot.line(x="time", add_legend=False);
+
+    @savefig partitioning_track_systems.png
+    plt.draw()
+
+The `min_duration` argument excludes wave systems spanning fewer time steps from the
+`systems=True` output (all systems are kept by default). Note that wave systems are
+tracked independently at each site, so the same `wave_system` index at different sites
+corresponds to different, physically unrelated systems, and the `wave_system`
+dimension is sized by the site with the most systems with null padding entries at the
+other sites. The spectra remapping is lazy on dask datasets but the track ids must be
+computed upfront to define the size of the output.
+
 Compare the original partitions with no tracking:
 
 .. ipython:: python

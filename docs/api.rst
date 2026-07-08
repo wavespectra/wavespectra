@@ -222,6 +222,7 @@ Internal core functions and objects
    partition.tracking.match_consecutive_partitions
    partition.tracking.np_track_partitions
    partition.tracking.track_partitions
+   partition.tracking.wave_systems
    partition.hanson_and_phillips_2001.combine_partitions_hp01
 
 **attributes module**

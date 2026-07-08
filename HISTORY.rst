@@ -30,6 +30,12 @@ New Features
 * Candidate partition pairs are now matched globally in ascending order of their
   distance in frequency-direction space, making the tracking independent of
   partition ordering.
+* New ``systems`` option in the ``track`` method to remap the tracked partitions
+  onto a ``wave_system`` dimension in place of ``part``, so each tracked wave system
+  occupies its own index and carries values along the entire time axis, null where
+  the system does not exist. Systems spanning fewer time steps than ``min_duration``
+  can be excluded. The remapping is lazy on dask datasets and is also available as
+  the standalone ``wave_systems`` function.
 * Rewritten ``hp01`` partitioning method implementing the swell combining criteria of
   `Hanson and Phillips (2001) <https://journals.ametsoc.org/view/journals/atot/18/2/1520-0426_2001_018_0277_aaoosd_2_0_co_2.xml>`_
   and `Hanson et al. (2009) <https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml>`_
