@@ -283,6 +283,7 @@ def combine_partitions_hp01(
         - The saddle point between them exceeds `zeta` times the smaller peak, or
         - Their peaks are closer in (fx, fy) space than `kappa` times the
           spread of either partition (and within `angle_max` if specified).
+
     Partitions failing the `hs_min` / noise thresholds are always merged onto
     their most connected (highest saddle) neighbour so that no energy is lost.
 
