@@ -619,7 +619,10 @@ class Partition:
               directions for combining partitions, disabled if None.
             - hs_min (float): Minimum Hs of swell partitions, smaller ones are always
               combined with their most connected neighbours regardless of other
-              criteria being satisfied.
+              criteria being satisfied. The default of 0.2 m follows Hanson et
+              al. (2009) and is appropriate for open-ocean data, consider
+              reducing it in low-energy environments such as sheltered sites so
+              genuine small wave systems are not combined.
             - noise_a (float): Factor `A` in Hanson and Phillips (2001)'s noise
               threshold eq 10, e <= A / (fp^4 + B), partitions with total energy
               below this threshold are treated as noise and merged onto their most
@@ -1174,7 +1177,10 @@ def np_hp01(
           for combining partitions as per Hanson et al. (2009), disabled if None.
         - hs_min (float): Minimum Hs of swell partitions, smaller ones are always
           combined with their most connected neighbours regardless of other
-          criteria being satisfied.
+          criteria being satisfied. The default of 0.2 m follows Hanson et al.
+          (2009) and is appropriate for open-ocean data, consider reducing it
+          in low-energy environments such as sheltered sites so genuine small
+          wave systems are not combined.
         - noise_a (float): Factor `A` in Hanson and Phillips (2001)'s noise
           threshold eq 10, e <= A / (fp^4 + B), partitions with total energy
           below this threshold are treated as noise and merged onto their most

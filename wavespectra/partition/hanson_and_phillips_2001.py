@@ -267,7 +267,9 @@ def combine_partitions_hp01(
           directions for combining as per Hanson et al. (2009), disabled
           if None.
         - hs_min (float): Minimum Hs of individual partitions, any partition
-          below this value is merged onto its most connected neighbour.
+          below this value is merged onto its most connected neighbour. Hanson
+          et al. (2009) used 0.2 m for open-ocean data, smaller values are
+          appropriate in low-energy environments such as sheltered sites.
         - noise_a (float): Factor `A` in HP01's noise threshold eq 10,
           e <= A / (fp^4 + B). Disabled if None.
         - noise_b (float): Factor `B` in HP01's noise threshold eq 10.
