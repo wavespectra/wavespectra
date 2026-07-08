@@ -282,19 +282,28 @@ class TestHP01(BasePTM):
 
     def test_defaults(self):
         self.out = self._exec()
-        # assert self.out.shape[0] == self.swells + 1
-        # assert self.hs_full == pytest.approx(self.hs_from_partitions)
+        assert self.out.shape[0] == self.swells + 1
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
 
-    # def test_request_all_partitions(self):
-    #     self.out = self._exec(swells=None)
-    #     assert self.out.shape[0] == 3
-    #     assert self.hs_full == pytest.approx(self.hs_from_partitions)
+    def test_request_all_partitions(self):
+        """swells=None detects the required number of partitions."""
+        dspart = self.pt.hp01(
+            wspd=self.dset.wspd,
+            wdir=self.dset.wdir,
+            dpt=self.dset.dpt,
+            agefac=self.agefac,
+            swells=None,
+        )
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
+        # No partition slot is null across all spectra
+        assert (dspart.spec.hs() > 0).any(["time", "site"]).all()
 
-    # def test_request_less_partitions(self):
-    #     swells = 2
-    #     self.out = self._exec(swells=swells)
-    #     assert self.hs_from_partitions < self.hs_full
-    #     assert len(self.out) == swells + 1
+    def test_request_less_partitions(self):
+        swells = 1
+        self.out = self._exec(swells=swells)
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+        assert len(self.out) == swells + 1
 
     def test_partition_class(self):
         swells = 2
@@ -309,35 +318,16 @@ class TestHP01(BasePTM):
         hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
         assert hs_dspart == pytest.approx(self.hs_from_partitions, rel=1e-2)
 
-    # def test_smoothing(self):
-    #     swells = 2
-    #     ds_nosmoothing = self.pt.ptm1(
-    #         wspd=self.dset.wspd,
-    #         wdir=self.dset.wdir,
-    #         dpt=self.dset.dpt,
-    #         swells=swells,
-    #     )
-    #     ds_smoothing = self.pt.ptm1(
-    #         wspd=self.dset.wspd,
-    #         wdir=self.dset.wdir,
-    #         dpt=self.dset.dpt,
-    #         swells=swells,
-    #         smooth=True,
-    #     )
-    #     assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
-
-    # def test_compare_legacy(self):
-    #     kwargs = {"agefac": self.agefac, "wscut": self.wscut, "swells": self.swells}
-    #     old = self.dset.spec.partition_deprecated(
-    #         wsp_darr=self.dset.wspd,
-    #         wdir_darr=self.dset.wdir,
-    #         dep_darr=self.dset.dpt,
-    #         **kwargs,
-    #     )
-    #     new = self.pt.ptm1(
-    #         wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, **kwargs,
-    #     )
-    #     assert  np.array_equal(old.spec.hs().values, new.spec.hs().values)
+    def test_smoothing(self):
+        kwargs = dict(
+            wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt, swells=2
+        )
+        ds_nosmoothing = self.pt.hp01(**kwargs)
+        ds_smoothing = self.pt.hp01(smooth=True, **kwargs)
+        assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
+        # Smoothing only changes the partition boundaries, energy is conserved
+        hs = np.sqrt((ds_smoothing.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs.values, self.dset.spec.hs().values, rtol=1e-2)
 
 
 class TestBbox(BasePTM):
