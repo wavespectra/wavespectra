@@ -9,14 +9,14 @@ Installation
 Stable release
 --------------
 
-The latest stable release of wavespectra package
+The latest stable release of the wavespectra package
 can be installed using pip or conda.
 
 Install using pip
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
-Wavespectra can be installed using `pip`_. There are several differet options.
-For a basic intall that does not include some readers and writers:
+Wavespectra can be installed using `pip`_. There are several different options.
+For a basic install that does not include some readers and writers:
 
 .. code-block:: console
 
@@ -32,7 +32,7 @@ extra libraries run this command:
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
-Install from conda
+Install using conda
 ~~~~~~~~~~~~~~~~~~~
 
 The package can also be installed using `conda`_:
@@ -56,7 +56,7 @@ Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -o wavespectra.tar.gz -L https://github.com/wavespectra/wavespectra/tarball/master
+    $ curl -o wavespectra.tar.gz -L https://github.com/wavespectra/wavespectra/tarball/main
     $ tar xzf wavespectra.tar.gz
 
 .. note::
@@ -111,7 +111,7 @@ and run the tests with:
 
     $ pytest tests
 
-docs
+Docs
 ~~~~
 
 To build the docs, install the docs dependencies:
@@ -130,9 +130,9 @@ and build the docs with:
 
 .. _netcdf4: https://unidata.github.io/netcdf4-python/netCDF4/index.html
 .. _pip: https://pip.pypa.io
+.. _conda: https://docs.conda.io/en/latest/
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 .. _Github repo: https://github.com/wavespectra/wavespectra
-.. _tarball: https://github.com/wavespectra/wavespectra/tarball/master
+.. _tarball: https://github.com/wavespectra/wavespectra/tarball/main
 .. _development mode: https://setuptools.pypa.io/en/latest/userguide/development_mode.html
-.. _sphinx: https://www.sphinx-doc.org/en/master/
 .. _git: https://git-scm.com/

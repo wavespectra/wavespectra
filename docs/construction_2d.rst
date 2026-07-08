@@ -37,7 +37,7 @@ Two directional spreading functions are currently implemented in wavespectra:
 Cartwright symmetrical spread
 -----------------------------
 
-The cosine-squared distribution of `Cartwright (1963)`_ assumes single mean direction
+The cosine-squared distribution of `Cartwright (1963)`_ assumes a single mean direction
 and directional spread for all frequencies with a symmetrical decay of energy around
 the peak represented by a cosine-squared function:
 
@@ -67,7 +67,7 @@ where :math:`\theta` is the wave direction, :math:`f` is the wave frequency,
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :meth:`~wavespectra.construct.direction.cartwright` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.direction.cartwright` function:
 
     * Mean wave direction :meth:`~wavespectra.SpecArray.dm`.
     * Mean direction spread :meth:`~wavespectra.SpecArray.dspr`.
@@ -76,7 +76,7 @@ where :math:`\theta` is the wave direction, :math:`f` is the wave frequency,
 Bunney asymmetrical spread
 --------------------------
 
-The Asymmetrical distribution of `Bunney et al. (2014)`_ addresses the skewed
+The asymmetrical distribution of `Bunney et al. (2014)`_ addresses the skewed
 directional shape under turning wind seas. The function modifies the peak direction and
 the directional spread for each frequency above the peak so that
 
@@ -127,7 +127,7 @@ constraints:
 
 .. tip::
 
-    Relevant wavespectra stats methods for the :meth:`~wavespectra.construct.direction.asymmetric` function:
+    Relevant wavespectra stats methods for the :func:`~wavespectra.construct.direction.asymmetric` function:
 
     * Mean wave direction :meth:`~wavespectra.SpecArray.dm`.
     * Peak wave direction :meth:`~wavespectra.SpecArray.dpm` (or alternatively :meth:`~wavespectra.SpecArray.dp`).
@@ -308,7 +308,7 @@ one-dimensional spectrum :math:`E_d(f)` integrated from existing :math:`E_d(f,d)
 Constructor function
 --------------------
 
-The :func:`~wavespectra.construct.construct_partition` constructor defines an api to
+The :func:`~wavespectra.construct.construct_partition` constructor defines an API to
 construct two-dimensional spectra for a partition from frequency shape and directional
 spread functions available in wavespectra:
 
@@ -417,8 +417,6 @@ parameter:
     @savefig parameter_checking.png
     plt.draw()
 
-
-.. include:: reconstruction.rst
 
 
 .. _`Bunney et al. (2014)`: https://www.icevirtuallibrary.com/doi/abs/10.1680/fsts.59757.114

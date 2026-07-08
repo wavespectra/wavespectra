@@ -6,16 +6,17 @@
 Plotting
 ========
 
-Wavespectra wraps the plotting functionality from `xarray`_ to allow easily defining
+Wavespectra wraps the plotting functionality from `xarray`_ to make it easy to define
 frequency-direction spectral plots in polar coordinates.
 
 .. ipython:: python
     :okwarning:
     :okexcept:
 
+    import numpy as np
     import matplotlib.pyplot as plt
     import cmocean
-    from wavespectra import read_swan, read_era5
+    from wavespectra import read_era5
     dset = read_era5("_static/era5file.nc").isel(time=0)
     ds = dset.isel(lat=0, lon=0)
 
@@ -24,7 +25,7 @@ Simplest usage
 --------------
 
 The :py:meth:`~wavespectra.SpecArray.plot` method is available in :py:class:`~wavespectra.SpecArray`. The simplest usage takes no arguments 
-and defines sensible settings for plotting normalised spectra on logarithmic radii and countour levels:
+and defines sensible settings for plotting normalised spectra on logarithmic radii and contour levels:
 
 .. ipython:: python
     :okwarning:
@@ -113,7 +114,7 @@ The normalised spectrum :math:`\frac{E_{d}(f,d)}{\max{E_{d}}}` is plotted by def
     @savefig single_polar_plot_period_realvalues.png
     ds.spec.plot(as_period=True, normalised=False, cmap="Spectral_r");
 
-Logarithmic contour levels are only default for normalised spectra but they can be still manually specified:
+Logarithmic contour levels are only the default for normalised spectra but they can still be specified manually:
 
 .. ipython:: python
     :okwarning:
@@ -136,7 +137,7 @@ Linear radii
 ------------
 
 Radii are shown in a logarithmic scale by default. Linear radii can be defined by setting `logradius=False` 
-(radii ticks can be prescribed from the `radii_ticks` paramater):
+(radii ticks can be prescribed with the `radii_ticks` parameter):
 
 .. ipython:: python
     :okwarning:
@@ -158,7 +159,7 @@ Radii are shown in a logarithmic scale by default. Linear radii can be defined b
 
 .. hint::
 
-    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but similar result 
+    The `as_log10` option to plot the :math:`\log{E_{d}(f,d)}` has been deprecated but a similar result 
     can be achieved by calculating the :math:`\log{E_{d}(f,d)}` beforehand:
 
 .. ipython:: python
@@ -203,7 +204,6 @@ The radii extents are controlled from `rmin` and `rmax` parameters:
         levels=25,
         cmap="gray_r",
         radii_ticks=[0.03, 0.06, 0.09, 0.12, 0.15],
-        radii_labels=["0.05", "0.1", "0.15Hz"],
         radii_labels_angle=120,
         radii_labels_size=7,
     );
@@ -219,11 +219,13 @@ The radii extents are controlled from `rmin` and `rmax` parameters:
     * **logradius** (True): Set log radii.
     * **as_period** (False): Set wave period radii instead of frequency.
     * **show_radii_labels** (True): Display the radii tick labels.
-    * **show_theta_labels** (False): Display the directions tick labels.
+    * **show_theta_labels** (True): Display the direction tick labels.
     * **radii_ticks** (array): Tick values for radii.
     * **radii_labels_angle** (22.5): Polar angle at which radii labels are positioned.
     * **radii_labels_size** (8): Fontsize for radii labels.
-    * **cbar_ticks**: Tick values for colorbar (default depends if normalised, logradius and as_period).
+    * **cbar_ticks**: Tick values for colorbar (default depends on normalised, logradius and as_period).
+    * **rmin**, **rmax**: Minimum and maximum radius extents.
+    * **efth_min**: Mask energy density below this value.
     * **clean_axis** (False): Remove radii and theta ticks for a clean view.
 
 
@@ -250,10 +252,10 @@ Wavespectra allows passing some parameters from the functions wrapped from xarra
     :class: warning
 
     * **projection**: Always set to "polar".
-    * **x**, **y**: Set to wavespectra coordinates naming.
+    * **x**, **y**: Set to wavespectra's coordinate names.
     * **xlabel**, **ylabel**: Disabled.
     * **ax**, **aspect**, **size**: Conflict with axes defined in wavespectra.
-    * **xlim**, **ylim**: produce no effect.
+    * **xlim**, **ylim**: Produce no effect.
 
 
 Faceting
@@ -285,7 +287,7 @@ Clean axes
 ----------
 
 Use the `clean_axis` argument to remove radii and theta grids for a clean overview. This is
-equivalent to disabling ticks from the axis by calling `ax.set_rticks=[]`, `ax.set_xticks=[]`.
+equivalent to disabling ticks from the axis by calling `ax.set_rticks([])`, `ax.set_xticks([])`.
 
 .. ipython:: python
     :okwarning:
@@ -314,16 +316,8 @@ equivalent to disabling ticks from the axis by calling `ax.set_rticks=[]`, `ax.s
     plt.close("all")
 
 
-.. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
-.. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py
 .. _xarray: https://xarray.pydata.org/en/stable/
-.. _selecting: https://xarray.pydata.org/en/latest/indexing.html
-.. _xarray_plot: https://xarray.pydata.org/en/stable/plotting.html
-.. _faceting: https://xarray.pydata.org/en/stable/plotting.html#faceting
-.. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
-.. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
 .. _contour: https://xarray.pydata.org/en/stable/generated/xarray.plot.contour.html#xarray.plot.contour
 .. _contourf: https://xarray.pydata.org/en/stable/generated/xarray.plot.contourf.html#xarray.plot.contourf
 .. _pcolormesh: https://xarray.pydata.org/en/stable/generated/xarray.plot.pcolormesh.html#xarray.plot.pcolormesh
-.. _`Hanson et al. (2008)`: https://journals.ametsoc.org/doi/pdf/10.1175/2009JTECHO650.1
 .. _cmocean: https://matplotlib.org/cmocean/

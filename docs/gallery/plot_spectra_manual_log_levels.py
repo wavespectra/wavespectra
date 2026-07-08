@@ -2,7 +2,7 @@
 Logarithmic contours
 ====================
 
-Logarithmic contour levels are only default for normalised spectra but they can be still manually specified
+Logarithmic contour levels are only the default for normalised spectra but they can still be specified manually
 
 """
 

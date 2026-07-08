@@ -7,51 +7,73 @@ Conventions
 ================
 Wavespectra takes advantage of `xarray`_'s labelled coordinates to abstract
 n-dimensional wave spectra datasets. This requires some conventions around special
-coordinates and variables. The convention adopted is based on that of the netcdf
+coordinates and variables. The convention adopted is based on that of the NetCDF
 output from the WAVEWATCH III spectral wave model.
 
-Coordinates
------------
+Datasets and DataArrays that follow these naming and units conventions gain the
+``spec`` accessor with the full wavespectra functionality. The table below summarises
+the special names:
 
-Wave frequency
-~~~~~~~~~~~~~~
+.. list-table::
+   :header-rows: 1
+   :widths: 12 12 20 56
 
-Wave frequency coordinate with name ``freq``, defined in :math:`Hz` (required).
+   * - Name
+     - Type
+     - Units
+     - Description
+   * - ``efth``
+     - variable
+     - :math:`m^{2}/Hz/degree` (2D), :math:`m^{2}/Hz` (1D)
+     - Wave energy density :math:`E(f,\theta)` or :math:`E(f)`; the core spectral
+       variable, required by all methods.
+   * - ``freq``
+     - coordinate
+     - :math:`Hz`
+     - Wave frequency, required by all methods.
+   * - ``dir``
+     - coordinate
+     - :math:`degree`
+     - Wave direction in coming-from convention; required for 2D spectra and
+       directional methods.
+   * - ``time``
+     - coordinate
+     -
+     - Times of the spectra, required by a few methods such as partition tracking.
+   * - ``site``
+     - coordinate
+     -
+     - Index of spectral sites; used by the selecting functionality.
+   * - ``lon``, ``lat``
+     - coordinate / variable
+     - :math:`degree`
+     - Longitude and latitude of the spectral sites; required by the selecting
+       functionality.
+   * - ``wspd``
+     - variable
+     - :math:`m s^{-1}`
+     - Wind speed, required by the partitioning methods that split sea and swell
+       (``ptm1``, ``ptm2``, ``ptm4``, ``hp01``).
+   * - ``wdir``
+     - variable
+     - :math:`degree`
+     - Wind direction in coming-from convention, required by the same partitioning
+       methods as ``wspd``.
+   * - ``dpt``
+     - variable
+     - :math:`m`
+     - Water depth, required by the sea/swell partitioning methods and by
+       wavenumber-based methods such as
+       :py:meth:`~wavespectra.SpecArray.celerity` and
+       :py:meth:`~wavespectra.SpecArray.wavelen`.
 
-Wave direction
-~~~~~~~~~~~~~~
+Directions
+----------
 
-Wave direction coordinate in coming-from convention, with name ``dir``,
-defined in :math:`degree` (required for 2D spectra and directional methods).
-
-Time
-~~~~
-Time coordinate with name ``time`` (required by a few methods).
-
-Data variables
---------------
-
-Wave energy density
-~~~~~~~~~~~~~~~~~~~
-Wave energy density array named with name ``efth``, defined in:
-
-* 2D spectra :math:`E(\sigma,\theta)`: :math:`m^{2}{degree^{-1}}{s}`.
-* 1D spectra :math:`E(\sigma)`: :math:`m^{2}{s}`.
-
-Wind speed
-~~~~~~~~~~
-Wind speed array named with name ``wspd``, defined in :math:`ms^{-1}` (required for the
-watershed partitioning).
-
-Wind direction
-~~~~~~~~~~~~~~
-Wind direction array with ``wdir``, defined in :math:`degree` (required for the
-watershed partitioning).
-
-Water depth
-~~~~~~~~~~~
-Water depth array with name ``dpt``, defined in :math:`m` (required for the watershed
-partitioning and wavenumber-based methods).
+Directional quantities (``dir``, ``wdir`` and derived parameters such as ``dm`` and
+``dpm``) follow the nautical, *coming-from* convention: the direction waves (or wind)
+come from, measured clockwise from true North, in degrees. For example, waves with
+``dir=0`` travel southwards and waves with ``dir=270`` come from the West.
 
 Attributes
 ----------

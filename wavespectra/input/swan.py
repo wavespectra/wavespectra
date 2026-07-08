@@ -179,14 +179,18 @@ def read_swans(
         - ndays (float): number of days to keep from each file, choose None to
           keep entire period.
         - int_freq (ndarray, bool): frequency array for interpolating onto:
+
             - ndarray: 1d array specifying frequencies to interpolate onto.
             - True: logarithm array is constructed such that fmin=0.0418 Hz,
               fmax=0.71856 Hz, df=0.1f.
             - False: No interpolation performed in frequency space.
+
         - int_dir (ndarray, bool): direction array for interpolating onto:
+
             - ndarray: 1d array specifying directions to interpolate onto.
             - True: circular array is constructed such that dd=10 degrees.
             - False: No interpolation performed in direction space.
+
         - dirorder (bool): if True ensures directions are sorted.
         - ntimes (int): use it to read only specific number of times, useful
           for checking headers only.

@@ -8,7 +8,7 @@ Construction
 
 Spectra construction capability has been added to the wavespectra package in version 4
 to generate synthetic spectra based on parametric spectral shapes. The package provides
-functions to construct 1D, frequency spectra from integrated parameters using the
+functions to construct 1D frequency spectra from integrated parameters using the
 following spectral forms:
 
 * Pierson-Moskowitz spectral form for fully developed seas (`Pierson and Moskowitz, 1964`_).
@@ -17,12 +17,12 @@ following spectral forms:
 * Gaussian spectral form for swells (`Bunney et al., 2014`_).
 
 Directional spectra can be constructed by combining these spectral forms with a
-directional spread function. Two spread functions are now available:
+directional spread function. Two spread functions are currently available:
 
 * Cartwright cosine-squared spread (`Cartwright, 1963`_).
-* Asymmetrical spread (`Bunney et al., 2014`_)
+* Asymmetrical spread (`Bunney et al., 2014`_).
 
-This page provides examples on how to construct spectra using these functions.
+This page provides examples of how to construct spectra using these functions.
 
 .. ipython:: python
     :okexcept:
@@ -88,7 +88,7 @@ Jonswap
 
 Jonswap spectral form for developing seas (`Hasselmann et al., 1973`_):
 
-:math:`S(f) = \alpha g^2 (2\pi)^{-4} f^{-5} \exp{\left [-\frac{5}{4} \left (\frac{f}{f_p} \right)^{-4} \right]} \gamma^{\exp{[\frac{(f-f_p)^2}{2\sigma^2f_p^2}}]}`.
+:math:`S(f) = \alpha g^2 (2\pi)^{-4} f^{-5} \exp{\left [-\frac{5}{4} \left (\frac{f}{f_p} \right)^{-4} \right]} \gamma^{\exp{\left[-\frac{(f-f_p)^2}{2\sigma^2f_p^2}\right]}}`.
 
 .. ipython:: python
     :okwarning:
@@ -184,9 +184,9 @@ If the :math:`Hs` parameter is provided it is used to scale the Jonswap spectrum
 
     Relevant wavespectra stats methods for the :func:`~wavespectra.construct.frequency.jonswap` function:
 
-    * Peak wave period :meth:`~wavespectra.SpecArray.fp`.
+    * Peak wave frequency :meth:`~wavespectra.SpecArray.fp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
-    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
+    * Fetch-dependent scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
 
 
@@ -195,7 +195,7 @@ TMA
 
 TMA spectral form for seas in water of finite depth (`Bouws et al., 1985`_):
 
-:math:`S(f) = S_{J}(f) \tanh{kh}^2 (1 + \frac{2kh} {\sinh{2kh}})^{-1}`
+:math:`S(f) = S_{J}(f) \tanh^2{(kh)} \left(1 + \frac{2kh}{\sinh{2kh}}\right)^{-1}`
 
 .. ipython:: python
     :okexcept:
@@ -244,7 +244,7 @@ In deep water TMA becomes a Jonswap spectrum:
 
     * Peak wave frequency :meth:`~wavespectra.SpecArray.fp`.
     * Peak enhancement factor :meth:`~wavespectra.SpecArray.gamma`.
-    * Fetch dependant scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
+    * Fetch-dependent scaling coefficient :meth:`~wavespectra.SpecArray.alpha`.
     * Significant wave height :meth:`~wavespectra.SpecArray.hs`.
 
 
@@ -253,17 +253,17 @@ Gaussian
 
 Gaussian spectral form for swell (`Bunney et al., 2014`_):
 
-:math:`S(f)=\frac{\displaystyle m_0^2}{\displaystyle \sigma \sqrt{2\pi}} \exp{\left(-\frac{\displaystyle (f-f_p)^2}{\displaystyle 2\sigma^2}\right)}`
+:math:`S(f)=\frac{\displaystyle m_0}{\displaystyle \sigma \sqrt{2\pi}} \exp{\left(-\frac{\displaystyle (f-f_p)^2}{\displaystyle 2\sigma^2}\right)}`
 
-where :math:`m_0=\left(\frac{Hs}{4} \right)^2`, and the gaussian width :math:`\sigma` (:meth:`~wavespectra.SpecArray.gw`) is calculatd from the mean
-:math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) as
+where :math:`m_0=\left(\frac{Hs}{4} \right)^2`, and the Gaussian width :math:`\sigma` (:meth:`~wavespectra.SpecArray.gw`) is calculated from the mean
+period :math:`T_m` (:meth:`~wavespectra.SpecArray.tm01`) and the zero-upcrossing period :math:`T_z` (:meth:`~wavespectra.SpecArray.tm02`) as
 
 :math:`\sigma=\sqrt{\frac{\displaystyle m_0}{\displaystyle T_z^2} - \frac{\displaystyle m_0^2}{\displaystyle T_m^2}}`.
 
 The authors define a criterion for fitting a swell partition with the Gaussian
 distribution based on the ratio :math:`rt` between :math:`T_m` and :math:`T_z`:
 
-:math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} >= 0.95`
+:math:`rt = \frac{(T_m - T_0)}{(T_z - T_0)} \geq 0.95`
 
 where :math:`T_0` is the period corresponding to the lowest frequency bin.
 

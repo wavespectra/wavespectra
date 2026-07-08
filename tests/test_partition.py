@@ -383,6 +383,10 @@ class TestPartitionAndTrack(BasePTM):
         )
         assert "part_id" in dspart
         assert "npart_id" in dspart
+        # Force the computation: the tracking kernel runs lazily under dask
+        # and never executes if only variable existence is checked.
+        dspart = dspart.load()
+        assert (dspart.npart_id.values > 0).all()
 
 
 class TestSpecpartKernel:

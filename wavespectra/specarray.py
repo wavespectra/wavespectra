@@ -420,10 +420,8 @@ class SpecArray(object):
             - theta (float): angle offset.
 
         Returns:
-            - msin (DataArray): Sin component of the mth directional moment
-              for each frequency.
-            - mcos (DataArray): Cosine component of the mth directional moment
-              for each frequency.
+            Tuple (msin, mcos) with the sin and cosine components of the mth
+            directional moment for each frequency.
 
         """
         if self.dir is None:

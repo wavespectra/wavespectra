@@ -50,7 +50,7 @@ Key Features
 - **Unified Data Model**: Built on xarray with standardised conventions for wave spectral data
 - **Extensive I/O Support**: Read/write 15+ formats including WW3, SWAN, ERA5, NDBC, and more
 - **Rich Analysis Tools**: 60+ methods for wave parameter calculation and spectral transformations
-- **Spectral Partitioning**: Separate wind sea and swell using multiple algorithms (PTM1-5, watershed, wave age)
+- **Spectral Partitioning**: Separate wind sea and swell using multiple algorithms (PTM1-PTM5, HP01, wave age)
 - **Spectral Construction**: Create synthetic spectra using parametric forms (JONSWAP, TMA, Gaussian, Pierson-Moskowitz)
 - **Flexible Visualisation**: Polar spectral plots with matplotlib integration
 - **High Performance**: Leverages dask for efficient processing of large datasets
@@ -87,7 +87,7 @@ Basic Usage
    from wavespectra import read_swan
 
    # Read wave spectra from various formats
-   dset = read_swan("spectra.swn")  # SWAN format
+   dset = read_swan("spectra.spec")  # SWAN format
    # dset = xr.open_dataset("era5.nc", engine="era5")  # ERA5 reanalysis
    # dset = xr.open_dataset("ww3.nc", engine="ww3")    # WAVEWATCH III
 
@@ -164,6 +164,8 @@ Create synthetic spectra from parametric forms:
 
 .. code-block:: python
 
+   import numpy as np
+
    from wavespectra.construct.frequency import jonswap, tma, gaussian
    from wavespectra.construct.direction import cartwright
    from wavespectra.construct import construct_partition
@@ -234,8 +236,8 @@ Input and Output Formats
 
 - **Wave Models**: WAVEWATCH III, SWAN, WWM, FUNWAVE, OrcaFlex
 - **Reanalysis**: ERA5, ERA-Interim, ECMWF
-- **Observations**: NDBC, TRIAXYS, Spotter, Octopus, AWAC
-- **Generic**: NetCDF, JSON, CSV
+- **Observations**: NDBC, TRIAXYS, Spotter, Datawell, Obscape, AWAC, Octopus
+- **Generic**: NetCDF, Zarr, JSON
 
 Documentation
 =============

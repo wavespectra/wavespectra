@@ -97,7 +97,22 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    # Files only used via the include directive
+    "construction_2d.rst",
+    "zieger.rst",
+    "gallery/README.rst",
+    "auto_gallery/index.rst",
+]
+
+# Avoid duplicate-label warnings between identically named sections in
+# different documents, and do not label deep sections (e.g. the repeated
+# "Bug Fixes" headings in the changelog)
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 3
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"

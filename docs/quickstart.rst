@@ -8,12 +8,24 @@ Quick start
 
 Wavespectra is an open source project for processing ocean wave spectral data.
 The library is built on top of xarray and provides reading and writing of different
-spectral data formats, calculation of common integrated wave paramaters, spectral
-partitioning and spectral manipulation in a package focussed on speed and efficiency
+spectral data formats, calculation of common integrated wave parameters, spectral
+partitioning and spectral manipulation in a package focused on speed and efficiency
 for large numbers of spectra.
 
-Wavespectra works by defining some :doc:`conventions <conventions>` for spectral data
-in xarray objects:
+In its simplest form, using wavespectra means reading a spectral file and accessing
+the functionality from the ``spec`` accessor:
+
+.. ipython:: python
+    :okwarning:
+
+    from wavespectra import read_ww3
+
+    dset = read_ww3("_static/ww3file.nc")
+    dset.spec.hs()
+
+The accessor is available on any xarray object that follows some
+:doc:`conventions <conventions>` for spectral data, so wavespectra also works with
+data defined from scratch:
 
 .. ipython:: python
     :okwarning:
@@ -31,7 +43,7 @@ in xarray objects:
     freq = np.array([0.05 , 0.075, 0.1  , 0.125, 0.15 , 0.175, 0.2  ,
                      0.225, 0.25 , 0.275, 0.3  , 0.325, 0.35 , 0.375,
                      0.4  , 0.425, 0.45 , 0.475, 0.5  , 0.525])
-    # Direction in degree
+    # Direction in degrees
     dir = np.array([0])
     # The DataArray and Dataset objects below are ready to use with wavespectra
     da = xr.DataArray(
@@ -78,14 +90,13 @@ Reading spectra from files
 --------------------------
 
 Wavespectra provides functions to read various file formats including spectral wave
-models like WAVEWATCHIII, SWAN and WWM, observation instruments such as TRIAXYS and
-SPOTTER, and industry standard formats including ERA5, NDBC, Octopus among others.
+models like WAVEWATCH III, SWAN and WWM, buoy data such as TRIAXYS, Spotter and
+NDBC, and other formats including ERA5 and Octopus among others.
 
 .. ipython:: python
     :okwarning:
 
     import matplotlib.pyplot as plt
-    from wavespectra import read_ww3
 
     dset = read_ww3("_static/ww3file.nc")
     dset
@@ -237,7 +248,7 @@ plotting of frequency-direction spectral plots in polar coordinates.
     );
 
 
-Plotting Hovmoller diagrams of frequency spectra timeseries can be done in only a few lines.
+Plotting Hovmoller diagrams of frequency spectra time series can be done in only a few lines.
 
 .. ipython:: python
     :okwarning:
@@ -314,13 +325,13 @@ shape functions available for frequency and direction such as Jonswap and Cartwr
         freq_kwargs={"freq":  freq, "fp": 0.1, "gamma": 3.3, "hs": 1.5},
         dir_kwargs={"dir": dir, "dm": 60, "dspr": 30},
     )
-    @savefig reconstruted_polar.png
+    @savefig reconstructed_polar.png
     ds.spec.plot();
 
 .. ipython:: python
     :okwarning:
 
-    @savefig reconstruted_1d.png
+    @savefig reconstructed_1d.png
     ds.spec.oned().plot(figsize=(8, 4));
 
 Selecting
@@ -350,19 +361,14 @@ interpolate from `site` coordinates with the :py:meth:`~wavespectra.specdataset.
     @savefig interp_stations_plot.png
     plt.draw()
 
-The `nearest` neighbour and `bbox` options are also available besides inverse distance weighting (idw).
+Besides inverse distance weighting (idw), the `nearest` neighbour and `bbox` methods are also available.
 
 
 
-.. _SpecArray: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specarray.py
-.. _SpecDataset: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/specdataset.py
 .. _xarray: https://xarray.pydata.org/en/stable/
 .. _`xarray.open_dataset`: https://docs.xarray.dev/en/stable/generated/xarray.open_dataset.html
-.. _xarray_plot: https://xarray.pydata.org/en/stable/plotting.html
-.. _faceting: https://xarray.pydata.org/en/stable/plotting.html#faceting
 .. _selecting: https://xarray.pydata.org/en/latest/indexing.html
 .. _interpolating: https://xarray.pydata.org/en/latest/interpolation.html
 .. _DataArray: http://xarray.pydata.org/en/stable/generated/xarray.DataArray.html
 .. _Dataset: http://xarray.pydata.org/en/stable/generated/xarray.Dataset.html
-.. _`Hanson et al. (2008)`: https://journals.ametsoc.org/doi/pdf/10.1175/2009JTECHO650.1
 .. _`WAVEWATCHIII`: https://github.com/NOAA-EMC/WW3

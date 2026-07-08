@@ -2,8 +2,4 @@
     :width: 150 px
     :align: right
 
-=======
-Gallery
-=======
-
 .. include:: auto_gallery/index.rst

@@ -2,7 +2,7 @@
 Spectrum as pcolormesh
 ======================
 
-Pcolor type plot of wave spectrum
+Pcolormesh type plot of wave spectrum
 
 """
 
