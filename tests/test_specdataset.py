@@ -6,11 +6,19 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from wavespectra import read_ww3
+from wavespectra import read_ww3, set_options, get_options
 from wavespectra.partition.partition import Partition
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_files")
+
+
+@pytest.fixture(autouse=True)
+def dataset_transforms():
+    """Opt in to the future dataset transforms behaviour in this module."""
+    with set_options(dataset_transforms=True):
+        yield
+
 
 TRANSFORMS = {
     "oned": {},
@@ -127,3 +135,58 @@ class TestPartitionDatasetAware:
         )
         assert isinstance(dsout, xr.Dataset)
         assert "wspd" not in dsout.data_vars
+
+
+class TestDefaultBehaviour:
+    """Without the dataset_transforms option the old behaviour is preserved."""
+
+    def test_transform_warns_and_returns_dataarray(self, dset):
+        with set_options(dataset_transforms=False):
+            with pytest.warns(FutureWarning, match="oned"):
+                dsout = dset.spec.oned()
+        assert isinstance(dsout, xr.DataArray)
+
+    def test_transform_values_unchanged(self, dset):
+        with set_options(dataset_transforms=False):
+            with pytest.warns(FutureWarning):
+                darr = dset.spec.smooth()
+        xr.testing.assert_allclose(darr, dset.efth.spec.smooth())
+
+    def test_dataarray_accessor_does_not_warn(self, dset):
+        import warnings
+
+        with set_options(dataset_transforms=False):
+            with warnings.catch_warnings():
+                warnings.simplefilter("error", FutureWarning)
+                darr = dset.efth.spec.oned()
+        assert isinstance(darr, xr.DataArray)
+
+    def test_partition_warns_and_returns_dataarray(self, dset):
+        with set_options(dataset_transforms=False):
+            with pytest.warns(FutureWarning, match="Partitioning"):
+                dspart = dset.spec.partition.ptm1(
+                    wspd=dset.wspd, wdir=dset.wdir, dpt=dset.dpt, swells=2
+                )
+        assert isinstance(dspart, xr.DataArray)
+
+    def test_hp01_does_not_default_wind_from_dataset(self, dset):
+        with set_options(dataset_transforms=False):
+            with pytest.warns((FutureWarning, UserWarning)):
+                dspart = dset.spec.partition.hp01(swells=2)
+        assert isinstance(dspart, xr.DataArray)
+        # No wind classification, partition 0 is null
+        assert float(dspart.isel(part=0).sum()) == 0
+
+
+class TestSetOptions:
+    def test_option_toggles_and_restores(self, dset):
+        with set_options(dataset_transforms=False):
+            assert get_options()["dataset_transforms"] is False
+            with set_options(dataset_transforms=True):
+                assert get_options()["dataset_transforms"] is True
+                assert isinstance(dset.spec.oned(), xr.Dataset)
+            assert get_options()["dataset_transforms"] is False
+
+    def test_invalid_option_raises(self):
+        with pytest.raises(ValueError):
+            set_options(not_an_option=True)

@@ -5,13 +5,24 @@ import types
 import os
 import re
 import sys
+import warnings
 import xarray as xr
 
 from wavespectra.core.attributes import attrs
+from wavespectra.core.options import OPTIONS, DATASET_TRANSFORMS
 from wavespectra.core.select import sel_idw, sel_nearest, sel_bbox
 from wavespectra.core.utils import dataset_from_transform
 from wavespectra.partition.partition import Partition
 from wavespectra.specarray import SpecArray
+
+FUTURE_DATASET_TRANSFORMS = (
+    "`{name}` called from the Dataset accessor currently returns a DataArray "
+    "but will return a Dataset preserving the non-spectral variables in "
+    "wavespectra 5.0. Opt in to the future behaviour with "
+    "`wavespectra.set_options(dataset_transforms=True)`, or call it from the "
+    "DataArray accessor, e.g. `dset.efth.spec.{name}()`, to retain the "
+    "current behaviour and silence this warning."
+)
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,11 +57,13 @@ class SpecDataset(metaclass=Plugin):
     are attached as methods in this accessor class.
 
     Note:
-        - Methods that transform the spectral variable such as `interp`,
-          `smooth`, `split` or `oned` return a Dataset in this accessor with
-          the non-spectral variables from the underlying dataset preserved,
-          rather than the bare spectral DataArray returned by the SpecArray
-          accessor.
+        - When the `dataset_transforms` option is set with
+          `wavespectra.set_options(dataset_transforms=True)`, methods that
+          transform the spectral variable such as `interp`, `smooth`, `split`
+          or `oned` return a Dataset in this accessor with the non-spectral
+          variables from the underlying dataset preserved, rather than the
+          bare spectral DataArray returned by the SpecArray accessor. This
+          will become the default behaviour in wavespectra 5.0.
 
     """
 
@@ -115,11 +128,25 @@ class SpecDataset(metaclass=Plugin):
             setattr(self, method_name, method)
 
     def _dataset_output(self, method):
-        """Wrap spectral transform method to return a Dataset."""
+        """Wrap spectral transform method to return a Dataset.
+
+        The Dataset output only takes place if the `dataset_transforms`
+        option is set, otherwise a FutureWarning is emitted and the bare
+        spectral DataArray is returned.
+
+        """
 
         @functools.wraps(method)
         def wrapped(*args, **kwargs):
-            return dataset_from_transform(method(*args, **kwargs), self.dset)
+            dsout = method(*args, **kwargs)
+            if OPTIONS[DATASET_TRANSFORMS]:
+                return dataset_from_transform(dsout, self.dset)
+            warnings.warn(
+                FUTURE_DATASET_TRANSFORMS.format(name=method.__name__),
+                FutureWarning,
+                stacklevel=2,
+            )
+            return dsout
 
         return wrapped
 

@@ -17,9 +17,10 @@ ___________________
 
 Breaking Changes
 ----------------
-* Methods that transform the spectral variable (``interp``, ``interp_like``,
+* The ``dataset_transforms`` behaviour introduced in 4.7.0 becomes the default:
+  methods that transform the spectral variable (``interp``, ``interp_like``,
   ``smooth``, ``split``, ``oned``, ``rotate``, ``to_energy``, ``scale_by_hs`` and
-  the partitioning methods in the ``spec.partition`` namespace) now return a
+  the partitioning methods in the ``spec.partition`` namespace) return a
   ``Dataset`` instead of a ``DataArray`` when called from the Dataset accessor,
   carrying the non-spectral variables (e.g. ``wspd``, ``wdir``, ``dpt``) from the
   source dataset which were previously silently dropped. The DataArray accessor
@@ -29,13 +30,38 @@ Breaking Changes
   consistent with the transformed spectra. Methods that reduce the spectra into
   parameters such as ``hs`` and ``tp`` are unaffected and still return a named
   DataArray from both accessors.
+* The ``wspd``, ``wdir`` and ``dpt`` arguments of the ``hp01`` and ``track``
+  partitioning methods now default to the variables with those names in the
+  underlying dataset when partitioning from a Dataset.
+
+4.7.0 (unreleased)
+___________________
 
 New Features
 ------------
-* The ``wspd``, ``wdir`` and ``dpt`` arguments of the ``ptm1``, ``ptm2``, ``ptm4``,
-  ``hp01`` and ``track`` partitioning methods now default to the variables with
-  those names in the underlying dataset when partitioning from a Dataset, e.g.
-  ``dset.spec.partition.ptm1()``.
+* New ``wavespectra.set_options`` / ``wavespectra.get_options`` functions to set
+  package-level options globally or within a context block. The first supported
+  option is ``dataset_transforms`` which opts in to the future behaviour where
+  methods that transform the spectral variable (``interp``, ``interp_like``,
+  ``smooth``, ``split``, ``oned``, ``rotate``, ``to_energy``, ``scale_by_hs`` and
+  the partitioning methods in the ``spec.partition`` namespace) return a
+  ``Dataset`` preserving the non-spectral variables when called from the Dataset
+  accessor. This will become the default behaviour in wavespectra 5.0; until
+  then, calling these methods from the Dataset accessor without the option set
+  emits a ``FutureWarning`` and returns the bare spectral DataArray as before.
+* The ``wspd``, ``wdir`` and ``dpt`` arguments of the ``ptm1``, ``ptm2`` and
+  ``ptm4`` partitioning methods now default to the variables with those names in
+  the underlying dataset when partitioning from a Dataset, e.g.
+  ``dset.spec.partition.ptm1()``. The same defaults apply to ``hp01`` and
+  ``track`` only when the ``dataset_transforms`` option is set, since falling
+  back on dataset wind would change the wind sea classification of existing code
+  calling these methods without wind arguments.
+
+Bug Fixes
+---------
+* ``read_triaxys`` now returns a Dataset as documented when reading with
+  ``magnetic_variation`` and ``regrid_dir=True`` (previously it returned a
+  DataArray in that case).
 
 Internal Changes
 ----------------

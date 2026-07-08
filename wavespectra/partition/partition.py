@@ -19,6 +19,7 @@ from wavespectra.core.utils import (
     waveage,
 )
 from wavespectra.core.attributes import attrs
+from wavespectra.core.options import OPTIONS, DATASET_TRANSFORMS
 from wavespectra.core import npstats
 from wavespectra.partition.hanson_and_phillips_2001 import combine_partitions_hp01
 from wavespectra.partition.tracking import track_partitions, wave_systems
@@ -44,12 +45,15 @@ class Partition:
     """Spectra partition methods.
 
     Note:
-        - When defined from a Dataset, the partitioning methods return a
-          Dataset carrying the non-spectral variables from the source dataset,
-          and the `wspd`, `wdir` and `dpt` arguments default to the dataset
-          variables with those names. When defined from a DataArray, the
-          partitioned spectra are returned as a DataArray (except for `track`
-          which always returns a Dataset).
+        - When defined from a Dataset and the `dataset_transforms` option is
+          set with `wavespectra.set_options(dataset_transforms=True)`, the
+          partitioning methods return a Dataset carrying the non-spectral
+          variables from the source dataset, and the `wspd`, `wdir` and `dpt`
+          arguments of the `hp01` and `track` methods default to the dataset
+          variables with those names. This will become the default behaviour
+          in wavespectra 5.0. When defined from a DataArray, the partitioned
+          spectra are returned as a DataArray (except for `track` which
+          always returns a Dataset).
 
     Methods:
         - ptm1: In PTM1, topographic partitions for which the percentage of wind-sea energy exceeds a
@@ -127,10 +131,29 @@ class Partition:
         return wspd, wdir, dpt
 
     def _wrap_output(self, dsout):
-        """Return Dataset with non-spectral variables if defined from a Dataset."""
+        """Return Dataset with non-spectral variables if defined from a Dataset.
+
+        The Dataset output only takes place if the `dataset_transforms`
+        option is set, otherwise a FutureWarning is emitted and the bare
+        partitioned spectra are returned.
+
+        """
         if self._dset is None:
             return dsout
-        return dataset_from_transform(dsout, self._dset)
+        if OPTIONS[DATASET_TRANSFORMS]:
+            return dataset_from_transform(dsout, self._dset)
+        warnings.warn(
+            "Partitioning from the Dataset accessor will return a Dataset "
+            "preserving the non-spectral variables in wavespectra 5.0. Opt "
+            "in to the future behaviour with "
+            "`wavespectra.set_options(dataset_transforms=True)`, or "
+            "partition from the DataArray accessor, e.g. "
+            "`dset.efth.spec.partition`, to retain the current behaviour "
+            "and silence this warning.",
+            FutureWarning,
+            stacklevel=3,
+        )
+        return dsout
 
     def _set_metadata(self, dsout):
         """Define metadata attributes in output."""
@@ -706,7 +729,10 @@ class Partition:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
-        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
+        # Falling back on dataset wind and depth would change the wind sea
+        # classification of existing code hence it is opt-in until v5.0
+        if OPTIONS[DATASET_TRANSFORMS]:
+            wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
         check_same_coordinates(wspd, wdir, dpt)
         # Smooth spectra for defining watershed boundaries
         if smooth:
@@ -969,7 +995,10 @@ class Partition:
               the size of the output.
 
         """
-        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
+        # Falling back on dataset wind and depth would change the wind sea
+        # classification of existing hp01 code hence it is opt-in until v5.0
+        if OPTIONS[DATASET_TRANSFORMS]:
+            wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
         wind_kwargs = {"wspd": wspd, "wdir": wdir, "dpt": dpt}
         if method in ("ptm1", "ptm2"):
             check_same_coordinates(wspd, wdir, dpt)

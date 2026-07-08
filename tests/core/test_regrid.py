@@ -2,11 +2,19 @@ import pytest
 from pathlib import Path
 import numpy as np
 
+import wavespectra
 from wavespectra import read_triaxys, read_ww3
 from wavespectra.core.utils import regrid_spec
 
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"
+
+
+@pytest.fixture(autouse=True)
+def dataset_transforms():
+    """Run under the future dataset transforms behaviour in this module."""
+    with wavespectra.set_options(dataset_transforms=True):
+        yield
 
 
 @pytest.fixture(scope="module")

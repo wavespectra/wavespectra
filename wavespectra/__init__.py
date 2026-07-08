@@ -7,6 +7,8 @@
 
 import warnings
 
+from wavespectra.core.options import set_options, get_options
+
 try:
     from wavespectra.specdataset import SpecDataset
     from wavespectra.specarray import SpecArray

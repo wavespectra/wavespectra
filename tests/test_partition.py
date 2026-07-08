@@ -2,6 +2,7 @@ import pytest
 from pathlib import Path
 import numpy as np
 
+import wavespectra
 from wavespectra import read_ww3
 from wavespectra.partition.partition import (
     Partition,
@@ -16,6 +17,13 @@ from wavespectra.partition.tracking import track_partitions
 
 
 HERE = Path(__file__).parent
+
+
+@pytest.fixture(autouse=True)
+def dataset_transforms():
+    """Run under the future dataset transforms behaviour in this module."""
+    with wavespectra.set_options(dataset_transforms=True):
+        yield
 
 
 class BasePTM:

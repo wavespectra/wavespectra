@@ -10,7 +10,7 @@ import xarray as xr
 
 from wavespectra.specdataset import SpecDataset
 from wavespectra.core.attributes import attrs, set_spec_attributes
-from wavespectra.core.utils import interp_spec
+from wavespectra.core.utils import interp_spec, dataset_from_transform
 
 
 def read_triaxys(
@@ -47,7 +47,9 @@ def read_triaxys(
         dset = dset.assign_coords({"dir": dirs + magnetic_variation})
         # Regrid
         if regrid_dir:
-            dset = dset.spec.interp(dir=dirs)
+            dset = dataset_from_transform(
+                dset[attrs.SPECNAME].spec.interp(dir=dirs), dset
+            )
     return dset
 
 

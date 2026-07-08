@@ -13,6 +13,15 @@ from wavespectra.core.xrstats import (
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
 
 
+@pytest.fixture(autouse=True)
+def dataset_transforms():
+    """Run under the future dataset transforms behaviour in this module."""
+    import wavespectra
+
+    with wavespectra.set_options(dataset_transforms=True):
+        yield
+
+
 @pytest.fixture(scope="module")
 def dset():
     """Load SpecDset but skip test if matplotlib is not installed."""

@@ -39,10 +39,14 @@ combined until the requested number is reached.
 The `BBOX` method is a custom method to split the energy
 density inside and outside a defined bounding box in spectral space.
 
-When partitioning from a Dataset, the output is a Dataset carrying the non-spectral
-variables from the source dataset, and the ``wspd``, ``wdir`` and ``dpt`` arguments
-default to the dataset variables with those names so the methods that require them
-can be called without arguments, e.g. ``dset.spec.partition.ptm1()``. When
+When partitioning from a Dataset with the ``dataset_transforms`` option set with
+``wavespectra.set_options(dataset_transforms=True)``, the output is a Dataset
+carrying the non-spectral variables from the source dataset, and the ``wspd``,
+``wdir`` and ``dpt`` arguments default to the dataset variables with those names so
+the methods that require them can be called without arguments, e.g.
+``dset.spec.partition.ptm1()``. This will become the default behaviour in
+wavespectra 5.0; until then, partitioning from a Dataset without the option set
+returns the partitioned spectra as a DataArray and emits a ``FutureWarning``. When
 partitioning from a DataArray, the partitioned spectra are returned as a DataArray
 and the wind and depth arguments must be prescribed.
 
