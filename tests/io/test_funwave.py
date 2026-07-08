@@ -180,7 +180,7 @@ class TestFunwave:
         * Read it back and check stats and dimension consistency.
         """
         filename = os.path.join(self.tmp_dir, "fw_new_roundtrip_1d.txt")
-        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned().to_dataset()
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned()
         dset0.spec.to_funwave_new(filename, clip=False)
         dset1 = read_funwave_new(filename)
         assert dset1.spec.dd == 1
@@ -194,7 +194,7 @@ class TestFunwave:
     def test_new_data2d_1d(self):
         """Write oned wave component file with all directions set to zero."""
         filename = os.path.join(self.tmp_dir, "fw_new_1d.txt")
-        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned().to_dataset()
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned()
         dset0.spec.to_funwave_new(filename, clip=False)
         nc, tp, freq, dire, amp, phase = self._read_new_data2d(filename)
         assert nc == dset0.freq.size
@@ -232,7 +232,7 @@ class TestFunwave:
         * Check for dimension consistency.
         """
         filename = os.path.join(self.tmp_dir, "fw1d.txt")
-        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned().to_dataset()
+        dset0 = self.dsww3.isel(time=0, site=0, drop=True).spec.oned()
         dset0.spec.to_funwave(filename, clip=False)
         dset1 = read_funwave(filename)
         assert dset1.spec.dd == 1

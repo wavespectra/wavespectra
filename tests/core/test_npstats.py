@@ -27,7 +27,7 @@ def test_hs(dset):
 
 def test_dpm(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    ipeak = ds.efth.spec._peak(ds.spec.oned())
+    ipeak = ds.efth.spec._peak(ds.efth.spec.oned())
     momsin, momcos = ds.spec.momd(1)
     out = dpm(int(ipeak), momsin.values, momcos.values)
     assert np.isclose(out, 249.09263611)
@@ -37,7 +37,7 @@ def test_dpm(dset):
 
 def test_dp(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
+    ipeak = np.int64(ds.efth.spec._peak(ds.efth.spec.oned()))
     dir = ds.dir.values.astype("float32")
     out = dp(ipeak, dir)
     assert np.isclose(out, 55)
@@ -45,8 +45,8 @@ def test_dp(dset):
 
 def test_tps(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
-    spectrum = ds.spec.oned().values.astype("float64")
+    ipeak = np.int64(ds.efth.spec._peak(ds.efth.spec.oned()))
+    spectrum = ds.efth.spec.oned().values.astype("float64")
     freq = ds.freq.values.astype("float32")
     out = tps(ipeak, spectrum, freq)
     assert np.isclose(out, 12.907742)
@@ -56,8 +56,8 @@ def test_tps(dset):
 
 def test_tp(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
-    spectrum = ds.spec.oned().values.astype("float64")
+    ipeak = np.int64(ds.efth.spec._peak(ds.efth.spec.oned()))
+    spectrum = ds.efth.spec.oned().values.astype("float64")
     freq = ds.freq.values.astype("float32")
     out = tp(ipeak, spectrum, freq)
     assert np.isclose(out, 13.568521)
@@ -67,7 +67,7 @@ def test_tp(dset):
 
 def test_dpspr(dset):
     ds = dset.isel(time=0, site=0, drop=True)
-    ipeak = np.int64(ds.efth.spec._peak(ds.spec.oned()))
+    ipeak = np.int64(ds.efth.spec._peak(ds.efth.spec.oned()))
     fdspr1 = ds.spec.fdspr(mom=1).values.astype("float64")
     fdspr2 = ds.spec.fdspr(mom=2).values.astype("float64")
 

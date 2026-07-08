@@ -258,7 +258,7 @@ Plotting Hovmoller diagrams of frequency spectra time series can be done in only
     @suppress
     plt.figure(figsize=(8, 4))
 
-    ds = dset.isel(site=0).spec.split(fmax=0.18).spec.oned().rename({"freq": "period"})
+    ds = dset.isel(site=0).spec.split(fmax=0.18).efth.spec.oned().rename({"freq": "period"})
     ds = ds.assign_coords({"period": 1 / ds.period})
     ds.period.attrs.update({"standard_name": "sea_surface_wave_period", "units": "s"})
 

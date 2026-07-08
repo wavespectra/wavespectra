@@ -205,6 +205,11 @@ class SpecArray(object):
               This is the default behaviour for sum() in DataArray. Notice it
               converts masks, where the entire array is nan, into zero.
 
+        Returns:
+            - efth (DataArray): Frequency spectra, returned as a Dataset with
+              the non-spectral variables preserved when called from the
+              Dataset accessor.
+
         """
         if self.dir is not None:
             dsout = self.dd * self._obj.sum(dim=attrs.DIRNAME, skipna=skipna)
@@ -226,6 +231,11 @@ class SpecArray(object):
             - interpolate (bool): Interpolate spectra at frequency cutoffs they
               are not available in coordinates of input spectra.
             - rechunk (bool): Rechunk split dims so there is one single chunk.
+
+        Returns:
+            - efth (DataArray): Split spectra, returned as a Dataset with the
+              non-spectral variables preserved when called from the Dataset
+              accessor.
 
         """
         if fmax is not None and fmin is not None and fmax <= fmin:
@@ -265,7 +275,14 @@ class SpecArray(object):
         return other
 
     def to_energy(self):
-        """Convert spectra from energy density (m2/Hz/degree) into wave energy (m2)."""
+        """Convert spectra from energy density (m2/Hz/degree) into wave energy (m2).
+
+        Returns:
+            - energy (DataArray): Wave energy, returned as a Dataset with the
+              non-spectral variables preserved when called from the Dataset
+              accessor.
+
+        """
         energy = self._obj * self.df * self.dd
         set_spec_attributes(energy)
         energy.attrs.update(self._get_cf_attributes(attrs.ESPECNAME))
@@ -348,6 +365,11 @@ class SpecArray(object):
             - expr (str): expression to apply, e.g. '0.13*hs + 0.02'.
             - hs_min, hs_max, tp_min, tp_max, dpm_min, dpm_max (float): Ranges of hs,
                 tp and dpm over which the scaling defined by `expr` is applied.
+
+        Returns:
+            - efth (DataArray): Scaled spectra, returned as a Dataset with the
+              non-spectral variables preserved when called from the Dataset
+              accessor.
 
         """
         # Scale spectra by hs expression
@@ -820,7 +842,7 @@ class SpecArray(object):
 
         return xr.merge(params).rename(dict(zip(stats_dict.keys(), names)))
 
-    def rotate(self, angle) -> xr.DataArray:
+    def rotate(self, angle):
         """Rotate spectra.
 
         Args:
@@ -828,7 +850,9 @@ class SpecArray(object):
               and negative for counter-clockwise rotation.
 
         Returns:
-            - efth (DataArray): Rotated spectra.
+            - efth (DataArray): Rotated spectra, returned as a Dataset with the
+              non-spectral variables preserved when called from the Dataset
+              accessor.
 
         Note:
             - Directions are interpolated so that the rotated spectra have the same
@@ -847,7 +871,9 @@ class SpecArray(object):
             - dir_window (int): Rolling window size along `dir` dim.
 
         Returns:
-            - efth (DataArray): Smoothed spectra.
+            - efth (DataArray): Smoothed spectra, returned as a Dataset with
+              the non-spectral variables preserved when called from the
+              Dataset accessor.
 
         Note:
             - Window sizes must be odd to ensure symmetry.
@@ -864,7 +890,9 @@ class SpecArray(object):
             - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
 
         Returns:
-            - dsi (DataArray): Regridded spectra.
+            - dsi (DataArray): Regridded spectra, returned as a Dataset with
+              the non-spectral variables preserved when called from the
+              Dataset accessor.
 
         Note:
             - All freq below lowest freq are interpolated assuming :math:`E_d(f=0)=0`.
@@ -882,7 +910,9 @@ class SpecArray(object):
             - maintain_m0 (bool): Ensure variance is conserved in interpolated spectra.
 
         Returns:
-            - dsi (DataArray): Regridded spectra.
+            - dsi (DataArray): Regridded spectra, returned as a Dataset with
+              the non-spectral variables preserved when called from the
+              Dataset accessor.
 
         """
         freq = getattr(other.spec, attrs.FREQNAME)
@@ -974,6 +1004,8 @@ class SpecArray(object):
             - Bunney et al. (2014).
 
         """
+        if isinstance(other, xr.Dataset):
+            other = other[attrs.SPECNAME]
         e0 = self.to_energy()
         e1 = other.spec.to_energy()
         ediff = np.sqrt(((e0 - e1) ** 2).sum(dim=self._spec_dims))

@@ -1,5 +1,6 @@
 """Wrapper around the xarray dataset."""
 
+import functools
 import types
 import os
 import re
@@ -8,6 +9,8 @@ import xarray as xr
 
 from wavespectra.core.attributes import attrs
 from wavespectra.core.select import sel_idw, sel_nearest, sel_bbox
+from wavespectra.core.utils import dataset_from_transform
+from wavespectra.partition.partition import Partition
 from wavespectra.specarray import SpecArray
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +45,25 @@ class SpecDataset(metaclass=Plugin):
     Plugin functions defined in wavespectra/output/<module>
     are attached as methods in this accessor class.
 
+    Note:
+        - Methods that transform the spectral variable such as `interp`,
+          `smooth`, `split` or `oned` return a Dataset in this accessor with
+          the non-spectral variables from the underlying dataset preserved,
+          rather than the bare spectral DataArray returned by the SpecArray
+          accessor.
+
     """
+
+    _spectral_transforms = (
+        "interp",
+        "interp_like",
+        "oned",
+        "rotate",
+        "scale_by_hs",
+        "smooth",
+        "split",
+        "to_energy",
+    )
 
     def __init__(self, xarray_dset):
         self.dset = xarray_dset
@@ -62,6 +83,18 @@ class SpecDataset(metaclass=Plugin):
     def __repr__(self):
         return re.sub(r"<.+>", f"<{self.__class__.__name__}>", str(self.dset))
 
+    @property
+    def partition(self):
+        """Partition interface defined from the full dataset.
+
+        Wind speed, wind direction and depth variables in the dataset are
+        used as default arguments by the partitioning methods that require
+        them, and partitioned output is returned as a Dataset preserving the
+        non-spectral variables.
+
+        """
+        return Partition(self.dset)
+
     def _wrapper(self):
         """Wraper around SpecArray methods.
 
@@ -69,11 +102,26 @@ class SpecDataset(metaclass=Plugin):
         For example:
             self.spec.hs() becomes equivalent to self.efth.spec.hs()
 
+        Methods that transform the spectral variable are wrapped so they
+        return a Dataset that preserves the non-spectral variables.
+
         """
         for method_name in dir(self.dset[attrs.SPECNAME].spec):
-            if not method_name.startswith("_"):
-                method = getattr(self.dset[attrs.SPECNAME].spec, method_name)
-                setattr(self, method_name, method)
+            if method_name.startswith("_") or method_name == "partition":
+                continue
+            method = getattr(self.dset[attrs.SPECNAME].spec, method_name)
+            if method_name in self._spectral_transforms:
+                method = self._dataset_output(method)
+            setattr(self, method_name, method)
+
+    def _dataset_output(self, method):
+        """Wrap spectral transform method to return a Dataset."""
+
+        @functools.wraps(method)
+        def wrapped(*args, **kwargs):
+            return dataset_from_transform(method(*args, **kwargs), self.dset)
+
+        return wrapped
 
     def _check_and_stack_dims(self):
         """Ensure dimensions are suitable for dumping in some ascii formats.

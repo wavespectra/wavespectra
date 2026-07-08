@@ -153,7 +153,7 @@ def test_interp_spec(dset):
     interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="cubic")
     interp_spec(inspec, inf, ind, outfreq=outf, outdir=outd, method="nearest")
     # 1D spectra
-    inspec = dset.isel(lat=0, lon=0, time=0).spec.oned().values
+    inspec = dset.isel(lat=0, lon=0, time=0).efth.spec.oned().values
     interp_spec(inspec, inf, indir=None, outfreq=None, outdir=None, method="linear")
     interp_spec(inspec, inf, indir=None, outfreq=outf, outdir=None, method="linear")
 

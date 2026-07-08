@@ -437,9 +437,16 @@ class TestPartitionAndTrack(BasePTM):
         self._track("hp01", wspd=self.dset.wspd, wdir=self.dset.wdir, dpt=self.dset.dpt)
 
     def test_track_hp01_no_wind(self):
+        # Wind variables are resolved from the dataset so partitioning from
+        # the DataArray is required to exercise the no-wind path
+        pt = Partition(self.dset.efth)
         with pytest.warns(UserWarning):
-            dspart = self.pt.track(method="hp01", swells=2)
+            dspart = pt.track(method="hp01", swells=2)
         dspart = dspart.load()
+        assert (dspart.ntracks.values > 0).all()
+
+    def test_track_hp01_wind_from_dataset(self):
+        dspart = self.pt.track(method="hp01", swells=2).load()
         assert (dspart.ntracks.values > 0).all()
 
     def test_track_invalid_method(self):

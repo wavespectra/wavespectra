@@ -280,6 +280,36 @@ def check_same_coordinates(*args):
             )
 
 
+def dataset_from_transform(transformed, dset):
+    """Merge transformed spectral variable back into its source dataset.
+
+    Args:
+        - transformed (DataArray, Dataset): Transformed spectral variable(s)
+          calculated from the spectral variable in dset.
+        - dset (Dataset): Source dataset the transform was calculated from.
+
+    Returns:
+        - dsout (Dataset): Dataset with the transformed spectral variable(s)
+          and the non-spectral variables from dset.
+
+    Note:
+        - Variables in dset that depend on the spectral dims (freq, dir) are
+          dropped since their coordinates may no longer be consistent with
+          those in the transformed spectra.
+
+    """
+    if isinstance(transformed, xr.DataArray):
+        transformed = transformed.to_dataset(name=transformed.name or attrs.SPECNAME)
+    drop_dims = [d for d in (attrs.FREQNAME, attrs.DIRNAME) if d in dset.dims]
+    others = dset.drop_dims(drop_dims)
+    others = others.drop_vars(
+        [v for v in others.data_vars if v in transformed.data_vars]
+    )
+    dsout = xr.merge([transformed, others])
+    dsout.attrs = dset.attrs
+    return dsout
+
+
 def load_function(module_name, func_name, prefix=None):
     """Returns a function object from string.
 

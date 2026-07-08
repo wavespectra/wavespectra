@@ -287,10 +287,10 @@ one-dimensional spectrum :math:`E_d(f)` integrated from existing :math:`E_d(f,d)
     )
 
     # Apply directional distributions to the one-dimensional spectrum
-    dscart = dset.spec.oned() * c
-    dsasym = dset.spec.oned() * a
+    dscart = dset.efth.spec.oned() * c
+    dsasym = dset.efth.spec.oned() * a
 
-    dsall = xr.concat([dset, dscart, dsasym], dim="fit")
+    dsall = xr.concat([dset.efth, dscart, dsasym], dim="fit")
     dsall["fit"] = ["Original", "Cartwright", "Asymmetric"]
     dsall.spec.plot(
         figsize=(12, 5),

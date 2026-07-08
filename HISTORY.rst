@@ -12,6 +12,35 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
+5.0.0 (unreleased)
+___________________
+
+Breaking Changes
+----------------
+* Methods that transform the spectral variable (``interp``, ``interp_like``,
+  ``smooth``, ``split``, ``oned``, ``rotate``, ``to_energy``, ``scale_by_hs`` and
+  the partitioning methods in the ``spec.partition`` namespace) now return a
+  ``Dataset`` instead of a ``DataArray`` when called from the Dataset accessor,
+  carrying the non-spectral variables (e.g. ``wspd``, ``wdir``, ``dpt``) from the
+  source dataset which were previously silently dropped. The DataArray accessor
+  is unchanged, e.g. ``dset.efth.spec.oned()`` still returns a DataArray.
+  Variables that depend on the spectral dims other than the spectral variable
+  itself are dropped from the output since their coordinates may no longer be
+  consistent with the transformed spectra. Methods that reduce the spectra into
+  parameters such as ``hs`` and ``tp`` are unaffected and still return a named
+  DataArray from both accessors.
+
+New Features
+------------
+* The ``wspd``, ``wdir`` and ``dpt`` arguments of the ``ptm1``, ``ptm2``, ``ptm4``,
+  ``hp01`` and ``track`` partitioning methods now default to the variables with
+  those names in the underlying dataset when partitioning from a Dataset, e.g.
+  ``dset.spec.partition.ptm1()``.
+
+Internal Changes
+----------------
+* ``rmse`` now accepts a Dataset in the ``other`` argument.
+
 4.6.0 (2026-07-08)
 ___________________
 

@@ -141,7 +141,7 @@ Compare against real frequency spectrum (with gamma adjusted for a good fit):
     @suppress
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
-    ds.spec.oned().plot(ax=ax, label="Original spectrum");
+    ds.efth.spec.oned().plot(ax=ax, label="Original spectrum");
     ds_construct.plot(ax=ax, label="Jonswap");
 
     @suppress
@@ -168,7 +168,7 @@ If the :math:`Hs` parameter is provided it is used to scale the Jonswap spectrum
     def label(dset):
         return f"$Hs={float(dset.spec.hs()):0.2f}m$)"
 
-    ds.spec.oned().plot(ax=ax, label=f"Original spectrum ({label(ds)}");
+    ds.efth.spec.oned().plot(ax=ax, label=f"Original spectrum ({label(ds)}");
     ds1.plot(ax=ax, label=f"Jonswap scaled by $\\alpha$ ({label(ds1)}");
     ds2.plot(ax=ax, label=f"Jonswap scaled by $Hs$ ({label(ds2)}");
 
@@ -355,7 +355,7 @@ Compare shapes for all times in the first swell partition:
 
     # Original spectra
     ax = fig.add_subplot(311)
-    ds = dspart.spec.oned().isel(part=1).transpose("freq", "time")
+    ds = dspart.efth.spec.oned().isel(part=1).transpose("freq", "time")
     ds.plot.contourf(cmap=cmap, levels=20, ylim=(0.02, 0.4), vmax=4.0);
 
     @suppress

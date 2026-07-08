@@ -107,7 +107,7 @@ def to_octopus(
                 dset.spec.momf(mom=1).rename("momf1"),
                 dset.spec.momf(mom=2).rename("momf2"),
                 dset.spec.momd(mom=0)[0].rename("momd"),
-                dset.spec.to_energy(),
+                dset[attrs.SPECNAME].spec.to_energy(),
                 (dset.efth.spec.df * dset.spec.momd(mom=0)[0])
                 .transpose(attrs.TIMENAME, attrs.SITENAME, attrs.FREQNAME)
                 .rename("fSpec"),

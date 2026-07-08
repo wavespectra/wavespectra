@@ -12,6 +12,7 @@ from wavespectra.core.utils import (
     regrid_spec,
     smooth_spec,
     check_same_coordinates,
+    dataset_from_transform,
     D2R,
     celerity,
     is_overlap,
@@ -41,6 +42,14 @@ DEFAULTS = {
 
 class Partition:
     """Spectra partition methods.
+
+    Note:
+        - When defined from a Dataset, the partitioning methods return a
+          Dataset carrying the non-spectral variables from the source dataset,
+          and the `wspd`, `wdir` and `dpt` arguments default to the dataset
+          variables with those names. When defined from a DataArray, the
+          partitioned spectra are returned as a DataArray (except for `track`
+          which always returns a Dataset).
 
     Methods:
         - ptm1: In PTM1, topographic partitions for which the percentage of wind-sea energy exceeds a
@@ -91,10 +100,37 @@ class Partition:
     def __init__(self, dset):
         if isinstance(dset, xr.DataArray):
             self.dset = dset
+            self._dset = None
         elif isinstance(dset, xr.Dataset):
             self.dset = dset[attrs.SPECNAME]
+            self._dset = dset
         else:
             raise ValueError("dset needs to be either SpecArray or SpecDataset")
+
+    def _resolve(self, value, name):
+        """Fall back on dataset variable `name` when `value` is not prescribed."""
+        if value is None and self._dset is not None:
+            value = self._dset.get(name)
+        return value
+
+    def _wind_and_depth(self, wspd, wdir, dpt, required=False):
+        """Resolve wind and depth args, falling back on dataset variables."""
+        wspd = self._resolve(wspd, attrs.WSPDNAME)
+        wdir = self._resolve(wdir, attrs.WDIRNAME)
+        dpt = self._resolve(dpt, attrs.DEPNAME)
+        if required and (wspd is None or wdir is None or dpt is None):
+            raise ValueError(
+                "wspd, wdir and dpt are required, either as arguments or as "
+                "variables in the underlying dataset when partitioning from a "
+                "Dataset"
+            )
+        return wspd, wdir, dpt
+
+    def _wrap_output(self, dsout):
+        """Return Dataset with non-spectral variables if defined from a Dataset."""
+        if self._dset is None:
+            return dsout
+        return dataset_from_transform(dsout, self._dset)
 
     def _set_metadata(self, dsout):
         """Define metadata attributes in output."""
@@ -145,9 +181,9 @@ class Partition:
 
     def ptm1(
         self,
-        wspd,
-        wdir,
-        dpt,
+        wspd=None,
+        wdir=None,
+        dpt=None,
         agefac=DEFAULTS["agefac"],
         wscut=DEFAULTS["wscut"],
         swells=DEFAULTS["swells"],
@@ -164,9 +200,12 @@ class Partition:
         swell components in order of decreasing wave height.
 
         Args:
-            - wspd (xr.DataArray): Wind speed DataArray.
-            - wdir (xr.DataArray): Wind direction DataArray.
-            - dpt (xr.DataArray): Depth DataArray.
+            - wspd (xr.DataArray): Wind speed DataArray, taken from the `wspd`
+              variable in the underlying dataset if not provided.
+            - wdir (xr.DataArray): Wind direction DataArray, taken from the
+              `wdir` variable in the underlying dataset if not provided.
+            - dpt (xr.DataArray): Depth DataArray, taken from the `dpt`
+              variable in the underlying dataset if not provided.
             - swells (int): Number of swell partitions to compute. If None, the
               number required to hold all swells detected from all spectra is
               used, which doubles the compute time and triggers an eager
@@ -180,7 +219,7 @@ class Partition:
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               where the 0th index are the wind sea and remaining indices are the swells
               sorted by descending order of Hs.
 
@@ -194,6 +233,7 @@ class Partition:
 
         """
         # Sort out inputs
+        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt, required=True)
         check_same_coordinates(wspd, wdir, dpt)
         if smooth:
             dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
@@ -261,13 +301,13 @@ class Partition:
         }
         dsout.attrs.update(parts_description)
 
-        return dsout.transpose("part", ...)
+        return self._wrap_output(dsout.transpose("part", ...))
 
     def ptm2(
         self,
-        wspd,
-        wdir,
-        dpt,
+        wspd=None,
+        wdir=None,
+        dpt=None,
         agefac=DEFAULTS["agefac"],
         wscut=DEFAULTS["wscut"],
         swells=DEFAULTS["swells"],
@@ -288,9 +328,12 @@ class Partition:
         partition compared to PTM1.
 
         Args:
-            - wspd (xr.DataArray): Wind speed DataArray.
-            - wdir (xr.DataArray): Wind direction DataArray.
-            - dpt (xr.DataArray): Depth DataArray.
+            - wspd (xr.DataArray): Wind speed DataArray, taken from the `wspd`
+              variable in the underlying dataset if not provided.
+            - wdir (xr.DataArray): Wind direction DataArray, taken from the
+              `wdir` variable in the underlying dataset if not provided.
+            - dpt (xr.DataArray): Depth DataArray, taken from the `dpt`
+              variable in the underlying dataset if not provided.
             - swells (int): Number of swell partitions to compute. If None, the
               number required to hold all swells detected from all spectra is
               used, which doubles the compute time and triggers an eager
@@ -304,7 +347,7 @@ class Partition:
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               where the 0th and 1st indices are the primary and secondary wind seas
               and remaining indices are the swells sorted by descending order of Hs.
 
@@ -318,6 +361,7 @@ class Partition:
 
         """
         # Sort out inputs
+        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt, required=True)
         check_same_coordinates(wspd, wdir, dpt)
         if smooth:
             dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
@@ -386,7 +430,7 @@ class Partition:
         }
         dsout.attrs.update(parts_description)
 
-        return dsout.transpose("part", ...)
+        return self._wrap_output(dsout.transpose("part", ...))
 
     def ptm3(
         self,
@@ -418,7 +462,7 @@ class Partition:
             - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               defining watershed partitions sorted by descending order of Hs.
 
         References:
@@ -473,9 +517,9 @@ class Partition:
         dsout = self._set_metadata(dsout)
         dsout.attrs.update({"part0-n": "partitions in descending order of hs"})
 
-        return dsout.transpose("part", ...)
+        return self._wrap_output(dsout.transpose("part", ...))
 
-    def ptm4(self, wspd, wdir, dpt, agefac=DEFAULTS["agefac"]):
+    def ptm4(self, wspd=None, wdir=None, dpt=None, agefac=DEFAULTS["agefac"]):
         """PTM4 WAM partitioning of sea and swell based on wave age criterion..
 
         PTM4 uses the wave age criterion derived from the local wind speed to split the
@@ -486,19 +530,23 @@ class Partition:
         model.
 
         Args:
-            - wspd (xr.DataArray): Wind speed DataArray.
-            - wdir (xr.DataArray): Wind direction DataArray.
-            - dpt (xr.DataArray): Depth DataArray.
+            - wspd (xr.DataArray): Wind speed DataArray, taken from the `wspd`
+              variable in the underlying dataset if not provided.
+            - wdir (xr.DataArray): Wind direction DataArray, taken from the
+              `wdir` variable in the underlying dataset if not provided.
+            - dpt (xr.DataArray): Depth DataArray, taken from the `dpt`
+              variable in the underlying dataset if not provided.
             - agefac (float): Age factor.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               where the 0th index is the wind sea and the 1st index is the swell.
 
         References:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
+        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt, required=True)
         dsout = self.dset.sortby("dir").sortby("freq")
 
         # Masking wind sea and swell regions
@@ -513,7 +561,7 @@ class Partition:
         dsout = self._set_metadata(dsout)
         dsout.attrs.update({"part0": "wind sea", "part1": "swell"})
 
-        return dsout.fillna(0.0)
+        return self._wrap_output(dsout.fillna(0.0))
 
     def ptm5(self, fcut, interpolate=True):
         """PTM5 SWAN partitioning of sea and swell based on user-defined threshold.
@@ -534,7 +582,7 @@ class Partition:
               frequency in the dset.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               where the 0th index is the wind sea and the 1st index is the swell.
 
         Note:
@@ -565,7 +613,7 @@ class Partition:
         dsout = self._set_metadata(dsout)
         dsout.attrs.update({"part0": "sea", "part1": "swell"})
 
-        return dsout.fillna(0.0)
+        return self._wrap_output(dsout.fillna(0.0))
 
     def hp01(
         self,
@@ -596,9 +644,12 @@ class Partition:
         contain small, non-physical partitions.
 
         Args:
-            - wspd (xr.DataArray): Wind speed DataArray.
-            - wdir (xr.DataArray): Wind direction DataArray.
-            - dpt (xr.DataArray): Depth DataArray.
+            - wspd (xr.DataArray): Wind speed DataArray, taken from the `wspd`
+              variable in the underlying dataset if not provided.
+            - wdir (xr.DataArray): Wind direction DataArray, taken from the
+              `wdir` variable in the underlying dataset if not provided.
+            - dpt (xr.DataArray): Depth DataArray, taken from the `dpt`
+              variable in the underlying dataset if not provided.
             - swells (int): Number of swell partitions to compute. If None, the
               number required to hold all combined swells from all spectra is
               detected in a first pass, which doubles the compute time and
@@ -636,7 +687,7 @@ class Partition:
               from the output.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               where the 0th index are the wind sea and remaining indices are the swells
               sorted by descending order of Hs.
 
@@ -655,6 +706,7 @@ class Partition:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
 
         """
+        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
         check_same_coordinates(wspd, wdir, dpt)
         # Smooth spectra for defining watershed boundaries
         if smooth:
@@ -745,7 +797,7 @@ class Partition:
         }
         dsout.attrs.update(parts_description)
 
-        return dsout.transpose("part", ...)
+        return self._wrap_output(dsout.transpose("part", ...))
 
     def bbox(self, bboxes):
         """Partition based on user-defined bounding boxes in frequency-direction space.
@@ -758,7 +810,7 @@ class Partition:
               `dmin` and `dmax` specifying the boundaries of each bounding box.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               with indices ordered as in the list of dictionaries.
 
         Note:
@@ -823,7 +875,7 @@ class Partition:
             )
         dsout.attrs.update({f"part{ind + 1}": "complement"})
 
-        return dsout.fillna(0.0)
+        return self._wrap_output(dsout.fillna(0.0))
 
     def track(
         self,
@@ -858,7 +910,8 @@ class Partition:
 
         Args:
             - wspd (xr.DataArray): Wind speed DataArray, required by the ptm1
-              and ptm2 methods and optional for hp01.
+              and ptm2 methods and optional for hp01. Taken from the `wspd`
+              variable in the underlying dataset if not provided.
             - wdir (xr.DataArray): Wind direction DataArray, as above.
             - dpt (xr.DataArray): Depth DataArray, as above.
             - method (str): Partitioning method to track partitions from,
@@ -888,7 +941,7 @@ class Partition:
               parameters.
 
         Returns:
-            - dspart (xr.Dataset): Partitioned spectra with extra `part` dimension
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
               ordered according to the partitioning method, plus the variable
               `track_id` identifying the wave system each partition belongs to at
               each time step and the variable `ntracks` with the number of wave
@@ -916,6 +969,7 @@ class Partition:
               the size of the output.
 
         """
+        wspd, wdir, dpt = self._wind_and_depth(wspd, wdir, dpt)
         wind_kwargs = {"wspd": wspd, "wdir": wdir, "dpt": dpt}
         if method in ("ptm1", "ptm2"):
             check_same_coordinates(wspd, wdir, dpt)
@@ -937,8 +991,9 @@ class Partition:
                 "available methods are 'ptm1', 'ptm2', 'ptm3' and 'hp01'"
             )
 
-        # Do the partitioning
-        dspart = getattr(self, method)(**wind_kwargs, **kwargs)
+        # Do the partitioning, on the spectral variable only so the tracking
+        # is not affected by other variables in the underlying dataset
+        dspart = getattr(Partition(self.dset), method)(**wind_kwargs, **kwargs)
 
         # Calculate peak frequency and peak direction
         stats = dspart.spec.stats(["fp", "dpm"])
@@ -961,7 +1016,7 @@ class Partition:
         if systems:
             dsout = wave_systems(dsout, min_duration=min_duration)
 
-        return dsout
+        return self._wrap_output(dsout)
 
 
 def np_ptm1(
