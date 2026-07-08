@@ -68,7 +68,7 @@ All methods in the :py:class:`SpecArray` accessor are also available from :py:cl
    partition.partition.Partition.ptm5
    partition.partition.Partition.hp01
    partition.partition.Partition.bbox
-   partition.partition.Partition.ptm1_track
+   partition.partition.Partition.track
 
 
 **Other methods**

@@ -17,6 +17,19 @@ ___________________
 
 New Features
 ------------
+* New ``track`` partitioning method replacing ``ptm1_track``, tracking wave systems
+  in time from partitions produced by any of the ``ptm1``, ``ptm2``, ``ptm3`` or
+  ``hp01`` methods (``method`` argument, default ``"ptm1"``). Wind-sea matching
+  thresholds are applied to the leading wind sea partitions of each method (both wind
+  seas in ``ptm2``) and swell thresholds to the remaining ones; ``ptm3`` partitions
+  are unclassified so they are all matched with swell thresholds and wind inputs are
+  not required.
+* The partition tracker now evaluates the time step for each pair of consecutive
+  spectra, so records with gaps or irregular sampling use matching thresholds
+  consistent with the actual time elapsed.
+* Candidate partition pairs are now matched globally in ascending order of their
+  distance in frequency-direction space, making the tracking independent of
+  partition ordering.
 * Rewritten ``hp01`` partitioning method implementing the swell combining criteria of
   `Hanson and Phillips (2001) <https://journals.ametsoc.org/view/journals/atot/18/2/1520-0426_2001_018_0277_aaoosd_2_0_co_2.xml>`_
   and `Hanson et al. (2009) <https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml>`_
@@ -42,6 +55,13 @@ New Features
 
 Breaking Changes
 ----------------
+* The ``ptm1_track`` method has been replaced by ``track`` (use ``method="ptm1"``
+  for the previous behaviour). The output variables have been renamed for clarity:
+  ``part_id`` is now ``track_id`` and ``npart_id`` is now ``ntracks``.
+* ``match_consecutive_partitions`` now takes per-partition threshold arrays and
+  ``np_track_partitions`` / ``track_partitions`` take an ``nsea`` argument defining
+  the number of leading wind sea partitions; times must be strictly increasing and
+  ``wspd`` is only required when ``nsea > 0``.
 * The experimental ``wstype`` argument of ``hp01`` and the associated
   ``np_hp01_wseabins`` and ``np_hp01_wseafrac_wseabins`` variants have been removed;
   the wind sea is now always defined by the wind-sea fraction criterion as in

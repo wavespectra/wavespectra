@@ -16,7 +16,7 @@ version 4 this namespace replaced the previous ``partition`` method, see
 :doc:`migration`):
 
 - :meth:`~wavespectra.partition.partition.Partition.ptm1`
-- :meth:`~wavespectra.partition.partition.Partition.ptm1_track`
+- :meth:`~wavespectra.partition.partition.Partition.track`
 - :meth:`~wavespectra.partition.partition.Partition.ptm2`
 - :meth:`~wavespectra.partition.partition.Partition.ptm3`
 - :meth:`~wavespectra.partition.partition.Partition.ptm4`
@@ -25,8 +25,8 @@ version 4 this namespace replaced the previous ``partition`` method, see
 - :meth:`~wavespectra.partition.partition.Partition.bbox`
 
 The `PTM` methods are named after the convention in the `WAVEWATCHIII`_ spectral wave
-model from which they were derived (`PTM1_TRACK` is a modified version of `PTM1` that
-tracks and merges spectral partitions in time).
+model from which they were derived (`TRACK` runs one of the partitioning methods and
+tracks the partitions in time).
 
 The `HP01` method implements the combining of nearby swell partitions (in spectral
 space) described in `Hanson and Phillips (2001)`_ and `Hanson et al. (2009)`_. Adjacent
@@ -51,10 +51,11 @@ density inside and outside a defined bounding box in spectral space.
      - Watershed with all wind-sea partitions combined into partition 0
      - yes
      - yes
-   * - ``ptm1_track``
-     - As ``ptm1``, with swell partitions tracked and merged in time
-     - yes
-     - yes
+   * - ``track``
+     - Any of ``ptm1``, ``ptm2``, ``ptm3`` or ``hp01``, with the partitions
+       tracked in time into wave systems
+     - as per method
+     - as per method
    * - ``ptm2``
      - As ``ptm1``, with a secondary wind sea split from the swell partitions
      - yes
@@ -355,28 +356,36 @@ result is the same as the PTM1 method.
     plt.draw()
 
 
-PTM1_TRACK
-__________
-PTM1_TRACK extends the `PTM1` method to track the partitions using the evolution of
-peak frequency and peak direction in time. The method returns a partitioned dataset
-with the addition of a couple of extra data variables `part_id` and `npart_id`:
+TRACK
+_____
+TRACK partitions the spectra with any of the `PTM1`, `PTM2`, `PTM3` or `HP01` methods
+and tracks the partitions in time using the evolution of peak frequency and peak
+direction. Wind sea partitions are matched with wind-sea thresholds based on
+fetch-limited growth rates and swell partitions with thresholds based on the swell
+dispersion rate. The method returns the partitioned dataset with two extra data
+variables: `track_id`, identifying the wave system each partition belongs to at each
+time step, and `ntracks`, the number of wave systems tracked:
 
 .. ipython:: python
     :okwarning:
 
     dset = read_ww3("_static/ww3file.nc").isel(site=0, drop=True)
-    dspart = dset.spec.partition.ptm1_track(
+    dspart = dset.spec.partition.track(
         wspd=dset.wspd,
         wdir=dset.wdir,
         dpt=dset.dpt,
+        method="ptm1",
     )
     # Add some spectral parameters to visualise
     dspart = xr.merge([dspart, dspart.spec.stats(["hs", "tp", "dpm"])])
     dspart
 
-These variables track the id of all unique wave systems identified over the time range
-of the input spectra dataset and can be used to combine these systems to yield
-consistent time series.
+The `track_id` variable identifies all unique wave systems over the time range of the
+input spectra dataset and can be used to combine these systems to yield consistent
+time series. The `ptm4`, `ptm5` and `bbox` methods define partitions as fixed spectral
+regions whose identity is already continuous in time, so they are not available for
+tracking. The `ptm3` method has no wind sea classification, all partitions are matched
+with the swell thresholds and wind inputs are not required.
 
 Compare the original partitions with no tracking:
 
@@ -405,12 +414,12 @@ Against the tracked partitions:
     fig, axes = plt.subplots(3, 1, figsize=(10, 10))
 
     # Iterate over each unique wave system
-    for part_id in range(dspart.npart_id.values):
-        ind = np.where(dspart.part_id.values.flatten()==part_id)[0]
+    for track_id in range(int(dspart.ntracks)):
+        ind = np.where(dspart.track_id.values.flatten() == track_id)[0]
         pstats = dspart.stack(tpart=("part", "time")).isel(tpart=ind).sortby("time")
         # Plot stats for this wave system
         for ax, var in zip(axes, ["hs", "tp", "dpm"]):
-            ax.plot(pstats.time, pstats[var], ".-", label=f"Partition {part_id}")
+            ax.plot(pstats.time, pstats[var], ".-", label=f"System {track_id}")
             ax.set_ylabel(var)
     ax.legend()
 
