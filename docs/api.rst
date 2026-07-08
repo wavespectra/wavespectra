@@ -219,12 +219,8 @@ Internal core functions and objects
    partition.tracking.match_consecutive_partitions
    partition.tracking.np_track_partitions
    partition.tracking.track_partitions
-   partition.hanson_and_phillips_2001._partition_stats
-   partition.hanson_and_phillips_2001._is_contiguous
-   partition.hanson_and_phillips_2001._frequency_resolution
-   partition.hanson_and_phillips_2001._plot_partitions
-   partition.hanson_and_phillips_2001.spread_hp01
-   partition.hanson_and_phillips_2001._combine_last
+   partition.hanson_and_phillips_2001._label_map
+   partition.hanson_and_phillips_2001._adjacency_saddles
    partition.hanson_and_phillips_2001.combine_partitions_hp01
 
 **attributes module**

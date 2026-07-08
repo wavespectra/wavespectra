@@ -28,10 +28,13 @@ The `PTM` methods are named after the convention in the `WAVEWATCHIII`_ spectral
 model from which they were derived (`PTM1_TRACK` is a modified version of `PTM1` that
 tracks and merges spectral partitions in time).
 
-The `HP01` method is an attempt to implement the merging of nearby swell partitions
-(in spectral space) described in `Hanson and Phillips (2001)`_. However, the
-implementation is still under development and may not work as expected (contribution is
-welcome).
+The `HP01` method implements the combining of nearby swell partitions (in spectral
+space) described in `Hanson and Phillips (2001)`_ and `Hanson et al. (2009)`_. Adjacent
+partitions are combined when the saddle point between them is high relative to the
+smaller of the two peaks, or when their peaks are close relative to the spectral
+spread of either partition and their mean directions agree. An exact number of swell
+partitions can be requested, in which case the least separated partitions are further
+combined until the requested number is reached.
 
 The `BBOX` method is a custom method to split the energy
 density inside and outside a defined bounding box in spectral space. 
@@ -245,12 +248,38 @@ HP01
 ____
 
 HP01 partitions the spectra and merges wind-sea components as in the PTM1 method, then
-it merges adjacent swells following the criteria outlined in `Hanson and Phillips (2001)`_
-and `Hanson et al. (2009)`_. This method is particularly useful when partitioning measured
-wave spectra which are typically noisy and may contain small, non-physical partitions.
-The method is still under development in wavespectra and may not work as expected.
+it combines adjacent swells belonging to the same wave system following the criteria
+outlined in `Hanson and Phillips (2001)`_ and `Hanson et al. (2009)`_. This method is
+particularly useful when partitioning measured wave spectra, which are typically noisy
+and tend to be over-segmented by the watershed algorithm, and to prescribe an exact
+number of output partitions.
 
-The example below shows the partitioning of a model spectra which aren't noisy, the
+Two adjacent swell partitions are combined when their mean directions agree within
+`angle_max` (30 degrees by default, the optimum found by Hanson et al., 2009) and
+either of the following criteria is met:
+
+- **Minimum between peaks**: the spectral density at the saddle point between the two
+  partitions exceeds a fraction `zeta` of the smaller of the two peak densities.
+- **Peak separation**: the distance between the two peaks in cartesian frequency space
+  :math:`(f_x, f_y) = (f\cos\theta, f\sin\theta)` is smaller than a fraction `kappa`
+  of the spectral spread of either partition (eqs 6-9 in Hanson and Phillips, 2001).
+
+Partition adjacency and saddle points are evaluated on the shared boundaries of the
+watershed partitions, statistics are recomputed after every merge and the candidate
+pairs satisfying the criteria most strongly are always combined first, so results do
+not depend on the ordering of the partitions. Partitions smaller than `hs_min` (or
+below the optional noise threshold defined by `noise_a` and `noise_b`, eq 10 in Hanson
+and Phillips, 2001) are merged onto their most connected neighbours so that spectral
+variance is conserved.
+
+The `swells` argument prescribes the exact number of swell partitions returned: if
+more systems remain after the combining criteria are exhausted, the least separated
+ones are further combined until the requested number is achieved (or the smallest ones
+are excluded if `combine_extra_swells` is False). Setting `swells=None` instead sizes
+the output from the number of swell systems detected across all spectra, at the cost
+of an extra pass over the data.
+
+The example below shows the partitioning of model spectra which aren't noisy, the
 result is the same as the PTM1 method.
 
 .. ipython:: python
