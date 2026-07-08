@@ -12,16 +12,43 @@ changelog covers the release history since v3.0 when wavespectra was open-source
 Releases
 ********
 
-4.5.2 (unreleased)
+4.6.0 (2026-07-08)
 ___________________
 
 New Features
 ------------
+* Rewritten ``hp01`` partitioning method implementing the swell combining criteria of
+  `Hanson and Phillips (2001) <https://journals.ametsoc.org/view/journals/atot/18/2/1520-0426_2001_018_0277_aaoosd_2_0_co_2.xml>`_
+  and `Hanson et al. (2009) <https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml>`_
+  from scratch. Swell partitions belonging to the same wave system are combined based
+  on the saddle point between adjacent partitions (``zeta``), the separation between
+  partition peaks relative to their spectral spread (``kappa``, renamed from ``k``)
+  and the angle between partition mean directions (``angle_max``). The criteria are
+  evaluated on an adjacency graph of the watershed partitions with statistics
+  recomputed after every merge and the strongest candidate pairs combined first, so
+  results are independent of partition ordering; spectral variance is conserved
+  throughout. Small partitions are merged onto their most connected neighbours based
+  on the ``hs_min`` threshold or the optional Hanson and Phillips (2001) noise floor
+  (``noise_a``, ``noise_b``). The method supports prescribing an exact number of
+  output partitions, with extra swells either combined or dropped.
+* Support ``swells=None`` (``parts=None`` in ``ptm3``) in all watershed partitioning
+  methods, sizing the output ``part`` dimension from the largest number of partitions
+  detected across all spectra by an extra counting pass over the data.
 * New ``awac``, ``datawell`` and ``obscape`` engines for ``xr.open_dataset``,
   completing the xarray backend registration of all wavespectra readers.
 * Binary wheels published for CPython 3.9-3.13 on Linux (x86_64, aarch64), macOS
   (x86_64, arm64) and Windows (amd64), so installing wavespectra no longer requires a
   C compiler.
+
+Breaking Changes
+----------------
+* The experimental ``wstype`` argument of ``hp01`` and the associated
+  ``np_hp01_wseabins`` and ``np_hp01_wseafrac_wseabins`` variants have been removed;
+  the wind sea is now always defined by the wind-sea fraction criterion as in
+  ``ptm1``. The ``k`` argument of ``hp01`` has been renamed ``kappa`` and the
+  internals of the ``hanson_and_phillips_2001`` module have been rewritten, removing
+  the previous helper functions. These changes are confined to the ``hp01`` method,
+  which was previously documented as under development.
 
 Bug Fixes
 ---------

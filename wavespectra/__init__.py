@@ -14,7 +14,7 @@ except ImportError as exc:
     warnings.warn(f"Cannot import accessors at the main module level:\n{exc}")
 
 
-__version__ = "4.5.1"
+__version__ = "4.6.0"
 
 
 def _import_functions(pkgname="input", prefix="read"):
