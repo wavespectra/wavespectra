@@ -32,6 +32,41 @@ def test_read_swans(dset):
     assert dset.time.size > ds.time.size
 
 
+@pytest.mark.parametrize(
+    "kwargs, ntimes_expected", [({"ntimes": 3}, 3), ({"ndays": 1}, 2)]
+)
+def test_read_swans_sliced_times_keep_tab(kwargs, ntimes_expected):
+    """Winds and depth from tab files are appended when slicing times, see #51."""
+    full = read_swans([FILENAME])
+    ds = read_swans([FILENAME], **kwargs)
+    assert ds.time.size == ntimes_expected
+    for v in ["wspd", "wdir", "dpt"]:
+        assert v in ds.data_vars
+        xr.testing.assert_allclose(ds[v], full[v].isel(time=slice(0, ds.time.size)))
+    xr.testing.assert_allclose(ds.efth, full.efth.isel(time=slice(0, ds.time.size)))
+
+
+def test_read_swans_ndays_and_ntimes():
+    """Whichever of the ndays and ntimes limits is reached first stops the reading."""
+    ds = read_swans([FILENAME], ndays=2, ntimes=1)
+    assert ds.time.size == 1
+    ds = read_swans([FILENAME], ndays=1, ntimes=99)
+    assert ds.time.size == 2
+    assert "wspd" in ds.data_vars
+
+
+def test_read_swans_ntimes_more_than_available(dset):
+    """All available times are read when ntimes exceeds the record number."""
+    ds = read_swans([FILENAME], ntimes=99)
+    assert ds.time.size == dset.time.size
+
+
+def test_read_swans_ndays_longer_than_file():
+    """An exception is raised if the file does not span the requested period."""
+    with pytest.raises(OSError):
+        read_swans([FILENAME], ndays=30)
+
+
 def test_read_hotswan():
     """Test that swan hotstart file is read as a grid."""
     filename = FILENAME.parent / "swanhot.spec"

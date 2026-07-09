@@ -176,8 +176,11 @@ def read_swans(
 
     Args:
         - fileglob (str, list): glob pattern specifying files to read.
-        - ndays (float): number of days to keep from each file, choose None to
-          keep entire period.
+        - ndays (float): number of days to keep from the start of each file,
+          choose None to keep the entire period. Useful for constructing
+          continuous timeseries from files of overlapping forecast cycles.
+          Reading stops once the period is read and an exception is raised
+          if a file does not span the requested period.
         - int_freq (ndarray, bool): frequency array for interpolating onto:
 
             - ndarray: 1d array specifying frequencies to interpolate onto.
@@ -192,8 +195,11 @@ def read_swans(
             - False: No interpolation performed in direction space.
 
         - dirorder (bool): if True ensures directions are sorted.
-        - ntimes (int): use it to read only specific number of times, useful
-          for checking headers only.
+        - ntimes (int): number of times to read from the start of each file,
+          choose None to read all times. Reading stops early once the records
+          are read which makes it useful for quickly inspecting the first few
+          records of large files. Can be combined with ndays, whichever limit
+          is reached first stops the reading.
 
     Returns:
         - dset (SpecDataset): spectra dataset object read from file with
@@ -207,6 +213,8 @@ def read_swans(
           have same number of sites.
         - Either all or none of the spectra in fileglob must have tabfile
           associated to provide wind/depth data.
+        - Winds and depth from tab files are sliced at the times actually
+          read when the ndays or ntimes options are used.
         - Concatenation is done with numpy arrays for efficiency.
 
     """
@@ -249,16 +257,40 @@ def read_swans(
         freqs = swanfile.freqs
         dirs = swanfile.dirs
 
-        if ntimes is None:
-            spec_list = [s for s in swanfile.readall()]
-        else:
-            spec_list = [swanfile.read() for itime in range(ntimes)]
+        # Read spectra records, stopping early once ntimes records or ndays
+        # worth of times have been read so the rest of the file is not parsed
+        spec_list = []
+        tend = None
+        truncated = False
+        while ntimes is None or len(spec_list) < ntimes:
+            sset = swanfile.read()
+            if not sset:
+                break
+            if ndays is not None:
+                if tend is None:
+                    tend = times[0] + datetime.timedelta(days=ndays)
+                if times[-1] > tend:
+                    # Ignore the time parsed beyond the period and stop reading
+                    times.pop()
+                    truncated = True
+                    break
+            spec_list.append(sset)
 
-        # Read tab files for winds / depth
+        # Ensure file spans the requested period unless ntimes stopped first
+        ntimes_reached = ntimes is not None and len(spec_list) == ntimes
+        if tend is not None and not truncated and not ntimes_reached:
+            if times[-1] < tend:
+                raise OSError(
+                    "Times in %s does not extend for %0.2f days" % (filename, ndays)
+                )
+
+        # Read tab files for winds / depth, slicing at the times actually read
+        tab = pd.DataFrame()
         if swanfile.is_tab:
             try:
                 tab = read_tab(swanfile.tabfile).rename(columns={"dep": attrs.DEPNAME})
-                if len(swanfile.times) == tab.index.size:
+                if isinstance(times, list) and set(times).issubset(tab.index):
+                    tab = tab.loc[times]
                     if "X-wsp" in tab and "Y-wsp" in tab:
                         tab[attrs.WSPDNAME], tab[attrs.WDIRNAME] = uv_to_spddir(
                             tab["X-wsp"], tab["Y-wsp"], coming_from=True
@@ -277,23 +309,10 @@ def read_swans(
                     )
                 ]
             except Exception as exc:
+                tab = pd.DataFrame()
                 warnings.warn(
                     f"Cannot parse depth and winds from {swanfile.tabfile}:\n{exc}"
                 )
-        else:
-            tab = pd.DataFrame()
-
-        # Shrinking times
-        if ndays is not None:
-            tend = times[0] + datetime.timedelta(days=ndays)
-            if tend > times[-1]:
-                raise OSError(
-                    "Times in %s does not extend for %0.2f days" % (filename, ndays)
-                )
-            iend = times.index(min(times, key=lambda d: abs(d - tend)))
-            times = times[0 : iend + 1]
-            spec_list = spec_list[0 : iend + 1]
-            tab = tab.loc[times[0] : tend] if tab is not None else tab
 
         spec_list = flatten_list(spec_list, [])
 

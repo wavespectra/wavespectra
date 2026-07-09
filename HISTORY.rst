@@ -62,10 +62,20 @@ Bug Fixes
 * ``read_triaxys`` now returns a Dataset as documented when reading with
   ``magnetic_variation`` and ``regrid_dir=True`` (previously it returned a
   DataArray in that case).
+* ``read_swans`` now appends the winds and depth from tab files when the
+  ``ntimes`` option is used, previously the tab data were dropped with a
+  warning since they were not sliced consistently with the spectra
+  (`#51 <https://github.com/wavespectra/wavespectra/issues/51>`_).
 
 Internal Changes
 ----------------
 * ``rmse`` now accepts a Dataset in the ``other`` argument.
+* The ``ndays`` and ``ntimes`` options of ``read_swans`` now share a common
+  early-stopping reading loop so ``ndays`` also stops parsing each file once
+  the requested period is read, and the two options can be combined with
+  whichever limit is reached first stopping the reading. The ``ndays`` cutoff
+  now keeps records up to the exact end of the period instead of the record
+  nearest to it.
 
 4.6.0 (2026-07-08)
 ___________________
