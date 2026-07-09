@@ -34,7 +34,7 @@ Breaking Changes
   partitioning methods now default to the variables with those names in the
   underlying dataset when partitioning from a Dataset.
 
-4.7.0 (unreleased)
+4.7.0 (2026-07-09)
 ___________________
 
 New Features
