@@ -467,6 +467,36 @@ Against the tracked partitions:
     plt.draw()
 
 
+Sorting partitions
+__________________
+
+The watershed methods sort the swell partitions by descending significant wave height,
+following the convention used in the WW3 and SWAN models. Notice the wave height
+ranking also defines which partitions are retained when there are more partitions in a
+spectrum than slots requested with the `swells` argument (`parts` in `ptm3`), so a
+significant but small long-period swell could be excluded from the output if only a
+few partitions are requested. Set the argument to None to keep all detected
+partitions, then reorder them by any parameter calculated from the partitioned
+spectra. The example below sorts the partitions of each spectrum by descending peak
+period, with null partitions kept at the end:
+
+.. ipython:: python
+    :okwarning:
+
+    dset = read_wwm("_static/wwmfile.nc")
+    dspart = dset.spec.partition.ptm3(parts=None)
+    tp = dspart.spec.tp().load()
+    inds = (-tp).fillna(np.inf).argsort(axis=tp.get_axis_num("part"))
+    dsort = dspart.isel(part=inds.drop_vars("part"))
+    tp.isel(site=0).values
+    dsort.spec.tp().isel(site=0).values
+
+Alternatively, consider the `hp01` method to combine partition fragments belonging to
+the same wave system so that significant swells emerge within fewer partitions, and
+the `min_duration` argument of the `track` method with `systems=True` to exclude
+short-lived, spurious wave systems from the output.
+
+
 .. _`WAVEWATCHIII`: https://github.com/NOAA-EMC/WW3
 .. _`Hanson and Phillips (2001)`: https://journals.ametsoc.org/view/journals/atot/18/2/1520-0426_2001_018_0277_aaoosd_2_0_co_2.xml
 .. _`Hanson et al. (2009)`: https://journals.ametsoc.org/view/journals/atot/26/8/2009jtecho650_1.xml

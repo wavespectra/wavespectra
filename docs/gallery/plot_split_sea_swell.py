@@ -13,8 +13,8 @@ from wavespectra import read_ww3
 dset = read_ww3("../_static/ww3file.nc")
 
 fcut = 1 / 8
-sea = dset.spec.split(fmin=fcut)
-swell = dset.spec.split(fmax=fcut)
+sea = dset.efth.spec.split(fmin=fcut)
+swell = dset.efth.spec.split(fmax=fcut)
 
 plt.figure(figsize=(8, 4.5))
 p1 = dset.spec.hs().isel(site=0).plot(label="Full spectrum", marker="o")
