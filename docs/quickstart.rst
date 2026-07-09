@@ -182,6 +182,15 @@ Interpolate
 -----------
 A custom interpolation method takes care of the cyclic nature of the wave direction.
 
+.. note::
+    Methods that transform the spectral variable such as ``interp``, ``smooth``,
+    ``split`` and ``oned`` will return a Dataset preserving the non-spectral
+    variables when called from the Dataset accessor in wavespectra 5.0, instead
+    of the bare spectral DataArray currently returned. Opt in to the future
+    behaviour with ``wavespectra.set_options(dataset_transforms=True)``, or call
+    these methods from the DataArray accessor, e.g. ``dset.efth.spec.oned()``,
+    to retain the current return type and silence the ``FutureWarning``.
+
 .. ipython:: python
     :okwarning:
 

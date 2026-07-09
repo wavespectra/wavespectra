@@ -20,6 +20,27 @@ Wavespectra accessors
 \* The two accessors are attached to the respective xarray objects via the `spec` namespace.
 
 
+Options
+-------
+
+Package-level options can be set globally or within a context block. The
+``dataset_transforms`` option opts in to the future behaviour (default from
+wavespectra 5.0) where methods that transform the spectral variable such as
+:py:meth:`SpecArray.interp`, :py:meth:`SpecArray.smooth`,
+:py:meth:`SpecArray.split`, :py:meth:`SpecArray.oned` and the partitioning
+methods return a Dataset preserving the non-spectral variables when called
+from the Dataset accessor, instead of a bare spectral DataArray. Until then,
+calling these methods from the Dataset accessor without the option set emits
+a ``FutureWarning``.
+
+.. autosummary::
+   :nosignatures:
+   :toctree: generated/
+
+   set_options
+   get_options
+
+
 SpecArray
 ---------
 
