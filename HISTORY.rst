@@ -417,7 +417,7 @@ Partitioning
 Stats
 ~~~~~
 * Method for non-linear gaussian fit in SpecArray by `Paul Branson`_
-  (`PR1 <https://github.com/oceanum/wavespectra/pull/3>`_).
+  (`PR3 <https://github.com/oceanum/wavespectra/pull/3>`_).
 * Methods to calculate stokes drift and the mean squared slope by `Paul Branson`_
   (`PR1 <https://github.com/oceanum/wavespectra/pull/1>`_).
 * Gaussian frequency width method `gw` in SpecArray.
@@ -592,7 +592,7 @@ ___________________
 
 Internal Changes
 ----------------
-* Redefine packaging via pyproject.toml to conform to PEP517/518 (`PR77 <https://github.com/wavespectra/wavespectra/pull/87>`_).
+* Redefine packaging via pyproject.toml to conform to PEP517/518 (`PR87 <https://github.com/wavespectra/wavespectra/pull/87>`_).
 * All packaging metadata removed from setup.py and moved to pyproject.toml. The
   setup.py file is now only used to build the Fortran module.
 * Removed the MANIFEST.in file, package data now handled in pyproject.toml.
@@ -799,7 +799,7 @@ Internal Changes
 Bug Fixes
 ---------
 * Fix bug in sel with `"nearest"` option.
-* Ensure last time chunk is written in `to_swan`_ when the dataset time size is not divisible by ntime (`GH20 <https://github.com/wavespectra/wavespectra/issues/24>`_).
+* Ensure last time chunk is written in `to_swan`_ when the dataset time size is not divisible by ntime (`GH24 <https://github.com/wavespectra/wavespectra/issues/24>`_).
 
 
 .. _`to_netcdf`: https://github.com/wavespectra/wavespectra/blob/master/wavespectra/output/netcdf.py

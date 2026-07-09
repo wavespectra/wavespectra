@@ -232,7 +232,7 @@ The radii extents are controlled from `rmin` and `rmax` parameters:
 Plotting parameters from xarray
 -------------------------------
 
-Wavespectra allows passing some parameters from the functions wrapped from xarray such as `contourf <http://xarray.pydata.org/en/stable/generated/xarray.plot.contourf.html>`_ 
+Wavespectra allows passing some parameters from the functions wrapped from xarray such as `contourf`_
 (excluding some that are manipulated in wavespectra such as `ax`, `x` and others):
 
 .. ipython:: python
