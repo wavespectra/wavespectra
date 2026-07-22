@@ -33,9 +33,20 @@ Breaking Changes
 * The ``wspd``, ``wdir`` and ``dpt`` arguments of the ``hp01`` and ``track``
   partitioning methods now default to the variables with those names in the
   underlying dataset when partitioning from a Dataset.
+* Support for Python 3.9 is removed, the minimum supported version is now
+  Python 3.10. This was announced in 4.8.0.
 
 4.8.0 (unreleased)
 ___________________
+
+Deprecations
+------------
+* Support for Python 3.9 is deprecated and will be removed in wavespectra 5.0,
+  when the minimum supported version becomes Python 3.10. Python 3.9 reached
+  its end of life in October 2025 and current releases of the core
+  dependencies no longer support it. Environments running Python 3.9 will keep
+  working: pip installs the latest wavespectra compatible with the running
+  interpreter, so they will resolve to the 4.x series rather than fail.
 
 Internal Changes
 ----------------
