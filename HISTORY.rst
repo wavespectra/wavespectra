@@ -34,6 +34,16 @@ Breaking Changes
   partitioning methods now default to the variables with those names in the
   underlying dataset when partitioning from a Dataset.
 
+4.8.0 (unreleased)
+___________________
+
+Internal Changes
+----------------
+* Binary wheels are now built for Python 3.14.
+* ``numpy`` is now declared explicitly as a runtime dependency. It was already
+  required by the compiled ``specpart`` extension through the numpy C API and
+  was being installed transitively by other dependencies.
+
 4.7.0 (2026-07-09)
 ___________________
 
