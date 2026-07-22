@@ -36,7 +36,7 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
-4.8.0 (unreleased)
+4.8.0 (2026-07-23)
 ___________________
 
 Deprecations

@@ -162,7 +162,7 @@ extend-select = ["B015", "B018"]
 github_url = "https://github.com/wavespectra/wavespectra/"
 
 [tool.tbump.version]
-current = "4.7.0"
+current = "4.8.0"
 regex = '''
   (?P<major>\d+)
   \.(?P<minor>\d+)
