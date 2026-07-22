@@ -30,12 +30,16 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 requires-python = ">=3.9"
 dependencies = [
     "click",
     "dask",
     "matplotlib",
+    # Linked by the compiled specpart extension via the numpy C API, so it is
+    # declared explicitly rather than relying on it arriving transitively.
+    "numpy",
     "python-dateutil",
     "pyyaml",
     "sortedcontainers",
@@ -113,7 +117,7 @@ version = {attr = "wavespectra.__version__"}
 
 [tool.cibuildwheel]
 # CPython versions matching the supported range in the classifiers.
-build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*"]
+build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
 # 64-bit only: 32-bit Windows wheels would be built by default, but core
 # dependencies (e.g. matplotlib) no longer ship win32 wheels to test against.
 archs = ["auto64"]
