@@ -115,6 +115,53 @@ To run a subset of tests::
 $ pytest tests/test_specarray.py
 
 
+Packaging Notes
+---------------
+
+Some of the packaging settings in ``pyproject.toml`` are not self-explanatory,
+the reasoning behind them is recorded here.
+
+``[project] dependencies``
+    ``numpy`` is declared explicitly because the compiled ``specpart``
+    extension links the numpy C API, even though numpy would also be installed
+    transitively through ``scipy`` and ``xarray``.
+
+``[tool.setuptools.packages.find] include``
+    Packages are listed explicitly so that stray top-level directories created
+    at build time, such as cibuildwheel's ``wheelhouse``, do not break the
+    flat-layout auto-discovery.
+
+``[tool.cibuildwheel] build``
+    The CPython versions to build wheels for, which should be kept in sync
+    with the supported range in the classifiers and in the test matrix of the
+    testing workflow. Free-threaded builds use separate ``cp3XXt-*``
+    identifiers so they are not built unless they are listed here.
+
+``[tool.cibuildwheel] archs``
+    64-bit only. 32-bit Windows wheels would be built by default but core
+    dependencies such as matplotlib no longer ship win32 wheels to test the
+    built wheels against.
+
+``[tool.cibuildwheel] skip``
+    musl-based linux wheels are not built, they can be added if there is
+    demand for them.
+
+``[tool.cibuildwheel] test-requires`` and ``test-command``
+    Every built wheel is tested by running the partition test module, which
+    exercises the compiled ``specpart`` extension end to end. This requires
+    netCDF4 to be available for the wheels of every Python version built.
+
+``[tool.pytest.ini_options] filterwarnings``
+    netCDF4-python sets the ``shape`` attribute on numpy arrays, which numpy
+    2.5 deprecated. It surfaces through the xarray netCDF4 backend whenever a
+    netcdf file is written and is a third-party issue, nothing to fix in
+    wavespectra.
+
+``[tool.ruff.lint] extend-select``
+    B015 and B018 flag comparisons and expressions whose result is discarded,
+    which in tests almost always means a forgotten ``assert``.
+
+
 Deploying
 ---------
 

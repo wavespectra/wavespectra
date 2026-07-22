@@ -37,8 +37,6 @@ dependencies = [
     "click",
     "dask",
     "matplotlib",
-    # Linked by the compiled specpart extension via the numpy C API, so it is
-    # declared explicitly rather than relying on it arriving transitively.
     "numpy",
     "python-dateutil",
     "pyyaml",
@@ -103,8 +101,6 @@ docs = [
 ]
 
 [tool.setuptools.packages.find]
-# Explicit include so stray top-level directories created at build time
-# (e.g. cibuildwheel's wheelhouse/) don't break flat-layout auto-discovery.
 include = ["wavespectra*"]
 
 [tool.setuptools.package-data]
@@ -116,15 +112,9 @@ include = ["wavespectra*"]
 version = {attr = "wavespectra.__version__"}
 
 [tool.cibuildwheel]
-# CPython versions matching the supported range in the classifiers.
 build = ["cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
-# 64-bit only: 32-bit Windows wheels would be built by default, but core
-# dependencies (e.g. matplotlib) no longer ship win32 wheels to test against.
 archs = ["auto64"]
-# Skip musl-based linux; can be added later if there is demand.
 skip = ["*-musllinux*"]
-# Test every built wheel by running the partition test module, which
-# exercises the compiled specpart extension end to end.
 test-requires = ["pytest", "netCDF4"]
 test-command = "pytest {project}/tests/test_partition.py -q"
 build-verbosity = 1
@@ -132,9 +122,6 @@ build-verbosity = 1
 [tool.pytest.ini_options]
 norecursedirs = [".*", "build", "dist", "CVS", "_darcs", "{arch}", "*.egg", "venv", "broken"]
 filterwarnings = [
-    # netCDF4-python sets the .shape attribute on numpy arrays, which numpy
-    # 2.5 deprecated; it surfaces through xarray's netCDF4 backend whenever a
-    # netCDF file is written. Third-party issue, nothing to fix in wavespectra.
     "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
 ]
 
@@ -147,8 +134,6 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.ruff.lint]
-# B015/B018: flag comparisons/expressions whose result is discarded, which in
-# tests almost always means a forgotten `assert`.
 extend-select = ["B015", "B018"]
 
 [tool.ruff.lint.extend-per-file-ignores]
