@@ -38,6 +38,7 @@ DEFAULTS = {
     "window": 3,
     "wscut": 0.3333,
     "agefac": 1.7,
+    "min_steepness": 0.025,
 }
 
 
@@ -77,6 +78,11 @@ class Partition:
           freely propogating swell (i.e. unforced by the wind). This is similar to the
           method commonly used to generate wind-sea and swell from the WAM model.
         - ptm5: PTM5 splits spectra into wind sea and swell based on a user defined static cutoff.
+        - steepness: STEEPNESS works like PTM1 but identifies wind sea from the steepness Hm0 / L of each
+          topographic partition, evaluated at the energy period Tm-1,0, rather than from a wind speed and
+          direction based wave age criterion. Partitions at or above a minimum steepness are aggregated
+          and assigned to the wind-sea component and the remaining partitions are assigned as swell
+          components in order of decreasing wave height. No wind input is required.
         - hp01: HP01 partitions the spectra and merges wind-sea components as in the PTM1 method, then it combines
           adjacent swells belonging to the same wave system following the criteria outlined in Hanson and
           Phillips (2001) and Hanson et al. (2009). Useful for noisy measured spectra which the watershed
@@ -638,6 +644,152 @@ class Partition:
 
         return self._wrap_output(dsout.fillna(0.0))
 
+    def steepness(
+        self,
+        dpt=None,
+        min_steepness=DEFAULTS["min_steepness"],
+        tail=False,
+        swells=DEFAULTS["swells"],
+        smooth=DEFAULTS["smooth"],
+        freq_window=DEFAULTS["window"],
+        dir_window=DEFAULTS["window"],
+        ihmax=DEFAULTS["ihmax"],
+    ):
+        """STEEPNESS watershed partitioning.
+
+        STEEPNESS works like PTM1 but identifies wind sea from the steepness
+        Hm0 / L of each topographic partition, evaluated at the energy period
+        Tm-1,0, rather than from the wind speed and direction based wave age
+        criterion used by the other methods. Partitions with steepness at or
+        above `min_steepness` are aggregated and assigned to the wind-sea
+        component (e.g., the first partition). The remaining partitions are
+        assigned as swell components in order of decreasing wave height.
+        Because no wind input is used, this method is useful when reliable wind
+        speed and direction are not available, or when the misalignment between
+        wave and wind direction is not a desired classification factor.
+
+        Args:
+            - dpt (xr.DataArray): Depth DataArray, taken from the `dpt` variable
+              in the underlying dataset if not provided, deep water approximation
+              used if not available from either source.
+            - min_steepness (float): Minimum wave steepness Hm0 / L for a
+              partition to be classified as wind sea.
+            - tail (bool): If True, account for an f^-5 high-frequency tail
+              beyond the last frequency when evaluating the steepness.
+            - swells (int): Number of swell partitions to compute. If None, the
+              number required to hold all swells detected from all spectra is
+              used, which doubles the compute time and triggers an eager
+              computation on dask datasets.
+            - smooth (bool): Compute watershed boundaries from smoothed spectra
+              as described in Portilla et al., 2009.
+            - freq_window (int): Size of running window for smoothing spectra.
+            - dir_window (int): Size of running window for smoothing spectra.
+            - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
+
+        Returns:
+            - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
+              where the 0th index are the wind sea and remaining indices are the swells
+              sorted by descending order of Hs.
+
+        Note:
+            - The steepness of a fully developed Pierson-Moskowitz sea is 0.035
+              in deep water regardless of the wind speed, and it grows as the sea
+              gets younger, so a single `min_steepness` threshold applies across
+              the range of wind speeds. The default of 0.025 sits below the fully
+              developed value to allow for the energy a topographic partition
+              loses at its watershed boundaries.
+            - The steepness of a wind sea partition is underestimated when its
+              peak is close to the upper limit of the frequency grid, since the
+              truncated energy is missing from Hm0. This affects light wind seas
+              on the coarse frequency grids typical of wave model output, which
+              may then fall below `min_steepness` and be classified as swell.
+              Set `tail=True` to compensate for the truncated energy; the
+              correction is inert for swell partitions, which carry no energy at
+              the last frequency.
+            - The steepness is evaluated with the local wavelength when the depth
+              is available, so shoaling waves become steeper in shallow water and
+              swells may be classified as wind sea on that basis alone. Prescribe
+              a larger `min_steepness` or partition from the DataArray accessor
+              without a `dpt` argument to classify from the deep water steepness
+              in shallow water applications.
+
+        References:
+            - Portilla et al. (2009).
+            - Tracy et al. (2007).
+            - Vincent et al. (1991).
+            - WW3 documentation (https://github.com/NOAA-EMC/WW3).
+
+        """
+        dpt = self._resolve(dpt, attrs.DEPNAME)
+        if dpt is None:
+            # Plain nan sentinel so apply_ufunc can broadcast it like the other
+            # scalar arguments; translated back to the deep water approximation
+            # inside np_steepness.
+            dpt = np.nan
+        if smooth:
+            dset_smooth = smooth_spec(self.dset, freq_window, dir_window)
+        else:
+            dset_smooth = self.dset
+
+        args = [
+            self.dset,
+            dset_smooth,
+            self.dset.freq,
+            self.dset.dir,
+            dpt,
+            min_steepness,
+            tail,
+        ]
+        input_core_dims = [
+            ["freq", "dir"],
+            ["freq", "dir"],
+            ["freq"],
+            ["dir"],
+            [],
+            [],
+            [],
+            [],
+            [],
+        ]
+
+        # Detect the number of swells required if not prescribed
+        if swells is None:
+            swells = self._detect_nparts(
+                np_steepness,
+                *args,
+                None,
+                ihmax,
+                input_core_dims=input_core_dims,
+                nparts_fixed=1,
+            )
+
+        # Partitioning full spectra
+        dsout = xr.apply_ufunc(
+            np_steepness,
+            *args,
+            swells,
+            ihmax,
+            input_core_dims=input_core_dims,
+            output_core_dims=[["part", "freq", "dir"]],
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=["float32"],
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"part": swells + 1},
+            },
+        )
+
+        # Finalise output
+        dsout = self._set_metadata(dsout)
+        parts_description = {
+            "part0": "wind sea",
+            "part1-n": "swells in descending order of hs",
+        }
+        dsout.attrs.update(parts_description)
+
+        return self._wrap_output(dsout.transpose("part", ...))
+
     def hp01(
         self,
         wspd=None,
@@ -936,14 +1088,14 @@ class Partition:
 
         Args:
             - wspd (xr.DataArray): Wind speed DataArray, required by the ptm1
-              and ptm2 methods and optional for hp01. Taken from the `wspd`
-              variable in the underlying dataset if not provided.
+              and ptm2 methods and optional for hp01 and steepness. Taken from
+              the `wspd` variable in the underlying dataset if not provided.
             - wdir (xr.DataArray): Wind direction DataArray, as above.
             - dpt (xr.DataArray): Depth DataArray, as above.
             - method (str): Partitioning method to track partitions from,
-              one of "ptm1", "ptm2", "ptm3" or "hp01". The ptm4, ptm5 and bbox
-              methods define partitions as fixed spectral regions whose
-              identity is already continuous in time, so there is nothing
+              one of "ptm1", "ptm2", "ptm3", "steepness" or "hp01". The ptm4,
+              ptm5 and bbox methods define partitions as fixed spectral regions
+              whose identity is already continuous in time, so there is nothing
               to track.
             - ddpm_sea_max (float): Maximum peak direction difference for wind sea
               partitions. Default is 30 degrees.
@@ -963,8 +1115,8 @@ class Partition:
               must span to be included in the `systems=True` output. The
               default of 1 keeps all tracked systems.
             - kwargs: Further arguments passed to the partitioning method, e.g.
-              `swells`, `agefac`, `wscut`, `smooth` or the hp01 combining
-              parameters.
+              `swells`, `agefac`, `wscut`, `min_steepness`, `smooth` or the
+              hp01 combining parameters.
 
         Returns:
             - dspart (xr.DataArray, xr.Dataset): Partitioned spectra with extra `part` dimension
@@ -977,11 +1129,14 @@ class Partition:
               in the `systems=False` output.
 
         Note:
-            - Wind sea partitions (partition 0 in ptm1 and hp01, partitions 0
-              and 1 in ptm2) are matched with wind-sea thresholds and the
-              remaining partitions with swell thresholds. The ptm3 partitions
-              are not classified and are all matched with swell thresholds,
-              which makes wind inputs optional for that method.
+            - Wind sea partitions (partition 0 in ptm1, hp01 and steepness,
+              partitions 0 and 1 in ptm2) are matched with wind-sea thresholds
+              and the remaining partitions with swell thresholds. The ptm3
+              partitions are not classified and are all matched with swell
+              thresholds, which makes wind inputs optional for that method.
+              The steepness method classifies the wind sea without wind but the
+              wind speed still defines the wind-sea matching threshold, so
+              without it all its partitions are matched with swell thresholds.
             - The time step is evaluated for each pair of consecutive spectra
               so records with gaps or irregular sampling use matching
               thresholds consistent with the actual time elapsed.
@@ -1014,10 +1169,15 @@ class Partition:
             # ptm3 partitions are not classified, tracking does not need wind
             wind_kwargs = {}
             nsea = 0
+        elif method == "steepness":
+            # steepness classifies the wind sea without wind, which is only
+            # required to match it with wind sea thresholds when tracking
+            wind_kwargs = {"dpt": dpt}
+            nsea = 1 if wspd is not None else 0
         else:
             raise ValueError(
-                f"Cannot track partitions from method '{method}', "
-                "available methods are 'ptm1', 'ptm2', 'ptm3' and 'hp01'"
+                f"Cannot track partitions from method '{method}', available "
+                "methods are 'ptm1', 'ptm2', 'ptm3', 'steepness' and 'hp01'"
             )
 
         # Do the partitioning, on the spectral variable only so the tracking
@@ -1117,6 +1277,85 @@ def np_ptm1(
             # Discard extra partitions
             swell_partitions = swell_partitions[:swells]
         elif nparts < swells:
+            # Extend partitions list with null spectra
+            n = swells - len(swell_partitions)
+            for i in range(n):
+                swell_partitions.append(np.zeros_like(spectrum))
+
+    return np.array([wsea_partition] + swell_partitions)
+
+
+def np_steepness(
+    spectrum,
+    spectrum_smooth,
+    freq,
+    dir,
+    dpt=np.nan,
+    min_steepness=DEFAULTS["min_steepness"],
+    tail=False,
+    swells=DEFAULTS["swells"],
+    ihmax=DEFAULTS["ihmax"],
+):
+    """STEEPNESS spectra partitioning on numpy arrays.
+
+    Args:
+        - spectrum (2darray): Wave spectrum array with shape (nf, nd).
+        - spectrum_smooth (2darray): Smoothed wave spectrum array with shape (nf, nd).
+        - freq (1darray): Wave frequency array with shape (nf).
+        - dir (1darray): Wave direction array with shape (nd).
+        - dpt (float): Water depth, deep water approximation used if nan.
+        - min_steepness (float): Minimum wave steepness Hm0 / L, evaluated at the
+          energy period Tm-1,0, for a partition to be classified as wind sea.
+        - tail (bool): If True, account for an f^-5 high-frequency tail beyond
+          the last frequency when evaluating the steepness.
+        - swells (int): Number of swell partitions to compute, all detected if None.
+        - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
+
+    Returns:
+        - specpart (3darray): Wave spectrum partitions sorted in decreasing order of Hs
+          with shape (np, nf, nd).
+
+    Note:
+        - The smooth spectrum `spectrum_smooth` is used to define the watershed
+          boundaries which are applied to the original spectrum.
+        - Unlike ptm1, ptm2 and hp01, wind sea is identified from the steepness
+          of each topographic partition rather than from a wind speed and
+          direction based wave age criterion, so no wind input is required.
+
+    """
+    # Use smooth spectrum to define morphological boundaries
+    watershed_map = specpart.partition(spectrum_smooth, ihmax)
+    nparts = watershed_map.max()
+    dpt = None if np.isnan(dpt) else dpt
+    ddir = abs(dir[1] - dir[0]) if dir.size > 1 else 1.0
+
+    # Classify each topographic partition as wind sea or swell from its steepness
+    wsea_partition = np.zeros_like(spectrum)
+    swell_partitions = []
+    for ipart in range(nparts):
+        part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
+        E = ddir * part.sum(axis=1)
+        if npstats.steepness(E, freq, dpt, tail) >= min_steepness:
+            wsea_partition += part
+        else:
+            swell_partitions.append(part)
+
+    # Sort swells by Hs
+    if swell_partitions:
+        isort = np.argsort(
+            [-npstats.hs(swell, freq, dir) for swell in swell_partitions]
+        )
+        swell_partitions = list(np.array(swell_partitions)[isort])
+
+    # Dealing with the number of swells
+    if swells is None:
+        # Exclude null swell partitions if the number of output swells is undefined
+        swell_partitions = [swell for swell in swell_partitions if swell.sum() > 0]
+    else:
+        if len(swell_partitions) > swells:
+            # Discard extra partitions
+            swell_partitions = swell_partitions[:swells]
+        elif len(swell_partitions) < swells:
             # Extend partitions list with null spectra
             n = swells - len(swell_partitions)
             for i in range(n):

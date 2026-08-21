@@ -1,22 +1,29 @@
 import pytest
 from pathlib import Path
 import numpy as np
+import xarray as xr
 
 import wavespectra
 from wavespectra import read_ww3
+from wavespectra.construct import construct_partition
 from wavespectra.partition.partition import (
     Partition,
     np_ptm1,
     np_ptm2,
     np_ptm3,
+    np_steepness,
     np_hp01,
 )
-from wavespectra.core.utils import waveage
+from wavespectra.core.utils import waveage, create_frequencies, to_coords
 from wavespectra.core import npstats
 from wavespectra.partition.tracking import track_partitions
 
 
 HERE = Path(__file__).parent
+
+# Well resolved spectral grid for constructing synthetic spectra
+FREQ = to_coords(create_frequencies(0.03, 40, 1.1), "freq")
+DIR = to_coords(np.arange(0, 360, 10.0), "dir")
 
 
 @pytest.fixture(autouse=True)
@@ -374,6 +381,176 @@ class TestHP01(BasePTM):
         assert np.allclose(hs.values, self.dset.spec.hs().values, rtol=1e-2)
 
 
+class TestSteepness(BasePTM):
+    def setup_class(self):
+        super().setup_class(self)
+        self.dpt = self.dset.isel(time=0, site=0).dpt.values
+        self.min_steepness = 0.025
+        self.swells = 3
+
+    def _exec(self, **kwargs):
+        out = np_steepness(
+            spectrum=self.efth,
+            spectrum_smooth=self.efth,
+            freq=self.freq,
+            dir=self.dir,
+            dpt=kwargs.get("dpt", self.dpt),
+            min_steepness=kwargs.get("min_steepness", self.min_steepness),
+            tail=kwargs.get("tail", False),
+            swells=kwargs.get("swells", self.swells),
+        )
+        return out
+
+    def test_defaults(self):
+        self.out = self._exec()
+        assert self.out.shape[0] == self.swells + 1
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_request_all_partitions(self):
+        self.out = self._exec(swells=None)
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_request_all_partitions_class(self):
+        """swells=None detects the required number of partitions."""
+        dspart = self.pt.steepness(dpt=self.dset.dpt, swells=None)
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
+
+    def test_request_less_partitions(self):
+        swells = 1
+        self.out = self._exec(swells=swells)
+        assert len(self.out) == swells + 1
+
+    def test_partition_class(self):
+        swells = 2
+        self.out = self._exec(swells=swells)
+        dspart = self.pt.steepness(dpt=self.dset.dpt, swells=swells)
+        hs_dspart = np.sqrt(np.sum(dspart.isel(time=0, site=0).spec.hs().values ** 2))
+        assert hs_dspart == pytest.approx(self.hs_from_partitions, rel=1e-2)
+
+    def test_no_wind_required(self):
+        """The method runs from a DataArray with no wind or depth available."""
+        dspart = Partition(self.dset.efth).steepness(swells=2)
+        assert isinstance(dspart, xr.DataArray)
+        assert dspart.part.size == 3
+        assert bool((dspart.spec.hs() > 0).any())
+
+    def test_no_depth_deep_water_default(self):
+        """Depth is optional, the deep water approximation is used without it."""
+        deep = self._exec(dpt=np.nan)
+        prescribed = self._exec(dpt=1e5)
+        assert np.allclose(deep, prescribed)
+
+    def test_depth_makes_partitions_steeper(self):
+        """Shoaling in shallow water pushes more energy into the wind sea.
+
+        The steepness is evaluated with the local wavelength when the depth is
+        prescribed, so the same swell is classified as wind sea in shallow
+        enough water.
+        """
+        swell = construct_partition(
+            freq_kwargs=dict(freq=FREQ, fp=1 / 9.0, hs=2.0, gamma=3.3),
+            dir_kwargs=dict(dir=DIR, dm=270.0, dspr=25.0),
+        ).transpose("freq", "dir")
+
+        def hs_windsea(dpt):
+            out = np_steepness(
+                spectrum=swell.values,
+                spectrum_smooth=swell.values,
+                freq=FREQ.values,
+                dir=DIR.values,
+                dpt=dpt,
+                swells=2,
+            )
+            return npstats.hs(out[0], FREQ.values, DIR.values)
+
+        assert hs_windsea(np.nan) == 0.0
+        assert hs_windsea(15.0) == 0.0
+        assert hs_windsea(10.0) == pytest.approx(2.0, rel=1e-2)
+
+    def test_lower_threshold_grows_windsea(self):
+        """A lower min_steepness threshold classifies more energy as wind sea."""
+        lo = self.pt.steepness(dpt=self.dset.dpt, min_steepness=0.01, swells=2)
+        hi = self.pt.steepness(dpt=self.dset.dpt, min_steepness=0.06, swells=2)
+        hs_sea_lo = lo.isel(part=0).spec.hs()
+        hs_sea_hi = hi.isel(part=0).spec.hs()
+        assert bool((hs_sea_lo >= hs_sea_hi).all())
+        assert bool((hs_sea_lo > hs_sea_hi).any())
+
+    def test_unreachable_threshold_leaves_no_windsea(self):
+        """Partition 0 is null when no partition reaches min_steepness."""
+        dspart = self.pt.steepness(dpt=self.dset.dpt, min_steepness=1.0, swells=2)
+        assert bool((dspart.isel(part=0).spec.hs() == 0).all())
+
+    def test_tail_grows_windsea(self):
+        """The tail correction recovers wind seas truncated by the freq grid.
+
+        The sample file frequency grid stops at 0.406 Hz so the light wind seas
+        in it are truncated and their steepness is underestimated.
+        """
+        assert self.freq[-1] < 0.5
+        notail = self.pt.steepness(dpt=self.dset.dpt, swells=2)
+        tail = self.pt.steepness(dpt=self.dset.dpt, swells=2, tail=True)
+        hs_sea_notail = notail.isel(part=0).spec.hs()
+        hs_sea_tail = tail.isel(part=0).spec.hs()
+        assert bool((hs_sea_tail >= hs_sea_notail).all())
+        assert bool((hs_sea_tail > hs_sea_notail).any())
+
+    def test_tail_inert_for_swells(self):
+        """The tail correction cannot turn a swell into a wind sea.
+
+        A watershed swell partition carries no energy at the last frequency so
+        the correction is inert for it.
+        """
+        efth = self._sea_and_swell()
+        kwargs = dict(
+            spectrum=efth.values,
+            spectrum_smooth=efth.values,
+            freq=FREQ.values,
+            dir=DIR.values,
+            swells=2,
+        )
+        notail = np_steepness(**kwargs, tail=False)
+        tail = np_steepness(**kwargs, tail=True)
+        assert notail[0][-1].sum() > 0  # wind sea reaches the last frequency
+        assert notail[1][-1].sum() == 0  # swell does not
+        assert np.array_equal(notail[1], tail[1])
+
+    @staticmethod
+    def _sea_and_swell():
+        """Steep 6s wind sea and gentle 14s swell, opposing directions."""
+        sea = construct_partition(
+            freq_kwargs=dict(freq=FREQ, fp=1 / 6.0, hs=2.5, gamma=3.3),
+            dir_kwargs=dict(dir=DIR, dm=90.0, dspr=25.0),
+        )
+        swell = construct_partition(
+            freq_kwargs=dict(freq=FREQ, fp=1 / 14.0, hs=1.5, gamma=3.3),
+            dir_kwargs=dict(dir=DIR, dm=270.0, dspr=15.0),
+        )
+        return (sea + swell).transpose("freq", "dir")
+
+    def test_sea_and_swell_are_recovered(self):
+        """A steep wind sea and a gentle swell are classified from steepness."""
+        efth = self._sea_and_swell()
+        out = np_steepness(
+            spectrum=efth.values,
+            spectrum_smooth=efth.values,
+            freq=FREQ.values,
+            dir=DIR.values,
+            swells=2,
+        )
+        hs_parts = [npstats.hs(part, FREQ.values, DIR.values) for part in out]
+        assert hs_parts[0] == pytest.approx(2.5, rel=1e-2)
+        assert hs_parts[1] == pytest.approx(1.5, rel=1e-2)
+        assert hs_parts[2] == 0.0
+
+    def test_smoothing(self):
+        swells = 2
+        ds_nosmoothing = self.pt.steepness(dpt=self.dset.dpt, swells=swells)
+        ds_smoothing = self.pt.steepness(dpt=self.dset.dpt, swells=swells, smooth=True)
+        assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
+
+
 class TestBbox(BasePTM):
     def test_default(self):
         bboxes = [
@@ -439,6 +616,19 @@ class TestPartitionAndTrack(BasePTM):
         dspart = self.pt.track(method="ptm3", parts=3)
         assert "track_id" in dspart
         dspart = dspart.load()
+        assert (dspart.ntracks.values > 0).all()
+
+    def test_track_steepness(self):
+        self._track("steepness", wspd=self.dset.wspd, dpt=self.dset.dpt)
+
+    def test_track_steepness_no_wind(self):
+        """Without wind the steepness partitions are matched as swells.
+
+        Wind variables are resolved from the dataset so partitioning from
+        the DataArray is required to exercise the no-wind path.
+        """
+        pt = Partition(self.dset.efth)
+        dspart = pt.track(method="steepness", swells=2).load()
         assert (dspart.ntracks.values > 0).all()
 
     def test_track_hp01(self):
