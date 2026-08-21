@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.constants import g, pi
 
-from wavespectra.core.utils import R2D
+from wavespectra.core.utils import R2D, wavelen
 
 
 def mom1(spectrum, dir, theta=90.0):
@@ -67,6 +67,49 @@ def hs(spectrum, freq, dir=None, tail=True):
     if tail and freq[-1] > 0.333:
         Etot += 0.25 * E[-1] * freq[-1]
     return 4.0 * np.sqrt(Etot)
+
+
+def steepness(spectrum, freq, dpt=None, tail=False):
+    """Wave steepness Hm0 / L evaluated at the energy period Tm-1,0.
+
+    Args:
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+        - dpt (float): Water depth, deep water approximation used by default.
+        - tail (bool): If True, add the contribution of an f^-5 high-frequency
+          tail beyond the last frequency to the spectral moments.
+
+    Returns:
+        - steepness (float): Wave steepness Hm0 / L, used as the wind sea
+          criterion in the `steepness` partitioning method.
+
+    Note:
+        - The steepness of a fully developed Pierson-Moskowitz sea is 0.035 in
+          deep water regardless of the wind speed, and it increases as the sea
+          gets younger, so this is a wave age proxy that requires no wind input.
+        - The `tail` correction is applied to both m0 and m-1 so it is
+          consistent with the energy period. It matters for wind sea partitions
+          whose peak sits close to the upper limit of the frequency grid, which
+          are otherwise truncated and appear less steep than they are. Swell
+          partitions carry no energy at the last frequency so the correction is
+          inert for them.
+        - The steepness is evaluated with the local wavelength when `dpt` is
+          prescribed, so shoaling waves become steeper in shallow water.
+
+    """
+    df = np.abs(freq[1:] - freq[:-1])
+    add_tail = tail and freq[-1] > 0.333
+    m0 = 0.5 * np.sum(df * (spectrum[1:] + spectrum[:-1]))
+    if add_tail:
+        m0 += 0.25 * spectrum[-1] * freq[-1]
+    if m0 < 1e-6:
+        return 0.0
+    m_1 = 0.5 * np.sum(df * (spectrum[1:] / freq[1:] + spectrum[:-1] / freq[:-1]))
+    if add_tail:
+        m_1 += spectrum[-1] / 5.0
+    hm0 = 4.0 * np.sqrt(m0)
+    fm_10 = m0 / m_1
+    return float(hm0 / wavelen(fm_10, dpt))
 
 
 def dpm(ipeak, momsin, momcos):
