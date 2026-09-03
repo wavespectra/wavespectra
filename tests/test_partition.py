@@ -7,6 +7,7 @@ import wavespectra
 from wavespectra import read_ww3
 from wavespectra.construct import construct_partition
 from wavespectra.partition.partition import (
+    DEFAULTS,
     Partition,
     np_ptm1,
     np_ptm2,
@@ -549,6 +550,102 @@ class TestSteepness(BasePTM):
         ds_nosmoothing = self.pt.steepness(dpt=self.dset.dpt, swells=swells)
         ds_smoothing = self.pt.steepness(dpt=self.dset.dpt, swells=swells, smooth=True)
         assert not ds_nosmoothing.spec.hs().equals(ds_smoothing.spec.hs())
+
+
+class TestSteepnessSwellMerge:
+    """Coverage for `swell_merge`, exercising the path where more swells are
+    detected than the requested `swells` slots. The ww3file.nc fixture used by
+    TestSteepness never detects more than 3 swells so it can't reach this path;
+    a synthetic four-swell spectrum with no wind sea is built here instead.
+    """
+
+    def setup_class(self):
+        self.freq = np.linspace(0.03, 0.5, 40)
+        self.dir = np.linspace(0, 350, 36)
+        self.dpt = np.nan  # np_steepness's sentinel for "no depth" (deep water)
+
+        def peak(fp, hsig, dp, spread=15):
+            E = npstats.jonswap(self.freq, fp, hsig)
+            dfac = np.exp(-0.5 * ((self.dir - dp + 180) % 360 - 180) ** 2 / spread**2)
+            dfac = dfac / (dfac.sum() * (self.dir[1] - self.dir[0]))
+            return np.outer(E, dfac)
+
+        # Four distinct, gentle (sub-threshold) swell systems, all classified
+        # as swell rather than wind sea, so requesting fewer than 4 swell
+        # slots always exercises the merge path.
+        self.efth = (
+            peak(0.07, 1.8, 200)
+            + peak(0.09, 1.4, 260)
+            + peak(0.11, 1.0, 30)
+            + peak(0.14, 0.6, 100)
+        )
+        self.hs_full = npstats.hs(self.efth, self.freq, self.dir)
+
+    def _exec(self, swells, swell_merge):
+        return np_steepness(
+            spectrum=self.efth,
+            spectrum_smooth=self.efth,
+            freq=self.freq,
+            dir=self.dir,
+            dpt=self.dpt,
+            min_steepness=0.025,
+            swells=swells,
+            swell_merge=swell_merge,
+        )
+
+    def _hs_from_partitions(self, out):
+        hs_partitions = [npstats.hs(efth, self.freq, self.dir) for efth in out]
+        return np.sqrt(np.sum(np.power(hs_partitions, 2)))
+
+    @pytest.mark.parametrize("swell_merge", ["sum", "hp01"])
+    @pytest.mark.parametrize("swells", [1, 2, 3])
+    def test_merge_conserves_energy_and_count(self, swells, swell_merge):
+        """Merging (either strategy) always yields exactly `swells` swell
+        partitions and loses no energy, unlike the old discard behaviour."""
+        out = self._exec(swells=swells, swell_merge=swell_merge)
+        assert out.shape[0] == swells + 1
+        assert self.hs_full == pytest.approx(self._hs_from_partitions(out), rel=1e-2)
+
+    def test_swells_one_merges_everything(self):
+        """swells=1 collapses every detected swell into the single output slot."""
+        out = self._exec(swells=1, swell_merge="sum")
+        assert out.shape[0] == 2
+        hs_swell = npstats.hs(out[1], self.freq, self.dir)
+        assert hs_swell == pytest.approx(self.hs_full, rel=1e-2)
+
+    def test_default_swell_merge_is_sum(self):
+        assert DEFAULTS["swell_merge"] == "sum"
+
+    def test_invalid_swell_merge_raises(self):
+        with pytest.raises(ValueError):
+            self._exec(swells=2, swell_merge="bogus")
+
+    def test_sum_and_hp01_can_disagree(self):
+        """The two strategies are free to group swells differently as long as
+        both conserve energy - sanity-check they actually differ on this
+        deliberately-ambiguous four-swell case rather than one silently
+        falling back to the other."""
+        hs_sum = sorted(
+            npstats.hs(e, self.freq, self.dir)
+            for e in self._exec(swells=2, swell_merge="sum")[1:]
+        )
+        hs_hp01 = sorted(
+            npstats.hs(e, self.freq, self.dir)
+            for e in self._exec(swells=2, swell_merge="hp01")[1:]
+        )
+        assert hs_sum != pytest.approx(hs_hp01)
+
+    def test_partition_class_default_merge(self):
+        """The Dataset-level `Partition.steepness()` wrapper defaults to the
+        same 'sum' merge behaviour as the numpy core function."""
+        ds = xr.Dataset(
+            {"efth": (("freq", "dir"), self.efth)},
+            coords={"freq": self.freq, "dir": self.dir},
+        )
+        dspart = ds.spec.partition.steepness(swells=2)
+        assert dspart.sizes["part"] == 3
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum())
+        assert float(hs_dspart) == pytest.approx(self.hs_full, rel=1e-2)
 
 
 class TestBbox(BasePTM):

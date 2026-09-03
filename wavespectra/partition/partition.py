@@ -39,6 +39,7 @@ DEFAULTS = {
     "wscut": 0.3333,
     "agefac": 1.7,
     "min_steepness": 0.025,
+    "swell_merge": "sum",
 }
 
 
@@ -650,6 +651,7 @@ class Partition:
         min_steepness=DEFAULTS["min_steepness"],
         tail=False,
         swells=DEFAULTS["swells"],
+        swell_merge=DEFAULTS["swell_merge"],
         smooth=DEFAULTS["smooth"],
         freq_window=DEFAULTS["window"],
         dir_window=DEFAULTS["window"],
@@ -663,10 +665,12 @@ class Partition:
         criterion used by the other methods. Partitions with steepness at or
         above `min_steepness` are aggregated and assigned to the wind-sea
         component (e.g., the first partition). The remaining partitions are
-        assigned as swell components in order of decreasing wave height.
-        Because no wind input is used, this method is useful when reliable wind
-        speed and direction are not available, or when the misalignment between
-        wave and wind direction is not a desired classification factor.
+        assigned as swell components in order of decreasing wave height,
+        merged down to `swells` partitions if more are detected (see
+        `swell_merge`) so that no swell energy is discarded. Because no wind
+        input is used, this method is useful when reliable wind speed and
+        direction are not available, or when the misalignment between wave
+        and wind direction is not a desired classification factor.
 
         Args:
             - dpt (xr.DataArray): Depth DataArray, taken from the `dpt` variable
@@ -680,6 +684,14 @@ class Partition:
               number required to hold all swells detected from all spectra is
               used, which doubles the compute time and triggers an eager
               computation on dask datasets.
+            - swell_merge (str): How to reduce more than `swells` detected swells
+              down to `swells` partitions. "sum" (default) keeps the `swells - 1`
+              largest swells individually and adds the spectral energy of the
+              rest into the last (smallest) kept partition. "hp01" instead merges
+              excess swells onto their closest neighbour using the adjacency,
+              saddle-point and angle criteria from the `hp01` method (Hanson and
+              Phillips, 2001). Either way spectral energy is conserved rather
+              than discarded. Ignored if `swells` is None.
             - smooth (bool): Compute watershed boundaries from smoothed spectra
               as described in Portilla et al., 2009.
             - freq_window (int): Size of running window for smoothing spectra.
@@ -714,6 +726,7 @@ class Partition:
               in shallow water applications.
 
         References:
+            - Hanson and Phillips (2001).
             - Portilla et al. (2009).
             - Tracy et al. (2007).
             - Vincent et al. (1991).
@@ -750,6 +763,7 @@ class Partition:
             [],
             [],
             [],
+            [],
         ]
 
         # Detect the number of swells required if not prescribed
@@ -758,6 +772,7 @@ class Partition:
                 np_steepness,
                 *args,
                 None,
+                swell_merge,
                 ihmax,
                 input_core_dims=input_core_dims,
                 nparts_fixed=1,
@@ -768,6 +783,7 @@ class Partition:
             np_steepness,
             *args,
             swells,
+            swell_merge,
             ihmax,
             input_core_dims=input_core_dims,
             output_core_dims=[["part", "freq", "dir"]],
@@ -1294,6 +1310,7 @@ def np_steepness(
     min_steepness=DEFAULTS["min_steepness"],
     tail=False,
     swells=DEFAULTS["swells"],
+    swell_merge=DEFAULTS["swell_merge"],
     ihmax=DEFAULTS["ihmax"],
 ):
     """STEEPNESS spectra partitioning on numpy arrays.
@@ -1309,6 +1326,12 @@ def np_steepness(
         - tail (bool): If True, account for an f^-5 high-frequency tail beyond
           the last frequency when evaluating the steepness.
         - swells (int): Number of swell partitions to compute, all detected if None.
+        - swell_merge (str): How to reduce more than `swells` detected swells down
+          to `swells` partitions: "sum" adds the spectral energy of the smallest
+          excess swells into the last (smallest) kept partition; "hp01" merges
+          excess swells onto their closest neighbour using the Hanson and Phillips
+          (2001) adjacency criteria. Ignored if `swells` is None. Either way, no
+          swell energy is discarded.
         - ihmax (int): Number of discrete spectral levels in WW3 Watershed code.
 
     Returns:
@@ -1353,10 +1376,33 @@ def np_steepness(
         swell_partitions = [swell for swell in swell_partitions if swell.sum() > 0]
     else:
         if len(swell_partitions) > swells:
-            # Discard extra partitions
-            swell_partitions = swell_partitions[:swells]
-        elif len(swell_partitions) < swells:
-            # Extend partitions list with null spectra
+            if swell_merge == "sum":
+                # Keep the `swells - 1` largest swells individually, sum the
+                # spectral energy of the rest into the last kept partition
+                n_individual = max(swells - 1, 0)
+                kept = list(swell_partitions[:n_individual])
+                excess = swell_partitions[n_individual:]
+                if excess:
+                    kept.append(np.sum(excess, axis=0))
+                swell_partitions = kept
+            elif swell_merge == "hp01":
+                # Merge excess swells onto their closest neighbour using HP01's
+                # own adjacency/saddle/angle criteria instead of a plain sum
+                swell_partitions = combine_partitions_hp01(
+                    partitions=swell_partitions,
+                    freq=freq,
+                    dir=dir,
+                    swells=swells,
+                    combine_extra_swells=True,
+                )
+            else:
+                raise ValueError(
+                    f"swell_merge must be 'sum' or 'hp01', got {swell_merge!r}"
+                )
+        if len(swell_partitions) < swells:
+            # Extend partitions list with null spectra -- either fewer than
+            # `swells` were detected in the first place, or hp01 merging
+            # combined some of them down below the requested count
             n = swells - len(swell_partitions)
             for i in range(n):
                 swell_partitions.append(np.zeros_like(spectrum))
