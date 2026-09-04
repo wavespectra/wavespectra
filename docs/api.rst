@@ -88,6 +88,7 @@ All methods in the :py:class:`SpecArray` accessor are also available from :py:cl
    partition.partition.Partition.ptm4
    partition.partition.Partition.ptm5
    partition.partition.Partition.hp01
+   partition.partition.Partition.steepness
    partition.partition.Partition.bbox
    partition.partition.Partition.track
 
@@ -238,6 +239,7 @@ Internal core functions and objects
    partition.partition.np_ptm2
    partition.partition.np_ptm3
    partition.partition.np_hp01
+   partition.partition.np_steepness
    partition.tracking.dfp_wsea
    partition.tracking.dfp_swell
    partition.tracking.match_consecutive_partitions
@@ -268,6 +270,7 @@ Internal core functions and objects
    core.npstats.tps
    core.npstats.tp
    core.npstats.dpspr
+   core.npstats.steepness
    core.npstats.mom1
    core.npstats.jonswap
    core.npstats.gaussian
