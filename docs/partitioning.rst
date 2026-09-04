@@ -36,6 +36,10 @@ spread of either partition and their mean directions agree. An exact number of s
 partitions can be requested, in which case the least separated partitions are further
 combined until the requested number is reached.
 
+The `STEEPNESS` method is a variation of `PTM1` that classifies the wind sea from the
+wave steepness of each topographic partition rather than from a wave age criterion
+based on the wind, so it requires no wind input.
+
 The `BBOX` method is a custom method to split the energy
 density inside and outside a defined bounding box in spectral space.
 
@@ -63,8 +67,8 @@ and the wind and depth arguments must be prescribed.
      - yes
      - yes
    * - ``track``
-     - Any of ``ptm1``, ``ptm2``, ``ptm3`` or ``hp01``, with the partitions
-       tracked in time into wave systems
+     - Any of ``ptm1``, ``ptm2``, ``ptm3``, ``steepness`` or ``hp01``, with the
+       partitions tracked in time into wave systems
      - as per method
      - as per method
    * - ``ptm2``
@@ -88,6 +92,11 @@ and the wind and depth arguments must be prescribed.
        prescribing an exact number of output partitions
      - yes
      - optional
+   * - ``steepness``
+     - As ``ptm1``, with the wind sea identified from the partition steepness
+       instead of the wave age
+     - yes
+     - depth only
    * - ``bbox``
      - Split inside/outside a bounding box in spectral space
      - no
@@ -103,8 +112,8 @@ Some parameters are shared by several methods:
 * ``ihmax``: Number of discrete levels used to bin the spectra in the watershed
   algorithm.
 * ``swells`` (``parts`` in ``ptm3``): Number of partition slots in the output
-  ``part`` dimension; smaller partitions are dropped (or combined in ``hp01``) and
-  missing slots are null-padded. Setting it to None sizes the output from the
+  ``part`` dimension; smaller partitions are dropped (or combined in ``hp01`` and
+  ``steepness``) and missing slots are null-padded. Setting it to None sizes the output from the
   largest number of partitions detected across all spectra, at the cost of an extra
   pass over the data.
 
@@ -367,11 +376,85 @@ result is the same as the PTM1 method.
     plt.draw()
 
 
+STEEPNESS
+_________
+
+STEEPNESS works like PTM1 but identifies the wind sea from the steepness
+:math:`H_{m0}/L` of each topographic partition, evaluated at the energy period
+:math:`T_{m-1,0}`, rather than from the wave age criterion based on wind speed and
+direction. Partitions with steepness at or above the ``scut`` cutoff are aggregated
+and assigned to the wind-sea component, and the remaining partitions are assigned as
+swell components in order of decreasing wave height. No wind input is required, which
+makes this method useful when reliable wind data are not available, or when the
+misalignment between wave and wind direction is not a desired classification factor.
+
+The steepness of a fully developed Pierson-Moskowitz sea is 0.035 in deep water
+regardless of the wind speed, and it grows as the sea gets younger, so a single
+threshold applies across the range of wind speeds. The default ``scut`` of 0.025 sits
+below the fully developed value to allow for the energy a topographic partition loses
+at its watershed boundaries.
+
+The method returns one wind sea and one swell by default, which is the primary use
+case. Any further swells detected are merged into that single swell partition so no
+energy is discarded:
+
+.. ipython:: python
+    :okwarning:
+
+    dset = read_wwm("_static/wwmfile.nc")
+    dspart = dset.spec.partition.steepness(dset.dpt)
+    dspart.isel(time=7, site=0, drop=True).spec.plot(col="part");
+
+    @savefig partitioning_steepness.png
+    plt.draw()
+
+Prescribing more `swells` splits the swell energy into individual partitions in order
+of decreasing wave height. The `swell_merge` argument defines how any excess
+partitions are reduced to the requested number: ``"sum"`` (the default) adds the
+smallest ones into the last kept partition, while ``"hp01"`` merges them onto their
+closest neighbour using the criteria from the HP01 method. Either way no swell energy
+is discarded:
+
+.. ipython:: python
+    :okwarning:
+
+    dspart = dset.spec.partition.steepness(dset.dpt, swells=2, swell_merge="hp01")
+    dspart.isel(time=7, site=0, drop=True).spec.plot(col="part");
+
+    @savefig partitioning_steepness_swells.png
+    plt.draw()
+
+The steepness of a wind sea partition is underestimated when its peak sits close to
+the upper limit of the frequency grid, since the truncated energy is missing from
+:math:`H_{m0}`. This affects light wind seas on the coarse frequency grids typical of
+wave model output, which may then fall below `scut` and be classified as swell.
+Setting `tail` accounts for an :math:`f^{-5}` tail beyond the last frequency when
+evaluating the steepness. The correction is inert for swell partitions, which carry no
+energy at the last frequency:
+
+.. ipython:: python
+    :okwarning:
+
+    dsetw = read_ww3("_static/ww3file.nc")
+    # This frequency grid stops below 0.5 Hz so light wind seas are truncated
+    float(dsetw.freq.max())
+    notail = dsetw.spec.partition.steepness(dsetw.dpt)
+    tail = dsetw.spec.partition.steepness(dsetw.dpt, tail=True)
+    # Fraction of the spectra in which a wind sea is identified
+    float((notail.spec.hs().isel(part=0) > 0).mean())
+    float((tail.spec.hs().isel(part=0) > 0).mean())
+
+The steepness is evaluated with the local wavelength when the depth is available, so
+shoaling waves become steeper in shallow water and swells may be classified as wind
+sea on that basis alone. Prescribe a larger `scut`, or partition without a depth
+argument to classify from the deep water steepness, in shallow water applications.
+
+
 TRACK
 _____
-TRACK partitions the spectra with any of the `PTM1`, `PTM2`, `PTM3` or `HP01` methods
-and tracks the partitions in time using the evolution of peak frequency and peak
-direction. Wind sea partitions are matched with wind-sea thresholds based on
+TRACK partitions the spectra with any of the `PTM1`, `PTM2`, `PTM3`, `STEEPNESS` or
+`HP01` methods and tracks the partitions in time using the evolution of peak frequency
+and peak direction. Wind sea partitions are matched with wind-sea thresholds based on
 fetch-limited growth rates and swell partitions with thresholds based on the swell
 dispersion rate. The method returns the partitioned dataset with two extra data
 variables: `track_id`, identifying the wave system each partition belongs to at each
@@ -396,7 +479,10 @@ input spectra dataset and can be used to combine these systems to yield consiste
 time series. The `ptm4`, `ptm5` and `bbox` methods define partitions as fixed spectral
 regions whose identity is already continuous in time, so they are not available for
 tracking. The `ptm3` method has no wind sea classification, all partitions are matched
-with the swell thresholds and wind inputs are not required.
+with the swell thresholds and wind inputs are not required. The `steepness` method
+classifies the wind sea without wind, but the wind speed still defines the wind-sea
+matching threshold, so without it all its partitions are matched with the swell
+thresholds.
 
 Setting `systems=True` remaps the output onto a `wave_system` dimension in place of
 `part`, so that each tracked wave system occupies its own index and carries values
