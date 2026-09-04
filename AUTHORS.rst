@@ -26,9 +26,11 @@ Contributors
 
 * `Matthew Iannucci`_
 * `Carlos A. Michelén Ströfer`_
+* `eddylr`_
 * `Henrique Rapizo`_
 * `John Harrington`_
 * `Jorge Perez`_
+* `Joris de Vroom`_
 * `Paul Branson`_
 * `Ruben de Bruin`_
 * `Ryan Coe`_
@@ -36,9 +38,11 @@ Contributors
 
 .. _`Matthew Iannucci`: https://github.com/mpiannucci
 .. _`Carlos A. Michelén Ströfer`: https://github.com/cmichelenstrofer
+.. _`eddylr`: https://github.com/eddylr
 .. _`Henrique Rapizo`: https://github.com/hrapizo
 .. _`John Harrington`: https://github.com/JohnCHarrington
 .. _`Jorge Perez`: https://github.com/jorgeperezg
+.. _`Joris de Vroom`: https://github.com/jdevroom
 .. _`Paul Branson`: https://github.com/pbranson
 .. _`Ruben de Bruin`: https://github.com/RubendeBruin
 .. _`Ryan Coe`: https://github.com/ryancoe

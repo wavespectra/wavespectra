@@ -36,8 +36,28 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
-4.8.1 (unreleased)
+4.9.0 (2026-09-04)
 ___________________
+
+New Features
+------------
+* New ``steepness`` partitioning method in the ``spec.partition`` namespace,
+  contributed by `Joris de Vroom <https://github.com/jdevroom>`_
+  (`#173 <https://github.com/wavespectra/wavespectra/pull/173>`_). It works like
+  ``ptm1`` but identifies the wind sea from the wave steepness Hm0 / L of each
+  topographic partition, evaluated at the energy period Tm-1,0, rather than from
+  the wave age criterion based on wind speed and direction, so it requires no
+  wind input. Partitions with steepness at or above the ``scut`` cutoff are
+  aggregated into the wind sea and the remaining partitions become the swells,
+  merged down to the requested number of ``swells`` so that no swell energy is
+  discarded. The default of one swell returns a single wind sea and a single
+  swell. This method is useful when reliable wind data are not available, or
+  when the misalignment between wave and wind direction is not a desired
+  classification factor.
+* New ``wavespectra.core.npstats.steepness`` function to calculate the wave
+  steepness Hm0 / L of a frequency spectrum at the energy period Tm-1,0,
+  optionally accounting for the water depth and for an f^-5 high-frequency tail
+  beyond the last frequency.
 
 Bug Fixes
 ---------
@@ -50,7 +70,8 @@ Bug Fixes
   biasing ``dm`` by up to several degrees relative to the model output. Expect
   ``dm`` values to change slightly for existing datasets with non-uniform
   frequency grids. The numpy implementation ``wavespectra.core.npstats.dm`` now
-  requires the ``freq`` array as an additional argument
+  requires the ``freq`` array as an additional argument. Reported by
+  `eddylr <https://github.com/eddylr>`_
   (`#174 <https://github.com/wavespectra/wavespectra/issues/174>`_).
 
 Internal Changes

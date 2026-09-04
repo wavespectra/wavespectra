@@ -164,7 +164,7 @@ select = ["E4", "E7", "E9", "F", "B015", "B018"]
 github_url = "https://github.com/wavespectra/wavespectra/"
 
 [tool.tbump.version]
-current = "4.8.0"
+current = "4.9.0"
 regex = '''
   (?P<major>\d+)
   \.(?P<minor>\d+)
