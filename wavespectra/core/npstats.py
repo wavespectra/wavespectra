@@ -27,19 +27,21 @@ def mom1(spectrum, dir, theta=90.0):
     return msin, mcos
 
 
-def dm(spectrum, dir):
+def dm(spectrum, dir, freq):
     """Mean wave direction Dm.
 
     Args:
-        - spectrum (2darray): wave spectrum array.
+        - spectrum (2darray): wave spectrum array E(f, d).
         - dir (1darray): wave direction array.
+        - freq (1darray): wave frequency array.
 
     Returns:
-        - dm (float): Mean spectral period.
+        - dm (float): Mean wave direction.
 
     """
     moms, momc = mom1(spectrum, dir)
-    dm = np.arctan2(moms.sum(axis=0), momc.sum(axis=0))
+    df = np.gradient(freq) if np.size(freq) > 1 else np.ones(1)
+    dm = np.arctan2((moms * df).sum(axis=0), (momc * df).sum(axis=0))
     dm = (270 - R2D * dm) % 360.0
     return dm
 

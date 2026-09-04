@@ -479,13 +479,18 @@ class SpecArray(object):
         return tm02.rename(self._my_name())
 
     def dm(self):
-        """Mean wave direction from the 1st spectral moment Dm."""
+        """Mean wave direction from the 1st spectral moment Dm.
+
+        Defined from the sin and cosine components of the first directional
+        moment integrated over frequency and direction.
+
+        """
         if self.dir is None:
             raise ValueError("Cannot calculate dm from 1d, frequency spectra.")
         moms, momc = self.momd(1)
         dm = np.arctan2(
-            moms.sum(dim=attrs.FREQNAME, skipna=False),
-            momc.sum(dim=attrs.FREQNAME, skipna=False),
+            (moms * self.df).sum(dim=attrs.FREQNAME, skipna=False),
+            (momc * self.df).sum(dim=attrs.FREQNAME, skipna=False),
         )
         dm = (270 - R2D * dm) % 360.0
         dm.attrs.update(self._get_cf_attributes(self._my_name()))

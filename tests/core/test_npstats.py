@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from wavespectra import read_swan
-from wavespectra.core.npstats import hs, dpm, dp, tps, tp, dpspr
+from wavespectra.core.npstats import hs, dm, dpm, dp, tps, tp, dpspr
 
 
 FILES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../sample_files")
@@ -23,6 +23,14 @@ def test_hs(dset):
     hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values, tail=False)
     ds = ds.isel(dir=[0])
     hs(spectrum=ds.efth.values, freq=ds.freq.values, dir=ds.dir.values)
+
+
+def test_dm(dset):
+    ds = dset.isel(time=0, site=0, drop=True)
+    out = dm(spectrum=ds.efth.values, dir=ds.dir.values, freq=ds.freq.values)
+    assert np.isclose(out, float(ds.efth.spec.dm()))
+    # Independent reference from the SWAN table output for the same run
+    assert np.isclose(out, 250.226, atol=0.25)
 
 
 def test_dpm(dset):

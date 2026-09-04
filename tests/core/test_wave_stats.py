@@ -2,6 +2,7 @@
 
 import os
 import pytest
+import numpy as np
 import pandas as pd
 
 from wavespectra import read_swan
@@ -58,3 +59,25 @@ class TestSpecArray(object):
         ctrl = self.control[stat_name].values
         calc = getattr(self.swanspec.spec, stat_name)().values.ravel()
         assert calc == pytest.approx(ctrl, rel=rel)
+
+    def test_dm_against_swan_table(self):
+        """Mean direction must match the values written by SWAN for the same run.
+
+        Guards the frequency weighting of the directional moments on the
+        logarithmic frequency grid, see issue #174.
+
+        """
+        tab = pd.read_csv(
+            os.path.join(FILES_DIR, "swanfile.tab"),
+            sep=r"\s+",
+            comment="%",
+            header=None,
+            usecols=[0, 2],
+            names=["time", "dm"],
+            dtype={"time": str},
+        )
+        tab["time"] = pd.to_datetime(tab["time"].str.slice(0, 8), format="%Y%m%d")
+        tab = tab.set_index("time")
+        calc = self.swanspec.spec.dm().sel(time=tab.index).values.ravel()
+        diff = (calc - tab["dm"].values + 180) % 360 - 180
+        assert np.abs(diff).max() < 0.25
