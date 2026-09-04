@@ -134,7 +134,9 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.ruff.lint]
-extend-select = ["B015", "B018"]
+# Pin the rule set explicitly so linting does not change with the ruff release.
+# E4, E7, E9 and F were the defaults up to ruff 0.15.
+select = ["E4", "E7", "E9", "F", "B015", "B018"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "wavespectra/__init__.py" = ["F401"]

@@ -53,6 +53,11 @@ Bug Fixes
   requires the ``freq`` array as an additional argument
   (`#174 <https://github.com/wavespectra/wavespectra/issues/174>`_).
 
+Internal Changes
+----------------
+* The ruff lint rule set is now pinned explicitly in ``pyproject.toml`` so the
+  lint job no longer depends on the default rules of the installed ruff version.
+
 4.8.0 (2026-07-23)
 ___________________
 
