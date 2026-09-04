@@ -126,7 +126,7 @@ def test_steepness_decreases_with_wave_age(freq):
         values.append(steepness(efth.values, freq.values))
     assert np.all(np.diff(values) < 0)
     # The fully developed end of the growth curve is still above the default
-    # min_steepness threshold used to classify wind sea
+    # scut threshold used to classify wind sea
     assert values[-1] > 0.025
 
 

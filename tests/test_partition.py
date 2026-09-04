@@ -386,7 +386,7 @@ class TestSteepness(BasePTM):
     def setup_class(self):
         super().setup_class(self)
         self.dpt = self.dset.isel(time=0, site=0).dpt.values
-        self.min_steepness = 0.025
+        self.scut = 0.025
         self.swells = 3
 
     def _exec(self, **kwargs):
@@ -396,7 +396,7 @@ class TestSteepness(BasePTM):
             freq=self.freq,
             dir=self.dir,
             dpt=kwargs.get("dpt", self.dpt),
-            min_steepness=kwargs.get("min_steepness", self.min_steepness),
+            scut=kwargs.get("scut", self.scut),
             tail=kwargs.get("tail", False),
             swells=kwargs.get("swells", self.swells),
         )
@@ -406,6 +406,26 @@ class TestSteepness(BasePTM):
         self.out = self._exec()
         assert self.out.shape[0] == self.swells + 1
         assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_default_swells_is_one(self):
+        """The default returns a single wind sea and a single swell."""
+        assert DEFAULTS["steepness_swells"] == 1
+        self.out = np_steepness(
+            spectrum=self.efth,
+            spectrum_smooth=self.efth,
+            freq=self.freq,
+            dir=self.dir,
+            dpt=self.dpt,
+        )
+        assert self.out.shape[0] == 2
+        assert self.hs_full == pytest.approx(self.hs_from_partitions)
+
+    def test_default_swells_is_one_class(self):
+        """The Partition wrapper defaults to one wind sea and one swell."""
+        dspart = self.pt.steepness(dpt=self.dset.dpt)
+        assert dspart.part.size == 2
+        hs_dspart = np.sqrt((dspart.spec.hs() ** 2).sum("part"))
+        assert np.allclose(hs_dspart.values, self.dset.spec.hs().values, rtol=1e-2)
 
     def test_request_all_partitions(self):
         self.out = self._exec(swells=None)
@@ -470,17 +490,17 @@ class TestSteepness(BasePTM):
         assert hs_windsea(10.0) == pytest.approx(2.0, rel=1e-2)
 
     def test_lower_threshold_grows_windsea(self):
-        """A lower min_steepness threshold classifies more energy as wind sea."""
-        lo = self.pt.steepness(dpt=self.dset.dpt, min_steepness=0.01, swells=2)
-        hi = self.pt.steepness(dpt=self.dset.dpt, min_steepness=0.06, swells=2)
+        """A lower scut threshold classifies more energy as wind sea."""
+        lo = self.pt.steepness(dpt=self.dset.dpt, scut=0.01, swells=2)
+        hi = self.pt.steepness(dpt=self.dset.dpt, scut=0.06, swells=2)
         hs_sea_lo = lo.isel(part=0).spec.hs()
         hs_sea_hi = hi.isel(part=0).spec.hs()
         assert bool((hs_sea_lo >= hs_sea_hi).all())
         assert bool((hs_sea_lo > hs_sea_hi).any())
 
     def test_unreachable_threshold_leaves_no_windsea(self):
-        """Partition 0 is null when no partition reaches min_steepness."""
-        dspart = self.pt.steepness(dpt=self.dset.dpt, min_steepness=1.0, swells=2)
+        """Partition 0 is null when no partition reaches scut."""
+        dspart = self.pt.steepness(dpt=self.dset.dpt, scut=1.0, swells=2)
         assert bool((dspart.isel(part=0).spec.hs() == 0).all())
 
     def test_tail_grows_windsea(self):
@@ -588,7 +608,7 @@ class TestSteepnessSwellMerge:
             freq=self.freq,
             dir=self.dir,
             dpt=self.dpt,
-            min_steepness=0.025,
+            scut=0.025,
             swells=swells,
             swell_merge=swell_merge,
         )

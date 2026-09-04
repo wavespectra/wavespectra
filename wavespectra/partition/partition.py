@@ -38,7 +38,8 @@ DEFAULTS = {
     "window": 3,
     "wscut": 0.3333,
     "agefac": 1.7,
-    "min_steepness": 0.025,
+    "scut": 0.025,
+    "steepness_swells": 1,
     "swell_merge": "sum",
 }
 
@@ -648,9 +649,9 @@ class Partition:
     def steepness(
         self,
         dpt=None,
-        min_steepness=DEFAULTS["min_steepness"],
+        scut=DEFAULTS["scut"],
         tail=False,
-        swells=DEFAULTS["swells"],
+        swells=DEFAULTS["steepness_swells"],
         swell_merge=DEFAULTS["swell_merge"],
         smooth=DEFAULTS["smooth"],
         freq_window=DEFAULTS["window"],
@@ -663,26 +664,28 @@ class Partition:
         Hm0 / L of each topographic partition, evaluated at the energy period
         Tm-1,0, rather than from the wind speed and direction based wave age
         criterion used by the other methods. Partitions with steepness at or
-        above `min_steepness` are aggregated and assigned to the wind-sea
-        component (e.g., the first partition). The remaining partitions are
-        assigned as swell components in order of decreasing wave height,
-        merged down to `swells` partitions if more are detected (see
-        `swell_merge`) so that no swell energy is discarded. Because no wind
-        input is used, this method is useful when reliable wind speed and
-        direction are not available, or when the misalignment between wave
-        and wind direction is not a desired classification factor.
+        above `scut` are aggregated and assigned to the wind-sea component
+        (e.g., the first partition). The remaining partitions are assigned as
+        swell components in order of decreasing wave height, merged down to
+        `swells` partitions if more are detected (see `swell_merge`) so that no
+        swell energy is discarded. The default `swells=1` therefore returns a
+        single wind sea and a single swell holding all the non wind-sea energy.
+        Because no wind input is used, this method is useful when reliable wind
+        speed and direction are not available, or when the misalignment between
+        wave and wind direction is not a desired classification factor.
 
         Args:
             - dpt (xr.DataArray): Depth DataArray, taken from the `dpt` variable
               in the underlying dataset if not provided, deep water approximation
               used if not available from either source.
-            - min_steepness (float): Minimum wave steepness Hm0 / L for a
-              partition to be classified as wind sea.
+            - scut (float): Wave steepness Hm0 / L cutoff, partitions with
+              steepness at or above this value are classified as wind sea.
             - tail (bool): If True, account for an f^-5 high-frequency tail
               beyond the last frequency when evaluating the steepness.
-            - swells (int): Number of swell partitions to compute. If None, the
-              number required to hold all swells detected from all spectra is
-              used, which doubles the compute time and triggers an eager
+            - swells (int): Number of swell partitions to compute, the default
+              of 1 merges all detected swells into a single partition. If None,
+              the number required to hold all swells detected from all spectra
+              is used, which doubles the compute time and triggers an eager
               computation on dask datasets.
             - swell_merge (str): How to reduce more than `swells` detected swells
               down to `swells` partitions. "sum" (default) keeps the `swells - 1`
@@ -706,24 +709,24 @@ class Partition:
         Note:
             - The steepness of a fully developed Pierson-Moskowitz sea is 0.035
               in deep water regardless of the wind speed, and it grows as the sea
-              gets younger, so a single `min_steepness` threshold applies across
-              the range of wind speeds. The default of 0.025 sits below the fully
+              gets younger, so a single `scut` threshold applies across the
+              range of wind speeds. The default of 0.025 sits below the fully
               developed value to allow for the energy a topographic partition
               loses at its watershed boundaries.
             - The steepness of a wind sea partition is underestimated when its
               peak is close to the upper limit of the frequency grid, since the
               truncated energy is missing from Hm0. This affects light wind seas
               on the coarse frequency grids typical of wave model output, which
-              may then fall below `min_steepness` and be classified as swell.
-              Set `tail=True` to compensate for the truncated energy; the
-              correction is inert for swell partitions, which carry no energy at
-              the last frequency.
+              may then fall below `scut` and be classified as swell. Set
+              `tail=True` to compensate for the truncated energy; the correction
+              is inert for swell partitions, which carry no energy at the last
+              frequency.
             - The steepness is evaluated with the local wavelength when the depth
               is available, so shoaling waves become steeper in shallow water and
               swells may be classified as wind sea on that basis alone. Prescribe
-              a larger `min_steepness` or partition from the DataArray accessor
-              without a `dpt` argument to classify from the deep water steepness
-              in shallow water applications.
+              a larger `scut` or partition from the DataArray accessor without
+              a `dpt` argument to classify from the deep water steepness in
+              shallow water applications.
 
         References:
             - Hanson and Phillips (2001).
@@ -750,7 +753,7 @@ class Partition:
             self.dset.freq,
             self.dset.dir,
             dpt,
-            min_steepness,
+            scut,
             tail,
         ]
         input_core_dims = [
@@ -1131,7 +1134,7 @@ class Partition:
               must span to be included in the `systems=True` output. The
               default of 1 keeps all tracked systems.
             - kwargs: Further arguments passed to the partitioning method, e.g.
-              `swells`, `agefac`, `wscut`, `min_steepness`, `smooth` or the
+              `swells`, `agefac`, `wscut`, `scut`, `smooth` or the
               hp01 combining parameters.
 
         Returns:
@@ -1307,9 +1310,9 @@ def np_steepness(
     freq,
     dir,
     dpt=np.nan,
-    min_steepness=DEFAULTS["min_steepness"],
+    scut=DEFAULTS["scut"],
     tail=False,
-    swells=DEFAULTS["swells"],
+    swells=DEFAULTS["steepness_swells"],
     swell_merge=DEFAULTS["swell_merge"],
     ihmax=DEFAULTS["ihmax"],
 ):
@@ -1321,11 +1324,13 @@ def np_steepness(
         - freq (1darray): Wave frequency array with shape (nf).
         - dir (1darray): Wave direction array with shape (nd).
         - dpt (float): Water depth, deep water approximation used if nan.
-        - min_steepness (float): Minimum wave steepness Hm0 / L, evaluated at the
-          energy period Tm-1,0, for a partition to be classified as wind sea.
+        - scut (float): Wave steepness Hm0 / L cutoff, evaluated at the energy
+          period Tm-1,0, at or above which a partition is classified as wind sea.
         - tail (bool): If True, account for an f^-5 high-frequency tail beyond
           the last frequency when evaluating the steepness.
-        - swells (int): Number of swell partitions to compute, all detected if None.
+        - swells (int): Number of swell partitions to compute, all detected if
+          None. The default of 1 merges all detected swells into a single
+          partition.
         - swell_merge (str): How to reduce more than `swells` detected swells down
           to `swells` partitions: "sum" adds the spectral energy of the smallest
           excess swells into the last (smallest) kept partition; "hp01" merges
@@ -1358,7 +1363,7 @@ def np_steepness(
     for ipart in range(nparts):
         part = np.where(watershed_map == ipart + 1, spectrum, 0.0)  # start at 1
         E = ddir * part.sum(axis=1)
-        if npstats.steepness(E, freq, dpt, tail) >= min_steepness:
+        if npstats.steepness(E, freq, dpt, tail) >= scut:
             wsea_partition += part
         else:
             swell_partitions.append(part)
