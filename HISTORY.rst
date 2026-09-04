@@ -36,6 +36,28 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
+4.8.1 (unreleased)
+___________________
+
+Bug Fixes
+---------
+* The mean wave direction ``dm`` now weights the directional moments by the
+  frequency resolution when integrating over frequency, consistently with
+  ``dspr`` and with the standard definition used by wave models such as SWAN
+  and WW3. Previously the frequency bins were summed with equal weights, which
+  is only correct on uniformly spaced frequency grids. On the logarithmic grids
+  commonly used by spectral wave models the high frequencies were underweighted,
+  biasing ``dm`` by up to several degrees relative to the model output. Expect
+  ``dm`` values to change slightly for existing datasets with non-uniform
+  frequency grids. The numpy implementation ``wavespectra.core.npstats.dm`` now
+  requires the ``freq`` array as an additional argument
+  (`#174 <https://github.com/wavespectra/wavespectra/issues/174>`_).
+
+Internal Changes
+----------------
+* The ruff lint rule set is now pinned explicitly in ``pyproject.toml`` so the
+  lint job no longer depends on the default rules of the installed ruff version.
+
 4.8.0 (2026-07-23)
 ___________________
 
