@@ -43,7 +43,8 @@ def dm(spectrum, dir, freq):
     df = np.gradient(freq) if np.size(freq) > 1 else np.ones(1)
     dm = np.arctan2((moms * df).sum(axis=0), (momc * df).sum(axis=0))
     dm = (270 - R2D * dm) % 360.0
-    return dm
+    e = (spectrum.sum(axis=1) * df).sum()
+    return dm if e > 0 else np.nan
 
 
 def hs(spectrum, freq, dir=None, tail=True):

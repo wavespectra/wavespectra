@@ -35,6 +35,12 @@ def test_dm(dset):
     assert np.isclose(out, 250.226, atol=0.25)
 
 
+def test_dm_no_energy(dset):
+    ds = dset.isel(time=0, site=0, drop=True)
+    efth = np.zeros_like(ds.efth.values)
+    assert np.isnan(dm(spectrum=efth, dir=ds.dir.values, freq=ds.freq.values))
+
+
 def test_dpm(dset):
     ds = dset.isel(time=0, site=0, drop=True)
     ipeak = ds.efth.spec._peak(ds.efth.spec.oned())

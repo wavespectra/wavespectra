@@ -132,3 +132,11 @@ def test_partition_interface(dset_full):
     methods = ["ptm1", "ptm2", "ptm3", "ptm4", "ptm5"]
     for method in methods:
         assert method in dir(dset.spec.partition)
+
+
+def test_dm_no_energy(dset):
+    ds = dset.isel(time=slice(0, 2)).copy(deep=True)
+    ds[{"time": 0}] = 0.0
+    dm = ds.spec.dm()
+    assert dm.isel(time=0).isnull().all()
+    assert dm.isel(time=1).values == pytest.approx(dset.isel(time=1).spec.dm().values)

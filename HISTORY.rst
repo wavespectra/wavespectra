@@ -36,6 +36,20 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
+4.9.1 (unreleased)
+___________________
+
+Bug Fixes
+---------
+* The mean wave direction ``dm`` now returns NaN for spectra with no energy,
+  consistently with ``dspr``, ``tp`` and ``dpm``. Previously the zero first
+  directional moments gave ``arctan2(0, 0) = 0`` and ``dm`` returned 270 degrees,
+  which commonly showed up as spurious directions in empty partitions (e.g. a
+  wind sea at light winds or an unused swell slot). The numpy implementation
+  ``wavespectra.core.npstats.dm`` is fixed in the same way. Reported by
+  `rakuEquinor <https://github.com/rakuEquinor>`_
+  (`#176 <https://github.com/wavespectra/wavespectra/issues/176>`_).
+
 4.9.0 (2026-09-04)
 ___________________
 

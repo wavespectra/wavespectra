@@ -492,7 +492,8 @@ class SpecArray(object):
             (moms * self.df).sum(dim=attrs.FREQNAME, skipna=False),
             (momc * self.df).sum(dim=attrs.FREQNAME, skipna=False),
         )
-        dm = (270 - R2D * dm) % 360.0
+        e = (self.oned() * self.df).sum(dim=attrs.FREQNAME)
+        dm = ((270 - R2D * dm) % 360.0).where(e > 0)
         dm.attrs.update(self._get_cf_attributes(self._my_name()))
         return dm.rename(self._my_name())
 
