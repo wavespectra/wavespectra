@@ -9,6 +9,13 @@ from wavespectra.core.attributes import attrs
 from wavespectra.core import npstats
 
 
+def _name_and_attrs(dsout):
+    """Name the 1D frequency spectrum and set its CF attributes (m2 s)."""
+    dsout.name = attrs.SPECNAME
+    dsout.attrs = dict(attrs.ATTRS[attrs.SPEC1DNAME])
+    return dsout
+
+
 def pierson_moskowitz(freq, fp, alpha=0.0081, hs=None, **kwargs):
     """Pierson and Moskowitz spectrum for fully developed seas (Pierson and Moskowitz, 1964).
 
@@ -38,9 +45,7 @@ def pierson_moskowitz(freq, fp, alpha=0.0081, hs=None, **kwargs):
     if hs is not None:
         dsout = scaled(dsout, hs)
 
-    dsout.name = attrs.SPECNAME
-
-    return dsout
+    return _name_and_attrs(dsout)
 
 
 def jonswap(
@@ -80,9 +85,7 @@ def jonswap(
     if hs is not None:
         dsout = scaled(dsout, hs)
 
-    dsout.name = attrs.SPECNAME
-
-    return dsout
+    return _name_and_attrs(dsout)
 
 
 def tma(
@@ -130,9 +133,7 @@ def tma(
     if hs is not None:
         dsout = scaled(dsout, hs)
 
-    dsout.name = attrs.SPECNAME
-
-    return dsout
+    return _name_and_attrs(dsout)
 
 
 def gaussian(freq, hs, fp, gw, **kwargs):
@@ -160,8 +161,7 @@ def gaussian(freq, hs, fp, gw, **kwargs):
     mo = (hs / 4) ** 2
     dsout = mo / (gw * np.sqrt(2 * pi)) * np.exp(-0.5 * ((freq - fp) / gw) ** 2)
     dsout = scaled(dsout, hs)
-    dsout.name = attrs.SPECNAME
-    return dsout
+    return _name_and_attrs(dsout)
 
 
 def conditional(
@@ -204,6 +204,4 @@ def conditional(
     ds_false = false_func(**arguments)
     dsout = xr.where(cond, ds_true, ds_false)
 
-    dsout.name = attrs.SPECNAME
-
-    return dsout
+    return _name_and_attrs(dsout)

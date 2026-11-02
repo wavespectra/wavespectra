@@ -6,7 +6,9 @@ import numpy as np
 import xarray as xr
 
 from wavespectra.construct import construct_partition, partition_and_reconstruct
+from wavespectra.construct.frequency import pierson_moskowitz
 from wavespectra import read_swan
+from wavespectra.core.attributes import attrs
 
 
 FILES_DIR = Path(__file__).parent.parent / "sample_files"
@@ -33,6 +35,13 @@ def dir():
     yield _dir
 
 
+def test_frequency_spectrum_attributes():
+    spectrum = pierson_moskowitz(freq=np.arange(0.05, 0.2, 0.01), fp=0.1)
+
+    assert spectrum.name == attrs.SPECNAME
+    assert spectrum.attrs == attrs.ATTRS[attrs.SPEC1DNAME]
+
+
 def test_construct_partition(freq, dir):
     hs = 2
     fp = 0.1
@@ -50,6 +59,8 @@ def test_construct_partition(freq, dir):
         dir_kwargs=dir_kwargs,
     )
 
+    assert dset.name == attrs.SPECNAME
+    assert dset.attrs == attrs.ATTRS[attrs.SPECNAME]
     assert float(dset.spec.hs()) == pytest.approx(hs, 1e5)
     assert float(dset.spec.fp()) == pytest.approx(fp, 1e5)
     assert float(dset.spec.dm()) == pytest.approx(dm, 1e5)

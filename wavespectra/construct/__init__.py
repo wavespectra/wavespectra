@@ -79,6 +79,7 @@ def construct_partition(
 
     # Frequency-direction spectrum
     dset = efth1d * spread
+    dset.name = attrs.SPECNAME
     set_spec_attributes(dset)
 
     return dset.fillna(0.0)
