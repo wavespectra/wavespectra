@@ -36,11 +36,19 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
-4.9.1 (unreleased)
+4.9.1 (2026-11-04)
 ___________________
 
 Bug Fixes
 ---------
+* Spectra built with the frequency constructors in ``wavespectra.construct.frequency``
+  (``jonswap``, ``pierson_moskowitz``, ``tma``, ``gaussian`` and ``conditional``) now
+  carry the canonical 1D spectrum attributes (``m2 s``). Previously, with recent
+  xarray versions propagating attributes through arithmetic, the significant wave
+  height attributes used for scaling leaked onto the output. ``construct_partition``
+  now also names its output ``efth`` so the directional attributes are applied and
+  the result can be converted to a Dataset. By `Ryan Coe <https://github.com/rgcoe>`_
+  (`#178 <https://github.com/wavespectra/wavespectra/pull/178>`_).
 * The mean wave direction ``dm`` now returns NaN for spectra with no energy,
   consistently with ``dspr``, ``tp`` and ``dpm``. Previously the zero first
   directional moments gave ``arctan2(0, 0) = 0`` and ``dm`` returned 270 degrees,
