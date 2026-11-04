@@ -125,6 +125,12 @@ filterwarnings = [
     "ignore:Setting the shape on a NumPy array has been deprecated:DeprecationWarning",
 ]
 
+[tool.coverage.run]
+# Measure the imported package rather than the `wavespectra/` directory so the
+# reports name files relative to the repo root (wavespectra/specarray.py), which
+# is what Coveralls needs to link them to the GitHub sources.
+source_pkgs = ["wavespectra"]
+
 [tool.ruff]
 line-length = 88
 

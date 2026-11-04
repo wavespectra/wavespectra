@@ -61,7 +61,7 @@ jobs:
       name: Test package
       # --timeout guards against hangs (e.g. netCDF4/dask deadlocks): a stuck
       # test is killed with a thread dump instead of hanging the job for hours.
-      run: pytest -s -v --timeout=300 --timeout-method=thread --cov=wavespectra --cov-report=xml --cov-report=term tests
+      run: pytest -s -v --timeout=300 --timeout-method=thread --cov --cov-report=xml --cov-report=term tests
     -
       name: Upload coverage to Coveralls
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
