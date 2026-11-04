@@ -2,10 +2,6 @@
 wavespectra
 ===========
 
-.. image:: https://deepwiki.com/badge.svg
-   :target: https://deepwiki.com/wavespectra/wavespectra
-   :alt: Ask DeepWiki
-
 .. image:: https://zenodo.org/badge/205463939.svg
    :target: https://zenodo.org/badge/latestdoi/205463939
    :alt: DOI
