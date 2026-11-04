@@ -49,9 +49,14 @@ jobs:
         cache: pip
     -
       name: Install dependencies
+      # Editable install so the tests import the package from the checkout,
+      # which is the tree `--cov=wavespectra` measures. A regular install puts
+      # the package in site-packages, coverage then sees no executed files and
+      # reports 0% (the wheels built by python-publish.yml still exercise the
+      # installed artifact).
       run: |
         python -m pip install --upgrade pip
-        pip install . 'wavespectra[extra,test]'
+        pip install -e '.[extra,test]'
     -
       name: Test package
       # --timeout guards against hangs (e.g. netCDF4/dask deadlocks): a stuck
