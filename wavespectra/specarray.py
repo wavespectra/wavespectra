@@ -630,22 +630,44 @@ class SpecArray(object):
         """
         return xrstats.alpha(self.oned(), smooth=smooth)
 
-    def gamma(self, smooth=True, scaled=True):
+    def gamma(self, smooth=True, scaled=True, log_parabola=False):
         """Jonswap peak enhancement factor gamma.
 
         Represents the ratio between the peak in the frequency spectrum :math:`E(f)`
         and its associate Pierson-Moskowitz shape.
 
-         Args:
-            - smooth (bool): True for the smooth wave frequency, False for the discrete
-              frequency corresponding to the peak in the frequency spectrum.
+        Args:
+            - smooth (bool): True to define the peak of the frequency spectrum, both
+              its frequency and its energy density, from a parabolic fit around the
+              largest frequency bin, False to define it from the largest bin itself.
             - scaled (bool): True to apply polynomial approximation to gamma.
+            - log_parabola (bool): True to fit the parabola to the logarithm of the
+              energy density as a function of the logarithm of the frequency, False
+              to fit it to the energy density as a function of frequency. Only
+              supported with `smooth=True`.
+
+        Note:
+            - Gamma depends on where the spectral peak lies relative to the frequency
+              bins because the peak is underestimated if it lies between two bins.
+              The parabolic fit reduces but does not remove this dependency which is
+              small in finely resolved spectra but may be large in the 10% frequency
+              grids typical of spectral wave models, where gamma may be up to about
+              25% (:math:`\\gamma=3.3`) or 40% (:math:`\\gamma=7`) too low.
+            - The default parabolic fit follows the definition in WAVEWATCH III,
+              the ratio with `scaled=False` corresponds to its peak enhancement
+              parameter. The spectral peak is closer to a parabola in logarithmic
+              space so `log_parabola=True` is more accurate, reducing those errors
+              to about 15% and 30%.
+            - Consider :meth:`fit_jonswap` if the spectral resolution is coarse.
 
         """
-        fp = self.fp(smooth=smooth)
+        if log_parabola and not smooth:
+            raise ValueError("log_parabola=True is only supported with smooth=True")
+        ef = self.oned()
+        fp = 1 / xrstats.peak_wave_period(ef, smooth=smooth, log=log_parabola)
         alpha_pm = 0.3125 * self.hs() ** 2 * fp**4
         epm_fp = alpha_pm * fp**-5 * 0.2865048
-        gamma = self.oned().max(dim=attrs.FREQNAME) / epm_fp
+        gamma = xrstats.peak_energy(ef, smooth=smooth, log=log_parabola) / epm_fp
         if scaled:
             # polynomial approximation for gamma
             p = [0.0378375, -0.13543292, 0.64087366, 0.32524949, 0.12974958]
