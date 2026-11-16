@@ -36,8 +36,27 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
-4.9.1 (2026-11-04)
+4.10.0 (unreleased)
 ___________________
+
+Bug Fixes
+---------
+* The sea and swell partitions from ``spec.partition.ptm5`` now add up to the
+  spectra they are defined from. Previously the energy in the frequency bin at
+  ``fcut`` was included in both partitions, which always happened with the default
+  ``interpolate=True`` since the spectra are interpolated at ``fcut``, so that
+  the partitions had more energy than the spectra, typically by a few percent.
+  With ``interpolate=True`` the energy in the bin at ``fcut`` is now shared
+  between the sea and the swell in proportion to the width of that bin above and
+  below ``fcut``. With ``interpolate=False`` the bins at or below ``fcut`` are
+  assigned to the swell and those above it to the sea as in WW3, so only the sea
+  changes and only if ``fcut`` is one of the frequencies of the spectra. **The
+  wave height of the partitions is therefore lower than before**. Spectra are
+  also no longer interpolated if ``fcut`` is outside their frequency range, in
+  which case all the energy is assigned to one partition. Reported by
+  `rakuEquinor <https://github.com/rakuEquinor>`_
+  (`#180 <https://github.com/wavespectra/wavespectra/issues/180>`_).
+
 
 Bug Fixes
 ---------

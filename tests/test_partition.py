@@ -306,6 +306,68 @@ class TestPTM5(BasePTM):
         ds = self.pt.ptm5(fcut=0.1, interpolate=False)
         assert fcut not in ds.freq
 
+    @pytest.mark.parametrize("interpolate", [True, False])
+    @pytest.mark.parametrize("fcut", [None, 0.1, 0.2])
+    def test_partitions_add_up_to_spectra(self, fcut, interpolate):
+        """Energy at fcut must not be in both partitions, see issue #180."""
+        efth = self.dset.efth
+        if fcut is None:
+            fcut = float(efth.freq[5])
+        ds = Partition(efth).ptm5(fcut=fcut, interpolate=interpolate)
+        m0 = (ds.spec.hs() ** 2).sum("part")
+        np.testing.assert_allclose(m0, efth.spec.hs() ** 2, rtol=1e-5)
+
+    @pytest.mark.parametrize("interpolate", [True, False])
+    @pytest.mark.parametrize("fcut, part", [(0.01, 0), (1.0, 1)])
+    def test_fcut_outside_frequency_range(self, fcut, part, interpolate):
+        """All energy is in one partition and the frequencies are not changed."""
+        efth = self.dset.efth.sortby("dir")
+        ds = Partition(efth).ptm5(fcut=fcut, interpolate=interpolate)
+        xr.testing.assert_equal(ds.freq, efth.freq)
+        xr.testing.assert_allclose(ds.isel(part=part, drop=True), efth)
+        assert float(ds.isel(part=1 - part).max()) == 0
+
+    def test_bins_are_in_one_partition_if_not_interpolate(self):
+        """Bins at or below fcut are swell and those above are sea, as in WW3."""
+        efth = self.dset.efth.sortby("dir")
+        fcut = float(efth.freq[5])
+        ds = Partition(efth).ptm5(fcut=fcut, interpolate=False)
+        sea, swell = ds.isel(part=0, drop=True), ds.isel(part=1, drop=True)
+        assert float(sea.sel(freq=slice(None, fcut)).max()) == 0
+        assert float(swell.sel(freq=slice(fcut + 1e-6, None)).max()) == 0
+        xr.testing.assert_allclose(swell.sel(freq=fcut), efth.sel(freq=fcut))
+        xr.testing.assert_allclose(sea + swell, efth)
+
+    def test_bin_at_fcut_is_shared_if_interpolate(self):
+        """Bin at fcut is split in proportion to its width either side of fcut."""
+        efth = self.dset.efth.sortby("dir")
+        f0, fcut, f1 = efth.freq.values[4:7].astype("float64")
+        ds = Partition(efth).ptm5(fcut=float(efth.freq[5]), interpolate=True)
+        sea, swell = ds.isel(part=0, drop=True), ds.isel(part=1, drop=True)
+        ratio = sea.isel(freq=5) / efth.isel(freq=5)
+        np.testing.assert_allclose(ratio.max(), (f1 - fcut) / (f1 - f0), rtol=1e-5)
+        xr.testing.assert_allclose(sea + swell, efth)
+
+    def test_cutoff_is_closer_to_fcut_if_interpolate(self):
+        """Swell energy in a Pierson-Moskowitz spectrum against the exact value."""
+        fp, fcut = 0.1, 0.085
+        freq = 0.04 * 1.1 ** np.arange(25)
+        efth = xr.DataArray(
+            freq**-5 * np.exp(-1.25 * (fp / freq) ** 4),
+            coords={"freq": freq},
+            dims="freq",
+            name="efth",
+        ).expand_dims(dir=[0.0])
+        exact = np.exp(-1.25 * (fp / fcut) ** 4)
+        error = {}
+        for interpolate in [True, False]:
+            ds = efth.spec.partition.ptm5(fcut=fcut, interpolate=interpolate)
+            m0 = ds.spec.hs() ** 2
+            swell = float(m0.isel(part=1) / m0.sum("part"))
+            error[interpolate] = abs(swell / exact - 1)
+        assert error[True] < 0.05
+        assert error[False] > 0.2
+
 
 class TestHP01(BasePTM):
     def setup_class(self):

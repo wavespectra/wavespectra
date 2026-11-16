@@ -617,9 +617,23 @@ class Partition:
               where the 0th index is the wind sea and the 1st index is the swell.
 
         Note:
+            - The energy in each frequency bin is distributed between the sea and
+              the swell so the partitions add up to the spectra they are defined
+              from.
             - Spectra are interpolated at `fcut` if this frequency is not in `dset`
               and `interpolate` is set to True which implies the frequency coordinates
-              will be different between the input and the output.
+              will be different between the input and the output. The energy in the
+              bin at `fcut` is shared between the sea and the swell in proportion
+              to the width of that bin above and below `fcut`, so that the spectra
+              are split at `fcut`.
+            - The frequency bins at or below `fcut` are entirely assigned to the
+              swell and those above it to the sea if `interpolate` is set to False,
+              as in WW3. The spectra are effectively split at the limit between two
+              frequency bins in this case rather than at `fcut`.
+            - Spectra are not interpolated if `fcut` is not within the frequency
+              range of `dset`, in which case all the energy is assigned to the sea
+              (`fcut` below the lowest frequency) or to the swell (`fcut` at or
+              above the highest frequency).
 
         References:
             - WW3 documentation (https://github.com/NOAA-EMC/WW3).
@@ -627,15 +641,27 @@ class Partition:
         """
         dsout = self.dset.sortby("dir").sortby("freq")
 
+        # Spectra are only split at fcut if it is within the frequency range
+        freq = dsout[attrs.FREQNAME]
+        interpolate = interpolate and float(freq[0]) < fcut < float(freq[-1])
+
         # Include cuttof if not in coordinates
         if interpolate:
             freqs = sorted(set(self.dset.freq.values).union([fcut]))
             if len(freqs) > self.dset.freq.size:
                 dsout = regrid_spec(self.dset, freq=freqs)
+                freq = dsout[attrs.FREQNAME]
+
+        # Fraction of the energy in each frequency bin assigned to the sea
+        sea = (freq > fcut).astype(dsout.dtype)
+        if interpolate:
+            icut = int(np.abs(freq.values - fcut).argmin())
+            flow, fhigh = freq.values[[icut - 1, icut + 1]]
+            sea[icut] = (fhigh - fcut) / (fhigh - flow)
 
         # Zero data outside the domain of each partition
-        hf = dsout.where((dsout.freq >= fcut))
-        lf = dsout.where((dsout.freq <= fcut))
+        hf = dsout * sea
+        lf = dsout * (1 - sea)
 
         # Combining into part index
         dsout = xr.concat([hf, lf], dim="part")
