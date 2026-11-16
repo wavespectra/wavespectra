@@ -36,6 +36,43 @@ Breaking Changes
 * Support for Python 3.9 is removed, the minimum supported version is now
   Python 3.10. This was announced in 4.8.0.
 
+4.10.0 (unreleased)
+___________________
+
+New Features
+------------
+* New ``log_parabola`` argument in ``spec.gamma`` to fit the parabola around the
+  spectral peak to the logarithm of the energy density as a function of the
+  logarithm of the frequency. The spectral peak is closer to a parabola in
+  logarithmic space so this is less sensitive to the position of the peak
+  relative to the frequency bins than the default parabolic fit, which follows
+  the definition in WAVEWATCH III. In Jonswap spectra on a 10% frequency grid
+  the largest error in gamma reduces from about 25% to 15% for a gamma of 3.3.
+  Proposed by `rakuEquinor <https://github.com/rakuEquinor>`_
+  (`#179 <https://github.com/wavespectra/wavespectra/issues/179>`_).
+
+Bug Fixes
+---------
+* The Jonswap peak enhancement factor ``spec.gamma`` now defines the peak of the
+  frequency spectrum consistently. With ``smooth=True`` (the default) the peak
+  energy density is taken from the same parabolic fit around the largest
+  frequency bin that defines the smooth peak frequency. Previously the smooth
+  peak frequency was combined with the energy density of the largest bin, which
+  reads the peak low if it lies between two bins so that gamma depended more
+  strongly on the position of the peak relative to the frequency bins. **Values
+  from the default** ``spec.gamma()`` **are now equal or higher than before**,
+  by a few percent on average and by up to about 15% (gamma of 3.3) or 25%
+  (gamma of 10) in Jonswap spectra on the 10% frequency grids typical of
+  spectral wave models. Values with
+  ``smooth=False``, which uses the frequency and energy density of the largest
+  bin, are unchanged. The parabolic fit reduces but does not remove the
+  dependency on the frequency discretisation, see the new ``log_parabola``
+  argument, and ``spec.fit_jonswap`` is recommended to estimate gamma from
+  coarsely resolved spectra. The peak energy
+  density is available from ``wavespectra.core.xrstats.peak_energy``. Reported
+  by `rakuEquinor <https://github.com/rakuEquinor>`_
+  (`#179 <https://github.com/wavespectra/wavespectra/issues/179>`_).
+
 4.9.1 (2026-11-04)
 ___________________
 

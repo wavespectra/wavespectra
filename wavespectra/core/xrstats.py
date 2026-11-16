@@ -141,12 +141,64 @@ def alpha(dset, smooth=True):
     return darr
 
 
-def peak_wave_period(dset, smooth=True):
+def peak_energy(dset, smooth=True, log=False):
+    """Peak energy density in the frequency spectrum.
+
+    Args:
+        - dset (xr.DataArray, xr.Dataset): 1D spectra array or dataset in wavespectra
+          convention.
+        - smooth (bool): Choose between the smooth (eps) or the raw (ep) peak energy
+          density type.
+        - log (bool): Fit the parabola of the smooth type to the logarithm of the
+          energy density as a function of the logarithm of the frequency.
+
+    Returns:
+        - ep (xr.DataArray): Peak energy density data array.
+
+    Note:
+        - The peak is defined consistently with `peak_wave_period`: the smooth type
+          is the value at the peak of the parabolic fit that defines the smooth peak
+          period and the raw type is the value at the frequency of the raw one.
+
+    """
+    # Ensure DataArray
+    if isinstance(dset, xr.Dataset):
+        dset = dset[attrs.SPECNAME]
+
+    # Choose peak energy function
+    if smooth:
+        func = npstats.eps
+    else:
+        func = npstats.ep
+
+    # Ensure single chunk along input core dimensions
+    dset = dset.chunk({attrs.FREQNAME: None})
+
+    # Frequency Peaks
+    ipeak = dset.spec._peak(dset)
+
+    # Apply function over the full dataset
+    return xr.apply_ufunc(
+        func,
+        ipeak.astype("int64"),
+        dset.astype("float64"),
+        dset[attrs.FREQNAME].astype("float32"),
+        input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        kwargs={"log": log} if smooth else {},
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=["float64"],
+    )
+
+
+def peak_wave_period(dset, smooth=True, log=False):
     """Smooth Peak wave period Tp.
 
     Args:
         - dset (xr.DataArray, xr.Dataset): 1D spectra array or dataset in wavespectra convention.
         - smooth (bool): Choose between the smooth (tps) or the raw (tp) peak wave period type.
+        - log (bool): Fit the parabola of the smooth type to the logarithm of the
+          energy density as a function of the logarithm of the frequency.
 
     Returns:
         - tp (xr.DataArray): Peak wave period data array.
@@ -175,6 +227,7 @@ def peak_wave_period(dset, smooth=True):
         dset.astype("float64"),
         dset[attrs.FREQNAME].astype("float32"),
         input_core_dims=[[], [attrs.FREQNAME], [attrs.FREQNAME]],
+        kwargs={"log": log} if smooth else {},
         vectorize=True,
         dask="parallelized",
         output_dtypes=["float32"],

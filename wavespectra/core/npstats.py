@@ -177,13 +177,46 @@ def alpha(spectrum, freq, fp):
     return np.float32(term1 * term2)
 
 
-def tps(ipeak, spectrum, freq):
+def _peak_parabola(ipeak, spectrum, freq, log=False):
+    """Coefficients of the parabola through the three bins around the spectral peak.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+        - log (bool): Fit the parabola to the logarithm of the energy density as a
+          function of the logarithm of the frequency.
+
+    Returns:
+        - f1, f2 (float): Frequency of the bin before the peak and at the peak.
+        - e2 (float): Energy density at the peak bin.
+        - q12 (float): Slope between the bin before the peak and the peak bin.
+        - qa (float): Curvature of the parabola.
+        - log (bool): True if values are in logarithmic space, the linear space is
+          used if a bin around the peak has no energy.
+
+    """
+    f1, f2, f3 = freq[ipeak - 1 : ipeak + 2]
+    e1, e2, e3 = spectrum[ipeak - 1 : ipeak + 2]
+    log = log and e1 > 0 and e3 > 0 and f1 > 0
+    if log:
+        f1, f2, f3 = np.log(f1), np.log(f2), np.log(f3)
+        e1, e2, e3 = np.log(e1), np.log(e2), np.log(e3)
+    q12 = (e1 - e2) / (f1 - f2)
+    q13 = (e1 - e3) / (f1 - f3)
+    qa = (q13 - q12) / (f3 - f2)
+    return f1, f2, e2, q12, qa, log
+
+
+def tps(ipeak, spectrum, freq, log=False):
     """Smooth peak wave period Tp.
 
     Args:
         - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
         - spectrum (1darray): Direction-integrated wave spectrum array E(f).
         - freq (1darray): Wave frequency array.
+        - log (bool): Fit the parabola to the logarithm of the energy density as a
+          function of the logarithm of the frequency.
 
     Returns:
         - tp (float): Period of the maximum energy density in the smooth spectrum.
@@ -196,17 +229,10 @@ def tps(ipeak, spectrum, freq):
     if not ipeak:
         return np.nan
     else:
-        f1 = freq[ipeak - 1]
-        f2 = freq[ipeak]
-        f3 = freq[ipeak + 1]
-        e1 = spectrum[ipeak - 1]
-        e2 = spectrum[ipeak]
-        e3 = spectrum[ipeak + 1]
-        s12 = f1 + f2
-        q12 = (e1 - e2) / (f1 - f2)
-        q13 = (e1 - e3) / (f1 - f3)
-        qa = (q13 - q12) / (f3 - f2)
-        fp = (s12 - q12 / qa) / 2.0
+        f1, f2, e2, q12, qa, log = _peak_parabola(ipeak, spectrum, freq, log)
+        fp = (f1 + f2 - q12 / qa) / 2.0
+        if log:
+            fp = np.exp(fp)
         return np.float32(1.0 / fp)
 
 
@@ -229,6 +255,56 @@ def tp(ipeak, spectrum, freq):
         return np.nan
     else:
         return np.float32(1.0 / freq[ipeak])
+
+
+def eps(ipeak, spectrum, freq, log=False):
+    """Smooth peak energy density Ep.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+        - log (bool): Fit the parabola to the logarithm of the energy density as a
+          function of the logarithm of the frequency.
+
+    Returns:
+        - ep (float): Maximum energy density in the smooth spectrum.
+
+    Note:
+        - The smooth peak energy density is the value at the peak of the parabolic
+          fit around the spectral peak that defines the smooth peak period `tps`.
+
+    """
+    if not ipeak:
+        return np.nan
+    else:
+        f1, f2, e2, q12, qa, log = _peak_parabola(ipeak, spectrum, freq, log)
+        q2 = q12 + qa * (f2 - f1)
+        ep = e2 - q2**2 / (4 * qa)
+        if log:
+            ep = np.exp(ep)
+        return ep
+
+
+def ep(ipeak, spectrum, freq):
+    """Peak energy density Ep.
+
+    Args:
+        - ipeak (int): Index of the maximum energy density in frequency spectrum E(f).
+        - spectrum (1darray): Direction-integrated wave spectrum array E(f).
+        - freq (1darray): Wave frequency array.
+
+    Returns:
+        - ep (float): Maximum energy density in the frequency spectrum.
+
+    Note:
+        - Arg freq is only defined so the signature is consistent with eps function.
+
+    """
+    if not ipeak:
+        return np.nan
+    else:
+        return spectrum[ipeak]
 
 
 def dpspr(ipeak, fdspr):

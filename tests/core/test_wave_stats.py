@@ -35,7 +35,6 @@ class TestSpecArray(object):
             ("swe", 1e-3),
             ("sw", 1e-3),
             ("fp", 1e-3),
-            ("gamma", 1e-3),
             ("goda", 1e-3),
             ("gw", 1e-3),
             ("dpspr", 1e-3),
