@@ -33,9 +33,20 @@ jobs:
     name: Build and test
     runs-on: ${{ matrix.os }}
     strategy:
+      # Let the other jobs finish if one fails, so a failure specific to one
+      # platform or Python version does not hide the results of the rest.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        # Python 3.9 is not available for the Ubuntu 26.04 image ubuntu-latest
+        # now points to, test it on 24.04 until support is removed in 5.0.
+        exclude:
+        - os: ubuntu-latest
+          python-version: '3.9'
+        include:
+        - os: ubuntu-24.04
+          python-version: '3.9'
 
     steps:
     -
